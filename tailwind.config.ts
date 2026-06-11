@@ -1,4 +1,3 @@
-/* Tailwind config for the frontend react app. This is where the app theme should be defined: https://v2.tailwindcss.com/docs/configuration. */
 import type { Config } from 'tailwindcss'
 import animatePlugin from 'tailwindcss-animate'
 import typographyPlugin from '@tailwindcss/typography'
@@ -36,6 +35,15 @@ export default {
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        brand: {
+          green: 'hsl(var(--brand-green))',
+          sidebar: 'hsl(var(--brand-sidebar))',
+          bg: 'hsl(var(--brand-bg))',
+          orange: 'hsl(var(--brand-orange))',
+          cyan: 'hsl(var(--brand-cyan))',
+          blue: 'hsl(var(--brand-blue))',
+          success: 'hsl(var(--brand-success))',
+        },
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
