@@ -3,21 +3,37 @@ import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Link, Navigate } from 'react-router-dom'
+import { extractFieldErrors, getErrorMessage } from '@/lib/pocketbase/errors'
 
-export default function Login() {
+export default function Signup() {
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
-  const { signIn, isAuthenticated, loading } = useAuth()
+  const { signUp, isAuthenticated, loading } = useAuth()
 
   if (loading) return null
   if (isAuthenticated) return <Navigate to="/" replace />
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    const { error: err } = await signIn(email, password)
-    if (err) setError('Email ou senha inválidos.')
+
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem.')
+      return
+    }
+
+    const { error: err } = await signUp(email, password, name)
+    if (err) {
+      const fieldErrors = extractFieldErrors(err)
+      if (fieldErrors.email) {
+        setError('Este email já está em uso ou é inválido.')
+      } else {
+        setError(getErrorMessage(err) || 'Erro ao criar conta. Tente novamente.')
+      }
+    }
   }
 
   return (
@@ -26,10 +42,17 @@ export default function Login() {
         <div className="text-center mb-8 flex flex-col items-center justify-center">
           <span className="text-3xl font-bold tracking-tighter text-brand-green">BENER</span>
           <span className="mt-[2px] text-[10px] uppercase tracking-[0.2em] text-brand-green/80">
-            Máquinas que transformam
+            Cadastre-se
           </span>
         </div>
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleSignup} className="space-y-4">
+          <Input
+            type="text"
+            placeholder="Nome completo"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
           <Input
             type="email"
             placeholder="Email"
@@ -43,17 +66,26 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            minLength={8}
+          />
+          <Input
+            type="password"
+            placeholder="Confirme a senha"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            minLength={8}
           />
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <Button
             type="submit"
             className="w-full bg-[#337ab7] hover:bg-blue-700 text-white uppercase text-xs h-10 font-bold"
           >
-            Entrar
+            Cadastrar
           </Button>
           <div className="mt-4 text-center text-sm">
-            <Link to="/signup" className="text-[#337ab7] hover:underline">
-              Não tem uma conta? Cadastre-se
+            <Link to="/login" className="text-[#337ab7] hover:underline">
+              Já tem uma conta? Entrar
             </Link>
           </div>
         </form>

@@ -17,6 +17,7 @@ import NotFound from './pages/NotFound'
 import Representantes from './pages/Representantes'
 import Prepostos from './pages/Prepostos'
 import Login from './pages/Login'
+import Signup from './pages/Signup'
 import { AuthProvider } from './hooks/use-auth'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
@@ -28,6 +29,7 @@ const App = () => (
         <Sonner />
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
               <Route path="/" element={<Index />} />
