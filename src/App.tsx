@@ -7,6 +7,7 @@ import Index from './pages/Index'
 import Cadastros from './pages/Cadastros'
 import Regioes from './pages/Regioes'
 import Gerentes from './pages/Gerentes'
+import Clientes from './pages/Clientes'
 import Eventos from './pages/Eventos'
 import Propostas from './pages/Propostas'
 import Produtos from './pages/Produtos'
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/cadastros" element={<Cadastros />} />
           <Route path="/cadastros/regioes" element={<Regioes />} />
           <Route path="/cadastros/gerentes" element={<Gerentes />} />
+          <Route path="/cadastros/clientes" element={<Clientes />} />
           <Route path="/eventos" element={<Eventos />} />
           <Route path="/propostas" element={<Propostas />} />
           <Route path="/produtos" element={<Produtos />} />
