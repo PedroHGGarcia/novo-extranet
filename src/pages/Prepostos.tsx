@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { UserCircle, Pencil, Copy } from 'lucide-react'
+import { Briefcase, Pencil, Copy } from 'lucide-react'
 import { PageLayout } from '@/components/PageLayout'
 import { PaginationBar } from '@/components/PaginationBar'
 import { SortableHead } from '@/components/SortableHead'
@@ -12,15 +12,15 @@ import {
   TableHead,
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
-import { getClientes } from '@/services/cadastros'
+import { getPrepostos } from '@/services/cadastros'
 import { useRealtime } from '@/hooks/use-realtime'
 
-export default function Clientes() {
+export default function Prepostos() {
   const [data, setData] = useState<any[]>([])
 
   const loadData = async () => {
     try {
-      const items = await getClientes()
+      const items = await getPrepostos()
       setData(items)
     } catch (err) {
       console.error(err)
@@ -31,16 +31,16 @@ export default function Clientes() {
     loadData()
   }, [])
 
-  useRealtime('clientes', () => {
+  useRealtime('prepostos', () => {
     loadData()
   })
 
-  const handleEdit = (id: string) => console.log('Editar cliente', id)
-  const handleDuplicate = (id: string) => console.log('Duplicar cliente', id)
+  const handleEdit = (id: string) => console.log('Editar preposto', id)
+  const handleDuplicate = (id: string) => console.log('Duplicar preposto', id)
 
   return (
-    <PageLayout title="Clientes" icon={UserCircle}>
-      <PaginationBar total={data.length} displayTotal={data.length > 0 ? 11341 : 0} />
+    <PageLayout title="Prepostos" icon={Briefcase}>
+      <PaginationBar total={data.length} displayTotal={data.length > 0 ? 97 : 0} />
       <div className="overflow-x-auto">
         <Table className="min-w-full text-sm">
           <TableHeader>
@@ -48,13 +48,11 @@ export default function Clientes() {
               <TableHead className="w-10">
                 <Checkbox />
               </TableHead>
-              <SortableHead>Fantasia</SortableHead>
-              <SortableHead>Contato</SortableHead>
+              <SortableHead>Representante</SortableHead>
+              <SortableHead>Nome</SortableHead>
+              <SortableHead>E-mail</SortableHead>
               <SortableHead>Telefone</SortableHead>
-              <SortableHead>Celular</SortableHead>
-              <SortableHead>Email</SortableHead>
-              <SortableHead>Dt. Cad.</SortableHead>
-              <SortableHead>Status</SortableHead>
+              <SortableHead>Dt Cad.</SortableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -64,7 +62,7 @@ export default function Clientes() {
                   <Checkbox />
                 </TableCell>
                 <TableCell>
-                  <div className="text-slate-700">{item.fantasia}</div>
+                  <div className="text-slate-700">{item.representante}</div>
                   <div className="flex items-center gap-2 mt-1 text-xs text-[#337ab7]">
                     <button
                       onClick={() => handleEdit(item.id)}
@@ -80,22 +78,10 @@ export default function Clientes() {
                     </button>
                   </div>
                 </TableCell>
-                <TableCell className="text-slate-600">{item.contato}</TableCell>
-                <TableCell className="text-slate-600 whitespace-nowrap">{item.telefone}</TableCell>
-                <TableCell className="text-slate-600 whitespace-nowrap">{item.celular}</TableCell>
+                <TableCell className="text-slate-600">{item.nome}</TableCell>
                 <TableCell className="text-slate-600">{item.email}</TableCell>
+                <TableCell className="text-slate-600 whitespace-nowrap">{item.telefone}</TableCell>
                 <TableCell className="text-slate-600 whitespace-nowrap">{item.dt_cad}</TableCell>
-                <TableCell>
-                  {item.status === 'Ativo' ? (
-                    <span className="bg-[#5cb85c] text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                      Ativo
-                    </span>
-                  ) : (
-                    <span className="bg-slate-400 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                      {item.status}
-                    </span>
-                  )}
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>

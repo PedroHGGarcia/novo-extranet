@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { UserCircle, Pencil, Copy } from 'lucide-react'
+import { Briefcase, Pencil, Copy } from 'lucide-react'
 import { PageLayout } from '@/components/PageLayout'
 import { PaginationBar } from '@/components/PaginationBar'
 import { SortableHead } from '@/components/SortableHead'
@@ -12,15 +12,15 @@ import {
   TableHead,
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
-import { getClientes } from '@/services/cadastros'
+import { getRepresentantes } from '@/services/cadastros'
 import { useRealtime } from '@/hooks/use-realtime'
 
-export default function Clientes() {
+export default function Representantes() {
   const [data, setData] = useState<any[]>([])
 
   const loadData = async () => {
     try {
-      const items = await getClientes()
+      const items = await getRepresentantes()
       setData(items)
     } catch (err) {
       console.error(err)
@@ -31,16 +31,16 @@ export default function Clientes() {
     loadData()
   }, [])
 
-  useRealtime('clientes', () => {
+  useRealtime('representantes', () => {
     loadData()
   })
 
-  const handleEdit = (id: string) => console.log('Editar cliente', id)
-  const handleDuplicate = (id: string) => console.log('Duplicar cliente', id)
+  const handleEdit = (id: string) => console.log('Editar representante', id)
+  const handleDuplicate = (id: string) => console.log('Duplicar representante', id)
 
   return (
-    <PageLayout title="Clientes" icon={UserCircle}>
-      <PaginationBar total={data.length} displayTotal={data.length > 0 ? 11341 : 0} />
+    <PageLayout title="Representantes" icon={Briefcase}>
+      <PaginationBar total={data.length} displayTotal={data.length > 0 ? 50 : 0} />
       <div className="overflow-x-auto">
         <Table className="min-w-full text-sm">
           <TableHeader>
@@ -49,10 +49,10 @@ export default function Clientes() {
                 <Checkbox />
               </TableHead>
               <SortableHead>Fantasia</SortableHead>
-              <SortableHead>Contato</SortableHead>
+              <SortableHead>Sigla</SortableHead>
               <SortableHead>Telefone</SortableHead>
-              <SortableHead>Celular</SortableHead>
-              <SortableHead>Email</SortableHead>
+              <SortableHead>Cidade</SortableHead>
+              <SortableHead>UF</SortableHead>
               <SortableHead>Dt. Cad.</SortableHead>
               <SortableHead>Status</SortableHead>
             </TableRow>
@@ -80,10 +80,10 @@ export default function Clientes() {
                     </button>
                   </div>
                 </TableCell>
-                <TableCell className="text-slate-600">{item.contato}</TableCell>
+                <TableCell className="text-slate-600">{item.sigla}</TableCell>
                 <TableCell className="text-slate-600 whitespace-nowrap">{item.telefone}</TableCell>
-                <TableCell className="text-slate-600 whitespace-nowrap">{item.celular}</TableCell>
-                <TableCell className="text-slate-600">{item.email}</TableCell>
+                <TableCell className="text-slate-600">{item.cidade}</TableCell>
+                <TableCell className="text-slate-600">{item.uf}</TableCell>
                 <TableCell className="text-slate-600 whitespace-nowrap">{item.dt_cad}</TableCell>
                 <TableCell>
                   {item.status === 'Ativo' ? (

@@ -14,29 +14,41 @@ import Produtos from './pages/Produtos'
 import Relatorios from './pages/Relatorios'
 import Perfil from './pages/Perfil'
 import NotFound from './pages/NotFound'
+import Representantes from './pages/Representantes'
+import Prepostos from './pages/Prepostos'
+import Login from './pages/Login'
+import { AuthProvider } from './hooks/use-auth'
+import { ProtectedRoute } from './components/ProtectedRoute'
 
 const App = () => (
-  <BrowserRouter>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Index />} />
-          <Route path="/cadastros" element={<Cadastros />} />
-          <Route path="/cadastros/regioes" element={<Regioes />} />
-          <Route path="/cadastros/gerentes" element={<Gerentes />} />
-          <Route path="/cadastros/clientes" element={<Clientes />} />
-          <Route path="/eventos" element={<Eventos />} />
-          <Route path="/propostas" element={<Propostas />} />
-          <Route path="/produtos" element={<Produtos />} />
-          <Route path="/relatorios" element={<Relatorios />} />
-          <Route path="/perfil" element={<Perfil />} />
-        </Route>
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </TooltipProvider>
-  </BrowserRouter>
+  <AuthProvider>
+    <BrowserRouter>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/cadastros" element={<Cadastros />} />
+              <Route path="/cadastros/regioes" element={<Regioes />} />
+              <Route path="/cadastros/gerentes" element={<Gerentes />} />
+              <Route path="/cadastros/clientes" element={<Clientes />} />
+              <Route path="/cadastros/representantes" element={<Representantes />} />
+              <Route path="/cadastros/prepostos" element={<Prepostos />} />
+              <Route path="/eventos" element={<Eventos />} />
+              <Route path="/propostas" element={<Propostas />} />
+              <Route path="/produtos" element={<Produtos />} />
+              <Route path="/relatorios" element={<Relatorios />} />
+              <Route path="/perfil" element={<Perfil />} />
+            </Route>
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </TooltipProvider>
+    </BrowserRouter>
+  </AuthProvider>
 )
 
 export default App
