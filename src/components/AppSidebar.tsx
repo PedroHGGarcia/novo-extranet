@@ -8,6 +8,9 @@ import {
   LineChart,
   UserCircle,
   ChevronRight,
+  Globe,
+  User,
+  Briefcase,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -30,7 +33,13 @@ const menuItems = [
     title: 'Cadastros',
     url: '/cadastros',
     icon: Contact,
-    sub: [{ title: 'Clientes', url: '/cadastros' }],
+    sub: [
+      { title: 'Regiões', url: '/cadastros/regioes', icon: Globe },
+      { title: 'Gerentes', url: '/cadastros/gerentes', icon: User },
+      { title: 'Clientes', url: '/cadastros/clientes', icon: UserCircle },
+      { title: 'Representantes', url: '/cadastros/representantes', icon: Briefcase },
+      { title: 'Prepostos', url: '/cadastros/prepostos', icon: Briefcase },
+    ],
   },
   {
     title: 'Controle de Eventos',
@@ -75,7 +84,9 @@ export function AppSidebar() {
       <SidebarContent className="bg-brand-sidebar py-2">
         <SidebarMenu>
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.url
+            const isActive =
+              location.pathname === item.url ||
+              item.sub.some((sub) => location.pathname === sub.url)
 
             return (
               <Collapsible
@@ -110,14 +121,20 @@ export function AppSidebar() {
 
                   {item.sub.length > 0 && (
                     <CollapsibleContent>
-                      <SidebarMenuSub className="border-l-white/10 pr-0 mr-0">
+                      <SidebarMenuSub className="border-l-transparent pr-0 mr-0 gap-1">
                         {item.sub.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.title}>
                             <SidebarMenuSubButton
                               asChild
-                              className="text-white/60 hover:bg-white/5 hover:text-white"
+                              className={cn(
+                                'text-white/70 hover:bg-white/5 hover:text-white flex items-center gap-3 py-2 px-4 rounded-none',
+                                location.pathname === subItem.url && 'text-white bg-white/5',
+                              )}
                             >
-                              <Link to={subItem.url}>{subItem.title}</Link>
+                              <Link to={subItem.url}>
+                                {subItem.icon && <subItem.icon className="h-4 w-4 shrink-0" />}
+                                <span>{subItem.title}</span>
+                              </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         ))}
