@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import {
   Monitor,
+  Map,
   Contact,
   CalendarDays,
   FileText,
@@ -29,6 +30,7 @@ import { cn } from '@/lib/utils'
 
 const menuItems = [
   { title: 'Painel Principal', url: '/', icon: Monitor, sub: [] },
+  { title: 'Área de Atuação', url: '/area-atuacao', icon: Map, sub: [] },
   {
     title: 'Cadastros',
     url: '/cadastros',

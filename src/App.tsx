@@ -13,6 +13,7 @@ import Propostas from './pages/Propostas'
 import Produtos from './pages/Produtos'
 import Relatorios from './pages/Relatorios'
 import Perfil from './pages/Perfil'
+import AreaAtuacao from './pages/AreaAtuacao'
 import NotFound from './pages/NotFound'
 import Representantes from './pages/Representantes'
 import Prepostos from './pages/Prepostos'
@@ -33,6 +34,7 @@ const App = () => (
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
               <Route path="/" element={<Index />} />
+              <Route path="/area-atuacao" element={<AreaAtuacao />} />
               <Route path="/cadastros" element={<Cadastros />} />
               <Route path="/cadastros/regioes" element={<Regioes />} />
               <Route path="/cadastros/gerentes" element={<Gerentes />} />
