@@ -45,11 +45,60 @@ export function AreaMap({ polygons }: AreaMapProps) {
   const [center, setCenter] = useState({ lat: -23.5, lon: -48.0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
   const [selectedPoly, setSelectedPoly] = useState<{ name: string; x: number; y: number } | null>(
     null,
   )
   const containerRef = useRef<HTMLDivElement>(null)
+  const prevPolygonIds = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (dimensions.width === 0 || dimensions.height === 0 || polygons.length === 0) return
+
+    const currentPolygonIds = polygons.map((p) => p.id).join(',')
+    if (prevPolygonIds.current === currentPolygonIds) return
+
+    prevPolygonIds.current = currentPolygonIds
+
+    let minLat = Infinity
+    let maxLat = -Infinity
+    let minLon = Infinity
+    let maxLon = -Infinity
+
+    polygons.forEach((poly) => {
+      poly.points.forEach((p) => {
+        if (p[0] < minLat) minLat = p[0]
+        if (p[0] > maxLat) maxLat = p[0]
+        if (p[1] < minLon) minLon = p[1]
+        if (p[1] > maxLon) maxLon = p[1]
+      })
+    })
+
+    if (minLat === Infinity) return
+
+    const centerLat = (minLat + maxLat) / 2
+    const centerLon = (minLon + maxLon) / 2
+
+    setCenter({ lat: centerLat, lon: centerLon })
+
+    const pMin = project(minLat, minLon, 0)
+    const pMax = project(maxLat, maxLon, 0)
+
+    const dx = Math.abs(pMax.x - pMin.x) || 0.0001
+    const dy = Math.abs(pMax.y - pMin.y) || 0.0001
+
+    const paddingX = Math.max(dimensions.width - 60, dimensions.width * 0.8)
+    const paddingY = Math.max(dimensions.height - 60, dimensions.height * 0.8)
+
+    const zoomX = Math.log2(paddingX / dx)
+    const zoomY = Math.log2(paddingY / dy)
+
+    let newZoom = Math.min(zoomX, zoomY)
+    if (!Number.isFinite(newZoom)) newZoom = 12
+    newZoom = Math.max(3, Math.min(newZoom, 14))
+
+    setZoom(newZoom)
+  }, [polygons, dimensions.width, dimensions.height])
 
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
