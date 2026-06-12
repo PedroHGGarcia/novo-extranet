@@ -4,15 +4,15 @@ import { AreaMap, sortClockwise, type PolygonData } from '@/components/AreaMap'
 import { getRepresentantes } from '@/services/cadastros'
 
 const COLORS = [
-  '#ef4444', // red
-  '#3b82f6', // blue
-  '#22c55e', // green
-  '#a855f7', // purple
-  '#f97316', // orange
-  '#8b0000', // darkred
-  '#ff7f7f', // lightred
-  '#f5f5dc', // beige
-  '#00008b', // darkblue
+  'red',
+  'blue',
+  'green',
+  'purple',
+  'orange',
+  'darkred',
+  'lightred',
+  'beige',
+  'darkblue',
 ]
 
 export default function AreaAtuacao() {

@@ -46,7 +46,7 @@ export function AreaMap({ polygons }: AreaMapProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
-  const [hoveredPoly, setHoveredPoly] = useState<{ name: string; x: number; y: number } | null>(
+  const [selectedPoly, setSelectedPoly] = useState<{ name: string; x: number; y: number } | null>(
     null,
   )
   const containerRef = useRef<HTMLDivElement>(null)
@@ -129,8 +129,8 @@ export function AreaMap({ polygons }: AreaMapProps) {
       onMouseUp={handleMouseUp}
       onMouseLeave={() => {
         handleMouseUp()
-        setHoveredPoly(null)
       }}
+      onClick={() => setSelectedPoly(null)}
       style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
       <svg width="100%" height="100%">
@@ -159,31 +159,21 @@ export function AreaMap({ polygons }: AreaMapProps) {
                 <polygon
                   points={pointsAttr}
                   fill={poly.color}
-                  fillOpacity={hoveredPoly?.name === poly.name ? 0.6 : 0.3}
+                  fillOpacity={selectedPoly?.name === poly.name ? 0.6 : 0.3}
                   stroke={poly.color}
                   strokeWidth={2 / scale}
                   className="transition-opacity cursor-pointer"
-                  onMouseEnter={(e) => {
+                  onClick={(e) => {
+                    e.stopPropagation()
                     const rect = containerRef.current?.getBoundingClientRect()
                     if (rect) {
-                      setHoveredPoly({
+                      setSelectedPoly({
                         name: poly.name,
                         x: e.clientX - rect.left,
                         y: e.clientY - rect.top,
                       })
                     }
                   }}
-                  onMouseMove={(e) => {
-                    const rect = containerRef.current?.getBoundingClientRect()
-                    if (rect) {
-                      setHoveredPoly({
-                        name: poly.name,
-                        x: e.clientX - rect.left,
-                        y: e.clientY - rect.top,
-                      })
-                    }
-                  }}
-                  onMouseLeave={() => setHoveredPoly(null)}
                 />
                 {projectedPoints.map((p, i) => (
                   <circle
@@ -203,12 +193,12 @@ export function AreaMap({ polygons }: AreaMapProps) {
         </g>
       </svg>
 
-      {hoveredPoly && (
+      {selectedPoly && (
         <div
           className="absolute z-50 px-3 py-2 bg-gray-900 text-white text-sm font-medium rounded shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-full mt-[-15px]"
-          style={{ left: hoveredPoly.x, top: hoveredPoly.y }}
+          style={{ left: selectedPoly.x, top: selectedPoly.y }}
         >
-          {hoveredPoly.name}
+          {selectedPoly.name}
           <div className="absolute w-3 h-3 bg-gray-900 rotate-45 left-1/2 -translate-x-1/2 -bottom-1" />
         </div>
       )}

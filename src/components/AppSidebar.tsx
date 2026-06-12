@@ -30,7 +30,6 @@ import { cn } from '@/lib/utils'
 
 const menuItems = [
   { title: 'Painel Principal', url: '/', icon: Monitor, sub: [] },
-  { title: 'Área de Atuação', url: '/area-atuacao', icon: Map, sub: [] },
   {
     title: 'Cadastros',
     url: '/cadastros',
@@ -68,6 +67,7 @@ const menuItems = [
     sub: [{ title: 'Vendas', url: '/relatorios' }],
   },
   { title: 'Perfil', url: '/perfil', icon: UserCircle, sub: [] },
+  { title: 'Área de Atuação de Representantes', url: '/area-atuacao', icon: Map, sub: [] },
 ]
 
 export function AppSidebar() {
