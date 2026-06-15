@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Link, Navigate } from 'react-router-dom'
-import logoIn from '@/assets/systemlogoin-large-52274.png'
+import logoIn from '@/assets/bener-thumb-c5c1b.png'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -22,10 +22,14 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-brand-green">
-      <div className="bg-white p-8 rounded-md w-full max-w-sm shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="bg-white p-8 rounded-xl w-full max-w-sm shadow-xl border border-slate-100">
         <div className="text-center mb-8 flex flex-col items-center justify-center">
-          <img src={logoIn} alt="Bener Logo" className="h-16 mb-2 object-contain" />
+          <img
+            src={logoIn}
+            alt="Bener Logo"
+            className="w-auto h-16 sm:h-20 max-w-full mb-2 object-contain"
+          />
         </div>
         <form onSubmit={handleLogin} className="space-y-4">
           <Input
