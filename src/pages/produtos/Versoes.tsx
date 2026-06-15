@@ -9,6 +9,7 @@ import {
   FileText,
   ListChecks,
   Undo2,
+  BrainCircuit,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,8 @@ import { useTablePreferences } from '@/hooks/use-table-preferences'
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown'
 import { RichTextEditor } from '@/components/RichTextEditor'
 import { cn } from '@/lib/utils'
+import { z } from 'zod'
+import pb from '@/lib/pocketbase/client'
 import {
   getVersoes,
   createVersao,
@@ -131,6 +134,9 @@ export default function Versoes() {
   const [deleteFoto, setDeleteFoto] = useState(false)
   const fotoInputRef = useRef<HTMLInputElement>(null)
 
+  const [loadingSpecs, setLoadingSpecs] = useState(false)
+  const [auditoria, setAuditoria] = useState<any[]>([])
+
   const colunasOptions = [
     { id: 'modelo', label: 'Modelo' },
     { id: 'nome', label: 'Nome' },
@@ -173,6 +179,19 @@ export default function Versoes() {
     setFiltered(result)
   }, [items, searchTerm])
 
+  useEffect(() => {
+    if (activeTab === 'historico' && editingItem) {
+      pb.collection('auditoria')
+        .getFullList({
+          filter: `tabela = 'versoes' && registro_id = '${editingItem.id}'`,
+          sort: '-created',
+          expand: 'user',
+        })
+        .then(setAuditoria)
+        .catch(() => toast({ title: 'Erro ao buscar histórico', variant: 'destructive' }))
+    }
+  }, [activeTab, editingItem])
+
   const handleEdit = (item: Versao) => {
     setEditingItem(item)
     setNome(item.nome)
@@ -213,7 +232,59 @@ export default function Versoes() {
     }
   }
 
+  const handleSuggestSpecs = async () => {
+    if (!modeloId) {
+      toast({ title: 'Selecione um modelo primeiro', variant: 'destructive' })
+      return
+    }
+    const modelo = modelos.find((m) => m.id === modeloId)
+    try {
+      setLoadingSpecs(true)
+      const res = await pb.send('/backend/v1/ai/suggest-specs', {
+        method: 'POST',
+        body: JSON.stringify({ modelo: modelo?.nome, produto: modelo?.expand?.produto?.nome }),
+      })
+      setEspecificacoes((prev) => prev + (prev ? '<br/><br/>' : '') + res.text)
+      toast({ title: 'Especificações sugeridas com sucesso.' })
+    } catch (err: any) {
+      toast({ title: 'Erro ao gerar sugestão', description: err.message, variant: 'destructive' })
+    } finally {
+      setLoadingSpecs(false)
+    }
+  }
+
   const isFormValid = nome.trim() && modeloId
+
+  const specsSchema = z.string().superRefine((val, ctx) => {
+    const text = val.replace(/<[^>]*>?/gm, '').toLowerCase()
+    if (
+      text.includes('peso') &&
+      !/\d+/.test(text.substring(text.indexOf('peso'), text.indexOf('peso') + 30))
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A especificação de 'Peso' deve conter um valor numérico válido.",
+      })
+    }
+    if (
+      text.includes('altura') &&
+      !/\d+/.test(text.substring(text.indexOf('altura'), text.indexOf('altura') + 30))
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A especificação de 'Altura' deve conter um valor numérico válido.",
+      })
+    }
+    if (
+      text.includes('voltagem') &&
+      !/\d+/.test(text.substring(text.indexOf('voltagem'), text.indexOf('voltagem') + 30))
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A especificação de 'Voltagem' deve conter um valor numérico válido.",
+      })
+    }
+  })
 
   const handleSave = async () => {
     setNomeError(!nome.trim())
@@ -221,6 +292,16 @@ export default function Versoes() {
 
     if (!isFormValid) {
       toast({ title: 'Preencha os campos obrigatórios', variant: 'destructive' })
+      return
+    }
+
+    const specsValidation = specsSchema.safeParse(especificacoes)
+    if (!specsValidation.success) {
+      toast({
+        title: 'Erro na Especificação Técnica',
+        description: specsValidation.error.issues[0].message,
+        variant: 'destructive',
+      })
       return
     }
 
@@ -368,6 +449,13 @@ export default function Versoes() {
           >
             Cadastro
           </TabsTrigger>
+          <TabsTrigger
+            value="historico"
+            disabled={!editingItem}
+            className="rounded-none border border-transparent data-[state=active]:border-gray-300 data-[state=active]:border-b-white data-[state=active]:bg-white data-[state=active]:text-gray-800 px-6 py-2 -mb-[1px] bg-gray-50 text-gray-500 disabled:opacity-50"
+          >
+            Histórico
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="registros" className="mt-0">
@@ -484,7 +572,6 @@ export default function Versoes() {
 
         <TabsContent value="cadastro" className="mt-0">
           <div className="flex flex-col lg:flex-row gap-4 items-start">
-            {/* Left Column: Dados (75%) */}
             <div className="w-full lg:w-3/4 border border-blue-200 rounded-sm bg-white shadow-sm flex flex-col">
               <div className="bg-white border-b border-blue-200 px-4 py-2 flex items-center gap-2 text-[#2A75D3]">
                 <FileText className="w-4 h-4" />
@@ -492,7 +579,6 @@ export default function Versoes() {
               </div>
 
               <div className="p-4 space-y-4">
-                {/* Row 1 */}
                 <div className="grid grid-cols-12 gap-6">
                   <div className="col-span-8 flex flex-col">
                     <label className="text-[11px] text-gray-500 mb-0.5">
@@ -523,7 +609,6 @@ export default function Versoes() {
                   </div>
                 </div>
 
-                {/* Row 2 */}
                 <div className="grid grid-cols-12 gap-6">
                   <div className="col-span-4 flex flex-col">
                     <label className="text-[11px] text-gray-500 mb-0.5">Nome Abreviado</label>
@@ -568,7 +653,6 @@ export default function Versoes() {
                   </div>
                 </div>
 
-                {/* Row 3: Image */}
                 <div className="flex flex-col">
                   <label className="text-[11px] text-gray-500 mb-0.5">Imagem Principal</label>
                   <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 p-1 rounded-sm">
@@ -613,7 +697,6 @@ export default function Versoes() {
                   </div>
                 </div>
 
-                {/* Row 4 */}
                 <div className="grid grid-cols-12 gap-6 pt-2 border-t border-red-200">
                   <div className="col-span-3 flex flex-col">
                     <label className="text-[11px] text-gray-500 mb-0.5">Moeda</label>
@@ -665,7 +748,6 @@ export default function Versoes() {
                   </div>
                 </div>
 
-                {/* Row 5 */}
                 <div className="grid grid-cols-12 gap-6 pt-2 border-t border-red-200">
                   <div className="col-span-4 flex flex-col">
                     <label className="text-[11px] text-gray-500 mb-0.5">Tem Estoque</label>
@@ -706,7 +788,6 @@ export default function Versoes() {
                   </div>
                 </div>
 
-                {/* Row 6: Estoque Readonly */}
                 <div className="grid grid-cols-12 gap-4 bg-gray-100 p-2 rounded-sm border border-gray-200 mt-2">
                   <div className="col-span-3 flex flex-col">
                     <label className="text-[10px] text-gray-400 mb-0.5 uppercase">
@@ -750,7 +831,6 @@ export default function Versoes() {
                   </div>
                 </div>
 
-                {/* Rich Texts */}
                 <div className="space-y-6 pt-4 border-t border-gray-200">
                   <RichTextEditor
                     label="Acessórios Standards"
@@ -762,14 +842,28 @@ export default function Versoes() {
                     value={caracteristicas}
                     onChange={setCaracteristicas}
                   />
-                  <RichTextEditor
-                    label="Especificações Técnicas Principais"
-                    value={especificacoes}
-                    onChange={setEspecificacoes}
-                  />
+                  <div className="relative">
+                    <div className="absolute -top-7 right-0 z-10 flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-6 px-3 text-[11px] text-[#2A75D3] border-[#2A75D3]"
+                        onClick={handleSuggestSpecs}
+                        disabled={loadingSpecs || !modeloId}
+                      >
+                        <BrainCircuit className="w-3 h-3 mr-1" />
+                        {loadingSpecs ? 'Sugerindo...' : 'Sugerir Especificações'}
+                      </Button>
+                    </div>
+                    <RichTextEditor
+                      label="Especificações Técnicas Principais"
+                      value={especificacoes}
+                      onChange={setEspecificacoes}
+                    />
+                  </div>
                 </div>
 
-                {/* Footer info */}
                 <div className="pt-6 pb-2">
                   <div className="bg-gray-100 p-2 w-max rounded border border-gray-200 text-xs text-gray-500">
                     <span className="block text-[10px] text-gray-400 uppercase mb-0.5">
@@ -783,7 +877,6 @@ export default function Versoes() {
               </div>
             </div>
 
-            {/* Right Column: Tipos de Proposta (25%) */}
             <div className="w-full lg:w-1/4 border border-blue-200 rounded-sm bg-white shadow-sm flex flex-col">
               <div className="bg-white border-b border-blue-200 px-4 py-2 flex items-center gap-2 text-[#2A75D3]">
                 <ListChecks className="w-4 h-4" />
@@ -809,6 +902,53 @@ export default function Versoes() {
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="historico" className="mt-0">
+          <div className="border border-blue-200 rounded-sm bg-white shadow-sm flex flex-col">
+            <div className="bg-white border-b border-blue-200 px-4 py-2 flex items-center gap-2 text-[#2A75D3]">
+              <FileText className="w-4 h-4" />
+              <h3 className="font-semibold text-sm">Histórico de Alterações</h3>
+            </div>
+            <div className="p-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-40">Data/Hora</TableHead>
+                    <TableHead className="w-40">Usuário</TableHead>
+                    <TableHead className="w-24">Ação</TableHead>
+                    <TableHead>Detalhes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {auditoria.map((a) => (
+                    <TableRow key={a.id}>
+                      <TableCell className="text-xs text-gray-600">
+                        {new Date(a.created).toLocaleString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-800">
+                        {a.expand?.user?.name || a.expand?.user?.email || 'Sistema'}
+                      </TableCell>
+                      <TableCell className="text-xs capitalize text-gray-600">{a.acao}</TableCell>
+                      <TableCell
+                        className="text-xs text-gray-500 max-w-lg truncate"
+                        title={JSON.stringify(a.dados)}
+                      >
+                        {JSON.stringify(a.dados)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {auditoria.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-6 text-gray-500">
+                        Nenhum registro de auditoria encontrado para esta versão.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </div>
         </TabsContent>

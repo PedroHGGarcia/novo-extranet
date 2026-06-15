@@ -17,6 +17,7 @@ import Modelos from './pages/produtos/Modelos'
 import Versoes from './pages/produtos/Versoes'
 import VersaoImagens from './pages/produtos/VersaoImagens'
 import DashboardProdutos from './pages/produtos/Dashboard'
+import Acessorios from './pages/produtos/Acessorios'
 import Relatorios from './pages/Relatorios'
 import Perfil from './pages/Perfil'
 import AreaAtuacao from './pages/AreaAtuacao'
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="/produtos/modelos" element={<Modelos />} />
               <Route path="/produtos/versoes" element={<Versoes />} />
               <Route path="/produtos/versao-imagens" element={<VersaoImagens />} />
+              <Route path="/produtos/acessorios" element={<Acessorios />} />
               <Route path="/produtos/dashboard" element={<DashboardProdutos />} />
               <Route path="/relatorios" element={<Relatorios />} />
               <Route path="/perfil" element={<Perfil />} />
