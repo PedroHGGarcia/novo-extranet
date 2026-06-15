@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-15T19:14:35.891Z",
+  "generatedAt": "2026-06-15T19:25:32.338Z",
   "collections": [
     {
       "name": "users",
@@ -449,8 +449,8 @@
       "name": "auditoria",
       "type": "base",
       "apiRules": {
-        "list": "@request.auth.role = 'admin'",
-        "view": "@request.auth.role = 'admin'",
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
         "create": null,
         "update": null,
         "delete": null
@@ -1160,6 +1160,12 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "especificacoes_tecnicas",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": ["CREATE INDEX `idx_acessorios_versoes` ON `acessorios` (versoes)"]

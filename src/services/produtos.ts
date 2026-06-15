@@ -97,6 +97,7 @@ export interface Acessorio {
   fator_nac: number
   status: 'Ativo' | 'Inativo'
   versoes: string[]
+  especificacoes_tecnicas?: string
   created: string
   updated: string
   expand?: {

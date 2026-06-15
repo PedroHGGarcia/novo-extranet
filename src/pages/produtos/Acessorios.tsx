@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
-import { Package, Pencil, Copy, Trash2 } from 'lucide-react'
+import { useState, useEffect, forwardRef } from 'react'
+import { Package, Pencil, Copy, X, Wand2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
   TableBody,
@@ -43,6 +44,31 @@ import {
   Acessorio,
   Versao,
 } from '@/services/produtos'
+import pb from '@/lib/pocketbase/client'
+
+export function formatCurrency(val: number, moeda: string) {
+  const locales: Record<string, string> = { BRL: 'pt-BR', USD: 'en-US', EUR: 'de-DE' }
+  const locale = locales[moeda] || 'pt-BR'
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: moeda || 'BRL',
+  }).format(val)
+}
+
+const CurrencyInput = forwardRef<
+  HTMLInputElement,
+  { value: number; onChange: (v: number) => void; currency: string; className?: string }
+>(({ value, onChange, currency, className }, ref) => {
+  const formatted = formatCurrency(value, currency)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/[^\d]/g, '')
+    onChange(Number(rawValue) / 100)
+  }
+
+  return <Input ref={ref} value={formatted} onChange={handleChange} className={className} />
+})
+CurrencyInput.displayName = 'CurrencyInput'
 
 export default function Acessorios() {
   const [items, setItems] = useState<Acessorio[]>([])
@@ -50,18 +76,22 @@ export default function Acessorios() {
   const [filtered, setFiltered] = useState<Acessorio[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState('registros')
+  const [activeSubTab, setActiveSubTab] = useState('dados')
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [nome, setNome] = useState('')
   const [tipo, setTipo] = useState('Opcional')
   const [moeda, setMoeda] = useState('BRL')
   const [valor, setValor] = useState<number>(0)
-  const [fatorNac, setFatorNac] = useState<number>(1.0)
+  const [fatorNac, setFatorNac] = useState<string>('1.0')
   const [status, setStatus] = useState('Ativo')
   const [selectedVersoes, setSelectedVersoes] = useState<string[]>([])
+  const [especificacoesTecnicas, setEspecificacoesTecnicas] = useState('')
   const [openVersoes, setOpenVersoes] = useState(false)
+  const [historico, setHistorico] = useState<any[]>([])
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [loadingAi, setLoadingAi] = useState(false)
 
   const colunasOptions = [
     { id: 'acoes', label: 'Ações' },
@@ -83,8 +113,22 @@ export default function Acessorios() {
       const [ac, vs] = await Promise.all([getAcessorios(), getVersoes()])
       setItems(ac)
       setVersoes(vs)
-    } catch (error) {
+    } catch {
       toast({ title: 'Erro ao carregar dados', variant: 'destructive' })
+    }
+  }
+
+  const loadHistorico = async () => {
+    if (!editingId) return
+    try {
+      const result = await pb.collection('auditoria').getFullList({
+        filter: `tabela='acessorios' && registro_id='${editingId}'`,
+        sort: '-created',
+        expand: 'user',
+      })
+      setHistorico(result)
+    } catch {
+      console.log('Sem permissão ou erro ao carregar histórico')
     }
   }
 
@@ -102,16 +146,24 @@ export default function Acessorios() {
     setFiltered(result)
   }, [items, searchTerm])
 
+  useEffect(() => {
+    if (activeTab === 'cadastro' && activeSubTab === 'historico' && editingId) {
+      loadHistorico()
+    }
+  }, [activeTab, activeSubTab, editingId])
+
   const handleEdit = (item: Acessorio) => {
     setEditingId(item.id)
     setNome(item.nome)
     setTipo(item.tipo)
     setMoeda(item.moeda || 'BRL')
     setValor(item.valor || 0)
-    setFatorNac(item.fator_nac || 1)
+    setFatorNac(String(item.fator_nac || 1))
     setStatus(item.status)
     setSelectedVersoes(item.versoes || [])
+    setEspecificacoesTecnicas(item.especificacoes_tecnicas || '')
     setActiveTab('cadastro')
+    setActiveSubTab('dados')
   }
 
   const handleDuplicate = (item: Acessorio) => {
@@ -120,10 +172,12 @@ export default function Acessorios() {
     setTipo(item.tipo)
     setMoeda(item.moeda || 'BRL')
     setValor(item.valor || 0)
-    setFatorNac(item.fator_nac || 1)
+    setFatorNac(String(item.fator_nac || 1))
     setStatus(item.status)
     setSelectedVersoes(item.versoes || [])
+    setEspecificacoesTecnicas(item.especificacoes_tecnicas || '')
     setActiveTab('cadastro')
+    setActiveSubTab('dados')
   }
 
   const handleDeleteSelected = async () => {
@@ -133,7 +187,7 @@ export default function Acessorios() {
       for (const id of selectedIds) await deleteAcessorio(id)
       setSelectedIds([])
       toast({ title: 'Acessórios excluídos com sucesso' })
-    } catch (error) {
+    } catch {
       toast({ title: 'Erro ao excluir', variant: 'destructive' })
     }
   }
@@ -141,15 +195,22 @@ export default function Acessorios() {
   const handleSave = async () => {
     if (!nome.trim())
       return toast({ title: 'Preencha o nome do acessório', variant: 'destructive' })
+
+    const parsedFator = parseFloat(fatorNac.replace(',', '.'))
+    if (isNaN(parsedFator)) {
+      return toast({ title: 'Fator Nac. inválido', variant: 'destructive' })
+    }
+
     try {
       const formData = {
         nome: nome.trim(),
         tipo,
         moeda,
         valor,
-        fator_nac: fatorNac,
+        fator_nac: parsedFator,
         status,
         versoes: selectedVersoes,
+        especificacoes_tecnicas: especificacoesTecnicas,
       }
       if (editingId) await updateAcessorio(editingId, formData)
       else await createAcessorio(formData)
@@ -157,11 +218,7 @@ export default function Acessorios() {
       resetForm()
       setActiveTab('registros')
     } catch (error: any) {
-      toast({
-        title: 'Erro ao salvar acessório',
-        description: error.message,
-        variant: 'destructive',
-      })
+      toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' })
     }
   }
 
@@ -171,9 +228,30 @@ export default function Acessorios() {
     setTipo('Opcional')
     setMoeda('BRL')
     setValor(0)
-    setFatorNac(1.0)
+    setFatorNac('1.0')
     setStatus('Ativo')
     setSelectedVersoes([])
+    setEspecificacoesTecnicas('')
+    setHistorico([])
+  }
+
+  const handleSuggestSpecs = async () => {
+    if (!nome.trim()) {
+      return toast({ title: 'Preencha o nome primeiro', variant: 'destructive' })
+    }
+    setLoadingAi(true)
+    try {
+      const res = await pb.send('/backend/v1/suggest-specs', {
+        method: 'POST',
+        body: JSON.stringify({ type: 'acessório', nome, versoes: selectedVersoes }),
+      })
+      setEspecificacoesTecnicas(res.content)
+      toast({ title: 'Especificações geradas com sucesso!' })
+    } catch (err: any) {
+      toast({ title: 'Erro ao gerar', description: err.message, variant: 'destructive' })
+    } finally {
+      setLoadingAi(false)
+    }
   }
 
   const handleSelectAll = (checked: boolean) => {
@@ -204,6 +282,7 @@ export default function Acessorios() {
           onClick={() => {
             resetForm()
             setActiveTab('cadastro')
+            setActiveSubTab('dados')
           }}
           className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4"
         >
@@ -344,7 +423,7 @@ export default function Acessorios() {
                       )}
                       {visibleColumns.includes('valor') && (
                         <TableCell className="text-xs text-gray-600 text-right py-2">
-                          {Number(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {formatCurrency(item.valor, item.moeda)}
                         </TableCell>
                       )}
                       {visibleColumns.includes('fator') && (
@@ -381,127 +460,254 @@ export default function Acessorios() {
         </TabsContent>
 
         <TabsContent value="cadastro" className="mt-0">
-          <div className="border border-blue-200 rounded-sm bg-white shadow-sm p-4 space-y-4 max-w-4xl">
-            <div className="grid grid-cols-12 gap-6">
-              <div className="col-span-8 flex flex-col">
-                <label className="text-[11px] text-gray-500 mb-0.5">
-                  Nome <span className="text-red-500">*</span>
+          <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
+            <TabsList className="bg-transparent border-b rounded-none w-full justify-start h-auto p-0 mb-4">
+              <TabsTrigger
+                value="dados"
+                className="rounded-none border border-transparent data-[state=active]:border-blue-500 data-[state=active]:border-b-blue-500 data-[state=active]:text-blue-700 px-4 py-2 -mb-[1px] bg-transparent text-gray-500"
+              >
+                Dados Gerais
+              </TabsTrigger>
+              <TabsTrigger
+                value="especificacoes"
+                className="rounded-none border border-transparent data-[state=active]:border-blue-500 data-[state=active]:border-b-blue-500 data-[state=active]:text-blue-700 px-4 py-2 -mb-[1px] bg-transparent text-gray-500"
+              >
+                Especificações Técnicas
+              </TabsTrigger>
+              {editingId && (
+                <TabsTrigger
+                  value="historico"
+                  className="rounded-none border border-transparent data-[state=active]:border-blue-500 data-[state=active]:border-b-blue-500 data-[state=active]:text-blue-700 px-4 py-2 -mb-[1px] bg-transparent text-gray-500"
+                >
+                  Histórico
+                </TabsTrigger>
+              )}
+            </TabsList>
+
+            <TabsContent
+              value="dados"
+              className="mt-0 border border-blue-200 rounded-sm bg-white shadow-sm p-4 space-y-4 max-w-4xl"
+            >
+              <div className="grid grid-cols-12 gap-6">
+                <div className="col-span-8 flex flex-col">
+                  <label className="text-[11px] text-gray-500 mb-0.5">
+                    Nome <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    className="input-bener"
+                  />
+                </div>
+                <div className="col-span-4 flex flex-col">
+                  <label className="text-[11px] text-gray-500 mb-0.5">Status</label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="select-bener-trigger">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Inativo">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-12 gap-6">
+                <div className="col-span-4 flex flex-col">
+                  <label className="text-[11px] text-gray-500 mb-0.5">Tipo</label>
+                  <Select value={tipo} onValueChange={setTipo}>
+                    <SelectTrigger className="select-bener-trigger">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Opcional">Opcional</SelectItem>
+                      <SelectItem value="Standard">Standard</SelectItem>
+                      <SelectItem value="Opcional Standard">Opcional Standard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-4 flex flex-col">
+                  <label className="text-[11px] text-gray-500 mb-0.5">Moeda</label>
+                  <Select value={moeda} onValueChange={setMoeda}>
+                    <SelectTrigger className="select-bener-trigger">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="BRL">Real (BRL)</SelectItem>
+                      <SelectItem value="USD">Dólar (USD)</SelectItem>
+                      <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-4 flex flex-col">
+                  <label className="text-[11px] text-gray-500 mb-0.5">Valor</label>
+                  <CurrencyInput
+                    value={valor}
+                    onChange={setValor}
+                    currency={moeda}
+                    className="input-bener"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-12 gap-6">
+                <div className="col-span-4 flex flex-col">
+                  <label className="text-[11px] text-gray-500 mb-0.5">Fator Nac.</label>
+                  <Input
+                    value={fatorNac}
+                    onChange={(e) => setFatorNac(e.target.value.replace(/[^0-9.,]/g, ''))}
+                    className="input-bener"
+                  />
+                </div>
+                <div className="col-span-8 flex flex-col">
+                  <label className="text-[11px] text-gray-500 mb-0.5">Vincular Versões</label>
+                  <Popover open={openVersoes} onOpenChange={setOpenVersoes}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between min-h-9 h-auto py-1.5 text-xs border-gray-300 font-normal"
+                      >
+                        {selectedVersoes.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {selectedVersoes.map((id) => {
+                              const v = versoes.find((x) => x.id === id)
+                              return v ? (
+                                <Badge
+                                  key={id}
+                                  variant="secondary"
+                                  className="font-normal text-[10px] py-0 px-1.5 flex items-center gap-1"
+                                >
+                                  {v.nome}
+                                  <span
+                                    className="cursor-pointer opacity-70 hover:opacity-100"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setSelectedVersoes(selectedVersoes.filter((x) => x !== id))
+                                    }}
+                                  >
+                                    <X className="w-2.5 h-2.5" />
+                                  </span>
+                                </Badge>
+                              ) : null
+                            })}
+                          </div>
+                        ) : (
+                          'Selecione as versões...'
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar versão..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhuma versão encontrada.</CommandEmpty>
+                          <CommandGroup>
+                            {versoes.map((v) => (
+                              <CommandItem
+                                key={v.id}
+                                value={v.nome}
+                                onSelect={() => {
+                                  if (selectedVersoes.includes(v.id))
+                                    setSelectedVersoes(selectedVersoes.filter((id) => id !== v.id))
+                                  else setSelectedVersoes([...selectedVersoes, v.id])
+                                }}
+                              >
+                                <div className="flex items-center gap-2 flex-1">
+                                  <Checkbox checked={selectedVersoes.includes(v.id)} />
+                                  <span className="text-xs truncate">{v.nome}</span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent
+              value="especificacoes"
+              className="mt-0 border border-blue-200 rounded-sm bg-white shadow-sm p-4 space-y-4 max-w-4xl"
+            >
+              <div className="flex justify-between items-center">
+                <label className="text-[11px] text-gray-500 font-semibold">
+                  Especificações Técnicas
                 </label>
-                <Input
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  className="input-bener"
-                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs flex items-center gap-2"
+                  onClick={handleSuggestSpecs}
+                  disabled={loadingAi}
+                >
+                  {loadingAi ? (
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-3 h-3" />
+                  )}
+                  Sugestões Inteligentes
+                </Button>
               </div>
-              <div className="col-span-4 flex flex-col">
-                <label className="text-[11px] text-gray-500 mb-0.5">Status</label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="select-bener-trigger">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+              <Textarea
+                value={especificacoesTecnicas}
+                onChange={(e) => setEspecificacoesTecnicas(e.target.value)}
+                className="min-h-[200px] text-sm"
+                placeholder="Descreva as especificações técnicas do acessório..."
+              />
+            </TabsContent>
 
-            <div className="grid grid-cols-12 gap-6">
-              <div className="col-span-4 flex flex-col">
-                <label className="text-[11px] text-gray-500 mb-0.5">Tipo</label>
-                <Select value={tipo} onValueChange={setTipo}>
-                  <SelectTrigger className="select-bener-trigger">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Opcional">Opcional</SelectItem>
-                    <SelectItem value="Standard">Standard</SelectItem>
-                    <SelectItem value="Opcional Standard">Opcional Standard</SelectItem>
-                  </SelectContent>
-                </Select>
+            <TabsContent value="historico" className="mt-0">
+              <div className="border border-blue-200 rounded-sm bg-white shadow-sm p-4 max-w-4xl">
+                {historico.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 text-sm">
+                    Nenhum histórico encontrado.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {historico.map((log) => (
+                      <div
+                        key={log.id}
+                        className="border rounded-sm p-3 text-sm flex gap-4 items-start"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                          {log.expand?.user?.avatar ? (
+                            <img
+                              src={pb.files.getURL(log.expand.user, log.expand.user.avatar)}
+                              alt="avatar"
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-gray-500 font-semibold">
+                              {log.expand?.user?.name?.[0] || 'U'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="font-semibold text-gray-800">
+                              {log.expand?.user?.name || log.user}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(log.created).toLocaleString('pt-BR')}
+                            </span>
+                          </div>
+                          <div className="text-gray-600">
+                            Ação: <span className="font-medium capitalize">{log.acao}</span>
+                          </div>
+                          <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded-sm max-h-32 overflow-y-auto">
+                            <pre>{JSON.stringify(log.dados, null, 2)}</pre>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="col-span-4 flex flex-col">
-                <label className="text-[11px] text-gray-500 mb-0.5">Moeda</label>
-                <Select value={moeda} onValueChange={setMoeda}>
-                  <SelectTrigger className="select-bener-trigger">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BRL">Real</SelectItem>
-                    <SelectItem value="USD">Dolar</SelectItem>
-                    <SelectItem value="EUR">Euro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="col-span-4 flex flex-col">
-                <label className="text-[11px] text-gray-500 mb-0.5">Valor</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={valor}
-                  onChange={(e) => setValor(parseFloat(e.target.value) || 0)}
-                  className="input-bener"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-12 gap-6">
-              <div className="col-span-4 flex flex-col">
-                <label className="text-[11px] text-gray-500 mb-0.5">Fator Nac.</label>
-                <Input
-                  type="number"
-                  step="0.000001"
-                  value={fatorNac}
-                  onChange={(e) => setFatorNac(parseFloat(e.target.value) || 0)}
-                  className="input-bener"
-                />
-              </div>
-              <div className="col-span-8 flex flex-col">
-                <label className="text-[11px] text-gray-500 mb-0.5">Vincular Versões</label>
-                <Popover open={openVersoes} onOpenChange={setOpenVersoes}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between h-9 text-xs border-gray-300 font-normal"
-                    >
-                      {selectedVersoes.length > 0
-                        ? `${selectedVersoes.length} versão(ões) vinculada(s)`
-                        : 'Selecione as versões...'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[400px] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Buscar versão..." />
-                      <CommandList>
-                        <CommandEmpty>Nenhuma versão encontrada.</CommandEmpty>
-                        <CommandGroup>
-                          {versoes.map((v) => (
-                            <CommandItem
-                              key={v.id}
-                              value={v.nome}
-                              onSelect={() => {
-                                if (selectedVersoes.includes(v.id)) {
-                                  setSelectedVersoes(selectedVersoes.filter((id) => id !== v.id))
-                                } else {
-                                  setSelectedVersoes([...selectedVersoes, v.id])
-                                }
-                              }}
-                            >
-                              <div className="flex items-center gap-2 flex-1">
-                                <Checkbox checked={selectedVersoes.includes(v.id)} />
-                                <span className="text-xs truncate">{v.nome}</span>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </div>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
     </div>

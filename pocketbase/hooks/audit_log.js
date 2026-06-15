@@ -1,80 +1,56 @@
 onRecordAfterCreateSuccess((e) => {
-  const collectionsToAudit = [
-    'users',
-    'clientes',
-    'representantes',
-    'prepostos',
-    'regioes',
-    'gerentes',
-  ]
-  if (!collectionsToAudit.includes(e.record.collection().name)) return e.next()
-  if (!e.auth) return e.next()
+  const adminOrUser = e.auth?.id || null
+  if (!adminOrUser || e.collection.name === 'auditoria') return e.next()
 
   try {
-    const audit = new Record($app.findCollectionByNameOrId('auditoria'))
-    audit.set('user', e.auth.id)
-    audit.set('acao', 'Create')
-    audit.set('tabela', e.record.collection().name)
-    audit.set('registro_id', e.record.id)
-    audit.set('dados', JSON.parse(JSON.stringify(e.record)))
-    $app.saveNoValidate(audit)
+    const auditoria = new Record($app.findCollectionByNameOrId('auditoria'))
+    auditoria.set('user', adminOrUser)
+    auditoria.set('acao', 'create')
+    auditoria.set('tabela', e.collection.name)
+    auditoria.set('registro_id', e.record.id)
+    auditoria.set('dados', e.record.publicExport())
+    $app.saveNoValidate(auditoria)
   } catch (err) {
-    $app.logger().error('Audit Log Create Failed', 'error', err.message)
+    console.log('Erro ao salvar auditoria', err.message)
   }
-
   return e.next()
 })
 
 onRecordAfterUpdateSuccess((e) => {
-  const collectionsToAudit = [
-    'users',
-    'clientes',
-    'representantes',
-    'prepostos',
-    'regioes',
-    'gerentes',
-  ]
-  if (!collectionsToAudit.includes(e.record.collection().name)) return e.next()
-  if (!e.auth) return e.next()
+  const adminOrUser = e.auth?.id || null
+  if (!adminOrUser || e.collection.name === 'auditoria') return e.next()
 
   try {
-    const audit = new Record($app.findCollectionByNameOrId('auditoria'))
-    audit.set('user', e.auth.id)
-    audit.set('acao', 'Update')
-    audit.set('tabela', e.record.collection().name)
-    audit.set('registro_id', e.record.id)
-    audit.set('dados', JSON.parse(JSON.stringify(e.record)))
-    $app.saveNoValidate(audit)
+    const auditoria = new Record($app.findCollectionByNameOrId('auditoria'))
+    auditoria.set('user', adminOrUser)
+    auditoria.set('acao', 'update')
+    auditoria.set('tabela', e.collection.name)
+    auditoria.set('registro_id', e.record.id)
+    auditoria.set('dados', {
+      old: e.record.original().publicExport(),
+      new: e.record.publicExport(),
+    })
+    $app.saveNoValidate(auditoria)
   } catch (err) {
-    $app.logger().error('Audit Log Update Failed', 'error', err.message)
+    console.log('Erro ao salvar auditoria', err.message)
   }
-
   return e.next()
 })
 
 onRecordAfterDeleteSuccess((e) => {
-  const collectionsToAudit = [
-    'users',
-    'clientes',
-    'representantes',
-    'prepostos',
-    'regioes',
-    'gerentes',
-  ]
-  if (!collectionsToAudit.includes(e.record.collection().name)) return e.next()
-  if (!e.auth) return e.next()
+  const adminOrUser = e.auth?.id || null
+  if (!adminOrUser || e.collection.name === 'auditoria') return e.next()
 
   try {
-    const audit = new Record($app.findCollectionByNameOrId('auditoria'))
-    audit.set('user', e.auth.id)
-    audit.set('acao', 'Delete')
-    audit.set('tabela', e.record.collection().name)
-    audit.set('registro_id', e.record.id)
-    audit.set('dados', { deleted: true })
-    $app.saveNoValidate(audit)
+    const auditoria = new Record($app.findCollectionByNameOrId('auditoria'))
+    auditoria.set('user', adminOrUser)
+    auditoria.set('acao', 'delete')
+    auditoria.set('tabela', e.collection.name)
+    auditoria.set('registro_id', e.record.id)
+    auditoria.set('dados', e.record.publicExport())
+    $app.saveNoValidate(auditoria)
   } catch (err) {
-    $app.logger().error('Audit Log Delete Failed', 'error', err.message)
+    console.log('Erro ao salvar auditoria', err.message)
   }
-
   return e.next()
 })
