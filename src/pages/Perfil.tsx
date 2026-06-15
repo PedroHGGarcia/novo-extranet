@@ -3,8 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function Perfil() {
+  const { user } = useAuth()
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-6 text-gray-800">
@@ -13,17 +17,26 @@ export default function Perfil() {
       </div>
 
       <Card className="border-t-4 border-t-brand-success shadow-sm rounded-t-sm max-w-2xl">
-        <CardHeader className="border-b pb-3">
+        <CardHeader className="border-b pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-normal text-gray-700">Meus Dados</CardTitle>
+          <Badge variant={user?.role === 'admin' ? 'default' : 'secondary'} className="uppercase">
+            {user?.role === 'admin' ? 'Administrador' : 'Usuário Padrão'}
+          </Badge>
         </CardHeader>
         <CardContent className="pt-6 space-y-4">
           <div className="grid gap-2">
             <Label htmlFor="nome">Nome Completo</Label>
-            <Input id="nome" defaultValue="Administrador BENER" />
+            <Input id="nome" defaultValue={user?.name || ''} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" defaultValue="admin@bener.com.br" />
+            <Input
+              id="email"
+              type="email"
+              defaultValue={user?.email || ''}
+              readOnly
+              className="bg-gray-50"
+            />
           </div>
         </CardContent>
         <CardFooter className="justify-end border-t pt-4">

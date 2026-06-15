@@ -12,6 +12,7 @@ import {
   Globe,
   User,
   Briefcase,
+  Users,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -27,6 +28,8 @@ import {
 } from '@/components/ui/sidebar'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/use-auth'
+import logoIn from '@/assets/systemlogoin-large-52274.png'
 
 const menuItems = [
   { title: 'Painel Principal', url: '/', icon: Monitor, sub: [] },
@@ -68,24 +71,25 @@ const menuItems = [
   },
   { title: 'Perfil', url: '/perfil', icon: UserCircle, sub: [] },
   { title: 'Área de Atuação de Representantes', url: '/area-atuacao', icon: Map, sub: [] },
+  { title: 'Usuários', url: '/usuarios', icon: Users, sub: [], adminOnly: true },
 ]
 
 export function AppSidebar() {
   const location = useLocation()
+  const { user } = useAuth()
 
   return (
     <Sidebar className="border-r-0 bg-brand-sidebar text-white">
       <SidebarHeader className="flex h-14 items-center justify-center border-b border-white/5 bg-brand-green p-0 rounded-none">
-        <Link to="/" className="flex flex-col items-center justify-center leading-none">
-          <span className="text-2xl font-bold tracking-tighter text-white">BENER</span>
-          <span className="mt-[2px] text-[8px] uppercase tracking-[0.2em] text-white/80">
-            Máquinas que transformam
-          </span>
+        <Link to="/" className="flex items-center justify-center p-2">
+          <img src={logoIn} alt="Bener Logo" className="h-10 object-contain" />
         </Link>
       </SidebarHeader>
       <SidebarContent className="bg-brand-sidebar py-2">
         <SidebarMenu>
           {menuItems.map((item) => {
+            if (item.adminOnly && user?.role !== 'admin') return null
+
             const isActive =
               location.pathname === item.url ||
               item.sub.some((sub) => location.pathname === sub.url)

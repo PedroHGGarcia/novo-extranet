@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Link, Navigate } from 'react-router-dom'
+import logoIn from '@/assets/systemlogoin-large-52274.png'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -24,10 +25,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-brand-green">
       <div className="bg-white p-8 rounded-md w-full max-w-sm shadow-lg">
         <div className="text-center mb-8 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold tracking-tighter text-brand-green">BENER</span>
-          <span className="mt-[2px] text-[10px] uppercase tracking-[0.2em] text-brand-green/80">
-            Máquinas que transformam
-          </span>
+          <img src={logoIn} alt="Bener Logo" className="h-16 mb-2 object-contain" />
         </div>
         <form onSubmit={handleLogin} className="space-y-4">
           <Input
