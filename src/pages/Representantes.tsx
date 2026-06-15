@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Briefcase } from 'lucide-react'
+import { Briefcase, Loader2 } from 'lucide-react'
 import { PageLayout } from '@/components/PageLayout'
 import { PaginationBar } from '@/components/PaginationBar'
 import { SortableHead } from '@/components/SortableHead'
@@ -13,12 +13,21 @@ import {
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetDescription,
+} from '@/components/ui/sheet'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -36,6 +45,7 @@ export default function Representantes() {
   const [selected, setSelected] = useState<string[]>([])
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     fantasia: '',
     sigla: '',
@@ -43,6 +53,7 @@ export default function Representantes() {
     cidade: '',
     uf: '',
     status: 'Ativo',
+    dt_cad: new Date().toISOString().split('T')[0],
     coordenadas: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -87,11 +98,12 @@ export default function Representantes() {
       }
     }
     try {
+      setIsSubmitting(true)
       setErrors({})
       await createRepresentante({
         ...formData,
         coordenadas: coords,
-        dt_cad: new Date().toLocaleDateString('pt-BR'),
+        dt_cad: formData.dt_cad.split('-').reverse().join('/'),
       })
       setIsCreateOpen(false)
       setFormData({
@@ -101,11 +113,14 @@ export default function Representantes() {
         cidade: '',
         uf: '',
         status: 'Ativo',
+        dt_cad: new Date().toISOString().split('T')[0],
         coordenadas: '',
       })
       toast({ title: 'Registro criado' })
     } catch (err) {
       setErrors(extractFieldErrors(err))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -169,60 +184,112 @@ export default function Representantes() {
         </Table>
       </div>
 
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Novo Representante</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div>
+      <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <SheetContent className="sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Novo Representante</SheetTitle>
+            <SheetDescription>Insira os dados do novo representante.</SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 py-6">
+            <div className="space-y-2">
+              <Label htmlFor="fantasia">Fantasia</Label>
               <Input
-                placeholder="Fantasia"
+                id="fantasia"
+                placeholder="Nome fantasia"
                 value={formData.fantasia}
                 onChange={(e) => setFormData({ ...formData, fantasia: e.target.value })}
               />
               {errors.fantasia && <span className="text-red-500 text-xs">{errors.fantasia}</span>}
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                placeholder="Sigla"
-                value={formData.sigla}
-                onChange={(e) => setFormData({ ...formData, sigla: e.target.value })}
-              />
-              <Input
-                placeholder="Telefone"
-                value={formData.telefone}
-                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="sigla">Sigla</Label>
+                <Input
+                  id="sigla"
+                  placeholder="Ex: REP"
+                  value={formData.sigla}
+                  onChange={(e) => setFormData({ ...formData, sigla: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input
+                  id="telefone"
+                  placeholder="(00) 0000-0000"
+                  value={formData.telefone}
+                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cidade">Cidade</Label>
+                <Input
+                  id="cidade"
+                  placeholder="Ex: São Paulo"
+                  value={formData.cidade}
+                  onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="uf">UF</Label>
+                <Input
+                  id="uf"
+                  placeholder="Ex: SP"
+                  value={formData.uf}
+                  onChange={(e) => setFormData({ ...formData, uf: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dt_cad">Data de Cadastro</Label>
+                <Input
+                  id="dt_cad"
+                  type="date"
+                  value={formData.dt_cad}
+                  onChange={(e) => setFormData({ ...formData, dt_cad: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(val) => setFormData({ ...formData, status: val })}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Inativo">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="coordenadas">Coordenadas JSON</Label>
+              <Textarea
+                id="coordenadas"
+                placeholder='Ex: [{"lat": -23, "lng": -46}]'
+                value={formData.coordenadas}
+                onChange={(e) => setFormData({ ...formData, coordenadas: e.target.value })}
+                className="resize-none"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                placeholder="Cidade"
-                value={formData.cidade}
-                onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
-              />
-              <Input
-                placeholder="UF"
-                value={formData.uf}
-                onChange={(e) => setFormData({ ...formData, uf: e.target.value })}
-              />
-            </div>
-            <Input
-              placeholder="Status"
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-            />
-            <Textarea
-              placeholder='Coordenadas JSON (ex: [{"lat": -23, "lng": -46}])'
-              value={formData.coordenadas}
-              onChange={(e) => setFormData({ ...formData, coordenadas: e.target.value })}
-            />
           </div>
-          <DialogFooter>
-            <Button onClick={handleCreate}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <SheetFooter className="mt-4">
+            <Button onClick={handleCreate} disabled={isSubmitting} className="w-full sm:w-auto">
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
       <DeleteConfirmModal
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}

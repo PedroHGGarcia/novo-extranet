@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { User } from 'lucide-react'
+import { User, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -11,12 +11,21 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetDescription,
+} from '@/components/ui/sheet'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { RegistrationActionBar } from '@/components/RegistrationActionBar'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
@@ -32,6 +41,7 @@ export default function Gerentes() {
   const [selected, setSelected] = useState<string[]>([])
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({ nome: '', email: '', telefone: '', status: 'Ativo' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { toast } = useToast()
@@ -62,6 +72,7 @@ export default function Gerentes() {
 
   const handleCreate = async () => {
     try {
+      setIsSubmitting(true)
       setErrors({})
       await createGerente(formData)
       setIsCreateOpen(false)
@@ -69,6 +80,8 @@ export default function Gerentes() {
       toast({ title: 'Registro criado' })
     } catch (err) {
       setErrors(extractFieldErrors(err))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -142,44 +155,70 @@ export default function Gerentes() {
         </Table>
       </div>
 
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Novo Gerente</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
+      <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <SheetContent className="sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Novo Gerente</SheetTitle>
+            <SheetDescription>
+              Adicione um novo gerente preenchendo as informações abaixo.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 py-6">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome</Label>
               <Input
-                placeholder="Nome"
+                id="nome"
+                placeholder="Nome completo"
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
               />
               {errors.nome && <span className="text-red-500 text-xs">{errors.nome}</span>}
             </div>
-            <div>
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail</Label>
               <Input
-                placeholder="Email"
+                id="email"
+                type="email"
+                placeholder="email@exemplo.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
               {errors.email && <span className="text-red-500 text-xs">{errors.email}</span>}
             </div>
-            <Input
-              placeholder="Telefone"
-              value={formData.telefone}
-              onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-            />
-            <Input
-              placeholder="Status"
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="telefone">Telefone</Label>
+              <Input
+                id="telefone"
+                placeholder="(00) 00000-0000"
+                value={formData.telefone}
+                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+              />
+              {errors.telefone && <span className="text-red-500 text-xs">{errors.telefone}</span>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(val) => setFormData({ ...formData, status: val })}
+              >
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Ativo">Ativo</SelectItem>
+                  <SelectItem value="Inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <DialogFooter>
-            <Button onClick={handleCreate}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <SheetFooter className="mt-4">
+            <Button onClick={handleCreate} disabled={isSubmitting} className="w-full sm:w-auto">
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
       <DeleteConfirmModal
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}

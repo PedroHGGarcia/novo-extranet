@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Briefcase } from 'lucide-react'
+import { Briefcase, Loader2 } from 'lucide-react'
 import { PageLayout } from '@/components/PageLayout'
 import { PaginationBar } from '@/components/PaginationBar'
 import { SortableHead } from '@/components/SortableHead'
@@ -13,12 +13,13 @@ import {
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetDescription,
+} from '@/components/ui/sheet'
 import {
   Select,
   SelectContent,
@@ -26,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { RegistrationActionBar } from '@/components/RegistrationActionBar'
@@ -48,7 +50,14 @@ export default function Prepostos() {
   const [selected, setSelected] = useState<string[]>([])
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  const [formData, setFormData] = useState({ representante: '', nome: '', email: '', telefone: '' })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState({
+    representante: '',
+    nome: '',
+    email: '',
+    telefone: '',
+    dt_cad: new Date().toISOString().split('T')[0],
+  })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { toast } = useToast()
 
@@ -86,13 +95,25 @@ export default function Prepostos() {
 
   const handleCreate = async () => {
     try {
+      setIsSubmitting(true)
       setErrors({})
-      await createPreposto({ ...formData, dt_cad: new Date().toLocaleDateString('pt-BR') })
+      await createPreposto({
+        ...formData,
+        dt_cad: formData.dt_cad.split('-').reverse().join('/'),
+      })
       setIsCreateOpen(false)
-      setFormData({ representante: '', nome: '', email: '', telefone: '' })
+      setFormData({
+        representante: '',
+        nome: '',
+        email: '',
+        telefone: '',
+        dt_cad: new Date().toISOString().split('T')[0],
+      })
       toast({ title: 'Registro criado' })
     } catch (err) {
       setErrors(extractFieldErrors(err))
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -146,19 +167,23 @@ export default function Prepostos() {
         </Table>
       </div>
 
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Novo Preposto</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div>
+      <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <SheetContent className="sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Novo Preposto</SheetTitle>
+            <SheetDescription>
+              Adicione um preposto e associe-o a um representante.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 py-6">
+            <div className="space-y-2">
+              <Label htmlFor="representante">Representante</Label>
               <Select
                 value={formData.representante}
                 onValueChange={(v) => setFormData({ ...formData, representante: v })}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um Representante" />
+                <SelectTrigger id="representante">
+                  <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
                   {reps.map((r) => (
@@ -172,27 +197,59 @@ export default function Prepostos() {
                 <span className="text-red-500 text-xs">{errors.representante}</span>
               )}
             </div>
-            <Input
-              placeholder="Nome"
-              value={formData.nome}
-              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-            />
-            <Input
-              placeholder="Email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-            <Input
-              placeholder="Telefone"
-              value={formData.telefone}
-              onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-            />
+
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome</Label>
+              <Input
+                id="nome"
+                placeholder="Nome completo"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+              />
+              {errors.nome && <span className="text-red-500 text-xs">{errors.nome}</span>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="email@exemplo.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+              {errors.email && <span className="text-red-500 text-xs">{errors.email}</span>}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input
+                  id="telefone"
+                  placeholder="(00) 00000-0000"
+                  value={formData.telefone}
+                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dt_cad">Data de Cadastro</Label>
+                <Input
+                  id="dt_cad"
+                  type="date"
+                  value={formData.dt_cad}
+                  onChange={(e) => setFormData({ ...formData, dt_cad: e.target.value })}
+                />
+              </div>
+            </div>
           </div>
-          <DialogFooter>
-            <Button onClick={handleCreate}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <SheetFooter className="mt-4">
+            <Button onClick={handleCreate} disabled={isSubmitting} className="w-full sm:w-auto">
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
       <DeleteConfirmModal
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
