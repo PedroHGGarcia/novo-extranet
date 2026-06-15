@@ -1,13 +1,12 @@
-const collectionsToAudit = [
-  'users',
-  'clientes',
-  'representantes',
-  'prepostos',
-  'regioes',
-  'gerentes',
-]
-
 onRecordAfterCreateSuccess((e) => {
+  const collectionsToAudit = [
+    'users',
+    'clientes',
+    'representantes',
+    'prepostos',
+    'regioes',
+    'gerentes',
+  ]
   if (!collectionsToAudit.includes(e.collection.name)) return e.next()
   if (!e.auth) return e.next()
 
@@ -27,6 +26,14 @@ onRecordAfterCreateSuccess((e) => {
 })
 
 onRecordAfterUpdateSuccess((e) => {
+  const collectionsToAudit = [
+    'users',
+    'clientes',
+    'representantes',
+    'prepostos',
+    'regioes',
+    'gerentes',
+  ]
   if (!collectionsToAudit.includes(e.collection.name)) return e.next()
   if (!e.auth) return e.next()
 
@@ -46,6 +53,14 @@ onRecordAfterUpdateSuccess((e) => {
 })
 
 onRecordAfterDeleteSuccess((e) => {
+  const collectionsToAudit = [
+    'users',
+    'clientes',
+    'representantes',
+    'prepostos',
+    'regioes',
+    'gerentes',
+  ]
   if (!collectionsToAudit.includes(e.collection.name)) return e.next()
   if (!e.auth) return e.next()
 
