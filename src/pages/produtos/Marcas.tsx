@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Package, Pencil, Copy, Download, Trash2, Filter } from 'lucide-react'
+import { Tag, Pencil, Copy, Download, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -20,154 +20,113 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
-import {
-  getProdutos,
-  createProduto,
-  updateProduto,
-  deleteProduto,
-  getCategorias,
-  Produto,
-  CategoriaProduto,
-} from '@/services/produtos'
+import { getMarcas, createMarca, updateMarca, deleteMarca, Marca } from '@/services/produtos'
 
-export default function Produtos() {
-  const [items, setItems] = useState<Produto[]>([])
-  const [categorias, setCategorias] = useState<CategoriaProduto[]>([])
-  const [filtered, setFiltered] = useState<Produto[]>([])
+export default function Marcas() {
+  const [items, setItems] = useState<Marca[]>([])
+  const [filtered, setFiltered] = useState<Marca[]>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [dateFilterStart, setDateFilterStart] = useState('')
-  const [dateFilterEnd, setDateFilterEnd] = useState('')
-
   const [activeTab, setActiveTab] = useState('registros')
-  const [editingItem, setEditingItem] = useState<Produto | null>(null)
+  const [editingItem, setEditingItem] = useState<Marca | null>(null)
 
   const [nome, setNome] = useState('')
-  const [categoriaId, setCategoriaId] = useState('')
   const [status, setStatus] = useState<'Ativo' | 'Inativo'>('Ativo')
 
   const loadData = async () => {
     try {
-      const [prods, cats] = await Promise.all([getProdutos(), getCategorias()])
-      setItems(prods)
-      setCategorias(cats)
+      const data = await getMarcas()
+      setItems(data)
     } catch (error) {
-      toast({ title: 'Erro ao carregar dados', variant: 'destructive' })
+      toast({ title: 'Erro ao carregar marcas', variant: 'destructive' })
     }
   }
 
   useEffect(() => {
     loadData()
   }, [])
-  useRealtime('produtos', () => {
-    loadData()
-  })
-  useRealtime('categorias_produtos', () => {
+  useRealtime('marcas', () => {
     loadData()
   })
 
   useEffect(() => {
-    let result = items
     if (searchTerm) {
-      result = result.filter((i) => i.nome.toLowerCase().includes(searchTerm.toLowerCase()))
+      setFiltered(items.filter((i) => i.nome.toLowerCase().includes(searchTerm.toLowerCase())))
+    } else {
+      setFiltered(items)
     }
-    if (categoryFilter && categoryFilter !== 'all') {
-      result = result.filter((i) => i.categoria === categoryFilter)
-    }
-    if (dateFilterStart) {
-      result = result.filter((i) => new Date(i.created) >= new Date(dateFilterStart))
-    }
-    if (dateFilterEnd) {
-      const end = new Date(dateFilterEnd)
-      end.setHours(23, 59, 59, 999)
-      result = result.filter((i) => new Date(i.created) <= end)
-    }
-    setFiltered(result)
-  }, [items, searchTerm, categoryFilter, dateFilterStart, dateFilterEnd])
+  }, [items, searchTerm])
 
-  const handleEdit = (item: Produto) => {
+  const handleEdit = (item: Marca) => {
     setEditingItem(item)
     setNome(item.nome)
-    setCategoriaId(item.categoria)
     setStatus(item.status)
     setActiveTab('cadastro')
   }
 
-  const handleDuplicate = async (item: Produto) => {
+  const handleDuplicate = async (item: Marca) => {
     try {
-      await createProduto({
-        nome: item.nome + ' (Cópia)',
-        categoria: item.categoria,
-        status: item.status,
-      })
-      toast({ title: 'Produto duplicado com sucesso' })
+      await createMarca({ nome: item.nome + ' (Cópia)', status: item.status })
+      toast({ title: 'Marca duplicada com sucesso' })
     } catch (error) {
-      toast({ title: 'Erro ao duplicar produto', variant: 'destructive' })
+      toast({ title: 'Erro ao duplicar marca', variant: 'destructive' })
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente excluir este produto?')) return
+    if (!confirm('Deseja realmente excluir esta marca?')) return
     try {
-      await deleteProduto(id)
-      toast({ title: 'Produto excluído com sucesso' })
+      await deleteMarca(id)
+      toast({ title: 'Marca excluída com sucesso' })
     } catch (error) {
-      toast({ title: 'Erro ao excluir produto', variant: 'destructive' })
+      toast({ title: 'Erro ao excluir marca', variant: 'destructive' })
     }
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!categoriaId) {
-      toast({ title: 'Selecione uma categoria', variant: 'destructive' })
-      return
-    }
     try {
       if (editingItem) {
-        await updateProduto(editingItem.id, { nome, categoria: categoriaId, status })
-        toast({ title: 'Produto atualizado com sucesso' })
+        await updateMarca(editingItem.id, { nome, status })
+        toast({ title: 'Marca atualizada com sucesso' })
       } else {
-        await createProduto({ nome, categoria: categoriaId, status })
-        toast({ title: 'Produto criado com sucesso' })
+        await createMarca({ nome, status })
+        toast({ title: 'Marca criada com sucesso' })
       }
       resetForm()
       setActiveTab('registros')
     } catch (error) {
-      toast({ title: 'Erro ao salvar produto', variant: 'destructive' })
+      toast({ title: 'Erro ao salvar marca', variant: 'destructive' })
     }
   }
 
   const resetForm = () => {
     setEditingItem(null)
     setNome('')
-    setCategoriaId('')
     setStatus('Ativo')
   }
 
   const exportCsv = () => {
-    const headers = ['Nome', 'Categoria', 'Status', 'Data de Cadastro']
+    const headers = ['Nome', 'Status', 'Data de Cadastro']
     const csvContent = [
       headers.join(','),
       ...filtered.map(
-        (i) =>
-          `"${i.nome}","${i.expand?.categoria?.nome || ''}","${i.status}","${new Date(i.created).toLocaleDateString('pt-BR')}"`,
+        (i) => `"${i.nome}","${i.status}","${new Date(i.created).toLocaleDateString('pt-BR')}"`,
       ),
     ].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
-    link.download = 'produtos.csv'
+    link.download = 'marcas.csv'
     link.click()
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-6 text-gray-800">
-        <Package className="h-6 w-6" />
-        <h1 className="text-2xl font-normal">Produtos</h1>
+        <Tag className="h-6 w-6" />
+        <h1 className="text-2xl font-normal">Marcas</h1>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -221,71 +180,13 @@ export default function Produtos() {
           value="registros"
           className="mt-4 border bg-white rounded-md shadow-sm overflow-hidden"
         >
-          <div className="p-4 border-b flex flex-wrap items-center gap-4">
+          <div className="p-4 border-b">
             <Input
               placeholder="Buscar por nome..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm rounded-sm"
             />
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="rounded-sm">
-                  <Filter className="w-4 h-4 mr-2" /> Filtros Avançados
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-4 space-y-4 rounded-sm">
-                <div className="space-y-2">
-                  <Label>Categoria</Label>
-                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="rounded-sm">
-                      <SelectValue placeholder="Todas as categorias" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas as categorias</SelectItem>
-                      {categorias.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-2">
-                    <Label>Data Inicial</Label>
-                    <Input
-                      type="date"
-                      value={dateFilterStart}
-                      onChange={(e) => setDateFilterStart(e.target.value)}
-                      className="rounded-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Data Final</Label>
-                    <Input
-                      type="date"
-                      value={dateFilterEnd}
-                      onChange={(e) => setDateFilterEnd(e.target.value)}
-                      className="rounded-sm"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end pt-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setCategoryFilter('all')
-                      setDateFilterStart('')
-                      setDateFilterEnd('')
-                    }}
-                  >
-                    Limpar
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
           </div>
           <div className="overflow-x-auto">
             <Table>
@@ -295,9 +196,8 @@ export default function Produtos() {
                     <input type="checkbox" className="rounded border-gray-300" />
                   </TableHead>
                   <TableHead className="font-medium text-brand-cyan">Nome</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Categoria</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Dt Cad.</TableHead>
                   <TableHead className="font-medium text-brand-cyan">Status</TableHead>
+                  <TableHead className="font-medium text-brand-cyan">Dt Cad.</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -329,12 +229,6 @@ export default function Produtos() {
                         </button>
                       </div>
                     </TableCell>
-                    <TableCell className="text-gray-600">
-                      {item.expand?.categoria?.nome || '-'}
-                    </TableCell>
-                    <TableCell className="text-gray-600">
-                      {new Date(item.created).toLocaleDateString('pt-BR')}
-                    </TableCell>
                     <TableCell>
                       <Badge
                         className={
@@ -346,11 +240,14 @@ export default function Produtos() {
                         {item.status}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-gray-600">
+                      {new Date(item.created).toLocaleDateString('pt-BR')}
+                    </TableCell>
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                       Nenhum registro encontrado.
                     </TableCell>
                   </TableRow>
@@ -365,7 +262,7 @@ export default function Produtos() {
             <div className="space-y-4">
               <div className="grid gap-2">
                 <Label htmlFor="nome">
-                  Nome do Produto <span className="text-red-500">*</span>
+                  Nome da Marca <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="nome"
@@ -374,23 +271,6 @@ export default function Produtos() {
                   required
                   className="rounded-sm"
                 />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="categoria">
-                  Categoria <span className="text-red-500">*</span>
-                </Label>
-                <Select value={categoriaId} onValueChange={setCategoriaId} required>
-                  <SelectTrigger className="rounded-sm">
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categorias.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="status">
@@ -409,7 +289,7 @@ export default function Produtos() {
             </div>
             <div className="flex gap-2 pt-4">
               <Button type="submit" className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm">
-                Salvar Produto
+                Salvar Marca
               </Button>
               <Button
                 type="button"

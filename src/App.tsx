@@ -11,6 +11,8 @@ import Clientes from './pages/Clientes'
 import Eventos from './pages/Eventos'
 import Propostas from './pages/Propostas'
 import Produtos from './pages/Produtos'
+import Categorias from './pages/produtos/Categorias'
+import Marcas from './pages/produtos/Marcas'
 import Relatorios from './pages/Relatorios'
 import Perfil from './pages/Perfil'
 import AreaAtuacao from './pages/AreaAtuacao'
@@ -47,6 +49,8 @@ const App = () => (
               <Route path="/eventos" element={<Eventos />} />
               <Route path="/propostas" element={<Propostas />} />
               <Route path="/produtos" element={<Produtos />} />
+              <Route path="/produtos/categorias" element={<Categorias />} />
+              <Route path="/produtos/marcas" element={<Marcas />} />
               <Route path="/relatorios" element={<Relatorios />} />
               <Route path="/perfil" element={<Perfil />} />
               <Route path="/usuarios" element={<Usuarios />} />

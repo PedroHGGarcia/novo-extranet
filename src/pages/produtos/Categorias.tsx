@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Package, Pencil, Copy, Download, Trash2, Filter } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Layers, Pencil, Copy, Download, Trash2, Image as ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -20,154 +20,135 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
 import {
-  getProdutos,
-  createProduto,
-  updateProduto,
-  deleteProduto,
   getCategorias,
-  Produto,
+  createCategoria,
+  updateCategoria,
+  deleteCategoria,
+  getCategoriaLogoUrl,
   CategoriaProduto,
 } from '@/services/produtos'
 
-export default function Produtos() {
-  const [items, setItems] = useState<Produto[]>([])
-  const [categorias, setCategorias] = useState<CategoriaProduto[]>([])
-  const [filtered, setFiltered] = useState<Produto[]>([])
+export default function Categorias() {
+  const [items, setItems] = useState<CategoriaProduto[]>([])
+  const [filtered, setFiltered] = useState<CategoriaProduto[]>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [dateFilterStart, setDateFilterStart] = useState('')
-  const [dateFilterEnd, setDateFilterEnd] = useState('')
-
   const [activeTab, setActiveTab] = useState('registros')
-  const [editingItem, setEditingItem] = useState<Produto | null>(null)
+  const [editingItem, setEditingItem] = useState<CategoriaProduto | null>(null)
 
   const [nome, setNome] = useState('')
-  const [categoriaId, setCategoriaId] = useState('')
   const [status, setStatus] = useState<'Ativo' | 'Inativo'>('Ativo')
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadData = async () => {
     try {
-      const [prods, cats] = await Promise.all([getProdutos(), getCategorias()])
-      setItems(prods)
-      setCategorias(cats)
+      const data = await getCategorias()
+      setItems(data)
     } catch (error) {
-      toast({ title: 'Erro ao carregar dados', variant: 'destructive' })
+      toast({ title: 'Erro ao carregar categorias', variant: 'destructive' })
     }
   }
 
   useEffect(() => {
     loadData()
   }, [])
-  useRealtime('produtos', () => {
-    loadData()
-  })
   useRealtime('categorias_produtos', () => {
     loadData()
   })
 
   useEffect(() => {
-    let result = items
     if (searchTerm) {
-      result = result.filter((i) => i.nome.toLowerCase().includes(searchTerm.toLowerCase()))
+      setFiltered(items.filter((i) => i.nome.toLowerCase().includes(searchTerm.toLowerCase())))
+    } else {
+      setFiltered(items)
     }
-    if (categoryFilter && categoryFilter !== 'all') {
-      result = result.filter((i) => i.categoria === categoryFilter)
-    }
-    if (dateFilterStart) {
-      result = result.filter((i) => new Date(i.created) >= new Date(dateFilterStart))
-    }
-    if (dateFilterEnd) {
-      const end = new Date(dateFilterEnd)
-      end.setHours(23, 59, 59, 999)
-      result = result.filter((i) => new Date(i.created) <= end)
-    }
-    setFiltered(result)
-  }, [items, searchTerm, categoryFilter, dateFilterStart, dateFilterEnd])
+  }, [items, searchTerm])
 
-  const handleEdit = (item: Produto) => {
+  const handleEdit = (item: CategoriaProduto) => {
     setEditingItem(item)
     setNome(item.nome)
-    setCategoriaId(item.categoria)
     setStatus(item.status)
+    setLogoFile(null)
     setActiveTab('cadastro')
   }
 
-  const handleDuplicate = async (item: Produto) => {
+  const handleDuplicate = async (item: CategoriaProduto) => {
     try {
-      await createProduto({
-        nome: item.nome + ' (Cópia)',
-        categoria: item.categoria,
-        status: item.status,
-      })
-      toast({ title: 'Produto duplicado com sucesso' })
+      const formData = new FormData()
+      formData.append('nome', item.nome + ' (Cópia)')
+      formData.append('status', item.status)
+      await createCategoria(formData)
+      toast({ title: 'Categoria duplicada com sucesso' })
     } catch (error) {
-      toast({ title: 'Erro ao duplicar produto', variant: 'destructive' })
+      toast({ title: 'Erro ao duplicar categoria', variant: 'destructive' })
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente excluir este produto?')) return
+    if (!confirm('Deseja realmente excluir esta categoria?')) return
     try {
-      await deleteProduto(id)
-      toast({ title: 'Produto excluído com sucesso' })
+      await deleteCategoria(id)
+      toast({ title: 'Categoria excluída com sucesso' })
     } catch (error) {
-      toast({ title: 'Erro ao excluir produto', variant: 'destructive' })
+      toast({ title: 'Erro ao excluir categoria', variant: 'destructive' })
     }
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!categoriaId) {
-      toast({ title: 'Selecione uma categoria', variant: 'destructive' })
-      return
-    }
     try {
+      const formData = new FormData()
+      formData.append('nome', nome)
+      formData.append('status', status)
+      if (logoFile) {
+        formData.append('logo', logoFile)
+      }
+
       if (editingItem) {
-        await updateProduto(editingItem.id, { nome, categoria: categoriaId, status })
-        toast({ title: 'Produto atualizado com sucesso' })
+        await updateCategoria(editingItem.id, formData)
+        toast({ title: 'Categoria atualizada com sucesso' })
       } else {
-        await createProduto({ nome, categoria: categoriaId, status })
-        toast({ title: 'Produto criado com sucesso' })
+        await createCategoria(formData)
+        toast({ title: 'Categoria criada com sucesso' })
       }
       resetForm()
       setActiveTab('registros')
     } catch (error) {
-      toast({ title: 'Erro ao salvar produto', variant: 'destructive' })
+      toast({ title: 'Erro ao salvar categoria', variant: 'destructive' })
     }
   }
 
   const resetForm = () => {
     setEditingItem(null)
     setNome('')
-    setCategoriaId('')
     setStatus('Ativo')
+    setLogoFile(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const exportCsv = () => {
-    const headers = ['Nome', 'Categoria', 'Status', 'Data de Cadastro']
+    const headers = ['Nome', 'Status', 'Data de Cadastro']
     const csvContent = [
       headers.join(','),
       ...filtered.map(
-        (i) =>
-          `"${i.nome}","${i.expand?.categoria?.nome || ''}","${i.status}","${new Date(i.created).toLocaleDateString('pt-BR')}"`,
+        (i) => `"${i.nome}","${i.status}","${new Date(i.created).toLocaleDateString('pt-BR')}"`,
       ),
     ].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
-    link.download = 'produtos.csv'
+    link.download = 'categorias.csv'
     link.click()
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-6 text-gray-800">
-        <Package className="h-6 w-6" />
-        <h1 className="text-2xl font-normal">Produtos</h1>
+        <Layers className="h-6 w-6" />
+        <h1 className="text-2xl font-normal">Categorias</h1>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -221,71 +202,13 @@ export default function Produtos() {
           value="registros"
           className="mt-4 border bg-white rounded-md shadow-sm overflow-hidden"
         >
-          <div className="p-4 border-b flex flex-wrap items-center gap-4">
+          <div className="p-4 border-b">
             <Input
               placeholder="Buscar por nome..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm rounded-sm"
             />
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="rounded-sm">
-                  <Filter className="w-4 h-4 mr-2" /> Filtros Avançados
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-4 space-y-4 rounded-sm">
-                <div className="space-y-2">
-                  <Label>Categoria</Label>
-                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="rounded-sm">
-                      <SelectValue placeholder="Todas as categorias" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas as categorias</SelectItem>
-                      {categorias.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-2">
-                    <Label>Data Inicial</Label>
-                    <Input
-                      type="date"
-                      value={dateFilterStart}
-                      onChange={(e) => setDateFilterStart(e.target.value)}
-                      className="rounded-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Data Final</Label>
-                    <Input
-                      type="date"
-                      value={dateFilterEnd}
-                      onChange={(e) => setDateFilterEnd(e.target.value)}
-                      className="rounded-sm"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end pt-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setCategoryFilter('all')
-                      setDateFilterStart('')
-                      setDateFilterEnd('')
-                    }}
-                  >
-                    Limpar
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
           </div>
           <div className="overflow-x-auto">
             <Table>
@@ -295,7 +218,7 @@ export default function Produtos() {
                     <input type="checkbox" className="rounded border-gray-300" />
                   </TableHead>
                   <TableHead className="font-medium text-brand-cyan">Nome</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Categoria</TableHead>
+                  <TableHead className="font-medium text-brand-cyan">Logo</TableHead>
                   <TableHead className="font-medium text-brand-cyan">Dt Cad.</TableHead>
                   <TableHead className="font-medium text-brand-cyan">Status</TableHead>
                 </TableRow>
@@ -329,8 +252,18 @@ export default function Produtos() {
                         </button>
                       </div>
                     </TableCell>
-                    <TableCell className="text-gray-600">
-                      {item.expand?.categoria?.nome || '-'}
+                    <TableCell>
+                      {item.logo ? (
+                        <img
+                          src={getCategoriaLogoUrl(item) || ''}
+                          alt="Logo"
+                          className="h-10 object-contain"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-gray-100 flex items-center justify-center rounded text-gray-400">
+                          <ImageIcon className="w-5 h-5" />
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-gray-600">
                       {new Date(item.created).toLocaleDateString('pt-BR')}
@@ -365,7 +298,7 @@ export default function Produtos() {
             <div className="space-y-4">
               <div className="grid gap-2">
                 <Label htmlFor="nome">
-                  Nome do Produto <span className="text-red-500">*</span>
+                  Nome da Categoria <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="nome"
@@ -376,21 +309,20 @@ export default function Produtos() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="categoria">
-                  Categoria <span className="text-red-500">*</span>
-                </Label>
-                <Select value={categoriaId} onValueChange={setCategoriaId} required>
-                  <SelectTrigger className="rounded-sm">
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categorias.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="logo">Logo</Label>
+                <Input
+                  id="logo"
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                  className="rounded-sm"
+                />
+                {editingItem?.logo && !logoFile && (
+                  <div className="text-sm text-gray-500 mt-1">
+                    Logo atual já carregada. Selecione outra para substituir.
+                  </div>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="status">
@@ -409,7 +341,7 @@ export default function Produtos() {
             </div>
             <div className="flex gap-2 pt-4">
               <Button type="submit" className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm">
-                Salvar Produto
+                Salvar Categoria
               </Button>
               <Button
                 type="button"
