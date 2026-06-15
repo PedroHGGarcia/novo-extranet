@@ -14,7 +14,15 @@ import {
   type Usuario,
 } from '@/services/usuarios'
 import { extractFieldErrors } from '@/lib/pocketbase/errors'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet'
+import { useRealtime } from '@/hooks/use-realtime'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetDescription,
+} from '@/components/ui/sheet'
 import {
   Select,
   SelectContent,
@@ -48,6 +56,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { inviteUser } from '@/services/config'
 
@@ -83,6 +92,12 @@ export default function Usuarios() {
       loadData()
     }
   }, [user])
+
+  useRealtime('users', () => {
+    if (user?.role === 'admin') {
+      loadData()
+    }
+  })
 
   if (user?.role !== 'admin') {
     return <Navigate to="/" replace />
@@ -265,6 +280,9 @@ export default function Usuarios() {
         <SheetContent className="sm:max-w-md overflow-y-auto">
           <SheetHeader>
             <SheetTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</SheetTitle>
+            <SheetDescription className="sr-only">
+              Preencha os dados abaixo para {editingUser ? 'editar o' : 'criar um novo'} usuário.
+            </SheetDescription>
           </SheetHeader>
           <div className="grid gap-6 py-6">
             <div className="grid gap-2">
@@ -340,6 +358,9 @@ export default function Usuarios() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Convidar Usuário</DialogTitle>
+            <DialogDescription className="sr-only">
+              Envie um convite para um novo usuário acessar o sistema.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
