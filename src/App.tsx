@@ -13,6 +13,9 @@ import Propostas from './pages/Propostas'
 import Produtos from './pages/Produtos'
 import Categorias from './pages/produtos/Categorias'
 import Marcas from './pages/produtos/Marcas'
+import Modelos from './pages/produtos/Modelos'
+import Versoes from './pages/produtos/Versoes'
+import VersaoImagens from './pages/produtos/VersaoImagens'
 import Relatorios from './pages/Relatorios'
 import Perfil from './pages/Perfil'
 import AreaAtuacao from './pages/AreaAtuacao'
@@ -51,6 +54,9 @@ const App = () => (
               <Route path="/produtos" element={<Produtos />} />
               <Route path="/produtos/categorias" element={<Categorias />} />
               <Route path="/produtos/marcas" element={<Marcas />} />
+              <Route path="/produtos/modelos" element={<Modelos />} />
+              <Route path="/produtos/versoes" element={<Versoes />} />
+              <Route path="/produtos/versao-imagens" element={<VersaoImagens />} />
               <Route path="/relatorios" element={<Relatorios />} />
               <Route path="/perfil" element={<Perfil />} />
               <Route path="/usuarios" element={<Usuarios />} />

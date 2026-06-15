@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-15T18:25:32.586Z",
+  "generatedAt": "2026-06-15T18:39:47.284Z",
   "collections": [
     {
       "name": "users",
@@ -760,6 +760,213 @@
           "type": "file",
           "required": false,
           "system": false
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "name": "modelos",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "produto",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "produtos"
+        },
+        {
+          "name": "marca",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "marcas"
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Ativo", "Inativo"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "name": "versoes",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "modelo",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "modelos"
+        },
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "cod_erp",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "imagem_preview",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "moeda",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["BRL", "USD", "EUR"]
+        },
+        {
+          "name": "valor",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tem_fator",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "fator_nac",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "atualizado_por",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Ativo", "Inativo"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE UNIQUE INDEX idx_versoes_coderp ON versoes (cod_erp) WHERE cod_erp != ''"]
+    },
+    {
+      "name": "versao_imagens",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "titulo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "versao",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "versoes"
+        },
+        {
+          "name": "ordem",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "arquivo",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Ativo", "Inativo"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
         }
       ],
       "indexes": []
