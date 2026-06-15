@@ -33,7 +33,14 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { RegistrationActionBar } from '@/components/RegistrationActionBar'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
-import { getRepresentantes, createRepresentante, deleteRepresentante } from '@/services/cadastros'
+import {
+  getRepresentantes,
+  createRepresentante,
+  updateRepresentante,
+  deleteRepresentante,
+  getByDocumento,
+} from '@/services/cadastros'
+import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useToast } from '@/hooks/use-toast'
 import { extractFieldErrors } from '@/lib/pocketbase/errors'
@@ -46,8 +53,28 @@ export default function Representantes() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [conflictRecord, setConflictRecord] = useState<any>(null)
+  const [isConflictOpen, setIsConflictOpen] = useState(false)
+
+  const resetForm = () => {
+    setIsCreateOpen(false)
+    setFormData({
+      fantasia: '',
+      documento: '',
+      sigla: '',
+      telefone: '',
+      cidade: '',
+      uf: '',
+      status: 'Ativo',
+      dt_cad: new Date().toISOString().split('T')[0],
+      coordenadas: '',
+    })
+    setConflictRecord(null)
+  }
+
   const [formData, setFormData] = useState({
     fantasia: '',
+    documento: '',
     sigla: '',
     telefone: '',
     cidade: '',
@@ -97,28 +124,92 @@ export default function Representantes() {
         return toast({ title: 'JSON de Coordenadas inválido', variant: 'destructive' })
       }
     }
+
     try {
       setIsSubmitting(true)
       setErrors({})
+
+      if (formData.documento) {
+        const existing = await getByDocumento('representantes', formData.documento)
+        if (existing) {
+          setConflictRecord(existing)
+          setIsConflictOpen(true)
+          setIsSubmitting(false)
+          return
+        }
+      }
+
       await createRepresentante({
         ...formData,
         coordenadas: coords,
         dt_cad: formData.dt_cad.split('-').reverse().join('/'),
       })
-      setIsCreateOpen(false)
-      setFormData({
-        fantasia: '',
-        sigla: '',
-        telefone: '',
-        cidade: '',
-        uf: '',
-        status: 'Ativo',
-        dt_cad: new Date().toISOString().split('T')[0],
-        coordenadas: '',
-      })
+      resetForm()
       toast({ title: 'Registro criado' })
     } catch (err) {
       setErrors(extractFieldErrors(err))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleReplace = async () => {
+    let coords = null
+    if (formData.coordenadas) {
+      try {
+        coords = JSON.parse(formData.coordenadas)
+      } catch {
+        return
+      }
+    }
+    try {
+      setIsSubmitting(true)
+      await updateRepresentante(conflictRecord.id, {
+        ...formData,
+        coordenadas: coords,
+        dt_cad: formData.dt_cad.split('-').reverse().join('/'),
+      })
+      setIsConflictOpen(false)
+      resetForm()
+      toast({ title: 'Registro substituído com sucesso' })
+    } catch (err) {
+      toast({ title: 'Erro ao substituir', variant: 'destructive' })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleMerge = async () => {
+    let coords = undefined
+    if (formData.coordenadas) {
+      try {
+        coords = JSON.parse(formData.coordenadas)
+      } catch {
+        return
+      }
+    }
+
+    try {
+      setIsSubmitting(true)
+      const formattedFormData = {
+        ...formData,
+        dt_cad: formData.dt_cad ? formData.dt_cad.split('-').reverse().join('/') : formData.dt_cad,
+        ...(coords !== undefined ? { coordenadas: coords } : {}),
+      }
+
+      const mergedData = { ...conflictRecord }
+      for (const [key, value] of Object.entries(formattedFormData)) {
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+          mergedData[key] = value
+        }
+      }
+
+      await updateRepresentante(conflictRecord.id, mergedData)
+      setIsConflictOpen(false)
+      resetForm()
+      toast({ title: 'Registros mesclados com sucesso' })
+    } catch (err) {
+      toast({ title: 'Erro ao mesclar', variant: 'destructive' })
     } finally {
       setIsSubmitting(false)
     }
@@ -148,6 +239,7 @@ export default function Representantes() {
                 />
               </TableHead>
               <SortableHead>Fantasia</SortableHead>
+              <SortableHead>CPF/CNPJ</SortableHead>
               <SortableHead>Sigla</SortableHead>
               <SortableHead>Telefone</SortableHead>
               <SortableHead>Cidade</SortableHead>
@@ -167,6 +259,7 @@ export default function Representantes() {
                 <TableCell>
                   <div className="text-slate-700">{item.fantasia}</div>
                 </TableCell>
+                <TableCell className="text-slate-600">{item.documento}</TableCell>
                 <TableCell className="text-slate-600">{item.sigla}</TableCell>
                 <TableCell className="text-slate-600 whitespace-nowrap">{item.telefone}</TableCell>
                 <TableCell className="text-slate-600">{item.cidade}</TableCell>
@@ -200,6 +293,17 @@ export default function Representantes() {
                 onChange={(e) => setFormData({ ...formData, fantasia: e.target.value })}
               />
               {errors.fantasia && <span className="text-red-500 text-xs">{errors.fantasia}</span>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="documento">CPF/CNPJ</Label>
+              <Input
+                id="documento"
+                placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                value={formData.documento}
+                onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
+              />
+              {errors.documento && <span className="text-red-500 text-xs">{errors.documento}</span>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -295,6 +399,13 @@ export default function Representantes() {
         onOpenChange={setIsDeleteOpen}
         count={selected.length}
         onConfirm={handleDelete}
+      />
+      <DuplicateConflictDialog
+        open={isConflictOpen}
+        onOpenChange={setIsConflictOpen}
+        onReplace={handleReplace}
+        onMerge={handleMerge}
+        isSubmitting={isSubmitting}
       />
     </PageLayout>
   )

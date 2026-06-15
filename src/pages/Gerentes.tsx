@@ -29,7 +29,14 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { RegistrationActionBar } from '@/components/RegistrationActionBar'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
-import { getGerentes, createGerente, deleteGerente } from '@/services/cadastros'
+import {
+  getGerentes,
+  createGerente,
+  updateGerente,
+  deleteGerente,
+  getByDocumento,
+} from '@/services/cadastros'
+import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useToast } from '@/hooks/use-toast'
 import { extractFieldErrors } from '@/lib/pocketbase/errors'
@@ -42,7 +49,22 @@ export default function Gerentes() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState({ nome: '', email: '', telefone: '', status: 'Ativo' })
+  const [conflictRecord, setConflictRecord] = useState<any>(null)
+  const [isConflictOpen, setIsConflictOpen] = useState(false)
+
+  const resetForm = () => {
+    setIsCreateOpen(false)
+    setFormData({ nome: '', documento: '', email: '', telefone: '', status: 'Ativo' })
+    setConflictRecord(null)
+  }
+
+  const [formData, setFormData] = useState({
+    nome: '',
+    documento: '',
+    email: '',
+    telefone: '',
+    status: 'Ativo',
+  })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { toast } = useToast()
 
@@ -74,12 +96,57 @@ export default function Gerentes() {
     try {
       setIsSubmitting(true)
       setErrors({})
+
+      if (formData.documento) {
+        const existing = await getByDocumento('gerentes', formData.documento)
+        if (existing) {
+          setConflictRecord(existing)
+          setIsConflictOpen(true)
+          setIsSubmitting(false)
+          return
+        }
+      }
+
       await createGerente(formData)
-      setIsCreateOpen(false)
-      setFormData({ nome: '', email: '', telefone: '', status: 'Ativo' })
+      resetForm()
       toast({ title: 'Registro criado' })
     } catch (err) {
       setErrors(extractFieldErrors(err))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleReplace = async () => {
+    try {
+      setIsSubmitting(true)
+      await updateGerente(conflictRecord.id, formData)
+      setIsConflictOpen(false)
+      resetForm()
+      toast({ title: 'Registro substituído com sucesso' })
+    } catch (err) {
+      toast({ title: 'Erro ao substituir', variant: 'destructive' })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleMerge = async () => {
+    try {
+      setIsSubmitting(true)
+      const mergedData = { ...conflictRecord }
+      for (const [key, value] of Object.entries(formData)) {
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+          mergedData[key] = value
+        }
+      }
+
+      await updateGerente(conflictRecord.id, mergedData)
+      setIsConflictOpen(false)
+      resetForm()
+      toast({ title: 'Registros mesclados com sucesso' })
+    } catch (err) {
+      toast({ title: 'Erro ao mesclar', variant: 'destructive' })
     } finally {
       setIsSubmitting(false)
     }
@@ -127,6 +194,7 @@ export default function Gerentes() {
                 />
               </TableHead>
               <TableHead className="text-[#3b82f6] font-semibold">Nome</TableHead>
+              <TableHead className="text-[#3b82f6] font-semibold">CPF/CNPJ</TableHead>
               <TableHead className="text-[#3b82f6] font-semibold">Email</TableHead>
               <TableHead className="text-[#3b82f6] font-semibold">Telefone</TableHead>
               <TableHead className="text-[#3b82f6] font-semibold">Status</TableHead>
@@ -142,6 +210,7 @@ export default function Gerentes() {
                   />
                 </TableCell>
                 <TableCell className="py-3 font-medium text-gray-700">{item.nome}</TableCell>
+                <TableCell className="text-gray-600">{item.documento}</TableCell>
                 <TableCell className="text-gray-600">{item.email}</TableCell>
                 <TableCell className="text-gray-600">{item.telefone}</TableCell>
                 <TableCell>
@@ -173,6 +242,16 @@ export default function Gerentes() {
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
               />
               {errors.nome && <span className="text-red-500 text-xs">{errors.nome}</span>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="documento">CPF/CNPJ</Label>
+              <Input
+                id="documento"
+                placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                value={formData.documento}
+                onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
+              />
+              {errors.documento && <span className="text-red-500 text-xs">{errors.documento}</span>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
@@ -224,6 +303,13 @@ export default function Gerentes() {
         onOpenChange={setIsDeleteOpen}
         count={selected.length}
         onConfirm={handleDelete}
+      />
+      <DuplicateConflictDialog
+        open={isConflictOpen}
+        onOpenChange={setIsConflictOpen}
+        onReplace={handleReplace}
+        onMerge={handleMerge}
+        isSubmitting={isSubmitting}
       />
     </div>
   )

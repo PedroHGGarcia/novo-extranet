@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-15T15:15:33.656Z",
+  "generatedAt": "2026-06-15T15:26:37.135Z",
   "collections": [
     {
       "name": "users",
@@ -110,9 +110,17 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "documento",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
-      "indexes": []
+      "indexes": [
+        "CREATE UNIQUE INDEX `idx_clientes_documento` ON `clientes` (documento) WHERE documento != ''"
+      ]
     },
     {
       "name": "representantes",
@@ -186,9 +194,17 @@
           "type": "json",
           "required": false,
           "system": false
+        },
+        {
+          "name": "documento",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
-      "indexes": []
+      "indexes": [
+        "CREATE UNIQUE INDEX `idx_representantes_documento` ON `representantes` (documento) WHERE documento != ''"
+      ]
     },
     {
       "name": "prepostos",
@@ -244,9 +260,17 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "documento",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
-      "indexes": []
+      "indexes": [
+        "CREATE UNIQUE INDEX `idx_prepostos_documento` ON `prepostos` (documento) WHERE documento != ''"
+      ]
     },
     {
       "name": "regioes",
@@ -342,9 +366,17 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "documento",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
-      "indexes": []
+      "indexes": [
+        "CREATE UNIQUE INDEX `idx_gerentes_documento` ON `gerentes` (documento) WHERE documento != ''"
+      ]
     }
   ]
 }

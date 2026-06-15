@@ -32,7 +32,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { RegistrationActionBar } from '@/components/RegistrationActionBar'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
-import { getClientes, createCliente, deleteCliente } from '@/services/cadastros'
+import {
+  getClientes,
+  createCliente,
+  updateCliente,
+  deleteCliente,
+  getByDocumento,
+} from '@/services/cadastros'
+import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useToast } from '@/hooks/use-toast'
 import { extractFieldErrors } from '@/lib/pocketbase/errors'
@@ -45,8 +52,27 @@ export default function Clientes() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [conflictRecord, setConflictRecord] = useState<any>(null)
+  const [isConflictOpen, setIsConflictOpen] = useState(false)
+
+  const resetForm = () => {
+    setIsCreateOpen(false)
+    setFormData({
+      fantasia: '',
+      documento: '',
+      contato: '',
+      telefone: '',
+      celular: '',
+      email: '',
+      dt_cad: new Date().toISOString().split('T')[0],
+      status: 'Ativo',
+    })
+    setConflictRecord(null)
+  }
+
   const [formData, setFormData] = useState({
     fantasia: '',
+    documento: '',
     contato: '',
     telefone: '',
     celular: '',
@@ -90,23 +116,68 @@ export default function Clientes() {
     try {
       setIsSubmitting(true)
       setErrors({})
+
+      if (formData.documento) {
+        const existing = await getByDocumento('clientes', formData.documento)
+        if (existing) {
+          setConflictRecord(existing)
+          setIsConflictOpen(true)
+          setIsSubmitting(false)
+          return
+        }
+      }
+
       await createCliente({
         ...formData,
         dt_cad: formData.dt_cad.split('-').reverse().join('/'),
       })
-      setIsCreateOpen(false)
-      setFormData({
-        fantasia: '',
-        contato: '',
-        telefone: '',
-        celular: '',
-        email: '',
-        dt_cad: new Date().toISOString().split('T')[0],
-        status: 'Ativo',
-      })
+      resetForm()
       toast({ title: 'Registro criado' })
     } catch (err) {
       setErrors(extractFieldErrors(err))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleReplace = async () => {
+    try {
+      setIsSubmitting(true)
+      await updateCliente(conflictRecord.id, {
+        ...formData,
+        dt_cad: formData.dt_cad.split('-').reverse().join('/'),
+      })
+      setIsConflictOpen(false)
+      resetForm()
+      toast({ title: 'Registro substituído com sucesso' })
+    } catch (err) {
+      toast({ title: 'Erro ao substituir', variant: 'destructive' })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleMerge = async () => {
+    try {
+      setIsSubmitting(true)
+      const formattedFormData = {
+        ...formData,
+        dt_cad: formData.dt_cad ? formData.dt_cad.split('-').reverse().join('/') : formData.dt_cad,
+      }
+
+      const mergedData = { ...conflictRecord }
+      for (const [key, value] of Object.entries(formattedFormData)) {
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+          mergedData[key] = value
+        }
+      }
+
+      await updateCliente(conflictRecord.id, mergedData)
+      setIsConflictOpen(false)
+      resetForm()
+      toast({ title: 'Registros mesclados com sucesso' })
+    } catch (err) {
+      toast({ title: 'Erro ao mesclar', variant: 'destructive' })
     } finally {
       setIsSubmitting(false)
     }
@@ -136,6 +207,7 @@ export default function Clientes() {
                 />
               </TableHead>
               <SortableHead>Fantasia</SortableHead>
+              <SortableHead>CPF/CNPJ</SortableHead>
               <SortableHead>Contato</SortableHead>
               <SortableHead>Telefone</SortableHead>
               <SortableHead>Celular</SortableHead>
@@ -155,6 +227,7 @@ export default function Clientes() {
                 <TableCell>
                   <div className="text-slate-700">{item.fantasia}</div>
                 </TableCell>
+                <TableCell className="text-slate-600">{item.documento}</TableCell>
                 <TableCell className="text-slate-600">{item.contato}</TableCell>
                 <TableCell className="text-slate-600 whitespace-nowrap">{item.telefone}</TableCell>
                 <TableCell className="text-slate-600 whitespace-nowrap">{item.celular}</TableCell>
@@ -188,6 +261,17 @@ export default function Clientes() {
                 onChange={(e) => setFormData({ ...formData, fantasia: e.target.value })}
               />
               {errors.fantasia && <span className="text-red-500 text-xs">{errors.fantasia}</span>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="documento">CPF/CNPJ</Label>
+              <Input
+                id="documento"
+                placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                value={formData.documento}
+                onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
+              />
+              {errors.documento && <span className="text-red-500 text-xs">{errors.documento}</span>}
             </div>
 
             <div className="space-y-2">
@@ -274,6 +358,13 @@ export default function Clientes() {
         onOpenChange={setIsDeleteOpen}
         count={selected.length}
         onConfirm={handleDelete}
+      />
+      <DuplicateConflictDialog
+        open={isConflictOpen}
+        onOpenChange={setIsConflictOpen}
+        onReplace={handleReplace}
+        onMerge={handleMerge}
+        isSubmitting={isSubmitting}
       />
     </PageLayout>
   )

@@ -36,8 +36,11 @@ import {
   getPrepostos,
   getRepresentantes,
   createPreposto,
+  updatePreposto,
   deletePreposto,
+  getByDocumento,
 } from '@/services/cadastros'
+import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useToast } from '@/hooks/use-toast'
 import { extractFieldErrors } from '@/lib/pocketbase/errors'
@@ -51,9 +54,26 @@ export default function Prepostos() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [conflictRecord, setConflictRecord] = useState<any>(null)
+  const [isConflictOpen, setIsConflictOpen] = useState(false)
+
+  const resetForm = () => {
+    setIsCreateOpen(false)
+    setFormData({
+      representante: '',
+      nome: '',
+      documento: '',
+      email: '',
+      telefone: '',
+      dt_cad: new Date().toISOString().split('T')[0],
+    })
+    setConflictRecord(null)
+  }
+
   const [formData, setFormData] = useState({
     representante: '',
     nome: '',
+    documento: '',
     email: '',
     telefone: '',
     dt_cad: new Date().toISOString().split('T')[0],
@@ -97,21 +117,68 @@ export default function Prepostos() {
     try {
       setIsSubmitting(true)
       setErrors({})
+
+      if (formData.documento) {
+        const existing = await getByDocumento('prepostos', formData.documento)
+        if (existing) {
+          setConflictRecord(existing)
+          setIsConflictOpen(true)
+          setIsSubmitting(false)
+          return
+        }
+      }
+
       await createPreposto({
         ...formData,
         dt_cad: formData.dt_cad.split('-').reverse().join('/'),
       })
-      setIsCreateOpen(false)
-      setFormData({
-        representante: '',
-        nome: '',
-        email: '',
-        telefone: '',
-        dt_cad: new Date().toISOString().split('T')[0],
-      })
+      resetForm()
       toast({ title: 'Registro criado' })
     } catch (err) {
       setErrors(extractFieldErrors(err))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleReplace = async () => {
+    try {
+      setIsSubmitting(true)
+      await updatePreposto(conflictRecord.id, {
+        ...formData,
+        dt_cad: formData.dt_cad.split('-').reverse().join('/'),
+      })
+      setIsConflictOpen(false)
+      resetForm()
+      toast({ title: 'Registro substituído com sucesso' })
+    } catch (err) {
+      toast({ title: 'Erro ao substituir', variant: 'destructive' })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleMerge = async () => {
+    try {
+      setIsSubmitting(true)
+      const formattedFormData = {
+        ...formData,
+        dt_cad: formData.dt_cad ? formData.dt_cad.split('-').reverse().join('/') : formData.dt_cad,
+      }
+
+      const mergedData = { ...conflictRecord }
+      for (const [key, value] of Object.entries(formattedFormData)) {
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+          mergedData[key] = value
+        }
+      }
+
+      await updatePreposto(conflictRecord.id, mergedData)
+      setIsConflictOpen(false)
+      resetForm()
+      toast({ title: 'Registros mesclados com sucesso' })
+    } catch (err) {
+      toast({ title: 'Erro ao mesclar', variant: 'destructive' })
     } finally {
       setIsSubmitting(false)
     }
@@ -142,6 +209,7 @@ export default function Prepostos() {
               </TableHead>
               <SortableHead>Representante</SortableHead>
               <SortableHead>Nome</SortableHead>
+              <SortableHead>CPF/CNPJ</SortableHead>
               <SortableHead>E-mail</SortableHead>
               <SortableHead>Telefone</SortableHead>
             </TableRow>
@@ -159,6 +227,7 @@ export default function Prepostos() {
                   <div className="text-slate-700">{item.representante}</div>
                 </TableCell>
                 <TableCell className="text-slate-600">{item.nome}</TableCell>
+                <TableCell className="text-slate-600">{item.documento}</TableCell>
                 <TableCell className="text-slate-600">{item.email}</TableCell>
                 <TableCell className="text-slate-600 whitespace-nowrap">{item.telefone}</TableCell>
               </TableRow>
@@ -210,6 +279,17 @@ export default function Prepostos() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="documento">CPF/CNPJ</Label>
+              <Input
+                id="documento"
+                placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                value={formData.documento}
+                onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
+              />
+              {errors.documento && <span className="text-red-500 text-xs">{errors.documento}</span>}
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
               <Input
                 id="email"
@@ -255,6 +335,13 @@ export default function Prepostos() {
         onOpenChange={setIsDeleteOpen}
         count={selected.length}
         onConfirm={handleDelete}
+      />
+      <DuplicateConflictDialog
+        open={isConflictOpen}
+        onOpenChange={setIsConflictOpen}
+        onReplace={handleReplace}
+        onMerge={handleMerge}
+        isSubmitting={isSubmitting}
       />
     </PageLayout>
   )
