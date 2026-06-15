@@ -3,26 +3,63 @@ import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Link, Navigate } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
 import logoIn from '@/assets/bener-thumb-c5c1b.png'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [emailError, setEmailError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const { signIn, isAuthenticated, loading } = useAuth()
 
   if (loading) return null
   if (isAuthenticated) return <Navigate to="/" replace />
 
+  const validateEmail = (value: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!value) {
+      setEmailError('E-mail é obrigatório.')
+      return false
+    }
+    if (!emailRegex.test(value)) {
+      setEmailError('E-mail inválido')
+      return false
+    }
+    setEmailError('')
+    return true
+  }
+
+  const validatePassword = (value: string) => {
+    if (!value) {
+      setPasswordError('Senha é obrigatória.')
+      return false
+    }
+    if (value.length < 8) {
+      setPasswordError('Senha muito curta')
+      return false
+    }
+    setPasswordError('')
+    return true
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    const isEmailValid = validateEmail(email)
+    const isPasswordValid = validatePassword(password)
+
+    if (!isEmailValid || !isPasswordValid) return
+
     const { error: err } = await signIn(email, password)
     if (err) setError('Email ou senha inválidos.')
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative bg-slate-50">
+    <div className="min-h-screen w-full flex items-center justify-center relative bg-slate-50 animate-in fade-in duration-500">
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-[#00704a]/5 blur-[120px]" />
         <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-[#00704a]/5 blur-[120px]" />
@@ -41,22 +78,45 @@ export default function Login() {
           </div>
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-4">
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-12 rounded-full px-5 border-gray-200 focus-visible:ring-[#00704a]"
-              />
-              <Input
-                type="password"
-                placeholder="Senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-12 rounded-full px-5 border-gray-200 focus-visible:ring-[#00704a]"
-              />
+              <div>
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    if (emailError) validateEmail(e.target.value)
+                  }}
+                  onBlur={() => validateEmail(email)}
+                  required
+                  className="h-12 rounded-full px-5 border-gray-200 focus-visible:ring-[#00704a]"
+                />
+                {emailError && <p className="text-red-500 text-xs mt-1 ml-4">{emailError}</p>}
+              </div>
+              <div>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Senha"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value)
+                      if (passwordError) validatePassword(e.target.value)
+                    }}
+                    onBlur={() => validatePassword(password)}
+                    required
+                    className="h-12 rounded-full px-5 border-gray-200 focus-visible:ring-[#00704a] pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+                {passwordError && <p className="text-red-500 text-xs mt-1 ml-4">{passwordError}</p>}
+              </div>
               <div className="flex justify-end px-2">
                 <Link
                   to="/forgot-password"
@@ -84,8 +144,8 @@ export default function Login() {
 
       <div className="absolute bottom-6 w-full text-center z-20 px-4">
         <p className="text-xs text-gray-500">
-          © 2017-2026 <span className="text-[#00704a] font-medium">Pedro Garcia</span> &{' '}
-          <span className="text-[#00704a] font-medium">Skip</span> - Todos os direitos reservados.
+          Desenvolvido por <span className="text-[#00704a] font-medium">Skip</span> e{' '}
+          <span className="text-[#00704a] font-medium">Pedro Garcia</span>
         </p>
       </div>
     </div>
