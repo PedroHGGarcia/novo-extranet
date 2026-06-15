@@ -81,6 +81,13 @@ export default function Login() {
           </form>
         </div>
       </div>
+
+      <div className="absolute bottom-6 w-full text-center z-20 px-4">
+        <p className="text-xs text-gray-500">
+          © 2017-2026 <span className="text-[#00704a] font-medium">Pedro Garcia</span> &{' '}
+          <span className="text-[#00704a] font-medium">Skip</span> - Todos os direitos reservados.
+        </p>
+      </div>
     </div>
   )
 }

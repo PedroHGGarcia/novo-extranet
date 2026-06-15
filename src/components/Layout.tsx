@@ -13,9 +13,10 @@ export default function Layout() {
           <Outlet />
         </main>
         <footer className="border-t bg-white py-4 text-center text-xs text-gray-500">
-          <p>© 2017-2026 Pack System Soluções Web - Todos os direitos reservados.</p>
-          <p className="my-1">11 3042.6242 | contato@packsystem.com.br</p>
-          <p>© Shareware Software</p>
+          <p>
+            © 2017-2026 <span className="text-[#00704a] font-medium">Pedro Garcia</span> &{' '}
+            <span className="text-[#00704a] font-medium">Skip</span> - Todos os direitos reservados.
+          </p>
         </footer>
       </SidebarInset>
     </SidebarProvider>
