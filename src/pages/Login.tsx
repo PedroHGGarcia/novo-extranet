@@ -22,14 +22,10 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative">
-      <div className="absolute inset-0 z-0 bg-zinc-900 overflow-hidden">
-        <div className="absolute inset-0 bg-black/60 z-10" />
-        <img
-          src="https://img.usecurling.com/p/1600/1200?q=industrial%20machinery"
-          alt="Industrial machinery"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+    <div className="min-h-screen w-full flex items-center justify-center relative bg-slate-50">
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-[#00704a]/5 blur-[120px]" />
+        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-[#00704a]/5 blur-[120px]" />
       </div>
 
       <div className="w-full max-w-[420px] z-20 px-4">
