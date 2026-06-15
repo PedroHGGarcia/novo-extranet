@@ -42,6 +42,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { inviteUser } from '@/services/config'
 
 export default function Usuarios() {
   const { user } = useAuth()
