@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Monitor, Users, MapPin, Activity, LayoutDashboard } from 'lucide-react'
+import { Monitor, Users, MapPin, Activity, LayoutDashboard, Download } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
@@ -50,7 +57,7 @@ export default function Index() {
           .collection('representantes')
           .getList(1, 1, { filter: "status ~ 'ativ' || status ~ 'Ativ'" }),
         pb.collection('regioes').getList(1, 1),
-        pb.collection('auditoria').getList(1, 1),
+        pb.collection('eventos').getList(1, 1),
       ])
 
       setTotalClientes(clientesRes.totalItems)
@@ -112,6 +119,9 @@ export default function Index() {
   useRealtime('regioes', () => {
     loadData()
   })
+  useRealtime('eventos', () => {
+    loadData()
+  })
 
   const chartConfig = {
     count: {
@@ -120,20 +130,73 @@ export default function Index() {
     },
   }
 
+  const handleExportCSV = async () => {
+    try {
+      const eventos = await pb.collection('eventos').getFullList()
+      let csv = `Indicadores do Dashboard\n`
+      csv += `Total de Clientes,${totalClientes}\n`
+      csv += `Representantes Ativos,${activeRepresentantes}\n`
+      csv += `Cobertura Regional,${totalRegioes}\n`
+      csv += `Eventos Registrados,${recentEventsCount}\n\n`
+
+      csv += 'Detalhes dos Eventos\n'
+      csv += 'Titulo,Categoria,Data,Status\n'
+      eventos.forEach((e: any) => {
+        csv += `"${e.titulo}",${e.categoria},${e.data},${e.status}\n`
+      })
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `relatorio_dashboard_${new Date().toISOString().split('T')[0]}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error exporting CSV:', error)
+    }
+  }
+
+  const handleExportPDF = () => {
+    window.print()
+  }
+
   return (
     <div className="space-y-8 animate-fade-in pb-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 bg-brand-blue/10 rounded-xl">
-          <LayoutDashboard className="h-7 w-7 text-brand-blue" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-brand-blue/10 rounded-xl">
+            <LayoutDashboard className="h-7 w-7 text-brand-blue" />
+          </div>
+          <div>
+            <h1 className="!mb-0 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+              Painel Principal
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-1">
+              Visão geral e indicadores de performance do sistema.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="!mb-0 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            Painel Principal
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Visão geral e indicadores de performance do sistema.
-          </p>
-        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="gap-2 rounded-xl transition-all duration-300 active:scale-95 border-slate-200 bg-white hover:bg-slate-50"
+            >
+              <Download className="h-4 w-4 text-brand-blue" />
+              Exportar Relatório
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="rounded-xl p-1">
+            <DropdownMenuItem onClick={handleExportCSV} className="cursor-pointer rounded-lg">
+              Exportar CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer rounded-lg">
+              Exportar PDF (Imprimir)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
