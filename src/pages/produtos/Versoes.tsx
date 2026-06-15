@@ -255,36 +255,7 @@ export default function Versoes() {
 
   const isFormValid = nome.trim() && modeloId
 
-  const specsSchema = z.string().superRefine((val, ctx) => {
-    const text = val.replace(/<[^>]*>?/gm, '').toLowerCase()
-    if (
-      text.includes('peso') &&
-      !/\d+/.test(text.substring(text.indexOf('peso'), text.indexOf('peso') + 30))
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "A especificação de 'Peso' deve conter um valor numérico válido.",
-      })
-    }
-    if (
-      text.includes('altura') &&
-      !/\d+/.test(text.substring(text.indexOf('altura'), text.indexOf('altura') + 30))
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "A especificação de 'Altura' deve conter um valor numérico válido.",
-      })
-    }
-    if (
-      text.includes('voltagem') &&
-      !/\d+/.test(text.substring(text.indexOf('voltagem'), text.indexOf('voltagem') + 30))
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "A especificação de 'Voltagem' deve conter um valor numérico válido.",
-      })
-    }
-  })
+  const specsSchema = z.string()
 
   const handleSave = async () => {
     setNomeError(!nome.trim())

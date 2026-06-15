@@ -7,7 +7,7 @@ routerAdd(
 
     const prompt = `Act as a Technical Product Assistant focused on industrial machinery specs.
 Generate a professional, structured template for technical specifications for the product: ${body.produto || 'Máquina'} - Model: ${body.modelo}.
-Return only the structured text in HTML format (using <ul>, <li>, and <strong> tags). Do NOT include markdown code block syntax like \`\`\`html. Include common dimensions, weight, voltage, and capacities usually present for this type of machine. Use placeholders like [value] for numbers.`
+Return only the structured text in HTML format (using <ul>, <li>, and <strong> tags). Do NOT include markdown code block syntax like \`\`\`html. Use placeholders like [value] for numbers.`
 
     const reply = $ai.chat({
       model: 'fast',
