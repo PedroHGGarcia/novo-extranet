@@ -274,15 +274,17 @@ export default function Acessorios() {
 
   return (
     <div className="space-y-6 max-w-full overflow-hidden">
-      <div className="flex items-center gap-2 mb-2 text-gray-800">
-        <Package className="h-6 w-6" />
-        <h1 className="text-2xl font-normal">Acessórios</h1>
+      <div className="flex items-center gap-3 mb-6 text-gray-900">
+        <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-100">
+          <Package className="h-5 w-5 text-[#00704a]" />
+        </div>
+        <h1 className="text-2xl font-semibold tracking-tight">Acessórios</h1>
       </div>
 
-      <div className="flex items-center gap-1 mb-4 bg-gray-100 p-2 rounded-sm border border-gray-200">
+      <div className="flex items-center gap-2 mb-6 bg-[#f8f9fa] p-2 rounded-md border border-gray-200/60 shadow-sm">
         <Button
           onClick={() => setActiveTab('registros')}
-          className="bg-primary hover:bg-primary/90 rounded-none h-8 text-xs font-semibold px-4"
+          className="bg-[#00704a] hover:bg-[#005a3b] rounded-sm h-8 text-[11px] tracking-wide font-bold px-5 uppercase"
         >
           PESQUISAR
         </Button>
@@ -292,7 +294,7 @@ export default function Acessorios() {
             setActiveTab('cadastro')
             setActiveSubTab('dados')
           }}
-          className="bg-primary hover:bg-primary/90 rounded-none h-8 text-xs font-semibold px-4"
+          className="bg-[#00704a] hover:bg-[#005a3b] rounded-sm h-8 text-[11px] tracking-wide font-bold px-5 uppercase"
         >
           NOVO
         </Button>
@@ -300,7 +302,7 @@ export default function Acessorios() {
           <Button
             onClick={handleDeleteSelected}
             disabled={selectedIds.length === 0}
-            className="bg-primary hover:bg-primary/90 rounded-none h-8 text-xs font-semibold px-4"
+            className="bg-[#8ab7a8] hover:bg-[#73a393] text-white rounded-sm h-8 text-[11px] tracking-wide font-bold px-5 uppercase disabled:opacity-60"
           >
             EXCLUIR
           </Button>
@@ -308,7 +310,7 @@ export default function Acessorios() {
         {activeTab === 'cadastro' && (
           <Button
             onClick={handleSave}
-            className="bg-primary hover:bg-primary/90 rounded-none h-8 text-xs font-semibold px-4"
+            className="bg-[#00704a] hover:bg-[#005a3b] rounded-sm h-8 text-[11px] tracking-wide font-bold px-5 uppercase"
           >
             SALVAR
           </Button>
@@ -323,30 +325,45 @@ export default function Acessorios() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-transparent border-b rounded-none w-full justify-start h-auto p-0 mb-4">
+        <TabsList className="bg-transparent border-b border-gray-200 rounded-none w-full justify-start h-auto p-0 mb-4 gap-1">
           <TabsTrigger
             value="registros"
-            className="rounded-none border border-transparent data-[state=active]:border-gray-300 data-[state=active]:border-b-white data-[state=active]:bg-white data-[state=active]:text-gray-800 px-6 py-2 -mb-[1px] bg-gray-50 text-gray-500"
+            className="rounded-t-md rounded-b-none border border-b-0 border-transparent data-[state=active]:border-gray-200 data-[state=active]:bg-white data-[state=active]:text-gray-900 px-8 py-2 -mb-[1px] bg-gray-100 text-gray-500 font-medium transition-colors"
           >
             Registros
           </TabsTrigger>
           <TabsTrigger
             value="cadastro"
-            className="rounded-none border border-transparent data-[state=active]:border-gray-300 data-[state=active]:border-b-white data-[state=active]:bg-white data-[state=active]:text-gray-800 px-6 py-2 -mb-[1px] bg-gray-50 text-gray-500"
+            className="rounded-t-md rounded-b-none border border-b-0 border-transparent data-[state=active]:border-gray-200 data-[state=active]:bg-white data-[state=active]:text-gray-900 px-8 py-2 -mb-[1px] bg-gray-100 text-gray-500 font-medium transition-colors"
           >
             Cadastro
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="registros" className="mt-0">
-          <div className="border bg-white rounded-sm shadow-sm overflow-hidden">
-            <div className="p-3 border-b bg-gray-50">
-              <Input
-                placeholder="Buscar acessório..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm h-8 text-sm bg-white"
-              />
+          <div className="border border-gray-200 bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-gray-100 bg-gray-50/30">
+              <div className="relative max-w-md">
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <Input
+                  placeholder="Buscar acessório..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full h-10 text-sm bg-white rounded-full pl-10 pr-4 border-gray-300 focus-visible:ring-[#00704a] focus-visible:border-[#00704a] shadow-sm transition-all"
+                />
+              </div>
             </div>
             <div className="overflow-x-auto">
               <Table>
@@ -354,107 +371,114 @@ export default function Acessorios() {
                   <TableRow className="border-b border-gray-200 hover:bg-transparent">
                     <TableHead className="w-12 text-center">
                       <Checkbox
+                        className="rounded-full border-gray-400 data-[state=checked]:bg-[#00704a] data-[state=checked]:border-[#00704a]"
                         checked={selectedIds.length === filtered.length && filtered.length > 0}
                         onCheckedChange={handleSelectAll}
                       />
                     </TableHead>
                     {visibleColumns.includes('acoes') && (
-                      <TableHead className="font-semibold text-gray-600 w-24">Ações</TableHead>
+                      <TableHead className="font-semibold text-gray-700 w-24 text-xs">
+                        Ações
+                      </TableHead>
                     )}
                     {visibleColumns.includes('versao') && (
-                      <TableHead className="font-semibold text-gray-600">Versão</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-xs">Versão</TableHead>
                     )}
                     {visibleColumns.includes('nome') && (
-                      <TableHead className="font-semibold text-gray-600">Nome</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-xs">Nome</TableHead>
                     )}
                     {visibleColumns.includes('moeda') && (
-                      <TableHead className="font-semibold text-gray-600">Moeda</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-xs">Moeda</TableHead>
                     )}
                     {visibleColumns.includes('tipo') && (
-                      <TableHead className="font-semibold text-gray-600">Tipo</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-xs">Tipo</TableHead>
                     )}
                     {visibleColumns.includes('valor') && (
-                      <TableHead className="font-semibold text-gray-600 text-right">
+                      <TableHead className="font-semibold text-gray-700 text-right text-xs">
                         Valor
                       </TableHead>
                     )}
                     {visibleColumns.includes('fator') && (
-                      <TableHead className="font-semibold text-gray-600 text-right">
+                      <TableHead className="font-semibold text-gray-700 text-right text-xs">
                         Fator Nac.
                       </TableHead>
                     )}
                     {visibleColumns.includes('status') && (
-                      <TableHead className="font-semibold text-gray-600">Status</TableHead>
+                      <TableHead className="font-semibold text-gray-700 text-xs">Status</TableHead>
                     )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-gray-50/50">
-                      <TableCell className="text-center">
+                    <TableRow
+                      key={item.id}
+                      className="even:bg-gray-50/50 hover:bg-gray-100/50 border-b border-gray-100 transition-colors"
+                    >
+                      <TableCell className="text-center align-middle">
                         <Checkbox
+                          className="rounded-full border-gray-300 data-[state=checked]:bg-[#00704a] data-[state=checked]:border-[#00704a]"
                           checked={selectedIds.includes(item.id)}
                           onCheckedChange={(c) => handleSelect(item.id, c as boolean)}
                         />
                       </TableCell>
                       {visibleColumns.includes('acoes') && (
-                        <TableCell className="py-2">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="text-primary text-[11px] hover:underline flex items-center gap-1 mb-1"
-                          >
-                            <Pencil className="w-3 h-3" /> Editar
-                          </button>
-                          <button
-                            onClick={() => handleDuplicate(item)}
-                            className="text-primary text-[11px] hover:underline flex items-center gap-1"
-                          >
-                            <Copy className="w-3 h-3" /> Duplicar
-                          </button>
+                        <TableCell className="py-3 align-middle">
+                          <div className="flex flex-col gap-1.5">
+                            <button
+                              onClick={() => handleEdit(item)}
+                              className="text-[#00704a] text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors"
+                            >
+                              <Pencil className="w-3.5 h-3.5" /> Editar
+                            </button>
+                            <button
+                              onClick={() => handleDuplicate(item)}
+                              className="text-[#00704a] text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors"
+                            >
+                              <Copy className="w-3.5 h-3.5" /> Duplicar
+                            </button>
+                          </div>
                         </TableCell>
                       )}
                       {visibleColumns.includes('versao') && (
-                        <TableCell className="text-xs text-gray-600 py-2">
+                        <TableCell className="text-xs text-gray-600 py-3 align-middle max-w-[250px] leading-relaxed">
                           {Array.isArray(item.expand?.versoes)
-                            ? item.expand.versoes.length > 2
-                              ? `${item.expand.versoes
-                                  .slice(0, 2)
-                                  .map((v: any) => v.nome)
-                                  .join(', ')} +${item.expand.versoes.length - 2}`
-                              : item.expand.versoes.length > 0
-                                ? item.expand.versoes.map((v: any) => v.nome).join(', ')
-                                : '-'
+                            ? item.expand.versoes.map((v: any) => v.nome).join(', ') || '-'
                             : item.expand?.versoes?.nome || '-'}
                         </TableCell>
                       )}
                       {visibleColumns.includes('nome') && (
-                        <TableCell className="text-sm font-medium text-gray-800 py-2">
+                        <TableCell className="text-xs font-semibold text-gray-800 py-3 align-middle">
                           {item.nome}
                         </TableCell>
                       )}
                       {visibleColumns.includes('moeda') && (
-                        <TableCell className="text-xs text-gray-600 py-2">{item.moeda}</TableCell>
+                        <TableCell className="text-xs text-gray-600 py-3 align-middle">
+                          {item.moeda}
+                        </TableCell>
                       )}
                       {visibleColumns.includes('tipo') && (
-                        <TableCell className="text-xs text-gray-600 py-2">{item.tipo}</TableCell>
+                        <TableCell className="text-xs text-gray-600 py-3 align-middle">
+                          {item.tipo}
+                        </TableCell>
                       )}
                       {visibleColumns.includes('valor') && (
-                        <TableCell className="text-xs text-gray-600 text-right py-2">
+                        <TableCell className="text-xs text-gray-600 text-right py-3 align-middle font-medium">
                           {formatCurrency(item.valor, item.moeda)}
                         </TableCell>
                       )}
                       {visibleColumns.includes('fator') && (
-                        <TableCell className="text-xs text-gray-600 text-right py-2">
+                        <TableCell className="text-xs text-gray-600 text-right py-3 align-middle">
                           {Number(item.fator_nac).toFixed(6)}
                         </TableCell>
                       )}
                       {visibleColumns.includes('status') && (
-                        <TableCell className="py-2">
+                        <TableCell className="py-3 align-middle">
                           <Badge
-                            variant="outline"
                             className={cn(
-                              'font-normal border-none text-white',
-                              item.status === 'Ativo' ? 'bg-green-500' : 'bg-gray-400',
+                              'font-medium border-none text-white rounded-full px-3 py-0.5 text-[10px] tracking-wide uppercase',
+                              item.status === 'Ativo'
+                                ? 'bg-[#22c55e] hover:bg-[#22c55e]'
+                                : 'bg-gray-400 hover:bg-gray-400',
                             )}
                           >
                             {item.status}
@@ -465,8 +489,14 @@ export default function Acessorios() {
                   ))}
                   {filtered.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-gray-500">
-                        Nenhum registro encontrado.
+                      <TableCell colSpan={9} className="text-center py-12 text-gray-500">
+                        <div className="flex flex-col items-center justify-center">
+                          <Package className="h-10 w-10 text-gray-300 mb-3" />
+                          <p className="text-sm font-medium">Nenhum registro encontrado.</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Tente ajustar a sua busca ou cadastre um novo item.
+                          </p>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
@@ -507,19 +537,19 @@ export default function Acessorios() {
             >
               <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-8 flex flex-col">
-                  <label className="text-[11px] text-gray-500 mb-0.5">
+                  <label className="text-xs font-medium text-gray-700 mb-1.5">
                     Nome <span className="text-red-500">*</span>
                   </label>
                   <Input
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    className="input-bener"
+                    className="focus-visible:ring-[#00704a] focus-visible:border-[#00704a] h-9"
                   />
                 </div>
                 <div className="col-span-4 flex flex-col">
-                  <label className="text-[11px] text-gray-500 mb-0.5">Status</label>
+                  <label className="text-xs font-medium text-gray-700 mb-1.5">Status</label>
                   <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="select-bener-trigger">
+                    <SelectTrigger className="focus:ring-[#00704a] focus:border-[#00704a] h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -532,9 +562,9 @@ export default function Acessorios() {
 
               <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-4 flex flex-col">
-                  <label className="text-[11px] text-gray-500 mb-0.5">Tipo</label>
+                  <label className="text-xs font-medium text-gray-700 mb-1.5">Tipo</label>
                   <Select value={tipo} onValueChange={setTipo}>
-                    <SelectTrigger className="select-bener-trigger">
+                    <SelectTrigger className="focus:ring-[#00704a] focus:border-[#00704a] h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -545,9 +575,9 @@ export default function Acessorios() {
                   </Select>
                 </div>
                 <div className="col-span-4 flex flex-col">
-                  <label className="text-[11px] text-gray-500 mb-0.5">Moeda</label>
+                  <label className="text-xs font-medium text-gray-700 mb-1.5">Moeda</label>
                   <Select value={moeda} onValueChange={setMoeda}>
-                    <SelectTrigger className="select-bener-trigger">
+                    <SelectTrigger className="focus:ring-[#00704a] focus:border-[#00704a] h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -558,32 +588,34 @@ export default function Acessorios() {
                   </Select>
                 </div>
                 <div className="col-span-4 flex flex-col">
-                  <label className="text-[11px] text-gray-500 mb-0.5">Valor</label>
+                  <label className="text-xs font-medium text-gray-700 mb-1.5">Valor</label>
                   <CurrencyInput
                     value={valor}
                     onChange={setValor}
                     currency={moeda}
-                    className="input-bener"
+                    className="focus-visible:ring-[#00704a] focus-visible:border-[#00704a] h-9"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-4 flex flex-col">
-                  <label className="text-[11px] text-gray-500 mb-0.5">Fator Nac.</label>
+                  <label className="text-xs font-medium text-gray-700 mb-1.5">Fator Nac.</label>
                   <Input
                     value={fatorNac}
                     onChange={(e) => setFatorNac(e.target.value.replace(/[^0-9.,]/g, ''))}
-                    className="input-bener"
+                    className="focus-visible:ring-[#00704a] focus-visible:border-[#00704a] h-9"
                   />
                 </div>
                 <div className="col-span-8 flex flex-col">
-                  <label className="text-[11px] text-gray-500 mb-0.5">Vincular Versões</label>
+                  <label className="text-xs font-medium text-gray-700 mb-1.5">
+                    Vincular Versões
+                  </label>
                   <Popover open={openVersoes} onOpenChange={setOpenVersoes}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between min-h-9 h-auto py-1.5 text-xs border-gray-300 font-normal"
+                        className="w-full justify-between min-h-9 h-auto py-1.5 text-xs border-gray-300 font-normal hover:bg-gray-50 focus:ring-[#00704a]"
                       >
                         {selectedVersoes.length > 0 ? (
                           <span className="text-xs truncate">
@@ -681,13 +713,11 @@ export default function Acessorios() {
               className="mt-0 border border-primary/20 rounded-sm bg-white shadow-sm p-4 space-y-4 max-w-4xl"
             >
               <div className="flex justify-between items-center">
-                <label className="text-[11px] text-gray-500 font-semibold">
-                  Especificações Técnicas
-                </label>
+                <label className="text-xs font-medium text-gray-700">Especificações Técnicas</label>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 text-xs flex items-center gap-2"
+                  className="h-8 text-xs flex items-center gap-2 border-gray-300 hover:bg-gray-50 text-[#00704a]"
                   onClick={handleSuggestSpecs}
                   disabled={loadingAi}
                 >
@@ -702,7 +732,7 @@ export default function Acessorios() {
               <Textarea
                 value={especificacoesTecnicas}
                 onChange={(e) => setEspecificacoesTecnicas(e.target.value)}
-                className="min-h-[200px] text-sm"
+                className="min-h-[200px] text-sm focus-visible:ring-[#00704a] focus-visible:border-[#00704a]"
                 placeholder="Descreva as especificações técnicas do acessório..."
               />
             </TabsContent>

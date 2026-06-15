@@ -9,7 +9,7 @@ export default function Layout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="flex min-h-screen flex-col bg-brand-bg overflow-x-hidden">
+      <SidebarInset className="flex min-h-screen flex-col bg-[#f8f9fa] overflow-x-hidden">
         <AppHeader />
         <main key={location.pathname} className="flex-1 p-6 animate-in fade-in duration-500">
           <Outlet />
