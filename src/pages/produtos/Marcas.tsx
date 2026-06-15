@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Tag, Pencil, Copy, Download, Trash2 } from 'lucide-react'
+import { Tag, Pencil, Copy, Download, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -22,7 +22,15 @@ import {
 } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
-import { getMarcas, createMarca, updateMarca, deleteMarca, Marca } from '@/services/produtos'
+import { cn } from '@/lib/utils'
+import {
+  getMarcas,
+  createMarca,
+  updateMarca,
+  deleteMarca,
+  checkUniqueName,
+  Marca,
+} from '@/services/produtos'
 
 export default function Marcas() {
   const [items, setItems] = useState<Marca[]>([])
@@ -33,6 +41,10 @@ export default function Marcas() {
 
   const [nome, setNome] = useState('')
   const [status, setStatus] = useState<'Ativo' | 'Inativo'>('Ativo')
+
+  const [nomeTouched, setNomeTouched] = useState(false)
+  const [nomeError, setNomeError] = useState('')
+  const [isCheckingNome, setIsCheckingNome] = useState(false)
 
   const loadData = async () => {
     try {
@@ -58,10 +70,31 @@ export default function Marcas() {
     }
   }, [items, searchTerm])
 
+  useEffect(() => {
+    if (!nomeTouched) return
+    if (!nome.trim()) {
+      setNomeError('O nome é obrigatório')
+      return
+    }
+    const timer = setTimeout(async () => {
+      setIsCheckingNome(true)
+      const isUnique = await checkUniqueName('marcas', nome.trim(), editingItem?.id)
+      if (!isUnique) {
+        setNomeError('Este nome já está em uso')
+      } else {
+        setNomeError('')
+      }
+      setIsCheckingNome(false)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [nome, nomeTouched, editingItem?.id])
+
   const handleEdit = (item: Marca) => {
     setEditingItem(item)
     setNome(item.nome)
     setStatus(item.status)
+    setNomeTouched(false)
+    setNomeError('')
     setActiveTab('cadastro')
   }
 
@@ -84,14 +117,17 @@ export default function Marcas() {
     }
   }
 
+  const isFormValid = nome.trim() && !nomeError && !isCheckingNome
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isFormValid) return
     try {
       if (editingItem) {
-        await updateMarca(editingItem.id, { nome, status })
+        await updateMarca(editingItem.id, { nome: nome.trim(), status })
         toast({ title: 'Marca atualizada com sucesso' })
       } else {
-        await createMarca({ nome, status })
+        await createMarca({ nome: nome.trim(), status })
         toast({ title: 'Marca criada com sucesso' })
       }
       resetForm()
@@ -105,6 +141,8 @@ export default function Marcas() {
     setEditingItem(null)
     setNome('')
     setStatus('Ativo')
+    setNomeTouched(false)
+    setNomeError('')
   }
 
   const exportCsv = () => {
@@ -264,13 +302,23 @@ export default function Marcas() {
                 <Label htmlFor="nome">
                   Nome da Marca <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  required
-                  className="rounded-sm"
-                />
+                <div className="relative">
+                  <Input
+                    id="nome"
+                    value={nome}
+                    onChange={(e) => {
+                      setNome(e.target.value)
+                      setNomeTouched(true)
+                    }}
+                    className={cn('rounded-sm pr-10', nomeError && 'border-red-500')}
+                  />
+                  {isCheckingNome && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                {nomeError && <p className="text-xs text-red-500">{nomeError}</p>}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="status">
@@ -288,7 +336,12 @@ export default function Marcas() {
               </div>
             </div>
             <div className="flex gap-2 pt-4">
-              <Button type="submit" className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm">
+              <Button
+                type="submit"
+                className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm"
+                disabled={!isFormValid}
+              >
+                {isCheckingNome && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Salvar Marca
               </Button>
               <Button

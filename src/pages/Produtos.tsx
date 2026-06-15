@@ -1,7 +1,18 @@
-import { useState, useEffect } from 'react'
-import { Package, Pencil, Copy, Download, Trash2, Filter } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import {
+  Package,
+  Pencil,
+  Copy,
+  Download,
+  Trash2,
+  Filter,
+  Loader2,
+  UploadCloud,
+  X,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
   TableBody,
@@ -23,12 +34,15 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
+import { cn } from '@/lib/utils'
 import {
   getProdutos,
   createProduto,
   updateProduto,
   deleteProduto,
   getCategorias,
+  checkUniqueName,
+  getProdutoFotoUrl,
   Produto,
   CategoriaProduto,
 } from '@/services/produtos'
@@ -48,6 +62,18 @@ export default function Produtos() {
   const [nome, setNome] = useState('')
   const [categoriaId, setCategoriaId] = useState('')
   const [status, setStatus] = useState<'Ativo' | 'Inativo'>('Ativo')
+  const [descricao, setDescricao] = useState('')
+  const [specs, setSpecs] = useState<Array<{ key: string; value: string }>>([])
+
+  const [nomeTouched, setNomeTouched] = useState(false)
+  const [nomeError, setNomeError] = useState('')
+  const [isCheckingNome, setIsCheckingNome] = useState(false)
+
+  const [isDraggingFotos, setIsDraggingFotos] = useState(false)
+  const [existingFotos, setExistingFotos] = useState<string[]>([])
+  const [fotosToDelete, setFotosToDelete] = useState<string[]>([])
+  const [newFotos, setNewFotos] = useState<File[]>([])
+  const fotosInputRef = useRef<HTMLInputElement>(null)
 
   const loadData = async () => {
     try {
@@ -62,12 +88,9 @@ export default function Produtos() {
   useEffect(() => {
     loadData()
   }, [])
-  useRealtime('produtos', () => {
-    loadData()
-  })
-  useRealtime('categorias_produtos', () => {
-    loadData()
-  })
+
+  useRealtime('produtos', () => loadData())
+  useRealtime('categorias_produtos', () => loadData())
 
   useEffect(() => {
     let result = items
@@ -88,21 +111,51 @@ export default function Produtos() {
     setFiltered(result)
   }, [items, searchTerm, categoryFilter, dateFilterStart, dateFilterEnd])
 
+  useEffect(() => {
+    if (!nomeTouched) return
+    if (!nome.trim()) {
+      setNomeError('O nome é obrigatório')
+      return
+    }
+    const timer = setTimeout(async () => {
+      setIsCheckingNome(true)
+      const isUnique = await checkUniqueName('produtos', nome.trim(), editingItem?.id)
+      if (!isUnique) {
+        setNomeError('Este nome já está em uso')
+      } else {
+        setNomeError('')
+      }
+      setIsCheckingNome(false)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [nome, nomeTouched, editingItem?.id])
+
   const handleEdit = (item: Produto) => {
     setEditingItem(item)
     setNome(item.nome)
     setCategoriaId(item.categoria)
     setStatus(item.status)
+    setDescricao(item.descricao || '')
+    const itemSpecs = item.especificacoes || {}
+    setSpecs(Object.entries(itemSpecs).map(([key, value]) => ({ key, value: String(value) })))
+    setExistingFotos(item.fotos || [])
+    setFotosToDelete([])
+    setNewFotos([])
+    setNomeTouched(false)
+    setNomeError('')
     setActiveTab('cadastro')
   }
 
   const handleDuplicate = async (item: Produto) => {
     try {
-      await createProduto({
-        nome: item.nome + ' (Cópia)',
-        categoria: item.categoria,
-        status: item.status,
-      })
+      const formData = new FormData()
+      formData.append('nome', item.nome + ' (Cópia)')
+      formData.append('categoria', item.categoria)
+      formData.append('status', item.status)
+      if (item.descricao) formData.append('descricao', item.descricao)
+      if (item.especificacoes)
+        formData.append('especificacoes', JSON.stringify(item.especificacoes))
+      await createProduto(formData)
       toast({ title: 'Produto duplicado com sucesso' })
     } catch (error) {
       toast({ title: 'Erro ao duplicar produto', variant: 'destructive' })
@@ -119,18 +172,40 @@ export default function Produtos() {
     }
   }
 
+  const isFormValid = nome.trim() && !nomeError && !isCheckingNome && categoriaId
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!categoriaId) {
       toast({ title: 'Selecione uma categoria', variant: 'destructive' })
       return
     }
+    if (!isFormValid) return
+
     try {
+      const formData = new FormData()
+      formData.append('nome', nome.trim())
+      formData.append('categoria', categoriaId)
+      formData.append('status', status)
+      formData.append('descricao', descricao.trim())
+
+      const specsObj = specs.reduce(
+        (acc, curr) => {
+          if (curr.key.trim()) acc[curr.key.trim()] = curr.value.trim()
+          return acc
+        },
+        {} as Record<string, string>,
+      )
+      formData.append('especificacoes', JSON.stringify(specsObj))
+
+      fotosToDelete.forEach((f) => formData.append('fotos-', f))
+      newFotos.forEach((f) => formData.append('fotos', f))
+
       if (editingItem) {
-        await updateProduto(editingItem.id, { nome, categoria: categoriaId, status })
+        await updateProduto(editingItem.id, formData)
         toast({ title: 'Produto atualizado com sucesso' })
       } else {
-        await createProduto({ nome, categoria: categoriaId, status })
+        await createProduto(formData)
         toast({ title: 'Produto criado com sucesso' })
       }
       resetForm()
@@ -145,6 +220,25 @@ export default function Produtos() {
     setNome('')
     setCategoriaId('')
     setStatus('Ativo')
+    setDescricao('')
+    setSpecs([])
+    setExistingFotos([])
+    setFotosToDelete([])
+    setNewFotos([])
+    setNomeTouched(false)
+    setNomeError('')
+    if (fotosInputRef.current) fotosInputRef.current.value = ''
+  }
+
+  const handleDropFotos = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDraggingFotos(false)
+    if (e.dataTransfer.files) {
+      const files = Array.from(e.dataTransfer.files).filter(
+        (f) => f.size <= 5242880 && f.type.startsWith('image/'),
+      )
+      setNewFotos((prev) => [...prev, ...files])
+    }
   }
 
   const exportCsv = () => {
@@ -361,54 +455,239 @@ export default function Produtos() {
         </TabsContent>
 
         <TabsContent value="cadastro" className="mt-4 border bg-white rounded-md shadow-sm p-6">
-          <form onSubmit={handleSave} className="space-y-6 max-w-2xl">
-            <div className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="nome">
-                  Nome do Produto <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  required
-                  className="rounded-sm"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="categoria">
-                  Categoria <span className="text-red-500">*</span>
-                </Label>
-                <Select value={categoriaId} onValueChange={setCategoriaId} required>
-                  <SelectTrigger className="rounded-sm">
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categorias.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nome}
-                      </SelectItem>
+          <form onSubmit={handleSave} className="space-y-6 max-w-4xl">
+            <Tabs defaultValue="gerais" className="w-full">
+              <TabsList className="mb-6 bg-gray-100/50 p-1">
+                <TabsTrigger
+                  value="gerais"
+                  className="rounded-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                >
+                  Dados Gerais
+                </TabsTrigger>
+                <TabsTrigger
+                  value="especificacoes"
+                  className="rounded-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                >
+                  Especificações Técnicas
+                </TabsTrigger>
+                <TabsTrigger
+                  value="imagens"
+                  className="rounded-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                >
+                  Imagens
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="gerais" className="space-y-4 max-w-2xl">
+                <div className="grid gap-2">
+                  <Label htmlFor="nome">
+                    Nome do Produto <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="nome"
+                      value={nome}
+                      onChange={(e) => {
+                        setNome(e.target.value)
+                        setNomeTouched(true)
+                      }}
+                      className={cn('rounded-sm pr-10', nomeError && 'border-red-500')}
+                    />
+                    {isCheckingNome && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  {nomeError && <p className="text-xs text-red-500">{nomeError}</p>}
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="categoria">
+                    Categoria <span className="text-red-500">*</span>
+                  </Label>
+                  <Select value={categoriaId} onValueChange={setCategoriaId}>
+                    <SelectTrigger className="rounded-sm">
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categorias.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="status">
+                    Status <span className="text-red-500">*</span>
+                  </Label>
+                  <Select value={status} onValueChange={(v: 'Ativo' | 'Inativo') => setStatus(v)}>
+                    <SelectTrigger className="rounded-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Inativo">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="especificacoes" className="space-y-6 max-w-2xl">
+                <div className="grid gap-2">
+                  <Label htmlFor="descricao">Descrição Geral</Label>
+                  <Textarea
+                    id="descricao"
+                    value={descricao}
+                    onChange={(e) => setDescricao(e.target.value)}
+                    rows={4}
+                    className="rounded-sm"
+                    placeholder="Escreva uma descrição para o produto..."
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Atributos e Especificações</Label>
+                  <div className="space-y-2 mt-2">
+                    {specs.map((spec, idx) => (
+                      <div key={idx} className="flex gap-2 items-center">
+                        <Input
+                          placeholder="Atributo (ex: Peso)"
+                          value={spec.key}
+                          onChange={(e) => {
+                            const newSpecs = [...specs]
+                            newSpecs[idx].key = e.target.value
+                            setSpecs(newSpecs)
+                          }}
+                        />
+                        <Input
+                          placeholder="Valor (ex: 10kg)"
+                          value={spec.value}
+                          onChange={(e) => {
+                            const newSpecs = [...specs]
+                            newSpecs[idx].value = e.target.value
+                            setSpecs(newSpecs)
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setSpecs(specs.filter((_, i) => i !== idx))}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="status">
-                  Status <span className="text-red-500">*</span>
-                </Label>
-                <Select value={status} onValueChange={(v: 'Ativo' | 'Inativo') => setStatus(v)}>
-                  <SelectTrigger className="rounded-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSpecs([...specs, { key: '', value: '' }])}
+                    >
+                      + Adicionar Especificação
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="imagens" className="space-y-4">
+                <div
+                  className={cn(
+                    'border-2 border-dashed rounded-md p-8 text-center transition-colors cursor-pointer',
+                    isDraggingFotos
+                      ? 'border-[#2A75D3] bg-blue-50'
+                      : 'border-gray-300 hover:bg-gray-50',
+                  )}
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    setIsDraggingFotos(true)
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault()
+                    setIsDraggingFotos(false)
+                  }}
+                  onDrop={handleDropFotos}
+                  onClick={() => fotosInputRef.current?.click()}
+                >
+                  <div className="flex flex-col items-center justify-center text-gray-500">
+                    <UploadCloud className="w-10 h-10 mb-2 text-gray-400" />
+                    <p className="text-sm font-medium">Arraste imagens ou clique para selecionar</p>
+                    <p className="text-xs mt-1">PNG, JPG, WEBP, SVG (Max 5MB)</p>
+                  </div>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    ref={fotosInputRef}
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        const files = Array.from(e.target.files).filter(
+                          (f) => f.size <= 5242880 && f.type.startsWith('image/'),
+                        )
+                        setNewFotos((prev) => [...prev, ...files])
+                      }
+                      if (fotosInputRef.current) fotosInputRef.current.value = ''
+                    }}
+                  />
+                </div>
+
+                {(existingFotos.length > 0 || newFotos.length > 0) && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
+                    {existingFotos.map((f, i) => (
+                      <div key={i} className="relative group rounded-md overflow-hidden border">
+                        <img
+                          src={getProdutoFotoUrl(editingItem!, f)}
+                          alt="Produto"
+                          className="w-full h-24 object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFotosToDelete((prev) => [...prev, f])
+                            setExistingFotos((prev) => prev.filter((file) => file !== f))
+                          }}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {newFotos.map((f, i) => (
+                      <div
+                        key={`new-${i}`}
+                        className="relative group rounded-md overflow-hidden border"
+                      >
+                        <img
+                          src={URL.createObjectURL(f)}
+                          alt="Novo Produto"
+                          className="w-full h-24 object-cover"
+                        />
+                        <div className="absolute top-1 left-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm">
+                          Novo
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setNewFotos((prev) => prev.filter((_, idx) => idx !== i))}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+
             <div className="flex gap-2 pt-4">
-              <Button type="submit" className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm">
+              <Button
+                type="submit"
+                className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm"
+                disabled={!isFormValid}
+              >
+                {isCheckingNome && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Salvar Produto
               </Button>
               <Button

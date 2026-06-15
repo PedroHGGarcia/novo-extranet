@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { Layers, Pencil, Copy, Download, Trash2, Image as ImageIcon } from 'lucide-react'
+import {
+  Layers,
+  Pencil,
+  Copy,
+  Download,
+  Trash2,
+  Image as ImageIcon,
+  Loader2,
+  UploadCloud,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -22,12 +31,14 @@ import {
 } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
+import { cn } from '@/lib/utils'
 import {
   getCategorias,
   createCategoria,
   updateCategoria,
   deleteCategoria,
   getCategoriaLogoUrl,
+  checkUniqueName,
   CategoriaProduto,
 } from '@/services/produtos'
 
@@ -41,6 +52,12 @@ export default function Categorias() {
   const [nome, setNome] = useState('')
   const [status, setStatus] = useState<'Ativo' | 'Inativo'>('Ativo')
   const [logoFile, setLogoFile] = useState<File | null>(null)
+
+  const [nomeTouched, setNomeTouched] = useState(false)
+  const [nomeError, setNomeError] = useState('')
+  const [isCheckingNome, setIsCheckingNome] = useState(false)
+
+  const [isDraggingLogo, setIsDraggingLogo] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadData = async () => {
@@ -67,11 +84,32 @@ export default function Categorias() {
     }
   }, [items, searchTerm])
 
+  useEffect(() => {
+    if (!nomeTouched) return
+    if (!nome.trim()) {
+      setNomeError('O nome é obrigatório')
+      return
+    }
+    const timer = setTimeout(async () => {
+      setIsCheckingNome(true)
+      const isUnique = await checkUniqueName('categorias_produtos', nome.trim(), editingItem?.id)
+      if (!isUnique) {
+        setNomeError('Este nome já está em uso')
+      } else {
+        setNomeError('')
+      }
+      setIsCheckingNome(false)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [nome, nomeTouched, editingItem?.id])
+
   const handleEdit = (item: CategoriaProduto) => {
     setEditingItem(item)
     setNome(item.nome)
     setStatus(item.status)
     setLogoFile(null)
+    setNomeTouched(false)
+    setNomeError('')
     setActiveTab('cadastro')
   }
 
@@ -97,11 +135,14 @@ export default function Categorias() {
     }
   }
 
+  const isFormValid = nome.trim() && !nomeError && !isCheckingNome
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isFormValid) return
     try {
       const formData = new FormData()
-      formData.append('nome', nome)
+      formData.append('nome', nome.trim())
       formData.append('status', status)
       if (logoFile) {
         formData.append('logo', logoFile)
@@ -126,7 +167,26 @@ export default function Categorias() {
     setNome('')
     setStatus('Ativo')
     setLogoFile(null)
+    setNomeTouched(false)
+    setNomeError('')
     if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleDropLogo = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDraggingLogo(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0]
+      if (file.size <= 5242880 && file.type.startsWith('image/')) {
+        setLogoFile(file)
+      } else {
+        toast({
+          title: 'Arquivo inválido',
+          description: 'Permitido imagens até 5MB.',
+          variant: 'destructive',
+        })
+      }
+    }
   }
 
   const exportCsv = () => {
@@ -300,29 +360,84 @@ export default function Categorias() {
                 <Label htmlFor="nome">
                   Nome da Categoria <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="nome"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  required
-                  className="rounded-sm"
-                />
+                <div className="relative">
+                  <Input
+                    id="nome"
+                    value={nome}
+                    onChange={(e) => {
+                      setNome(e.target.value)
+                      setNomeTouched(true)
+                    }}
+                    className={cn('rounded-sm pr-10', nomeError && 'border-red-500')}
+                  />
+                  {isCheckingNome && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                {nomeError && <p className="text-xs text-red-500">{nomeError}</p>}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="logo">Logo</Label>
-                <Input
-                  id="logo"
-                  type="file"
-                  accept="image/*"
-                  ref={fileInputRef}
-                  onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-                  className="rounded-sm"
-                />
-                {editingItem?.logo && !logoFile && (
-                  <div className="text-sm text-gray-500 mt-1">
-                    Logo atual já carregada. Selecione outra para substituir.
-                  </div>
-                )}
+                <Label>Logo</Label>
+                <div
+                  className={cn(
+                    'border-2 border-dashed rounded-md p-6 text-center transition-colors cursor-pointer',
+                    isDraggingLogo
+                      ? 'border-[#2A75D3] bg-blue-50'
+                      : 'border-gray-300 hover:bg-gray-50',
+                  )}
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    setIsDraggingLogo(true)
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault()
+                    setIsDraggingLogo(false)
+                  }}
+                  onDrop={handleDropLogo}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {logoFile ? (
+                    <div className="flex flex-col items-center">
+                      <img
+                        src={URL.createObjectURL(logoFile)}
+                        alt="Logo"
+                        className="h-16 object-contain mb-2"
+                      />
+                      <p className="text-sm text-brand-green font-medium">{logoFile.name}</p>
+                    </div>
+                  ) : editingItem?.logo ? (
+                    <div className="flex flex-col items-center">
+                      <img
+                        src={getCategoriaLogoUrl(editingItem)!}
+                        alt="Logo"
+                        className="h-16 object-contain mb-2"
+                      />
+                      <p className="text-sm text-gray-500">
+                        Logo atual. Arraste ou clique para substituir.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center text-gray-500">
+                      <UploadCloud className="w-8 h-8 mb-2 text-gray-400" />
+                      <p className="text-sm font-medium">
+                        Arraste a logo ou clique para selecionar
+                      </p>
+                      <p className="text-xs mt-1">PNG, JPG, WEBP, SVG (Max 5MB)</p>
+                    </div>
+                  )}
+                  <input
+                    id="logo"
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={(e) => {
+                      if (e.target.files) setLogoFile(e.target.files[0])
+                    }}
+                    className="hidden"
+                  />
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="status">
@@ -340,7 +455,12 @@ export default function Categorias() {
               </div>
             </div>
             <div className="flex gap-2 pt-4">
-              <Button type="submit" className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm">
+              <Button
+                type="submit"
+                className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm"
+                disabled={!isFormValid}
+              >
+                {isCheckingNome && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Salvar Categoria
               </Button>
               <Button

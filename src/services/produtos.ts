@@ -22,11 +22,30 @@ export interface Produto {
   nome: string
   categoria: string
   status: 'Ativo' | 'Inativo'
+  descricao?: string
+  especificacoes?: Record<string, string>
+  fotos?: string[]
   created: string
   updated: string
   expand?: {
     categoria?: CategoriaProduto
   }
+}
+
+export const checkUniqueName = async (collection: string, nome: string, ignoreId?: string) => {
+  try {
+    const filter = ignoreId
+      ? pb.filter('nome = {:nome} && id != {:id}', { nome, id: ignoreId })
+      : pb.filter('nome = {:nome}', { nome })
+    const result = await pb.collection(collection).getList(1, 1, { filter })
+    return result.totalItems === 0
+  } catch {
+    return false
+  }
+}
+
+export const getProdutoFotoUrl = (record: Produto, filename: string) => {
+  return pb.files.getURL(record, filename)
 }
 
 export const getCategorias = () =>
@@ -49,7 +68,8 @@ export const deleteMarca = (id: string) => pb.collection('marcas').delete(id)
 
 export const getProdutos = () =>
   pb.collection('produtos').getFullList<Produto>({ sort: '-created', expand: 'categoria' })
-export const createProduto = (data: Partial<Produto>) => pb.collection('produtos').create(data)
-export const updateProduto = (id: string, data: Partial<Produto>) =>
+export const createProduto = (data: Partial<Produto> | FormData) =>
+  pb.collection('produtos').create(data)
+export const updateProduto = (id: string, data: Partial<Produto> | FormData) =>
   pb.collection('produtos').update(id, data)
 export const deleteProduto = (id: string) => pb.collection('produtos').delete(id)
