@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-15T18:39:47.284Z",
+  "generatedAt": "2026-06-15T18:45:50.942Z",
   "collections": [
     {
       "name": "users",
@@ -892,7 +892,7 @@
           "type": "select",
           "required": true,
           "system": false,
-          "selectValues": ["Ativo", "Inativo"]
+          "selectValues": ["Ativo", "Inativo", "Em Revisão", "Aprovado"]
         },
         {
           "name": "created",
@@ -953,6 +953,53 @@
           "required": true,
           "system": false,
           "selectValues": ["Ativo", "Inativo"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "name": "preferencias_tabela",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && user = @request.auth.id",
+        "view": "@request.auth.id != '' && user = @request.auth.id",
+        "create": "@request.auth.id != '' && user = @request.auth.id",
+        "update": "@request.auth.id != '' && user = @request.auth.id",
+        "delete": "@request.auth.id != '' && user = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "user",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "tabela_id",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "colunas_visiveis",
+          "type": "json",
+          "required": true,
+          "system": false
         },
         {
           "name": "created",

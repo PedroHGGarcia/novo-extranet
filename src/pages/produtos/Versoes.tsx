@@ -1,5 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
-import { Package, Pencil, Copy, Trash2, UploadCloud, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import {
+  Package,
+  Pencil,
+  Copy,
+  Trash2,
+  UploadCloud,
+  X,
+  LayoutDashboard,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -24,6 +35,8 @@ import { Switch } from '@/components/ui/switch'
 import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useAuth } from '@/hooks/use-auth'
+import { useTablePreferences } from '@/hooks/use-table-preferences'
+import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown'
 import { cn } from '@/lib/utils'
 import {
   getVersoes,
@@ -38,6 +51,7 @@ import {
 
 export default function Versoes() {
   const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
   const [items, setItems] = useState<Versao[]>([])
   const [modelos, setModelos] = useState<Modelo[]>([])
   const [filtered, setFiltered] = useState<Versao[]>([])
@@ -49,7 +63,9 @@ export default function Versoes() {
   const [nome, setNome] = useState('')
   const [modeloId, setModeloId] = useState('')
   const [codErp, setCodErp] = useState('')
-  const [status, setStatus] = useState<'Ativo' | 'Inativo'>('Ativo')
+  const [status, setStatus] = useState<'Ativo' | 'Inativo' | 'Em Revisão' | 'Aprovado'>(
+    'Em Revisão',
+  )
 
   const [moeda, setMoeda] = useState('BRL')
   const [valor, setValor] = useState<number>(0)
@@ -63,6 +79,22 @@ export default function Versoes() {
   const [newFoto, setNewFoto] = useState<File | null>(null)
   const [deleteFoto, setDeleteFoto] = useState(false)
   const fotoInputRef = useRef<HTMLInputElement>(null)
+
+  const colunasOptions = [
+    { id: 'modelo', label: 'Modelo' },
+    { id: 'nome', label: 'Nome' },
+    { id: 'coderp', label: 'CodErp' },
+    { id: 'imagem', label: 'Imagem' },
+    { id: 'moeda', label: 'Moeda' },
+    { id: 'valor', label: 'Valor' },
+    { id: 'fator', label: 'Fator' },
+    { id: 'fator_nac', label: 'Fator Nac.' },
+    { id: 'status', label: 'Status' },
+  ]
+  const { visibleColumns, toggleColumn } = useTablePreferences(
+    'versoes',
+    colunasOptions.map((c) => c.id),
+  )
 
   const loadData = async () => {
     try {
@@ -123,7 +155,7 @@ export default function Versoes() {
       const formData = new FormData()
       formData.append('nome', item.nome + ' (Cópia)')
       formData.append('modelo', item.modelo)
-      formData.append('status', item.status)
+      formData.append('status', 'Em Revisão')
       if (item.cod_erp) formData.append('cod_erp', item.cod_erp + '-COPY')
       formData.append('moeda', item.moeda || 'BRL')
       formData.append('valor', String(item.valor || 0))
@@ -145,6 +177,32 @@ export default function Versoes() {
       toast({ title: 'Versão excluída com sucesso' })
     } catch (error) {
       toast({ title: 'Erro ao excluir versão', variant: 'destructive' })
+    }
+  }
+
+  const handleApprove = async (id: string) => {
+    if (!isAdmin) return
+    try {
+      const formData = new FormData()
+      formData.append('status', 'Aprovado')
+      formData.append('atualizado_por', user?.id)
+      await updateVersao(id, formData)
+      toast({ title: 'Versão aprovada com sucesso' })
+    } catch (error) {
+      toast({ title: 'Erro ao aprovar versão', variant: 'destructive' })
+    }
+  }
+
+  const handleReject = async (id: string) => {
+    if (!isAdmin) return
+    try {
+      const formData = new FormData()
+      formData.append('status', 'Inativo')
+      formData.append('atualizado_por', user?.id)
+      await updateVersao(id, formData)
+      toast({ title: 'Versão rejeitada' })
+    } catch (error) {
+      toast({ title: 'Erro ao rejeitar versão', variant: 'destructive' })
     }
   }
 
@@ -191,7 +249,7 @@ export default function Versoes() {
     setNome('')
     setModeloId('')
     setCodErp('')
-    setStatus('Ativo')
+    setStatus('Em Revisão')
     setMoeda('BRL')
     setValor(0)
     setTemFator(false)
@@ -241,6 +299,21 @@ export default function Versoes() {
         >
           EXCLUIR
         </Button>
+
+        <ColumnVisibilityDropdown
+          columns={colunasOptions}
+          visibleColumns={visibleColumns}
+          onToggle={toggleColumn}
+        />
+
+        <Link to="/produtos/dashboard" className="ml-auto">
+          <Button
+            variant="outline"
+            className="rounded-sm border-brand-green text-brand-green hover:bg-brand-green hover:text-white"
+          >
+            <LayoutDashboard className="w-4 h-4 mr-2" /> Dashboard
+          </Button>
+        </Link>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -278,17 +351,36 @@ export default function Versoes() {
                   <TableHead className="w-[50px]">
                     <input type="checkbox" className="rounded border-gray-300" />
                   </TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Modelo</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Nome</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">CodErp</TableHead>
-                  <TableHead className="font-medium text-brand-cyan w-[80px]">Imagem</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Moeda</TableHead>
-                  <TableHead className="font-medium text-brand-cyan text-right">Valor</TableHead>
-                  <TableHead className="font-medium text-brand-cyan text-center">Fator</TableHead>
-                  <TableHead className="font-medium text-brand-cyan text-right">
-                    Fator Nac.
-                  </TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Status</TableHead>
+                  {visibleColumns.includes('modelo') && (
+                    <TableHead className="font-medium text-brand-cyan">Modelo</TableHead>
+                  )}
+                  {visibleColumns.includes('nome') && (
+                    <TableHead className="font-medium text-brand-cyan">Nome</TableHead>
+                  )}
+                  {visibleColumns.includes('coderp') && (
+                    <TableHead className="font-medium text-brand-cyan">CodErp</TableHead>
+                  )}
+                  {visibleColumns.includes('imagem') && (
+                    <TableHead className="font-medium text-brand-cyan w-[80px]">Imagem</TableHead>
+                  )}
+                  {visibleColumns.includes('moeda') && (
+                    <TableHead className="font-medium text-brand-cyan">Moeda</TableHead>
+                  )}
+                  {visibleColumns.includes('valor') && (
+                    <TableHead className="font-medium text-brand-cyan text-right">Valor</TableHead>
+                  )}
+                  {visibleColumns.includes('fator') && (
+                    <TableHead className="font-medium text-brand-cyan text-center">Fator</TableHead>
+                  )}
+                  {visibleColumns.includes('fator_nac') && (
+                    <TableHead className="font-medium text-brand-cyan text-right">
+                      Fator Nac.
+                    </TableHead>
+                  )}
+                  {visibleColumns.includes('status') && (
+                    <TableHead className="font-medium text-brand-cyan">Status</TableHead>
+                  )}
+                  <TableHead className="font-medium text-brand-cyan w-[100px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -297,56 +389,110 @@ export default function Versoes() {
                     <TableCell>
                       <input type="checkbox" className="rounded border-gray-300" />
                     </TableCell>
-                    <TableCell className="text-gray-600">
-                      {item.expand?.modelo?.nome || '-'}
-                    </TableCell>
+                    {visibleColumns.includes('modelo') && (
+                      <TableCell className="text-gray-600">
+                        {item.expand?.modelo?.nome || '-'}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes('nome') && (
+                      <TableCell>
+                        <div className="font-medium text-gray-700">{item.nome}</div>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-brand-green">
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="hover:underline flex items-center gap-1"
+                          >
+                            <Pencil className="w-3 h-3" /> Editar
+                          </button>
+                          <button
+                            onClick={() => handleDuplicate(item)}
+                            className="hover:underline flex items-center gap-1"
+                          >
+                            <Copy className="w-3 h-3" /> Duplicar
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="text-red-500 hover:underline flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3 h-3" /> Excluir
+                          </button>
+                        </div>
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes('coderp') && (
+                      <TableCell className="text-gray-600">{item.cod_erp || '-'}</TableCell>
+                    )}
+                    {visibleColumns.includes('imagem') && (
+                      <TableCell>
+                        {item.imagem_preview && (
+                          <img
+                            src={getVersaoImagemUrl(item, item.imagem_preview)}
+                            className="h-10 w-10 object-contain rounded"
+                            alt={item.nome}
+                          />
+                        )}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes('moeda') && (
+                      <TableCell className="text-gray-600">{item.moeda}</TableCell>
+                    )}
+                    {visibleColumns.includes('valor') && (
+                      <TableCell className="text-gray-600 text-right">
+                        {Number(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes('fator') && (
+                      <TableCell className="text-gray-600 text-center">
+                        {item.tem_fator ? 'Sim' : 'Não'}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes('fator_nac') && (
+                      <TableCell className="text-gray-600 text-right">
+                        {Number(item.fator_nac).toLocaleString('pt-BR', {
+                          minimumFractionDigits: 6,
+                        })}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes('status') && (
+                      <TableCell>
+                        <Badge
+                          className={cn(
+                            item.status === 'Ativo'
+                              ? 'bg-green-500'
+                              : item.status === 'Inativo'
+                                ? 'bg-gray-400'
+                                : item.status === 'Em Revisão'
+                                  ? 'bg-amber-500'
+                                  : 'bg-blue-500', // Aprovado
+                          )}
+                        >
+                          {item.status}
+                        </Badge>
+                      </TableCell>
+                    )}
                     <TableCell>
-                      <div className="font-medium text-gray-700">{item.nome}</div>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-brand-green">
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="hover:underline flex items-center gap-1"
-                        >
-                          <Pencil className="w-3 h-3" /> Editar
-                        </button>
-                        <button
-                          onClick={() => handleDuplicate(item)}
-                          className="hover:underline flex items-center gap-1"
-                        >
-                          <Copy className="w-3 h-3" /> Duplicar
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="text-red-500 hover:underline flex items-center gap-1"
-                        >
-                          <Trash2 className="w-3 h-3" /> Excluir
-                        </button>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-gray-600">{item.cod_erp || '-'}</TableCell>
-                    <TableCell>
-                      {item.imagem_preview && (
-                        <img
-                          src={getVersaoImagemUrl(item, item.imagem_preview)}
-                          className="h-10 w-10 object-contain rounded"
-                          alt={item.nome}
-                        />
+                      {item.status === 'Em Revisão' && isAdmin && (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => handleApprove(item.id)}
+                            title="Aprovar"
+                          >
+                            <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleReject(item.id)}
+                            title="Rejeitar"
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
                       )}
-                    </TableCell>
-                    <TableCell className="text-gray-600">{item.moeda}</TableCell>
-                    <TableCell className="text-gray-600 text-right">
-                      {Number(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-gray-600 text-center">
-                      {item.tem_fator ? 'Sim' : 'Não'}
-                    </TableCell>
-                    <TableCell className="text-gray-600 text-right">
-                      {Number(item.fator_nac).toLocaleString('pt-BR', { minimumFractionDigits: 6 })}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={item.status === 'Ativo' ? 'bg-green-500' : 'bg-gray-400'}>
-                        {item.status}
-                      </Badge>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -432,11 +578,13 @@ export default function Versoes() {
                     <Label>
                       Status <span className="text-red-500">*</span>
                     </Label>
-                    <Select value={status} onValueChange={(v: 'Ativo' | 'Inativo') => setStatus(v)}>
+                    <Select value={status} onValueChange={(v: any) => setStatus(v)}>
                       <SelectTrigger className="rounded-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="Em Revisão">Em Revisão</SelectItem>
+                        {isAdmin && <SelectItem value="Aprovado">Aprovado</SelectItem>}
                         <SelectItem value="Ativo">Ativo</SelectItem>
                         <SelectItem value="Inativo">Inativo</SelectItem>
                       </SelectContent>

@@ -32,6 +32,10 @@ import {
 import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
 import { cn } from '@/lib/utils'
+import { Link } from 'react-router-dom'
+import { useTablePreferences } from '@/hooks/use-table-preferences'
+import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown'
+import { LayoutDashboard } from 'lucide-react'
 import {
   getCategorias,
   createCategoria,
@@ -59,6 +63,17 @@ export default function Categorias() {
 
   const [isDraggingLogo, setIsDraggingLogo] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const colunasOptions = [
+    { id: 'nome', label: 'Nome' },
+    { id: 'logo', label: 'Logo' },
+    { id: 'dt_cad', label: 'Dt Cad.' },
+    { id: 'status', label: 'Status' },
+  ]
+  const { visibleColumns, toggleColumn } = useTablePreferences(
+    'categorias',
+    colunasOptions.map((c) => c.id),
+  )
 
   const loadData = async () => {
     try {
@@ -233,13 +248,28 @@ export default function Categorias() {
         >
           EXCLUIR
         </Button>
-        <Button
-          onClick={exportCsv}
-          variant="outline"
-          className="ml-auto rounded-sm border-brand-green text-brand-green hover:bg-brand-green hover:text-white"
-        >
-          <Download className="w-4 h-4 mr-2" /> Exportar CSV
-        </Button>
+        <ColumnVisibilityDropdown
+          columns={colunasOptions}
+          visibleColumns={visibleColumns}
+          onToggle={toggleColumn}
+        />
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            onClick={exportCsv}
+            variant="outline"
+            className="rounded-sm border-brand-green text-brand-green hover:bg-brand-green hover:text-white"
+          >
+            <Download className="w-4 h-4 mr-2" /> Exportar CSV
+          </Button>
+          <Link to="/produtos/dashboard">
+            <Button
+              variant="outline"
+              className="rounded-sm border-brand-green text-brand-green hover:bg-brand-green hover:text-white"
+            >
+              <LayoutDashboard className="w-4 h-4 mr-2" /> Dashboard
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -277,10 +307,18 @@ export default function Categorias() {
                   <TableHead className="w-[50px]">
                     <input type="checkbox" className="rounded border-gray-300" />
                   </TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Nome</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Logo</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Dt Cad.</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Status</TableHead>
+                  {visibleColumns.includes('nome') && (
+                    <TableHead className="font-medium text-brand-cyan">Nome</TableHead>
+                  )}
+                  {visibleColumns.includes('logo') && (
+                    <TableHead className="font-medium text-brand-cyan">Logo</TableHead>
+                  )}
+                  {visibleColumns.includes('dt_cad') && (
+                    <TableHead className="font-medium text-brand-cyan">Dt Cad.</TableHead>
+                  )}
+                  {visibleColumns.includes('status') && (
+                    <TableHead className="font-medium text-brand-cyan">Status</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -289,56 +327,64 @@ export default function Categorias() {
                     <TableCell>
                       <input type="checkbox" className="rounded border-gray-300" />
                     </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-gray-700">{item.nome}</div>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-brand-green">
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="hover:underline flex items-center gap-1"
-                        >
-                          <Pencil className="w-3 h-3" /> Editar
-                        </button>
-                        <button
-                          onClick={() => handleDuplicate(item)}
-                          className="hover:underline flex items-center gap-1"
-                        >
-                          <Copy className="w-3 h-3" /> Duplicar
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="text-red-500 hover:underline flex items-center gap-1"
-                        >
-                          <Trash2 className="w-3 h-3" /> Excluir
-                        </button>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {item.logo ? (
-                        <img
-                          src={getCategoriaLogoUrl(item) || ''}
-                          alt="Logo"
-                          className="h-10 object-contain"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 bg-gray-100 flex items-center justify-center rounded text-gray-400">
-                          <ImageIcon className="w-5 h-5" />
+                    {visibleColumns.includes('nome') && (
+                      <TableCell>
+                        <div className="font-medium text-gray-700">{item.nome}</div>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-brand-green">
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="hover:underline flex items-center gap-1"
+                          >
+                            <Pencil className="w-3 h-3" /> Editar
+                          </button>
+                          <button
+                            onClick={() => handleDuplicate(item)}
+                            className="hover:underline flex items-center gap-1"
+                          >
+                            <Copy className="w-3 h-3" /> Duplicar
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="text-red-500 hover:underline flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3 h-3" /> Excluir
+                          </button>
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-gray-600">
-                      {new Date(item.created).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          item.status === 'Ativo'
-                            ? 'bg-green-500 hover:bg-green-600'
-                            : 'bg-gray-400 hover:bg-gray-500'
-                        }
-                      >
-                        {item.status}
-                      </Badge>
-                    </TableCell>
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes('logo') && (
+                      <TableCell>
+                        {item.logo ? (
+                          <img
+                            src={getCategoriaLogoUrl(item) || ''}
+                            alt="Logo"
+                            className="h-10 object-contain"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-100 flex items-center justify-center rounded text-gray-400">
+                            <ImageIcon className="w-5 h-5" />
+                          </div>
+                        )}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes('dt_cad') && (
+                      <TableCell className="text-gray-600">
+                        {new Date(item.created).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes('status') && (
+                      <TableCell>
+                        <Badge
+                          className={
+                            item.status === 'Ativo'
+                              ? 'bg-green-500 hover:bg-green-600'
+                              : 'bg-gray-400 hover:bg-gray-500'
+                          }
+                        >
+                          {item.status}
+                        </Badge>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (

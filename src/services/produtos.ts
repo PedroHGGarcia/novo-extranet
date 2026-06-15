@@ -99,7 +99,7 @@ export interface Versao {
   tem_fator?: boolean
   fator_nac?: number
   atualizado_por?: string
-  status: 'Ativo' | 'Inativo'
+  status: 'Ativo' | 'Inativo' | 'Em Revisão' | 'Aprovado'
   created: string
   updated: string
   expand?: {
