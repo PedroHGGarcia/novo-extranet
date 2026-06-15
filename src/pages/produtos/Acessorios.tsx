@@ -282,7 +282,7 @@ export default function Acessorios() {
       <div className="flex items-center gap-1 mb-4 bg-gray-100 p-2 rounded-sm border border-gray-200">
         <Button
           onClick={() => setActiveTab('registros')}
-          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4"
+          className="bg-primary hover:bg-primary/90 rounded-none h-8 text-xs font-semibold px-4"
         >
           PESQUISAR
         </Button>
@@ -292,7 +292,7 @@ export default function Acessorios() {
             setActiveTab('cadastro')
             setActiveSubTab('dados')
           }}
-          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4"
+          className="bg-primary hover:bg-primary/90 rounded-none h-8 text-xs font-semibold px-4"
         >
           NOVO
         </Button>
@@ -300,7 +300,7 @@ export default function Acessorios() {
           <Button
             onClick={handleDeleteSelected}
             disabled={selectedIds.length === 0}
-            className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4"
+            className="bg-primary hover:bg-primary/90 rounded-none h-8 text-xs font-semibold px-4"
           >
             EXCLUIR
           </Button>
@@ -308,7 +308,7 @@ export default function Acessorios() {
         {activeTab === 'cadastro' && (
           <Button
             onClick={handleSave}
-            className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4"
+            className="bg-primary hover:bg-primary/90 rounded-none h-8 text-xs font-semibold px-4"
           >
             SALVAR
           </Button>
@@ -401,13 +401,13 @@ export default function Acessorios() {
                         <TableCell className="py-2">
                           <button
                             onClick={() => handleEdit(item)}
-                            className="text-[#2A75D3] text-[11px] hover:underline flex items-center gap-1 mb-1"
+                            className="text-primary text-[11px] hover:underline flex items-center gap-1 mb-1"
                           >
                             <Pencil className="w-3 h-3" /> Editar
                           </button>
                           <button
                             onClick={() => handleDuplicate(item)}
-                            className="text-[#2A75D3] text-[11px] hover:underline flex items-center gap-1"
+                            className="text-primary text-[11px] hover:underline flex items-center gap-1"
                           >
                             <Copy className="w-3 h-3" /> Duplicar
                           </button>
@@ -481,20 +481,20 @@ export default function Acessorios() {
             <TabsList className="bg-transparent border-b rounded-none w-full justify-start h-auto p-0 mb-4">
               <TabsTrigger
                 value="dados"
-                className="rounded-none border border-transparent data-[state=active]:border-blue-500 data-[state=active]:border-b-blue-500 data-[state=active]:text-blue-700 px-4 py-2 -mb-[1px] bg-transparent text-gray-500"
+                className="rounded-none border border-transparent data-[state=active]:border-primary data-[state=active]:border-b-primary data-[state=active]:text-primary px-4 py-2 -mb-[1px] bg-transparent text-gray-500"
               >
                 Dados Gerais
               </TabsTrigger>
               <TabsTrigger
                 value="especificacoes"
-                className="rounded-none border border-transparent data-[state=active]:border-blue-500 data-[state=active]:border-b-blue-500 data-[state=active]:text-blue-700 px-4 py-2 -mb-[1px] bg-transparent text-gray-500"
+                className="rounded-none border border-transparent data-[state=active]:border-primary data-[state=active]:border-b-primary data-[state=active]:text-primary px-4 py-2 -mb-[1px] bg-transparent text-gray-500"
               >
                 Especificações Técnicas
               </TabsTrigger>
               {editingId && (
                 <TabsTrigger
                   value="historico"
-                  className="rounded-none border border-transparent data-[state=active]:border-blue-500 data-[state=active]:border-b-blue-500 data-[state=active]:text-blue-700 px-4 py-2 -mb-[1px] bg-transparent text-gray-500"
+                  className="rounded-none border border-transparent data-[state=active]:border-primary data-[state=active]:border-b-primary data-[state=active]:text-primary px-4 py-2 -mb-[1px] bg-transparent text-gray-500"
                 >
                   Histórico
                 </TabsTrigger>
@@ -503,7 +503,7 @@ export default function Acessorios() {
 
             <TabsContent
               value="dados"
-              className="mt-0 border border-blue-200 rounded-sm bg-white shadow-sm p-4 space-y-4 max-w-4xl"
+              className="mt-0 border border-primary/20 rounded-sm bg-white shadow-sm p-4 space-y-4 max-w-4xl"
             >
               <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-8 flex flex-col">
@@ -678,7 +678,7 @@ export default function Acessorios() {
 
             <TabsContent
               value="especificacoes"
-              className="mt-0 border border-blue-200 rounded-sm bg-white shadow-sm p-4 space-y-4 max-w-4xl"
+              className="mt-0 border border-primary/20 rounded-sm bg-white shadow-sm p-4 space-y-4 max-w-4xl"
             >
               <div className="flex justify-between items-center">
                 <label className="text-[11px] text-gray-500 font-semibold">
@@ -708,7 +708,7 @@ export default function Acessorios() {
             </TabsContent>
 
             <TabsContent value="historico" className="mt-0">
-              <div className="border border-blue-200 rounded-sm bg-white shadow-sm p-4 max-w-4xl">
+              <div className="border border-primary/20 rounded-sm bg-white shadow-sm p-4 max-w-4xl">
                 {historico.length === 0 ? (
                   <div className="text-center py-8 text-gray-500 text-sm">
                     Nenhum histórico encontrado.
