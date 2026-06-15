@@ -98,6 +98,20 @@ export interface Versao {
   valor?: number
   tem_fator?: boolean
   fator_nac?: number
+
+  nome_abreviado?: string
+  tem_estoque?: boolean
+  desconto_max_representante?: number
+  desconto_max_bener?: number
+  estoque_total?: number
+  estoque_bloqueado?: number
+  estoque_reservado?: number
+  estoque_disponivel?: number
+  acessorios_standards?: string
+  caracteristicas_construtivas?: string
+  especificacoes_tecnicas?: string
+  tipos_proposta?: string[]
+
   atualizado_por?: string
   status: 'Ativo' | 'Inativo' | 'Em Revisão' | 'Aprovado'
   created: string

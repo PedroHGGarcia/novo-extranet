@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-15T18:45:50.942Z",
+  "generatedAt": "2026-06-15T18:57:41.602Z",
   "collections": [
     {
       "name": "users",
@@ -907,6 +907,78 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "nome_abreviado",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tem_estoque",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "desconto_max_representante",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "desconto_max_bener",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "estoque_total",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "estoque_bloqueado",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "estoque_reservado",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "estoque_disponivel",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "acessorios_standards",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "caracteristicas_construtivas",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "especificacoes_tecnicas",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tipos_proposta",
+          "type": "json",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": ["CREATE UNIQUE INDEX idx_versoes_coderp ON versoes (cod_erp) WHERE cod_erp != ''"]

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
 import {
   Package,
   Pencil,
@@ -7,9 +6,9 @@ import {
   Trash2,
   UploadCloud,
   X,
-  LayoutDashboard,
-  CheckCircle2,
-  XCircle,
+  FileText,
+  ListChecks,
+  Undo2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,7 +22,6 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -31,12 +29,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
 import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useAuth } from '@/hooks/use-auth'
 import { useTablePreferences } from '@/hooks/use-table-preferences'
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown'
+import { RichTextEditor } from '@/components/RichTextEditor'
 import { cn } from '@/lib/utils'
 import {
   getVersoes,
@@ -49,6 +47,46 @@ import {
   Modelo,
 } from '@/services/produtos'
 
+const PROPOSTAS_OPTIONS = [
+  'AT - Importação Direta com 12% - 2022',
+  'AT - Importação Direta: Incluso 12% + Impostos - 2024',
+  'AT - Importação Direta: Incluso 13% - 2024',
+  'AT - Importação Direta: Incluso 18% - 2024',
+  'AT - Importação Direta: SEM 13% - 2025',
+  'Capas (Apenas efeito sequencial)',
+  'CNC - Nacionalizada - 2022',
+  'CNC - Nacionalizada - Em trânsito - 2022',
+  'CNC - Nacionalizada - Em trânsito - MVK 2616 Pro2024',
+  'Convencional - Nacionalizada - 2022',
+  'Convencional - Nacionalizada - Em trânsito - 2022',
+  'ENTREPOSTO - Importação Direta com 12% - 2022',
+  'FCS Importação Direta (FOB): SEM % - 2026',
+  'FCS Nacionalizada: SEM % - 2026',
+  'Importação Direta 12% + Impostos - 2024',
+  'Importação Direta com 10% - 2022',
+  'Importação Direta com 12% - 2022',
+  'Importação Direta com 12% - Akira Seiki CIF (Estoque)',
+  'Importação Direta com 12% - iCUT CIF',
+  'Importação Direta sem 12% - 2023',
+  'Importação Direta: Incluso 12% + Impostos - MVK 2616 Pro2024',
+  'Impressão 3D - STRATASYS - Importação Direta',
+  'Impressão 3D - STRATASYS - Nacionalizada',
+  'KBN - Importação Direta com 12% - FOB - 2022 (Inativo)',
+  'KBN - Importação Direta: Incluso 12% + Impostos - 2024',
+  'MAKINO - Aluguel - 2025 48x',
+  'MAKINO - Faturamento BENER - 2025',
+  'MITSUBISHI - Importação Direta: Incluso 12% + Impostos - 2026',
+  'MVK L - Importação Direta com 15% - 2022',
+  'Nacionalizada',
+  'Nacionalizada - Conteúdo Importado',
+  'Nacionalizada - Estoque Coreia',
+  'Nacionalizada - Reformada',
+  'PRIMINER - Nacionalizada - MaaS 2025 36x',
+  'SEYI - Imp. Direta: Incluso 12% + Imp - 120 dias - 10dias/2tecn - SNS2',
+  'SISMA - AT - Gravação a laser - Importação Direta - 2022',
+  'Torno Cabeçote Móvel - TORNOS - Importação Direta',
+]
+
 export default function Versoes() {
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
@@ -60,22 +98,35 @@ export default function Versoes() {
   const [activeTab, setActiveTab] = useState('registros')
   const [editingItem, setEditingItem] = useState<Versao | null>(null)
 
+  // Form States
   const [nome, setNome] = useState('')
+  const [status, setStatus] = useState<'Ativo' | 'Inativo' | 'Em Revisão' | 'Aprovado'>('Ativo')
+  const [nomeAbreviado, setNomeAbreviado] = useState('')
   const [modeloId, setModeloId] = useState('')
   const [codErp, setCodErp] = useState('')
-  const [status, setStatus] = useState<'Ativo' | 'Inativo' | 'Em Revisão' | 'Aprovado'>(
-    'Em Revisão',
-  )
 
   const [moeda, setMoeda] = useState('BRL')
   const [valor, setValor] = useState<number>(0)
   const [temFator, setTemFator] = useState(false)
   const [fatorNac, setFatorNac] = useState<number>(1)
 
-  const [nomeTouched, setNomeTouched] = useState(false)
-  const [nomeError, setNomeError] = useState('')
+  const [temEstoque, setTemEstoque] = useState(false)
+  const [descMaxRep, setDescMaxRep] = useState(0)
+  const [descMaxBener, setDescMaxBener] = useState(0)
 
-  const [isDragging, setIsDragging] = useState(false)
+  const [estoqueTotal, setEstoqueTotal] = useState(0)
+  const [estoqueBloqueado, setEstoqueBloqueado] = useState(0)
+  const [estoqueReservado, setEstoqueReservado] = useState(0)
+  const [estoqueDisponivel, setEstoqueDisponivel] = useState(0)
+
+  const [acessorios, setAcessorios] = useState('')
+  const [caracteristicas, setCaracteristicas] = useState('')
+  const [especificacoes, setEspecificacoes] = useState('')
+  const [tiposProposta, setTiposProposta] = useState<string[]>([])
+
+  const [nomeError, setNomeError] = useState(false)
+  const [modeloError, setModeloError] = useState(false)
+
   const [newFoto, setNewFoto] = useState<File | null>(null)
   const [deleteFoto, setDeleteFoto] = useState(false)
   const fotoInputRef = useRef<HTMLInputElement>(null)
@@ -87,12 +138,10 @@ export default function Versoes() {
     { id: 'imagem', label: 'Imagem' },
     { id: 'moeda', label: 'Moeda' },
     { id: 'valor', label: 'Valor' },
-    { id: 'fator', label: 'Fator' },
-    { id: 'fator_nac', label: 'Fator Nac.' },
     { id: 'status', label: 'Status' },
   ]
   const { visibleColumns, toggleColumn } = useTablePreferences(
-    'versoes',
+    'versoes_bener',
     colunasOptions.map((c) => c.id),
   )
 
@@ -124,50 +173,34 @@ export default function Versoes() {
     setFiltered(result)
   }, [items, searchTerm])
 
-  useEffect(() => {
-    if (!nomeTouched) return
-    if (!nome.trim()) {
-      setNomeError('O nome é obrigatório')
-      return
-    }
-    setNomeError('')
-  }, [nome, nomeTouched])
-
   const handleEdit = (item: Versao) => {
     setEditingItem(item)
     setNome(item.nome)
+    setStatus(item.status)
+    setNomeAbreviado(item.nome_abreviado || '')
     setModeloId(item.modelo)
     setCodErp(item.cod_erp || '')
-    setStatus(item.status)
     setMoeda(item.moeda || 'BRL')
     setValor(item.valor || 0)
     setTemFator(item.tem_fator || false)
     setFatorNac(item.fator_nac || 1)
+    setTemEstoque(item.tem_estoque || false)
+    setDescMaxRep(item.desconto_max_representante || 0)
+    setDescMaxBener(item.desconto_max_bener || 0)
+    setEstoqueTotal(item.estoque_total || 0)
+    setEstoqueBloqueado(item.estoque_bloqueado || 0)
+    setEstoqueReservado(item.estoque_reservado || 0)
+    setEstoqueDisponivel(item.estoque_disponivel || 0)
+    setAcessorios(item.acessorios_standards || '')
+    setCaracteristicas(item.caracteristicas_construtivas || '')
+    setEspecificacoes(item.especificacoes_tecnicas || '')
+    setTiposProposta(item.tipos_proposta || [])
+
     setNewFoto(null)
     setDeleteFoto(false)
-    setNomeTouched(false)
-    setNomeError('')
+    setNomeError(false)
+    setModeloError(false)
     setActiveTab('cadastro')
-  }
-
-  const handleDuplicate = async (item: Versao) => {
-    try {
-      const formData = new FormData()
-      formData.append('nome', item.nome + ' (Cópia)')
-      formData.append('modelo', item.modelo)
-      formData.append('status', 'Em Revisão')
-      if (item.cod_erp) formData.append('cod_erp', item.cod_erp + '-COPY')
-      formData.append('moeda', item.moeda || 'BRL')
-      formData.append('valor', String(item.valor || 0))
-      formData.append('tem_fator', String(item.tem_fator || false))
-      formData.append('fator_nac', String(item.fator_nac || 1))
-      formData.append('atualizado_por', user?.id)
-
-      await createVersao(formData)
-      toast({ title: 'Versão duplicada com sucesso' })
-    } catch (error) {
-      toast({ title: 'Erro ao duplicar versão', variant: 'destructive' })
-    }
   }
 
   const handleDelete = async (id: string) => {
@@ -180,48 +213,44 @@ export default function Versoes() {
     }
   }
 
-  const handleApprove = async (id: string) => {
-    if (!isAdmin) return
-    try {
-      const formData = new FormData()
-      formData.append('status', 'Aprovado')
-      formData.append('atualizado_por', user?.id)
-      await updateVersao(id, formData)
-      toast({ title: 'Versão aprovada com sucesso' })
-    } catch (error) {
-      toast({ title: 'Erro ao aprovar versão', variant: 'destructive' })
+  const isFormValid = nome.trim() && modeloId
+
+  const handleSave = async () => {
+    setNomeError(!nome.trim())
+    setModeloError(!modeloId)
+
+    if (!isFormValid) {
+      toast({ title: 'Preencha os campos obrigatórios', variant: 'destructive' })
+      return
     }
-  }
 
-  const handleReject = async (id: string) => {
-    if (!isAdmin) return
-    try {
-      const formData = new FormData()
-      formData.append('status', 'Inativo')
-      formData.append('atualizado_por', user?.id)
-      await updateVersao(id, formData)
-      toast({ title: 'Versão rejeitada' })
-    } catch (error) {
-      toast({ title: 'Erro ao rejeitar versão', variant: 'destructive' })
-    }
-  }
-
-  const isFormValid = nome.trim() && !nomeError && modeloId
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!isFormValid) return
     try {
       const formData = new FormData()
       formData.append('nome', nome.trim())
+      formData.append('status', status)
+      formData.append('nome_abreviado', nomeAbreviado.trim())
       formData.append('modelo', modeloId)
       formData.append('cod_erp', codErp.trim())
-      formData.append('status', status)
       formData.append('moeda', moeda)
       formData.append('valor', String(valor))
       formData.append('tem_fator', String(temFator))
       formData.append('fator_nac', String(fatorNac))
+      formData.append('tem_estoque', String(temEstoque))
+      formData.append('desconto_max_representante', String(descMaxRep))
+      formData.append('desconto_max_bener', String(descMaxBener))
+
+      formData.append('acessorios_standards', acessorios)
+      formData.append('caracteristicas_construtivas', caracteristicas)
+      formData.append('especificacoes_tecnicas', especificacoes)
+      formData.append('tipos_proposta', JSON.stringify(tiposProposta))
       formData.append('atualizado_por', user?.id)
+
+      if (!editingItem) {
+        formData.append('estoque_total', '0')
+        formData.append('estoque_bloqueado', '0')
+        formData.append('estoque_reservado', '0')
+        formData.append('estoque_disponivel', '0')
+      }
 
       if (deleteFoto) {
         formData.append('imagem_preview', '')
@@ -236,51 +265,58 @@ export default function Versoes() {
       resetForm()
       setActiveTab('registros')
     } catch (error: any) {
-      if (error?.response?.data?.cod_erp?.code === 'validation_not_unique') {
-        toast({ title: 'Código ERP já existe', variant: 'destructive' })
-      } else {
-        toast({ title: 'Erro ao salvar versão', variant: 'destructive' })
-      }
+      toast({ title: 'Erro ao salvar versão', description: error.message, variant: 'destructive' })
     }
   }
 
   const resetForm = () => {
     setEditingItem(null)
     setNome('')
+    setStatus('Ativo')
+    setNomeAbreviado('')
     setModeloId('')
     setCodErp('')
-    setStatus('Em Revisão')
     setMoeda('BRL')
     setValor(0)
     setTemFator(false)
     setFatorNac(1)
+    setTemEstoque(false)
+    setDescMaxRep(0)
+    setDescMaxBener(0)
+    setEstoqueTotal(0)
+    setEstoqueBloqueado(0)
+    setEstoqueReservado(0)
+    setEstoqueDisponivel(0)
+    setAcessorios('')
+    setCaracteristicas('')
+    setEspecificacoes('')
+    setTiposProposta([])
     setNewFoto(null)
     setDeleteFoto(false)
-    setNomeTouched(false)
-    setNomeError('')
+    setNomeError(false)
+    setModeloError(false)
     if (fotoInputRef.current) fotoInputRef.current.value = ''
   }
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const f = e.dataTransfer.files[0]
-      if (f.size <= 5242880 && f.type.startsWith('image/')) setNewFoto(f)
+  const toggleProposta = (opt: string) => {
+    if (tiposProposta.includes(opt)) {
+      setTiposProposta(tiposProposta.filter((t) => t !== opt))
+    } else {
+      setTiposProposta([...tiposProposta, opt])
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-6 text-gray-800">
+    <div className="space-y-6 max-w-full overflow-hidden">
+      <div className="flex items-center gap-2 mb-2 text-gray-800">
         <Package className="h-6 w-6" />
         <h1 className="text-2xl font-normal">Versões</h1>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 mb-4">
+      <div className="flex items-center gap-1 mb-4 bg-gray-100 p-2 rounded-sm border border-gray-200">
         <Button
           onClick={() => setActiveTab('registros')}
-          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm"
+          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4"
         >
           PESQUISAR
         </Button>
@@ -289,445 +325,492 @@ export default function Versoes() {
             resetForm()
             setActiveTab('cadastro')
           }}
-          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm"
+          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4"
         >
           NOVO
         </Button>
         <Button
-          variant="outline"
-          className="bg-[#2A75D3] text-white hover:bg-[#2A75D3]/90 hover:text-white rounded-sm border-0"
+          onClick={handleSave}
+          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4"
+          disabled={activeTab !== 'cadastro'}
         >
-          EXCLUIR
+          SALVAR
+        </Button>
+        <Button
+          onClick={resetForm}
+          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 px-3"
+          title="Desfazer/Resetar"
+          disabled={activeTab !== 'cadastro'}
+        >
+          <Undo2 className="h-4 w-4" />
         </Button>
 
-        <ColumnVisibilityDropdown
-          columns={colunasOptions}
-          visibleColumns={visibleColumns}
-          onToggle={toggleColumn}
-        />
-
-        <Link to="/produtos/dashboard" className="ml-auto">
-          <Button
-            variant="outline"
-            className="rounded-sm border-brand-green text-brand-green hover:bg-brand-green hover:text-white"
-          >
-            <LayoutDashboard className="w-4 h-4 mr-2" /> Dashboard
-          </Button>
-        </Link>
+        <div className="ml-auto">
+          <ColumnVisibilityDropdown
+            columns={colunasOptions}
+            visibleColumns={visibleColumns}
+            onToggle={toggleColumn}
+          />
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-transparent border-b rounded-none w-full justify-start h-auto p-0">
+        <TabsList className="bg-transparent border-b rounded-none w-full justify-start h-auto p-0 mb-4">
           <TabsTrigger
             value="registros"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#2A75D3] data-[state=active]:text-[#2A75D3] px-6 py-2"
+            className="rounded-none border border-transparent data-[state=active]:border-gray-300 data-[state=active]:border-b-white data-[state=active]:bg-white data-[state=active]:text-gray-800 px-6 py-2 -mb-[1px] bg-gray-50 text-gray-500"
           >
             Registros
           </TabsTrigger>
           <TabsTrigger
             value="cadastro"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#2A75D3] data-[state=active]:text-[#2A75D3] px-6 py-2"
+            className="rounded-none border border-transparent data-[state=active]:border-gray-300 data-[state=active]:border-b-white data-[state=active]:bg-white data-[state=active]:text-gray-800 px-6 py-2 -mb-[1px] bg-gray-50 text-gray-500"
           >
             Cadastro
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent
-          value="registros"
-          className="mt-4 border bg-white rounded-md shadow-sm overflow-hidden"
-        >
-          <div className="p-4 border-b">
-            <Input
-              placeholder="Buscar por nome ou ERP..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm rounded-sm"
-            />
-          </div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-gray-50/50">
-                <TableRow>
-                  <TableHead className="w-[50px]">
-                    <input type="checkbox" className="rounded border-gray-300" />
-                  </TableHead>
-                  {visibleColumns.includes('modelo') && (
-                    <TableHead className="font-medium text-brand-cyan">Modelo</TableHead>
-                  )}
-                  {visibleColumns.includes('nome') && (
-                    <TableHead className="font-medium text-brand-cyan">Nome</TableHead>
-                  )}
-                  {visibleColumns.includes('coderp') && (
-                    <TableHead className="font-medium text-brand-cyan">CodErp</TableHead>
-                  )}
-                  {visibleColumns.includes('imagem') && (
-                    <TableHead className="font-medium text-brand-cyan w-[80px]">Imagem</TableHead>
-                  )}
-                  {visibleColumns.includes('moeda') && (
-                    <TableHead className="font-medium text-brand-cyan">Moeda</TableHead>
-                  )}
-                  {visibleColumns.includes('valor') && (
-                    <TableHead className="font-medium text-brand-cyan text-right">Valor</TableHead>
-                  )}
-                  {visibleColumns.includes('fator') && (
-                    <TableHead className="font-medium text-brand-cyan text-center">Fator</TableHead>
-                  )}
-                  {visibleColumns.includes('fator_nac') && (
-                    <TableHead className="font-medium text-brand-cyan text-right">
-                      Fator Nac.
-                    </TableHead>
-                  )}
-                  {visibleColumns.includes('status') && (
-                    <TableHead className="font-medium text-brand-cyan">Status</TableHead>
-                  )}
-                  <TableHead className="font-medium text-brand-cyan w-[100px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((item) => (
-                  <TableRow key={item.id} className="hover:bg-gray-50/50">
-                    <TableCell>
-                      <input type="checkbox" className="rounded border-gray-300" />
-                    </TableCell>
+        <TabsContent value="registros" className="mt-0">
+          <div className="border bg-white rounded-sm shadow-sm overflow-hidden">
+            <div className="p-3 border-b bg-gray-50">
+              <Input
+                placeholder="Buscar por nome ou ERP..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm h-8 text-sm bg-white"
+              />
+            </div>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-white">
+                  <TableRow className="border-b border-gray-200 hover:bg-transparent">
                     {visibleColumns.includes('modelo') && (
-                      <TableCell className="text-gray-600">
-                        {item.expand?.modelo?.nome || '-'}
-                      </TableCell>
+                      <TableHead className="font-semibold text-gray-600">Modelo</TableHead>
                     )}
                     {visibleColumns.includes('nome') && (
-                      <TableCell>
-                        <div className="font-medium text-gray-700">{item.nome}</div>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-brand-green">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="hover:underline flex items-center gap-1"
-                          >
-                            <Pencil className="w-3 h-3" /> Editar
-                          </button>
-                          <button
-                            onClick={() => handleDuplicate(item)}
-                            className="hover:underline flex items-center gap-1"
-                          >
-                            <Copy className="w-3 h-3" /> Duplicar
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="text-red-500 hover:underline flex items-center gap-1"
-                          >
-                            <Trash2 className="w-3 h-3" /> Excluir
-                          </button>
-                        </div>
-                      </TableCell>
+                      <TableHead className="font-semibold text-gray-600">Nome</TableHead>
                     )}
                     {visibleColumns.includes('coderp') && (
-                      <TableCell className="text-gray-600">{item.cod_erp || '-'}</TableCell>
+                      <TableHead className="font-semibold text-gray-600">CodErp</TableHead>
                     )}
                     {visibleColumns.includes('imagem') && (
-                      <TableCell>
-                        {item.imagem_preview && (
-                          <img
-                            src={getVersaoImagemUrl(item, item.imagem_preview)}
-                            className="h-10 w-10 object-contain rounded"
-                            alt={item.nome}
-                          />
-                        )}
-                      </TableCell>
+                      <TableHead className="font-semibold text-gray-600 w-[80px]">Imagem</TableHead>
                     )}
                     {visibleColumns.includes('moeda') && (
-                      <TableCell className="text-gray-600">{item.moeda}</TableCell>
+                      <TableHead className="font-semibold text-gray-600">Moeda</TableHead>
                     )}
                     {visibleColumns.includes('valor') && (
-                      <TableCell className="text-gray-600 text-right">
-                        {Number(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                    )}
-                    {visibleColumns.includes('fator') && (
-                      <TableCell className="text-gray-600 text-center">
-                        {item.tem_fator ? 'Sim' : 'Não'}
-                      </TableCell>
-                    )}
-                    {visibleColumns.includes('fator_nac') && (
-                      <TableCell className="text-gray-600 text-right">
-                        {Number(item.fator_nac).toLocaleString('pt-BR', {
-                          minimumFractionDigits: 6,
-                        })}
-                      </TableCell>
+                      <TableHead className="font-semibold text-gray-600 text-right">
+                        Valor
+                      </TableHead>
                     )}
                     {visibleColumns.includes('status') && (
-                      <TableCell>
-                        <Badge
-                          className={cn(
-                            item.status === 'Ativo'
-                              ? 'bg-green-500'
-                              : item.status === 'Inativo'
-                                ? 'bg-gray-400'
-                                : item.status === 'Em Revisão'
-                                  ? 'bg-amber-500'
-                                  : 'bg-blue-500', // Aprovado
-                          )}
-                        >
-                          {item.status}
-                        </Badge>
-                      </TableCell>
+                      <TableHead className="font-semibold text-gray-600">Status</TableHead>
                     )}
-                    <TableCell>
-                      {item.status === 'Em Revisão' && isAdmin && (
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                            onClick={() => handleApprove(item.id)}
-                            title="Aprovar"
-                          >
-                            <CheckCircle2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleReject(item.id)}
-                            title="Rejeitar"
-                          >
-                            <XCircle className="h-4 w-4" />
-                          </Button>
-                        </div>
+                    <TableHead className="w-[100px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((item) => (
+                    <TableRow key={item.id} className="hover:bg-gray-50/50">
+                      {visibleColumns.includes('modelo') && (
+                        <TableCell className="text-gray-600 py-2">
+                          {item.expand?.modelo?.nome || '-'}
+                        </TableCell>
                       )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filtered.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-gray-500">
-                      Nenhum registro encontrado.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                      {visibleColumns.includes('nome') && (
+                        <TableCell className="py-2">
+                          <div className="font-medium text-gray-800">{item.nome}</div>
+                          <div className="flex items-center gap-3 mt-1 text-[11px] text-[#2A75D3]">
+                            <button
+                              onClick={() => handleEdit(item)}
+                              className="hover:underline flex items-center gap-1"
+                            >
+                              <Pencil className="w-3 h-3" /> Editar
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              className="text-red-500 hover:underline flex items-center gap-1"
+                            >
+                              <Trash2 className="w-3 h-3" /> Excluir
+                            </button>
+                          </div>
+                        </TableCell>
+                      )}
+                      {visibleColumns.includes('coderp') && (
+                        <TableCell className="text-gray-600 py-2">{item.cod_erp || '-'}</TableCell>
+                      )}
+                      {visibleColumns.includes('imagem') && (
+                        <TableCell className="py-2">
+                          {item.imagem_preview && (
+                            <img
+                              src={getVersaoImagemUrl(item, item.imagem_preview)}
+                              className="h-8 w-8 object-contain rounded border border-gray-200"
+                              alt={item.nome}
+                            />
+                          )}
+                        </TableCell>
+                      )}
+                      {visibleColumns.includes('moeda') && (
+                        <TableCell className="text-gray-600 py-2">{item.moeda}</TableCell>
+                      )}
+                      {visibleColumns.includes('valor') && (
+                        <TableCell className="text-gray-600 text-right py-2">
+                          {Number(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </TableCell>
+                      )}
+                      {visibleColumns.includes('status') && (
+                        <TableCell className="py-2">
+                          <Badge variant="outline" className="font-normal text-gray-600 bg-gray-50">
+                            {item.status}
+                          </Badge>
+                        </TableCell>
+                      )}
+                      <TableCell className="py-2"></TableCell>
+                    </TableRow>
+                  ))}
+                  {filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                        Nenhum registro encontrado.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="cadastro" className="mt-4 border bg-white rounded-md shadow-sm p-6">
-          <form onSubmit={handleSave} className="space-y-6 max-w-3xl">
-            <Tabs defaultValue="gerais" className="w-full">
-              <TabsList className="mb-6 bg-gray-100/50 p-1">
-                <TabsTrigger
-                  value="gerais"
-                  className="rounded-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                >
-                  Dados Gerais
-                </TabsTrigger>
-                <TabsTrigger
-                  value="especificacoes"
-                  className="rounded-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                >
-                  Especificações Técnicas
-                </TabsTrigger>
-                <TabsTrigger
-                  value="imagens"
-                  className="rounded-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                >
-                  Imagem Preview
-                </TabsTrigger>
-              </TabsList>
+        <TabsContent value="cadastro" className="mt-0">
+          <div className="flex flex-col lg:flex-row gap-4 items-start">
+            {/* Left Column: Dados (75%) */}
+            <div className="w-full lg:w-3/4 border border-blue-200 rounded-sm bg-white shadow-sm flex flex-col">
+              <div className="bg-white border-b border-blue-200 px-4 py-2 flex items-center gap-2 text-[#2A75D3]">
+                <FileText className="w-4 h-4" />
+                <h3 className="font-semibold text-sm">Dados</h3>
+              </div>
 
-              <TabsContent value="gerais" className="space-y-4 max-w-2xl">
-                <div className="grid gap-2">
-                  <Label>
-                    Nome da Versão <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    value={nome}
-                    onChange={(e) => {
-                      setNome(e.target.value)
-                      setNomeTouched(true)
-                    }}
-                    className={cn('rounded-sm', nomeError && 'border-red-500')}
-                  />
-                  {nomeError && <p className="text-xs text-red-500">{nomeError}</p>}
+              <div className="p-4 space-y-4">
+                {/* Row 1 */}
+                <div className="grid grid-cols-12 gap-6">
+                  <div className="col-span-8 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">
+                      Nome {nomeError && <span className="text-red-500">*</span>}
+                    </label>
+                    <Input
+                      value={nome}
+                      onChange={(e) => {
+                        setNome(e.target.value)
+                        setNomeError(false)
+                      }}
+                      className={cn('input-bener', nomeError && 'border-red-500')}
+                    />
+                  </div>
+                  <div className="col-span-4 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">Status</label>
+                    <Select value={status} onValueChange={(v: any) => setStatus(v)}>
+                      <SelectTrigger className="select-bener-trigger">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Ativo">Ativo</SelectItem>
+                        <SelectItem value="Inativo">Inativo</SelectItem>
+                        <SelectItem value="Em Revisão">Em Revisão</SelectItem>
+                        {isAdmin && <SelectItem value="Aprovado">Aprovado</SelectItem>}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label>
-                    Modelo <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={modeloId} onValueChange={setModeloId}>
-                    <SelectTrigger className="rounded-sm">
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {modelos.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Código ERP</Label>
+
+                {/* Row 2 */}
+                <div className="grid grid-cols-12 gap-6">
+                  <div className="col-span-4 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">Nome Abreviado</label>
+                    <Input
+                      value={nomeAbreviado}
+                      onChange={(e) => setNomeAbreviado(e.target.value)}
+                      className="input-bener"
+                    />
+                  </div>
+                  <div className="col-span-4 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">
+                      Modelo {modeloError && <span className="text-red-500">*</span>}
+                    </label>
+                    <Select
+                      value={modeloId}
+                      onValueChange={(v) => {
+                        setModeloId(v)
+                        setModeloError(false)
+                      }}
+                    >
+                      <SelectTrigger
+                        className={cn('select-bener-trigger', modeloError && 'border-red-500')}
+                      >
+                        <SelectValue placeholder="" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {modelos.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-4 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">Código E2Corp</label>
                     <Input
                       value={codErp}
                       onChange={(e) => setCodErp(e.target.value)}
-                      className="rounded-sm"
-                      placeholder="Opcional"
+                      className="input-bener"
                     />
                   </div>
-                  <div className="grid gap-2">
-                    <Label>
-                      Status <span className="text-red-500">*</span>
-                    </Label>
-                    <Select value={status} onValueChange={(v: any) => setStatus(v)}>
-                      <SelectTrigger className="rounded-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Em Revisão">Em Revisão</SelectItem>
-                        {isAdmin && <SelectItem value="Aprovado">Aprovado</SelectItem>}
-                        <SelectItem value="Ativo">Ativo</SelectItem>
-                        <SelectItem value="Inativo">Inativo</SelectItem>
-                      </SelectContent>
-                    </Select>
+                </div>
+
+                {/* Row 3: Image */}
+                <div className="flex flex-col">
+                  <label className="text-[11px] text-gray-500 mb-0.5">Imagem Principal</label>
+                  <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 p-1 rounded-sm">
+                    <div
+                      className="text-blue-500 px-2 cursor-pointer"
+                      onClick={() => fotoInputRef.current?.click()}
+                    >
+                      <UploadCloud className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 text-xs text-gray-600 truncate">
+                      {newFoto
+                        ? newFoto.name
+                        : editingItem?.imagem_preview && !deleteFoto
+                          ? getVersaoImagemUrl(editingItem, editingItem.imagem_preview)
+                          : 'Nenhuma imagem selecionada'}
+                    </div>
+                    {(newFoto || (editingItem?.imagem_preview && !deleteFoto)) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewFoto(null)
+                          setDeleteFoto(true)
+                        }}
+                        className="text-gray-400 hover:text-red-500 pr-2"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      ref={fotoInputRef}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          setNewFoto(e.target.files[0])
+                          setDeleteFoto(false)
+                        }
+                        if (fotoInputRef.current) fotoInputRef.current.value = ''
+                      }}
+                    />
                   </div>
                 </div>
-              </TabsContent>
 
-              <TabsContent value="especificacoes" className="space-y-4 max-w-2xl">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Moeda Base</Label>
+                {/* Row 4 */}
+                <div className="grid grid-cols-12 gap-6 pt-2 border-t border-red-200">
+                  <div className="col-span-3 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">Moeda</label>
                     <Select value={moeda} onValueChange={setMoeda}>
-                      <SelectTrigger className="rounded-sm">
+                      <SelectTrigger className="select-bener-trigger">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="BRL">BRL (R$)</SelectItem>
-                        <SelectItem value="USD">USD ($)</SelectItem>
-                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                        <SelectItem value="BRL">Real</SelectItem>
+                        <SelectItem value="USD">Dolar</SelectItem>
+                        <SelectItem value="EUR">Euro</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid gap-2">
-                    <Label>Valor Base</Label>
+                  <div className="col-span-3 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">Valor</label>
                     <Input
                       type="number"
                       step="0.01"
                       value={valor}
                       onChange={(e) => setValor(parseFloat(e.target.value) || 0)}
-                      className="rounded-sm"
+                      className="input-bener"
                     />
                   </div>
-                  <div className="grid gap-2">
-                    <Label>Fator Nacional</Label>
+                  <div className="col-span-3 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">Tem Fator</label>
+                    <Select
+                      value={temFator ? 'Sim' : 'Não'}
+                      onValueChange={(v) => setTemFator(v === 'Sim')}
+                    >
+                      <SelectTrigger className="select-bener-trigger">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Sim">Sim</SelectItem>
+                        <SelectItem value="Não">Não</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-3 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">Fator Nac.</label>
                     <Input
                       type="number"
                       step="0.000001"
                       value={fatorNac}
                       onChange={(e) => setFatorNac(parseFloat(e.target.value) || 0)}
-                      className="rounded-sm"
+                      className="input-bener"
                     />
                   </div>
-                  <div className="flex items-center gap-2 pt-6">
-                    <Switch id="tem-fator" checked={temFator} onCheckedChange={setTemFator} />
-                    <Label htmlFor="tem-fator">Aplicar Fator no Cálculo</Label>
+                </div>
+
+                {/* Row 5 */}
+                <div className="grid grid-cols-12 gap-6 pt-2 border-t border-red-200">
+                  <div className="col-span-4 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">Tem Estoque</label>
+                    <Select
+                      value={temEstoque ? 'Sim' : 'Não'}
+                      onValueChange={(v) => setTemEstoque(v === 'Sim')}
+                    >
+                      <SelectTrigger className="select-bener-trigger">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Sim">Sim</SelectItem>
+                        <SelectItem value="Não">Não</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-4 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">
+                      Desconto Max. Representante (%)
+                    </label>
+                    <Input
+                      type="number"
+                      value={descMaxRep}
+                      onChange={(e) => setDescMaxRep(parseFloat(e.target.value) || 0)}
+                      className="input-bener"
+                    />
+                  </div>
+                  <div className="col-span-4 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">
+                      Desconto Max. Bener (%)
+                    </label>
+                    <Input
+                      type="number"
+                      value={descMaxBener}
+                      onChange={(e) => setDescMaxBener(parseFloat(e.target.value) || 0)}
+                      className="input-bener"
+                    />
                   </div>
                 </div>
-              </TabsContent>
 
-              <TabsContent value="imagens" className="space-y-4 max-w-xl">
-                <div
-                  className={cn(
-                    'border-2 border-dashed rounded-md p-8 text-center transition-colors cursor-pointer',
-                    isDragging ? 'border-[#2A75D3] bg-blue-50' : 'border-gray-300 hover:bg-gray-50',
-                  )}
-                  onDragOver={(e) => {
-                    e.preventDefault()
-                    setIsDragging(true)
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault()
-                    setIsDragging(false)
-                  }}
-                  onDrop={handleDrop}
-                  onClick={() => fotoInputRef.current?.click()}
-                >
-                  <div className="flex flex-col items-center justify-center text-gray-500">
-                    <UploadCloud className="w-10 h-10 mb-2 text-gray-400" />
-                    <p className="text-sm font-medium">
-                      Arraste a imagem ou clique para selecionar
-                    </p>
-                    <p className="text-xs mt-1">Max 5MB</p>
+                {/* Row 6: Estoque Readonly */}
+                <div className="grid grid-cols-12 gap-4 bg-gray-100 p-2 rounded-sm border border-gray-200 mt-2">
+                  <div className="col-span-3 flex flex-col">
+                    <label className="text-[10px] text-gray-400 mb-0.5 uppercase">
+                      Estoque Total
+                    </label>
+                    <Input
+                      value={estoqueTotal}
+                      disabled
+                      className="h-7 text-xs bg-gray-200 border-none text-gray-600 rounded-sm px-2"
+                    />
                   </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    ref={fotoInputRef}
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        const f = e.target.files[0]
-                        if (f.size <= 5242880 && f.type.startsWith('image/')) setNewFoto(f)
-                      }
-                      if (fotoInputRef.current) fotoInputRef.current.value = ''
-                    }}
+                  <div className="col-span-3 flex flex-col">
+                    <label className="text-[10px] text-gray-400 mb-0.5 uppercase">
+                      Estoque Bloqueado
+                    </label>
+                    <Input
+                      value={estoqueBloqueado}
+                      disabled
+                      className="h-7 text-xs bg-gray-200 border-none text-gray-600 rounded-sm px-2"
+                    />
+                  </div>
+                  <div className="col-span-3 flex flex-col">
+                    <label className="text-[10px] text-gray-400 mb-0.5 uppercase">
+                      Estoque Reservado
+                    </label>
+                    <Input
+                      value={estoqueReservado}
+                      disabled
+                      className="h-7 text-xs bg-gray-200 border-none text-gray-600 rounded-sm px-2"
+                    />
+                  </div>
+                  <div className="col-span-3 flex flex-col">
+                    <label className="text-[10px] text-gray-400 mb-0.5 uppercase">
+                      Estoque Disponível
+                    </label>
+                    <Input
+                      value={estoqueDisponivel}
+                      disabled
+                      className="h-7 text-xs bg-gray-200 border-none text-gray-600 rounded-sm px-2"
+                    />
+                  </div>
+                </div>
+
+                {/* Rich Texts */}
+                <div className="space-y-6 pt-4 border-t border-gray-200">
+                  <RichTextEditor
+                    label="Acessórios Standards"
+                    value={acessorios}
+                    onChange={setAcessorios}
+                  />
+                  <RichTextEditor
+                    label="Características Construtivas Principais"
+                    value={caracteristicas}
+                    onChange={setCaracteristicas}
+                  />
+                  <RichTextEditor
+                    label="Especificações Técnicas Principais"
+                    value={especificacoes}
+                    onChange={setEspecificacoes}
                   />
                 </div>
 
-                {newFoto && (
-                  <div className="relative inline-block border rounded p-1">
-                    <img
-                      src={URL.createObjectURL(newFoto)}
-                      alt="Preview"
-                      className="h-32 object-contain"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setNewFoto(null)}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                {/* Footer info */}
+                <div className="pt-6 pb-2">
+                  <div className="bg-gray-100 p-2 w-max rounded border border-gray-200 text-xs text-gray-500">
+                    <span className="block text-[10px] text-gray-400 uppercase mb-0.5">
+                      Dt. Cad
+                    </span>
+                    {editingItem
+                      ? new Date(editingItem.created).toLocaleString('pt-BR')
+                      : new Date().toLocaleString('pt-BR')}
                   </div>
-                )}
-
-                {!newFoto && !deleteFoto && editingItem?.imagem_preview && (
-                  <div className="relative inline-block border rounded p-1">
-                    <img
-                      src={getVersaoImagemUrl(editingItem, editingItem.imagem_preview)}
-                      alt="Preview Atual"
-                      className="h-32 object-contain"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setDeleteFoto(true)}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-
-            <div className="flex gap-2 pt-4">
-              <Button
-                type="submit"
-                className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm"
-                disabled={!isFormValid}
-              >
-                Salvar Versão
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setActiveTab('registros')}
-                className="rounded-sm"
-              >
-                Cancelar
-              </Button>
+                </div>
+              </div>
             </div>
-          </form>
+
+            {/* Right Column: Tipos de Proposta (25%) */}
+            <div className="w-full lg:w-1/4 border border-blue-200 rounded-sm bg-white shadow-sm flex flex-col">
+              <div className="bg-white border-b border-blue-200 px-4 py-2 flex items-center gap-2 text-[#2A75D3]">
+                <ListChecks className="w-4 h-4" />
+                <h3 className="font-semibold text-sm">Tipos de Proposta</h3>
+              </div>
+              <div className="p-3 max-h-[800px] overflow-y-auto">
+                <div className="space-y-1">
+                  {PROPOSTAS_OPTIONS.map((opt) => (
+                    <label
+                      key={opt}
+                      className="flex items-start gap-2 py-1 px-1 hover:bg-blue-50 rounded cursor-pointer group"
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 rounded-sm border-gray-300 text-[#2A75D3] focus:ring-[#2A75D3]"
+                        checked={tiposProposta.includes(opt)}
+                        onChange={() => toggleProposta(opt)}
+                      />
+                      <span className="text-[11px] text-gray-700 leading-tight group-hover:text-gray-900">
+                        {opt}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
