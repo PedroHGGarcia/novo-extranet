@@ -85,7 +85,7 @@ export default function Acessorios() {
   const [valor, setValor] = useState<number>(0)
   const [fatorNac, setFatorNac] = useState<string>('1.0')
   const [status, setStatus] = useState('Ativo')
-  const [selectedVersoes, setSelectedVersoes] = useState<string[]>([])
+  const [selectedVersao, setSelectedVersao] = useState<string>('')
   const [especificacoesTecnicas, setEspecificacoesTecnicas] = useState('')
   const [openVersoes, setOpenVersoes] = useState(false)
   const [historico, setHistorico] = useState<any[]>([])
@@ -160,7 +160,7 @@ export default function Acessorios() {
     setValor(item.valor || 0)
     setFatorNac(String(item.fator_nac || 1))
     setStatus(item.status)
-    setSelectedVersoes(item.versoes || [])
+    setSelectedVersao(item.versoes || '')
     setEspecificacoesTecnicas(item.especificacoes_tecnicas || '')
     setActiveTab('cadastro')
     setActiveSubTab('dados')
@@ -174,7 +174,7 @@ export default function Acessorios() {
     setValor(item.valor || 0)
     setFatorNac(String(item.fator_nac || 1))
     setStatus(item.status)
-    setSelectedVersoes(item.versoes || [])
+    setSelectedVersao(item.versoes || '')
     setEspecificacoesTecnicas(item.especificacoes_tecnicas || '')
     setActiveTab('cadastro')
     setActiveSubTab('dados')
@@ -209,7 +209,7 @@ export default function Acessorios() {
         valor,
         fator_nac: parsedFator,
         status,
-        versoes: selectedVersoes,
+        versoes: selectedVersao || null,
         especificacoes_tecnicas: especificacoesTecnicas,
       }
       if (editingId) await updateAcessorio(editingId, formData)
@@ -230,7 +230,7 @@ export default function Acessorios() {
     setValor(0)
     setFatorNac('1.0')
     setStatus('Ativo')
-    setSelectedVersoes([])
+    setSelectedVersao('')
     setEspecificacoesTecnicas('')
     setHistorico([])
   }
@@ -243,7 +243,11 @@ export default function Acessorios() {
     try {
       const res = await pb.send('/backend/v1/suggest-specs', {
         method: 'POST',
-        body: JSON.stringify({ type: 'acessório', nome, versoes: selectedVersoes }),
+        body: JSON.stringify({
+          type: 'acessório',
+          nome,
+          versoes: selectedVersao ? [selectedVersao] : [],
+        }),
       })
       setEspecificacoesTecnicas(res.content)
       toast({ title: 'Especificações geradas com sucesso!' })
@@ -407,7 +411,7 @@ export default function Acessorios() {
                       )}
                       {visibleColumns.includes('versao') && (
                         <TableCell className="text-xs text-gray-600 py-2">
-                          {item.versoes?.length || 0} versão(ões)
+                          {item.expand?.versoes?.nome || '-'}
                         </TableCell>
                       )}
                       {visibleColumns.includes('nome') && (
@@ -561,39 +565,19 @@ export default function Acessorios() {
                   />
                 </div>
                 <div className="col-span-8 flex flex-col">
-                  <label className="text-[11px] text-gray-500 mb-0.5">Vincular Versões</label>
+                  <label className="text-[11px] text-gray-500 mb-0.5">Vincular Versão</label>
                   <Popover open={openVersoes} onOpenChange={setOpenVersoes}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className="w-full justify-between min-h-9 h-auto py-1.5 text-xs border-gray-300 font-normal"
                       >
-                        {selectedVersoes.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {selectedVersoes.map((id) => {
-                              const v = versoes.find((x) => x.id === id)
-                              return v ? (
-                                <Badge
-                                  key={id}
-                                  variant="secondary"
-                                  className="font-normal text-[10px] py-0 px-1.5 flex items-center gap-1"
-                                >
-                                  {v.nome}
-                                  <span
-                                    className="cursor-pointer opacity-70 hover:opacity-100"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setSelectedVersoes(selectedVersoes.filter((x) => x !== id))
-                                    }}
-                                  >
-                                    <X className="w-2.5 h-2.5" />
-                                  </span>
-                                </Badge>
-                              ) : null
-                            })}
-                          </div>
+                        {selectedVersao ? (
+                          <span className="text-xs truncate">
+                            {versoes.find((v) => v.id === selectedVersao)?.nome}
+                          </span>
                         ) : (
-                          'Selecione as versões...'
+                          'Selecione a versão...'
                         )}
                       </Button>
                     </PopoverTrigger>
@@ -608,15 +592,11 @@ export default function Acessorios() {
                                 key={v.id}
                                 value={v.nome}
                                 onSelect={() => {
-                                  if (selectedVersoes.includes(v.id))
-                                    setSelectedVersoes(selectedVersoes.filter((id) => id !== v.id))
-                                  else setSelectedVersoes([...selectedVersoes, v.id])
+                                  setSelectedVersao(v.id)
+                                  setOpenVersoes(false)
                                 }}
                               >
-                                <div className="flex items-center gap-2 flex-1">
-                                  <Checkbox checked={selectedVersoes.includes(v.id)} />
-                                  <span className="text-xs truncate">{v.nome}</span>
-                                </div>
+                                <span className="text-xs truncate">{v.nome}</span>
                               </CommandItem>
                             ))}
                           </CommandGroup>

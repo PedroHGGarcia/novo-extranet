@@ -96,12 +96,12 @@ export interface Acessorio {
   valor: number
   fator_nac: number
   status: 'Ativo' | 'Inativo'
-  versoes: string[]
+  versoes: string
   especificacoes_tecnicas?: string
   created: string
   updated: string
   expand?: {
-    versoes?: Versao[]
+    versoes?: Versao
   }
 }
 
