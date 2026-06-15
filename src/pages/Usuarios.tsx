@@ -66,6 +66,10 @@ export default function Usuarios() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
 
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteData, setInviteData] = useState({ email: '', role: 'user' as 'admin' | 'user' })
+  const [inviting, setInviting] = useState(false)
+
   useEffect(() => {
     if (user?.role === 'admin') {
       loadData()
@@ -323,6 +327,72 @@ export default function Usuarios() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Convidar Usuário</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>E-mail do convidado</Label>
+              <Input
+                type="email"
+                placeholder="email@exemplo.com"
+                value={inviteData.email}
+                onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Perfil</Label>
+              <Select
+                value={inviteData.role}
+                onValueChange={(val: 'admin' | 'user') =>
+                  setInviteData({ ...inviteData, role: val })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="user">Usuário Padrão</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInviteOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={inviting}
+              onClick={async () => {
+                if (!inviteData.email) return
+                setInviting(true)
+                try {
+                  await inviteUser(inviteData.email, inviteData.role)
+                  toast({ title: 'Convite enviado com sucesso!' })
+                  setInviteOpen(false)
+                  setInviteData({ email: '', role: 'user' })
+                  loadData()
+                } catch (e: any) {
+                  toast({
+                    title: 'Erro ao enviar convite',
+                    description: e.message,
+                    variant: 'destructive',
+                  })
+                } finally {
+                  setInviting(false)
+                }
+              }}
+              className="bg-brand-success hover:bg-brand-success/90"
+            >
+              {inviting ? 'Enviando...' : 'Enviar Convite'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

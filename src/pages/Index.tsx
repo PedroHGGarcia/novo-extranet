@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Monitor, User, Briefcase, CircleUser, FileText, Tag } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/use-auth'
+import { getConfigDashboard, type ConfigDashboard } from '@/services/config'
 
 interface MetricCardProps {
   title: string
@@ -32,8 +34,22 @@ const MetricCard = ({ title, value, colorClass, icon: Icon }: MetricCardProps) =
 )
 
 export default function Index() {
+  const { user } = useAuth()
   const [feedback, setFeedback] = useState('')
   const { toast } = useToast()
+  const [configs, setConfigs] = useState<ConfigDashboard[]>([])
+
+  useEffect(() => {
+    if (user?.role) {
+      getConfigDashboard().then(setConfigs).catch(console.error)
+    }
+  }, [user])
+
+  const isVisible = (componente: string) => {
+    if (configs.length === 0) return true
+    const conf = configs.find((c) => c.componente === componente && c.perfil === user?.role)
+    return conf ? conf.visivel : true
+  }
 
   const handleSubmit = () => {
     if (!feedback.trim()) return
@@ -54,54 +70,64 @@ export default function Index() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard title="Gerentes Ativos" value="5" colorClass="bg-brand-orange" icon={User} />
-        <MetricCard
-          title="Representantes Ativos"
-          value="50"
-          colorClass="bg-brand-cyan"
-          icon={Briefcase}
-        />
-        <MetricCard
-          title="Clientes Ativos"
-          value="11341"
-          colorClass="bg-brand-blue"
-          icon={CircleUser}
-        />
-        <MetricCard
-          title="Propostas Emitidas"
-          value="44039"
-          colorClass="bg-brand-success"
-          icon={FileText}
-        />
+        {isVisible('Gerentes Ativos') && (
+          <MetricCard title="Gerentes Ativos" value="5" colorClass="bg-brand-orange" icon={User} />
+        )}
+        {isVisible('Representantes Ativos') && (
+          <MetricCard
+            title="Representantes Ativos"
+            value="50"
+            colorClass="bg-brand-cyan"
+            icon={Briefcase}
+          />
+        )}
+        {isVisible('Clientes Ativos') && (
+          <MetricCard
+            title="Clientes Ativos"
+            value="11341"
+            colorClass="bg-brand-blue"
+            icon={CircleUser}
+          />
+        )}
+        {isVisible('Propostas Emitidas') && (
+          <MetricCard
+            title="Propostas Emitidas"
+            value="44039"
+            colorClass="bg-brand-success"
+            icon={FileText}
+          />
+        )}
       </div>
 
-      <div className="pt-2">
-        <Card className="border-t-4 border-t-brand-orange shadow-sm border-x-0 border-b-0 rounded-t-sm">
-          <CardHeader className="pb-3 border-b">
-            <CardTitle className="flex items-center gap-2 text-lg font-normal text-gray-700">
-              <Tag className="h-5 w-5 -rotate-90 text-gray-500" />
-              O que falta no sistema?
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <label className="text-xs text-gray-500 mb-2 block">Comentários</label>
-            <Textarea
-              placeholder="Como o sistema pode ajudar no seu dia a dia?"
-              className="min-h-[120px] resize-none border-gray-300 focus-visible:ring-brand-blue focus-visible:border-brand-blue rounded-sm"
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-            />
-          </CardContent>
-          <CardFooter className="justify-end border-t pt-4">
-            <Button
-              onClick={handleSubmit}
-              className="bg-brand-blue hover:bg-brand-blue/90 font-medium px-8 text-xs h-9 rounded-sm"
-            >
-              SALVAR
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+      {isVisible('Feedback') && (
+        <div className="pt-2">
+          <Card className="border-t-4 border-t-brand-orange shadow-sm border-x-0 border-b-0 rounded-t-sm">
+            <CardHeader className="pb-3 border-b">
+              <CardTitle className="flex items-center gap-2 text-lg font-normal text-gray-700">
+                <Tag className="h-5 w-5 -rotate-90 text-gray-500" />
+                O que falta no sistema?
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <label className="text-xs text-gray-500 mb-2 block">Comentários</label>
+              <Textarea
+                placeholder="Como o sistema pode ajudar no seu dia a dia?"
+                className="min-h-[120px] resize-none border-gray-300 focus-visible:ring-brand-blue focus-visible:border-brand-blue rounded-sm"
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+              />
+            </CardContent>
+            <CardFooter className="justify-end border-t pt-4">
+              <Button
+                onClick={handleSubmit}
+                className="bg-brand-blue hover:bg-brand-blue/90 font-medium px-8 text-xs h-9 rounded-sm"
+              >
+                SALVAR
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

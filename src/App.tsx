@@ -15,6 +15,8 @@ import Relatorios from './pages/Relatorios'
 import Perfil from './pages/Perfil'
 import AreaAtuacao from './pages/AreaAtuacao'
 import Usuarios from './pages/Usuarios'
+import AuditoriaPage from './pages/Auditoria'
+import Configuracoes from './pages/Configuracoes'
 import NotFound from './pages/NotFound'
 import Representantes from './pages/Representantes'
 import Prepostos from './pages/Prepostos'
@@ -48,6 +50,8 @@ const App = () => (
               <Route path="/relatorios" element={<Relatorios />} />
               <Route path="/perfil" element={<Perfil />} />
               <Route path="/usuarios" element={<Usuarios />} />
+              <Route path="/auditoria" element={<AuditoriaPage />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFound />} />

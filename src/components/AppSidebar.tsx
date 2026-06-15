@@ -13,6 +13,8 @@ import {
   User,
   Briefcase,
   Users,
+  Activity,
+  Settings,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -72,6 +74,8 @@ const menuItems = [
   { title: 'Perfil', url: '/perfil', icon: UserCircle, sub: [] },
   { title: 'Área de Atuação de Representantes', url: '/area-atuacao', icon: Map, sub: [] },
   { title: 'Usuários', url: '/usuarios', icon: Users, sub: [], adminOnly: true },
+  { title: 'Logs de Auditoria', url: '/auditoria', icon: Activity, sub: [], adminOnly: true },
+  { title: 'Configurações', url: '/configuracoes', icon: Settings, sub: [], adminOnly: true },
 ]
 
 export function AppSidebar() {
