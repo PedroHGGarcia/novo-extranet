@@ -85,7 +85,7 @@ export default function Acessorios() {
   const [valor, setValor] = useState<number>(0)
   const [fatorNac, setFatorNac] = useState<string>('1.0')
   const [status, setStatus] = useState('Ativo')
-  const [selectedVersao, setSelectedVersao] = useState<string>('')
+  const [selectedVersoes, setSelectedVersoes] = useState<string[]>([])
   const [especificacoesTecnicas, setEspecificacoesTecnicas] = useState('')
   const [openVersoes, setOpenVersoes] = useState(false)
   const [historico, setHistorico] = useState<any[]>([])
@@ -160,7 +160,9 @@ export default function Acessorios() {
     setValor(item.valor || 0)
     setFatorNac(String(item.fator_nac || 1))
     setStatus(item.status)
-    setSelectedVersao(item.versoes || '')
+    setSelectedVersoes(
+      Array.isArray(item.versoes) ? item.versoes : item.versoes ? [item.versoes] : [],
+    )
     setEspecificacoesTecnicas(item.especificacoes_tecnicas || '')
     setActiveTab('cadastro')
     setActiveSubTab('dados')
@@ -174,7 +176,9 @@ export default function Acessorios() {
     setValor(item.valor || 0)
     setFatorNac(String(item.fator_nac || 1))
     setStatus(item.status)
-    setSelectedVersao(item.versoes || '')
+    setSelectedVersoes(
+      Array.isArray(item.versoes) ? item.versoes : item.versoes ? [item.versoes] : [],
+    )
     setEspecificacoesTecnicas(item.especificacoes_tecnicas || '')
     setActiveTab('cadastro')
     setActiveSubTab('dados')
@@ -209,7 +213,7 @@ export default function Acessorios() {
         valor,
         fator_nac: parsedFator,
         status,
-        versoes: selectedVersao || null,
+        versoes: selectedVersoes,
         especificacoes_tecnicas: especificacoesTecnicas,
       }
       if (editingId) await updateAcessorio(editingId, formData)
@@ -230,7 +234,7 @@ export default function Acessorios() {
     setValor(0)
     setFatorNac('1.0')
     setStatus('Ativo')
-    setSelectedVersao('')
+    setSelectedVersoes([])
     setEspecificacoesTecnicas('')
     setHistorico([])
   }
@@ -246,7 +250,7 @@ export default function Acessorios() {
         body: JSON.stringify({
           type: 'acessório',
           nome,
-          versoes: selectedVersao ? [selectedVersao] : [],
+          versoes: selectedVersoes,
         }),
       })
       setEspecificacoesTecnicas(res.content)
@@ -411,7 +415,16 @@ export default function Acessorios() {
                       )}
                       {visibleColumns.includes('versao') && (
                         <TableCell className="text-xs text-gray-600 py-2">
-                          {item.expand?.versoes?.nome || '-'}
+                          {Array.isArray(item.expand?.versoes)
+                            ? item.expand.versoes.length > 2
+                              ? `${item.expand.versoes
+                                  .slice(0, 2)
+                                  .map((v: any) => v.nome)
+                                  .join(', ')} +${item.expand.versoes.length - 2}`
+                              : item.expand.versoes.length > 0
+                                ? item.expand.versoes.map((v: any) => v.nome).join(', ')
+                                : '-'
+                            : item.expand?.versoes?.nome || '-'}
                         </TableCell>
                       )}
                       {visibleColumns.includes('nome') && (
@@ -565,19 +578,21 @@ export default function Acessorios() {
                   />
                 </div>
                 <div className="col-span-8 flex flex-col">
-                  <label className="text-[11px] text-gray-500 mb-0.5">Vincular Versão</label>
+                  <label className="text-[11px] text-gray-500 mb-0.5">Vincular Versões</label>
                   <Popover open={openVersoes} onOpenChange={setOpenVersoes}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className="w-full justify-between min-h-9 h-auto py-1.5 text-xs border-gray-300 font-normal"
                       >
-                        {selectedVersao ? (
+                        {selectedVersoes.length > 0 ? (
                           <span className="text-xs truncate">
-                            {versoes.find((v) => v.id === selectedVersao)?.nome}
+                            {selectedVersoes.length === 1
+                              ? versoes.find((v) => v.id === selectedVersoes[0])?.nome
+                              : `${selectedVersoes.length} versões selecionadas`}
                           </span>
                         ) : (
-                          'Selecione a versão...'
+                          'Selecione as versões...'
                         )}
                       </Button>
                     </PopoverTrigger>
@@ -587,23 +602,76 @@ export default function Acessorios() {
                         <CommandList>
                           <CommandEmpty>Nenhuma versão encontrada.</CommandEmpty>
                           <CommandGroup>
-                            {versoes.map((v) => (
-                              <CommandItem
-                                key={v.id}
-                                value={v.nome}
-                                onSelect={() => {
-                                  setSelectedVersao(v.id)
-                                  setOpenVersoes(false)
-                                }}
-                              >
-                                <span className="text-xs truncate">{v.nome}</span>
-                              </CommandItem>
-                            ))}
+                            {versoes.map((v) => {
+                              const isSelected = selectedVersoes.includes(v.id)
+                              return (
+                                <CommandItem
+                                  key={v.id}
+                                  value={v.nome}
+                                  onSelect={() => {
+                                    setSelectedVersoes((prev) =>
+                                      prev.includes(v.id)
+                                        ? prev.filter((id) => id !== v.id)
+                                        : [...prev, v.id],
+                                    )
+                                  }}
+                                >
+                                  <div
+                                    className={cn(
+                                      'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
+                                      isSelected
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'opacity-50 [&_svg]:invisible',
+                                    )}
+                                  >
+                                    <svg
+                                      className="h-3 w-3"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                      strokeWidth={3}
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                  </div>
+                                  <span className="text-xs truncate">{v.nome}</span>
+                                </CommandItem>
+                              )
+                            })}
                           </CommandGroup>
                         </CommandList>
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {selectedVersoes.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {selectedVersoes.map((id) => {
+                        const v = versoes.find((ver) => ver.id === id)
+                        if (!v) return null
+                        return (
+                          <Badge
+                            key={id}
+                            variant="secondary"
+                            className="text-[10px] py-0 px-2 flex items-center gap-1 font-normal"
+                          >
+                            {v.nome}
+                            <button
+                              onClick={() =>
+                                setSelectedVersoes((prev) => prev.filter((vid) => vid !== id))
+                              }
+                              className="hover:text-red-500 rounded-full"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             </TabsContent>
