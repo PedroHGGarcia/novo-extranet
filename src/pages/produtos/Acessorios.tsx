@@ -33,6 +33,7 @@ import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown'
 import { useTablePreferences } from '@/hooks/use-table-preferences'
+import { cn } from '@/lib/utils'
 import {
   getAcessorios,
   createAcessorio,
