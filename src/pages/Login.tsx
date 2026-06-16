@@ -21,6 +21,27 @@ export default function Login() {
   const { signIn } = useAuth()
   const navigate = useNavigate()
 
+  const validateField = (field: 'email' | 'password', value: string) => {
+    const data = { email, password, [field]: value }
+    const result = loginSchema.safeParse(data)
+    if (!result.success) {
+      const issue = result.error.issues.find((i) => i.path[0] === field)
+      setErrors((prev) => ({ ...prev, [field]: issue ? issue.message : '' }))
+    } else {
+      setErrors((prev) => ({ ...prev, [field]: '' }))
+    }
+  }
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value)
+    validateField('email', e.target.value)
+  }
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value)
+    validateField('password', e.target.value)
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrors({})
@@ -39,13 +60,19 @@ export default function Login() {
     setLoading(false)
 
     if (error) {
+      let desc = 'Credenciais inválidas'
+      if (error?.message) {
+        if (error.message.includes('password')) desc = 'Senha incorreta'
+        if (error.message.includes('user') || error.message.includes('record'))
+          desc = 'Usuário não encontrado'
+      }
       toast({
         title: 'Erro ao fazer login',
-        description: 'Credenciais inválidas',
+        description: desc,
         variant: 'destructive',
       })
     } else {
-      navigate('/')
+      navigate('/dashboard')
     }
   }
 
@@ -67,7 +94,7 @@ export default function Login() {
               <Input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 className={`pl-10 h-11 focus-visible:ring-[#00704a] focus-visible:border-[#00704a] ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 placeholder="seu@email.com"
               />
@@ -84,7 +111,7 @@ export default function Login() {
               <Input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 className={`pl-10 pr-10 h-11 focus-visible:ring-[#00704a] focus-visible:border-[#00704a] ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 placeholder="••••••••"
               />

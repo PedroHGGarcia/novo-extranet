@@ -2,8 +2,9 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
-import Index from './pages/Index'
+import Dashboard from './pages/Dashboard'
 import Cadastros from './pages/Cadastros'
 import Regioes from './pages/Regioes'
 import Gerentes from './pages/Gerentes'
@@ -45,7 +46,8 @@ const App = () => (
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/area-atuacao" element={<AreaAtuacao />} />
               <Route path="/cadastros" element={<Cadastros />} />
               <Route path="/cadastros/regioes" element={<Regioes />} />

@@ -32,9 +32,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import logoIn from '@/assets/systemlogoin-large-52274.png'
+import { LogOut } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const menuItems = [
-  { title: 'Painel Principal', url: '/', icon: Monitor, sub: [] },
+  { title: 'Painel Principal', url: '/dashboard', icon: Monitor, sub: [] },
   {
     title: 'Cadastros',
     url: '/cadastros',
@@ -91,7 +93,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation()
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
 
   return (
     <Sidebar className="border-r-0 bg-brand-sidebar text-white">
@@ -178,6 +180,16 @@ export function AppSidebar() {
           })}
         </SidebarMenu>
       </SidebarContent>
+      <div className="p-4 border-t border-white/5 mt-auto">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-white/70 hover:bg-white/5 hover:text-white rounded-none h-12"
+          onClick={() => signOut()}
+        >
+          <LogOut className="mr-3 h-5 w-5 select-none" draggable={false} />
+          Sair
+        </Button>
+      </div>
     </Sidebar>
   )
 }
