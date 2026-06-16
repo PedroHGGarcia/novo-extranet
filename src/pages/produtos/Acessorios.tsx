@@ -276,7 +276,7 @@ export default function Acessorios() {
     <div className="space-y-6 max-w-full overflow-hidden">
       <div className="flex items-center gap-3 mb-6 text-gray-900">
         <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-100">
-          <Package className="h-5 w-5 text-[#00704a]" />
+          <Package className="h-5 w-5 text-[#00704a] select-none" draggable={false} />
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">Acessórios</h1>
       </div>
@@ -345,10 +345,11 @@ export default function Acessorios() {
             <div className="p-4 border-b border-gray-100 bg-gray-50/30">
               <div className="relative max-w-md">
                 <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 select-none"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  draggable={false}
                 >
                   <path
                     strokeLinecap="round"
@@ -426,15 +427,19 @@ export default function Acessorios() {
                           <div className="flex flex-col gap-1.5">
                             <button
                               onClick={() => handleEdit(item)}
-                              className="text-[#00704a] text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors"
+                              className="text-[#00704a] text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors select-none"
+                              draggable={false}
                             >
-                              <Pencil className="w-3.5 h-3.5" /> Editar
+                              <Pencil className="w-3.5 h-3.5 select-none" draggable={false} />{' '}
+                              Editar
                             </button>
                             <button
                               onClick={() => handleDuplicate(item)}
-                              className="text-[#00704a] text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors"
+                              className="text-[#00704a] text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors select-none"
+                              draggable={false}
                             >
-                              <Copy className="w-3.5 h-3.5" /> Duplicar
+                              <Copy className="w-3.5 h-3.5 select-none" draggable={false} />{' '}
+                              Duplicar
                             </button>
                           </div>
                         </TableCell>
@@ -491,7 +496,10 @@ export default function Acessorios() {
                     <TableRow>
                       <TableCell colSpan={9} className="text-center py-12 text-gray-500">
                         <div className="flex flex-col items-center justify-center">
-                          <Package className="h-10 w-10 text-gray-300 mb-3" />
+                          <Package
+                            className="h-10 w-10 text-gray-300 mb-3 select-none"
+                            draggable={false}
+                          />
                           <p className="text-sm font-medium">Nenhum registro encontrado.</p>
                           <p className="text-xs text-gray-400 mt-1">
                             Tente ajustar a sua busca ou cadastre um novo item.
@@ -657,11 +665,12 @@ export default function Acessorios() {
                                     )}
                                   >
                                     <svg
-                                      className="h-3 w-3"
+                                      className="h-3 w-3 select-none"
                                       fill="none"
                                       viewBox="0 0 24 24"
                                       stroke="currentColor"
                                       strokeWidth={3}
+                                      draggable={false}
                                     >
                                       <path
                                         strokeLinecap="round"
@@ -697,7 +706,7 @@ export default function Acessorios() {
                               }
                               className="hover:text-red-500 rounded-full"
                             >
-                              <X className="w-3 h-3" />
+                              <X className="w-3 h-3 select-none" draggable={false} />
                             </button>
                           </Badge>
                         )
@@ -722,9 +731,9 @@ export default function Acessorios() {
                   disabled={loadingAi}
                 >
                   {loadingAi ? (
-                    <RefreshCw className="w-3 h-3 animate-spin" />
+                    <RefreshCw className="w-3 h-3 animate-spin select-none" draggable={false} />
                   ) : (
-                    <Wand2 className="w-3 h-3" />
+                    <Wand2 className="w-3 h-3 select-none" draggable={false} />
                   )}
                   Sugestões Inteligentes
                 </Button>
@@ -755,7 +764,8 @@ export default function Acessorios() {
                             <img
                               src={pb.files.getURL(log.expand.user, log.expand.user.avatar)}
                               alt="avatar"
-                              className="w-10 h-10 rounded-full object-cover"
+                              className="w-10 h-10 rounded-full object-cover select-none"
+                              draggable={false}
                             />
                           ) : (
                             <span className="text-gray-500 font-semibold">

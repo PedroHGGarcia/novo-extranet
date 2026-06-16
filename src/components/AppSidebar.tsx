@@ -96,8 +96,13 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r-0 bg-brand-sidebar text-white">
       <SidebarHeader className="flex h-14 items-center justify-center border-b border-white/5 bg-brand-green p-0 rounded-none">
-        <Link to="/" className="flex items-center justify-center p-2">
-          <img src={logoIn} alt="Bener Logo" className="h-10 object-contain" />
+        <Link to="/" className="flex items-center justify-center p-2 select-none" draggable={false}>
+          <img
+            src={logoIn}
+            alt="Bener Logo"
+            className="h-10 object-contain select-none"
+            draggable={false}
+          />
         </Link>
       </SidebarHeader>
       <SidebarContent className="bg-brand-sidebar py-2">
@@ -125,8 +130,8 @@ export function AppSidebar() {
                       !isActive && 'border-l-4 border-transparent',
                     )}
                   >
-                    <Link to={item.url}>
-                      <item.icon className="h-5 w-5" />
+                    <Link to={item.url} draggable={false} className="select-none">
+                      <item.icon className="h-5 w-5 select-none" draggable={false} />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -134,7 +139,7 @@ export function AppSidebar() {
                   {item.sub.length > 0 && (
                     <CollapsibleTrigger asChild>
                       <SidebarMenuAction className="text-white/70 hover:bg-transparent hover:text-white data-[state=open]:rotate-90">
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-4 w-4 select-none" draggable={false} />
                         <span className="sr-only">Toggle Dropdown</span>
                       </SidebarMenuAction>
                     </CollapsibleTrigger>
@@ -152,8 +157,13 @@ export function AppSidebar() {
                                 location.pathname === subItem.url && 'text-white bg-white/5',
                               )}
                             >
-                              <Link to={subItem.url}>
-                                {subItem.icon && <subItem.icon className="h-4 w-4 shrink-0" />}
+                              <Link to={subItem.url} draggable={false} className="select-none">
+                                {subItem.icon && (
+                                  <subItem.icon
+                                    className="h-4 w-4 shrink-0 select-none"
+                                    draggable={false}
+                                  />
+                                )}
                                 <span>{subItem.title}</span>
                               </Link>
                             </SidebarMenuSubButton>

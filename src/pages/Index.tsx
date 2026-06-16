@@ -34,8 +34,9 @@ const MetricCard = ({ title, value, colorClass, icon: Icon }: MetricCardProps) =
       <span className="text-sm font-medium opacity-90">{title}</span>
     </div>
     <Icon
-      className="absolute -bottom-6 -right-4 h-32 w-32 opacity-20 transition-transform duration-500 hover:scale-110"
+      className="absolute -bottom-6 -right-4 h-32 w-32 opacity-20 transition-transform duration-500 hover:scale-110 select-none"
       strokeWidth={1.5}
+      draggable={false}
     />
   </div>
 )
@@ -166,7 +167,7 @@ export default function Index() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-brand-blue/10 rounded-xl">
-            <LayoutDashboard className="h-7 w-7 text-brand-blue" />
+            <LayoutDashboard className="h-7 w-7 text-brand-blue select-none" draggable={false} />
           </div>
           <div>
             <h1 className="!mb-0 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -184,7 +185,7 @@ export default function Index() {
               variant="outline"
               className="gap-2 rounded-xl transition-all duration-300 active:scale-95 border-slate-200 bg-white hover:bg-slate-50"
             >
-              <Download className="h-4 w-4 text-brand-blue" />
+              <Download className="h-4 w-4 text-brand-blue select-none" draggable={false} />
               Exportar Relatório
             </Button>
           </DropdownMenuTrigger>
@@ -289,7 +290,7 @@ export default function Index() {
             <div className="divide-y divide-slate-100 dark:divide-slate-800 h-full flex flex-col">
               <div className="p-5 flex items-start gap-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/50 flex-1">
                 <div className="p-2.5 rounded-xl bg-brand-blue/10 text-brand-blue shrink-0">
-                  <Users className="h-5 w-5" />
+                  <Users className="h-5 w-5 select-none" draggable={false} />
                 </div>
                 <div>
                   <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -302,7 +303,7 @@ export default function Index() {
               </div>
               <div className="p-5 flex items-start gap-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/50 flex-1">
                 <div className="p-2.5 rounded-xl bg-brand-orange/10 text-brand-orange shrink-0">
-                  <MapPin className="h-5 w-5" />
+                  <MapPin className="h-5 w-5 select-none" draggable={false} />
                 </div>
                 <div>
                   <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -315,7 +316,7 @@ export default function Index() {
               </div>
               <div className="p-5 flex items-start gap-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/50 flex-1">
                 <div className="p-2.5 rounded-xl bg-brand-green/10 text-brand-green shrink-0">
-                  <Activity className="h-5 w-5" />
+                  <Activity className="h-5 w-5 select-none" draggable={false} />
                 </div>
                 <div>
                   <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">

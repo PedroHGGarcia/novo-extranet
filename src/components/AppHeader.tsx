@@ -83,8 +83,13 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 bg-brand-green px-4 text-white shadow-sm">
       <SidebarTrigger className="text-white hover:bg-white/10 hover:text-white focus-visible:ring-white/20" />
-      <div className="flex-1 md:hidden flex justify-center">
-        <img src={logoIn} alt="Bener Logo" className="h-6 object-contain" />
+      <div className="flex-1 md:hidden flex justify-center select-none">
+        <img
+          src={logoIn}
+          alt="Bener Logo"
+          className="h-6 object-contain select-none"
+          draggable={false}
+        />
       </div>
       <div className="hidden md:flex flex-1" />
       <div className="flex items-center gap-2">
@@ -95,7 +100,7 @@ export function AppHeader() {
               size="icon"
               className="relative rounded-full text-white hover:bg-white/10 hover:text-white"
             >
-              <Bell className="h-5 w-5" />
+              <Bell className="h-5 w-5 select-none" draggable={false} />
               {unreadCount > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -164,7 +169,7 @@ export function AppHeader() {
               size="icon"
               className="rounded-full text-white hover:bg-white/10 hover:text-white"
             >
-              <User className="h-6 w-6" />
+              <User className="h-6 w-6 select-none" draggable={false} />
               <span className="sr-only">Perfil</span>
             </Button>
           </DropdownMenuTrigger>
@@ -177,8 +182,12 @@ export function AppHeader() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link to="/perfil" className="flex w-full cursor-pointer items-center">
-                <UserIcon className="mr-2 h-4 w-4" />
+              <Link
+                to="/perfil"
+                draggable={false}
+                className="flex w-full cursor-pointer items-center select-none"
+              >
+                <UserIcon className="mr-2 h-4 w-4 select-none" draggable={false} />
                 <span>Perfil</span>
               </Link>
             </DropdownMenuItem>
@@ -187,7 +196,7 @@ export function AppHeader() {
               onClick={handleSignOut}
               className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600"
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut className="mr-2 h-4 w-4 select-none" draggable={false} />
               <span>Sair</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

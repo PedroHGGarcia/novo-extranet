@@ -62,7 +62,7 @@ export default function Login() {
             <label className="text-xs font-medium text-gray-700 mb-1.5 block">E-mail</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4 select-none" draggable={false} />
               </div>
               <Input
                 type="email"
@@ -79,7 +79,7 @@ export default function Login() {
             <label className="text-xs font-medium text-gray-700 mb-1.5 block">Senha</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                <Lock className="h-4 w-4" />
+                <Lock className="h-4 w-4 select-none" draggable={false} />
               </div>
               <Input
                 type={showPassword ? 'text' : 'password'}
@@ -93,7 +93,11 @@ export default function Login() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 select-none" draggable={false} />
+                ) : (
+                  <Eye className="h-4 w-4 select-none" draggable={false} />
+                )}
               </button>
             </div>
             {errors.password && <p className="text-xs text-red-500 mt-1.5">{errors.password}</p>}
@@ -102,7 +106,8 @@ export default function Login() {
           <div className="flex items-center justify-between">
             <Link
               to="/forgot-password"
-              className="text-xs font-medium text-[#00704a] hover:underline"
+              draggable={false}
+              className="text-xs font-medium text-[#00704a] hover:underline select-none"
             >
               Esqueceu a senha?
             </Link>
@@ -113,18 +118,26 @@ export default function Login() {
             disabled={loading}
             className="w-full h-11 bg-[#00704a] hover:bg-[#005a3b] text-white font-medium rounded-md tracking-wide"
           >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'ENTRAR'}
+            {loading ? (
+              <Loader2 className="h-5 w-5 animate-spin select-none" draggable={false} />
+            ) : (
+              'ENTRAR'
+            )}
           </Button>
         </form>
 
         <div className="mt-8 text-center text-sm text-gray-600">
           Não tem uma conta?{' '}
-          <Link to="/signup" className="font-medium text-[#00704a] hover:underline">
+          <Link
+            to="/signup"
+            draggable={false}
+            className="font-medium text-[#00704a] hover:underline select-none"
+          >
             Cadastre-se
           </Link>
         </div>
       </div>
-      <footer className="mt-8 text-center text-xs text-gray-500">
+      <footer className="mt-8 text-center text-xs text-gray-500 select-none">
         <p>
           Desenvolvido por <span className="text-[#00704a] font-medium">Skip</span> e{' '}
           <span className="text-[#00704a] font-medium">Pedro Garcia</span>
