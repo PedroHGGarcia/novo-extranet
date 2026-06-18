@@ -2,19 +2,20 @@ import { Link, useLocation } from 'react-router-dom'
 import {
   Monitor,
   Map,
-  Contact,
+  Folder,
   CalendarDays,
   FileText,
-  Package,
+  Boxes,
   LineChart,
   UserCircle,
-  ChevronRight,
+  ChevronLeft,
   Globe,
   User,
   Briefcase,
   Users,
   Activity,
   Settings,
+  LogOut,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -31,8 +32,6 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
-import logoIn from '@/assets/systemlogoin-large-52274.png'
-import { LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const menuItems = [
@@ -40,11 +39,11 @@ const menuItems = [
   {
     title: 'Cadastros',
     url: '/cadastros',
-    icon: Contact,
+    icon: Folder,
     sub: [
-      { title: 'Regiões', url: '/cadastros/regioes', icon: Globe },
       { title: 'Gerentes', url: '/cadastros/gerentes', icon: User },
-      { title: 'Clientes', url: '/cadastros/clientes', icon: UserCircle },
+      { title: 'Clientes', url: '/cadastros/clientes', icon: Users },
+      { title: 'Regiões', url: '/cadastros/regioes', icon: Globe },
       { title: 'Representantes', url: '/cadastros/representantes', icon: Briefcase },
       { title: 'Prepostos', url: '/cadastros/prepostos', icon: Briefcase },
     ],
@@ -64,7 +63,7 @@ const menuItems = [
   {
     title: 'Controle de Produtos',
     url: '/produtos',
-    icon: Package,
+    icon: Boxes,
     sub: [
       { title: 'Categorias', url: '/produtos/categorias' },
       { title: 'Produtos', url: '/produtos' },
@@ -97,24 +96,26 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r-0 bg-brand-sidebar text-white">
-      <SidebarHeader className="flex h-14 items-center justify-center border-b border-white/5 bg-brand-green p-0 rounded-none">
-        <Link to="/" className="flex items-center justify-center p-2 select-none" draggable={false}>
-          <img
-            src={logoIn}
-            alt="Bener Logo"
-            className="h-10 object-contain select-none"
-            draggable={false}
-          />
+      <SidebarHeader className="flex h-24 items-center justify-center bg-brand-sidebar p-0 rounded-none mb-2">
+        <Link
+          to="/"
+          className="flex flex-col items-center justify-center p-4 select-none"
+          draggable={false}
+        >
+          <h1 className="text-3xl font-black tracking-widest text-white">BENER</h1>
+          <p className="text-[0.55rem] font-bold tracking-[0.2em] text-white uppercase mt-1">
+            Máquinas que transformam
+          </p>
         </Link>
       </SidebarHeader>
-      <SidebarContent className="bg-brand-sidebar py-2 text-left text-[#000000]">
+      <SidebarContent className="bg-brand-sidebar py-2 text-left">
         <SidebarMenu>
           {menuItems.map((item) => {
             if (item.adminOnly && user?.role !== 'admin') return null
 
             const isActive =
               location.pathname === item.url ||
-              item.sub.some((sub) => location.pathname === sub.url)
+              item.sub.some((sub) => location.pathname.startsWith(sub.url))
 
             return (
               <Collapsible
@@ -128,24 +129,26 @@ export function AppSidebar() {
                     asChild
                     isActive={isActive}
                     className={cn(
-                      'h-12 rounded-none text-white/70 hover:bg-white/5 hover:text-white active:bg-brand-green data-[active=true]:bg-brand-green data-[active=true]:text-white data-[active=true]:border-l-4 data-[active=true]:border-brand-success',
-                      !isActive && 'border-l-4 border-transparent',
+                      'h-11 rounded-none text-white/80 hover:bg-white/5 hover:text-white active:bg-white/10 data-[active=true]:bg-white/5 data-[active=true]:text-white data-[active=true]:font-semibold',
                     )}
                   >
                     <Link
                       to={item.url}
                       draggable={false}
-                      className="select-none text-[#ffffff] border-[#00d599] border-solid opacity-[1]"
+                      className="select-none flex items-center gap-3 w-full"
                     >
-                      <item.icon className="h-5 w-5 select-none" draggable={false} />
-                      <span>{item.title}</span>
+                      <item.icon className="h-5 w-5 select-none shrink-0" draggable={false} />
+                      <span className="flex-1">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
 
                   {item.sub.length > 0 && (
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuAction className="text-white/70 hover:bg-transparent hover:text-white data-[state=open]:rotate-90">
-                        <ChevronRight className="h-4 w-4 select-none" draggable={false} />
+                      <SidebarMenuAction className="text-white/80 hover:bg-white/10 hover:text-white">
+                        <ChevronLeft
+                          className="h-4 w-4 select-none transition-transform duration-200 group-data-[state=open]/collapsible:-rotate-90"
+                          draggable={false}
+                        />
                         <span className="sr-only">Toggle Dropdown</span>
                       </SidebarMenuAction>
                     </CollapsibleTrigger>
@@ -153,28 +156,31 @@ export function AppSidebar() {
 
                   {item.sub.length > 0 && (
                     <CollapsibleContent>
-                      <SidebarMenuSub className="border-l-transparent pr-0 mr-0 gap-1">
-                        {item.sub.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              className={cn(
-                                'text-white/70 hover:bg-white/5 hover:text-white flex items-center gap-3 py-2 px-4 rounded-none',
-                                location.pathname === subItem.url && 'text-white bg-white/5',
-                              )}
-                            >
-                              <Link to={subItem.url} draggable={false} className="select-none">
-                                {subItem.icon && (
-                                  <subItem.icon
-                                    className="h-4 w-4 shrink-0 select-none"
-                                    draggable={false}
-                                  />
+                      <SidebarMenuSub className="border-l-transparent pr-0 mr-0 gap-1 ml-5">
+                        {item.sub.map((subItem) => {
+                          const isSubActive = location.pathname.startsWith(subItem.url)
+                          return (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton
+                                asChild
+                                className={cn(
+                                  'text-white/70 hover:bg-white/5 hover:text-white flex items-center gap-3 py-2 px-4 rounded-none h-10',
+                                  isSubActive && 'text-white font-semibold',
                                 )}
-                                <span>{subItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
+                              >
+                                <Link to={subItem.url} draggable={false} className="select-none">
+                                  {subItem.icon && (
+                                    <subItem.icon
+                                      className="h-4 w-4 shrink-0 select-none"
+                                      draggable={false}
+                                    />
+                                  )}
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          )
+                        })}
                       </SidebarMenuSub>
                     </CollapsibleContent>
                   )}
@@ -184,10 +190,10 @@ export function AppSidebar() {
           })}
         </SidebarMenu>
       </SidebarContent>
-      <div className="p-4 border-t border-white/5 mt-auto">
+      <div className="p-4 mt-auto">
         <Button
           variant="ghost"
-          className="w-full justify-start text-white/70 hover:bg-white/5 hover:text-white rounded-none h-12"
+          className="w-full justify-start text-white/80 hover:bg-white/10 hover:text-white rounded-md h-11 transition-colors"
           onClick={() => signOut()}
         >
           <LogOut className="mr-3 h-5 w-5 select-none" draggable={false} />

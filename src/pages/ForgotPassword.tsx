@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Link } from 'react-router-dom'
-import logoIn from '@/assets/bener-thumb-c5c1b.png'
+
 import pb from '@/lib/pocketbase/client'
 
 export default function ForgotPassword() {
@@ -23,20 +23,21 @@ export default function ForgotPassword() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative bg-slate-50">
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-[#00704a]/5 blur-[120px]" />
-        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-[#00704a]/5 blur-[120px]" />
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-brand-green/5 blur-[120px]" />
+        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-brand-green/5 blur-[120px]" />
       </div>
 
       <div className="w-full max-w-[420px] z-20 px-4">
         <div className="bg-white rounded-[32px] shadow-2xl p-8 sm:p-10 w-full space-y-8">
-          <div className="text-center flex flex-col items-center justify-center">
-            <img
-              src={logoIn}
-              alt="Bener Logo"
-              className="w-auto h-20 sm:h-24 max-w-full mb-6 object-contain"
-            />
-            <h2 className="text-2xl font-bold text-[#002845]">Recuperar Senha</h2>
-            <p className="text-sm text-gray-500 mt-2">
+          <div className="text-center flex flex-col items-center justify-center pt-4">
+            <div className="flex flex-col items-center justify-center mb-8 select-none text-brand-green">
+              <h1 className="text-4xl font-black tracking-widest">BENER</h1>
+              <p className="text-[0.6rem] font-bold tracking-[0.2em] uppercase mt-1">
+                Máquinas que transformam
+              </p>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900">Recuperar Senha</h2>
+            <p className="text-sm text-slate-500 mt-2">
               Informe seu e-mail para receber o link de recuperação.
             </p>
           </div>
@@ -47,7 +48,7 @@ export default function ForgotPassword() {
                 Se o e-mail estiver cadastrado, você receberá um link de recuperação em breve.
               </div>
               <Link to="/login" className="block">
-                <Button className="w-full bg-[#00704a] hover:bg-[#00704a]/90 text-white uppercase text-sm h-12 rounded-full font-bold transition-colors">
+                <Button className="w-full bg-brand-green hover:bg-brand-green/90 text-white uppercase text-sm h-12 rounded-full font-bold transition-colors">
                   Voltar para o Login
                 </Button>
               </Link>
@@ -62,18 +63,18 @@ export default function ForgotPassword() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={status === 'loading'}
-                  className="h-12 rounded-full px-5 border-gray-200 focus-visible:ring-[#00704a]"
+                  className="h-12 rounded-full px-5 border-gray-200 focus-visible:ring-brand-green"
                 />
               </div>
               <Button
                 type="submit"
-                className="w-full bg-[#00704a] hover:bg-[#00704a]/90 text-white uppercase text-sm h-12 rounded-full font-bold transition-colors"
+                className="w-full bg-brand-green hover:bg-brand-green/90 text-white uppercase text-sm h-12 rounded-full font-bold transition-colors"
                 disabled={status === 'loading'}
               >
                 {status === 'loading' ? 'Enviando...' : 'Enviar link'}
               </Button>
               <div className="text-center text-sm pt-2">
-                <Link to="/login" className="text-[#00704a] hover:underline font-semibold">
+                <Link to="/login" className="text-brand-green hover:underline font-semibold">
                   Voltar para o Login
                 </Link>
               </div>

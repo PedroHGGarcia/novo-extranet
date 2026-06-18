@@ -16,8 +16,8 @@ export default function Layout() {
         </main>
         <footer className="border-t bg-white py-4 text-center text-xs text-gray-500 select-none">
           <p>
-            Desenvolvido por <span className="text-[#00704a] font-medium">Skip</span> e{' '}
-            <span className="text-[#00704a] font-medium">Pedro Garcia</span>
+            Desenvolvido por <span className="text-brand-green font-medium">Skip</span> e{' '}
+            <span className="text-brand-green font-medium">Pedro Garcia</span>
           </p>
         </footer>
       </SidebarInset>

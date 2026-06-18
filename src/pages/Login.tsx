@@ -95,7 +95,7 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={handleEmailChange}
-                className={`pl-10 h-11 focus-visible:ring-[#00704a] focus-visible:border-[#00704a] ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                className={`pl-10 h-11 focus-visible:ring-brand-green focus-visible:border-brand-green ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 placeholder="seu@email.com"
               />
             </div>
@@ -112,7 +112,7 @@ export default function Login() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={handlePasswordChange}
-                className={`pl-10 pr-10 h-11 focus-visible:ring-[#00704a] focus-visible:border-[#00704a] ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                className={`pl-10 pr-10 h-11 focus-visible:ring-brand-green focus-visible:border-brand-green ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                 placeholder="••••••••"
               />
               <button
@@ -134,7 +134,7 @@ export default function Login() {
             <Link
               to="/forgot-password"
               draggable={false}
-              className="text-xs font-medium text-[#00704a] hover:underline select-none"
+              className="text-xs font-medium text-brand-green hover:underline select-none"
             >
               Esqueceu a senha?
             </Link>
@@ -143,7 +143,7 @@ export default function Login() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-11 bg-[#00704a] hover:bg-[#005a3b] text-white font-medium rounded-md tracking-wide"
+            className="w-full h-11 bg-brand-green hover:bg-brand-green/90 text-white font-medium rounded-md tracking-wide"
           >
             {loading ? (
               <Loader2 className="h-5 w-5 animate-spin select-none" draggable={false} />
@@ -158,7 +158,7 @@ export default function Login() {
           <Link
             to="/signup"
             draggable={false}
-            className="font-medium text-[#00704a] hover:underline select-none"
+            className="font-medium text-brand-green hover:underline select-none"
           >
             Cadastre-se
           </Link>
@@ -166,8 +166,8 @@ export default function Login() {
       </div>
       <footer className="mt-8 text-center text-xs text-gray-500 select-none">
         <p>
-          Desenvolvido por <span className="text-[#00704a] font-medium">Skip</span> e{' '}
-          <span className="text-[#00704a] font-medium">Pedro Garcia</span>
+          Desenvolvido por <span className="text-brand-green font-medium">Skip</span> e{' '}
+          <span className="text-brand-green font-medium">Pedro Garcia</span>
         </p>
       </footer>
     </div>
