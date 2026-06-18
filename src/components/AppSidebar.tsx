@@ -107,7 +107,7 @@ export function AppSidebar() {
           />
         </Link>
       </SidebarHeader>
-      <SidebarContent className="bg-brand-sidebar py-2">
+      <SidebarContent className="bg-brand-sidebar py-2 text-left text-[#000000]">
         <SidebarMenu>
           {menuItems.map((item) => {
             if (item.adminOnly && user?.role !== 'admin') return null
@@ -132,7 +132,11 @@ export function AppSidebar() {
                       !isActive && 'border-l-4 border-transparent',
                     )}
                   >
-                    <Link to={item.url} draggable={false} className="select-none">
+                    <Link
+                      to={item.url}
+                      draggable={false}
+                      className="select-none text-[#ffffff] border-[#00d599] border-solid opacity-[1]"
+                    >
                       <item.icon className="h-5 w-5 select-none" draggable={false} />
                       <span>{item.title}</span>
                     </Link>
