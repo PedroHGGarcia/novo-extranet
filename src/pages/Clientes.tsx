@@ -84,6 +84,7 @@ export default function Clientes() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [conflictRecord, setConflictRecord] = useState<any>(null)
   const [isConflictOpen, setIsConflictOpen] = useState(false)
+  const [isFetchingCep, setIsFetchingCep] = useState(false)
 
   const defaultForm = {
     id: '',
@@ -322,10 +323,43 @@ export default function Clientes() {
     }
   }
 
+  const fetchCep = async (cepValue: string) => {
+    const cleanCep = cepValue.replace(/\D/g, '')
+    if (cleanCep.length !== 8) return
+
+    setIsFetchingCep(true)
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`)
+      const data = await response.json()
+
+      if (!data.erro) {
+        setFormData((prev) => ({
+          ...prev,
+          logradouro: data.logradouro || prev.logradouro,
+          bairro: data.bairro || prev.bairro,
+          cidade: data.localidade || prev.cidade,
+          estado: data.uf || prev.estado,
+        }))
+        toast({ title: 'Endereço preenchido automaticamente' })
+      } else {
+        toast({ title: 'CEP não encontrado', variant: 'destructive' })
+      }
+    } catch (error) {
+      toast({ title: 'Erro ao buscar CEP', variant: 'destructive' })
+    } finally {
+      setIsFetchingCep(false)
+    }
+  }
+
   const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let v = e.target.value.replace(/\D/g, '')
     if (v.length > 5) v = v.replace(/^(\d{5})(\d)/, '$1-$2')
-    setFormData({ ...formData, cep: v.substring(0, 9) })
+    const maskedCep = v.substring(0, 9)
+    setFormData({ ...formData, cep: maskedCep })
+
+    if (v.replace(/\D/g, '').length === 8) {
+      fetchCep(v)
+    }
   }
 
   return (
@@ -499,8 +533,8 @@ export default function Clientes() {
           </Card>
         ) : (
           <div className="space-y-6 pb-12">
-            <Card className="shadow-sm">
-              <CardHeader className="border-b bg-muted/20">
+            <Card className="shadow-sm bg-card">
+              <CardHeader className="border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Building2 className="h-5 w-5 text-primary" />
                   Dados Cadastrais
@@ -551,8 +585,8 @@ export default function Clientes() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm">
-              <CardHeader className="border-b bg-muted/20">
+            <Card className="shadow-sm bg-card">
+              <CardHeader className="border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Phone className="h-5 w-5 text-primary" />
                   Contato
@@ -613,8 +647,8 @@ export default function Clientes() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm">
-              <CardHeader className="border-b bg-muted/20">
+            <Card className="shadow-sm bg-card">
+              <CardHeader className="border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-primary" />
                   Localização
@@ -623,7 +657,17 @@ export default function Clientes() {
               <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-6">
                 <div className="space-y-2">
                   <Label>CEP</Label>
-                  <Input value={formData.cep} onChange={handleCepChange} placeholder="00000-000" />
+                  <div className="relative">
+                    <Input
+                      value={formData.cep}
+                      onChange={handleCepChange}
+                      placeholder="00000-000"
+                      disabled={isFetchingCep}
+                    />
+                    {isFetchingCep && (
+                      <Loader2 className="h-4 w-4 animate-spin absolute right-3 top-2.5 text-muted-foreground" />
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Estado</Label>
@@ -670,8 +714,8 @@ export default function Clientes() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm">
-              <CardHeader className="border-b bg-muted/20 flex flex-row items-center justify-between">
+            <Card className="shadow-sm bg-card">
+              <CardHeader className="border-b flex flex-row items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <UserCircle className="h-5 w-5 text-primary" />
                   Contatos Adicionais
@@ -703,7 +747,7 @@ export default function Clientes() {
                     {contatos.map((c, i) => (
                       <div
                         key={c.id}
-                        className="grid grid-cols-1 md:grid-cols-[2fr_1fr_2fr_3fr_auto] gap-4 items-end bg-muted/30 p-4 rounded-lg border border-border/50"
+                        className="grid grid-cols-1 md:grid-cols-[2fr_1fr_2fr_3fr_auto] gap-4 items-end bg-card p-4 rounded-lg border"
                       >
                         <div className="space-y-2">
                           <Label className="text-xs">Nome</Label>
@@ -764,8 +808,8 @@ export default function Clientes() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm">
-              <CardHeader className="border-b bg-muted/20 flex flex-row items-center justify-between">
+            <Card className="shadow-sm bg-card">
+              <CardHeader className="border-b flex flex-row items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <FileText className="h-5 w-5 text-primary" />
                   Documentos
@@ -788,7 +832,7 @@ export default function Clientes() {
                       return (
                         <div
                           key={d.id || i}
-                          className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-4 items-end bg-muted/30 p-4 rounded-lg border border-border/50"
+                          className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-4 items-end bg-card p-4 rounded-lg border"
                         >
                           <div className="space-y-2">
                             <Label className="text-xs">Tipo do Documento</Label>
