@@ -1,5 +1,15 @@
 import pb from '@/lib/pocketbase/client'
 
+// Documentos Clientes
+export const getDocumentosCliente = (clienteId: string) =>
+  pb
+    .collection('documentos_clientes')
+    .getFullList({ filter: `cliente="${clienteId}"`, sort: '-created' })
+export const createDocumentoCliente = (data: any) =>
+  pb.collection('documentos_clientes').create(data)
+export const deleteDocumentoCliente = (id: string) =>
+  pb.collection('documentos_clientes').delete(id)
+
 // Clientes
 export const getByDocumento = async (collection: string, documento: string) => {
   if (!documento) return null
