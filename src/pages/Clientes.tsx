@@ -85,6 +85,7 @@ export default function Clientes() {
   const [conflictRecord, setConflictRecord] = useState<any>(null)
   const [isConflictOpen, setIsConflictOpen] = useState(false)
   const [isFetchingCep, setIsFetchingCep] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const defaultForm = {
     id: '',
@@ -127,7 +128,7 @@ export default function Clientes() {
       let filter = ''
       if (debouncedSearch) {
         const s = debouncedSearch.replace(/"/g, '\\"')
-        filter = `fantasia ~ "${s}" || documento ~ "${s}" || contato ~ "${s}"`
+        filter = `fantasia ~ "${s}" || razao_social ~ "${s}" || documento ~ "${s}"`
       }
       const res = await getClientesPaginated(page, perPage, filter)
       setData(res.items)
@@ -151,6 +152,7 @@ export default function Clientes() {
     setContatos([])
     setDocumentos([])
     setConflictRecord(null)
+    setFieldErrors({})
   }
 
   const handleEdit = async (item: any) => {
@@ -179,6 +181,8 @@ export default function Clientes() {
 
     const parsedContatos = Array.isArray(item.contatos_adicionais) ? item.contatos_adicionais : []
     setContatos(parsedContatos.map((c: any) => ({ id: crypto.randomUUID(), ...c })))
+
+    setFieldErrors({})
 
     try {
       const docs = await getDocumentosCliente(item.id)
@@ -242,12 +246,14 @@ export default function Clientes() {
   const handleSave = async () => {
     try {
       setIsSubmitting(true)
+      setFieldErrors({})
       if (!formData.documento) throw new Error('CPF/CNPJ é obrigatório')
       if (!formData.fantasia) throw new Error('Nome Fantasia é obrigatório')
 
       const dataToSave = {
         ...formData,
         contatos_adicionais: contatos.map(({ id, ...rest }) => rest),
+        atualizado_por: pb.authStore.record?.id,
       }
 
       let clienteId = formData.id
@@ -273,8 +279,12 @@ export default function Clientes() {
       setView('list')
     } catch (err: any) {
       const errs = extractFieldErrors(err)
-      const msg = Object.values(errs)[0] || err.message || 'Erro ao salvar'
-      toast({ title: msg, variant: 'destructive' })
+      if (Object.keys(errs).length > 0) {
+        setFieldErrors(errs)
+        toast({ title: 'Verifique os campos com erro', variant: 'destructive' })
+      } else {
+        toast({ title: err.message || 'Erro ao salvar', variant: 'destructive' })
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -283,17 +293,26 @@ export default function Clientes() {
   const handleReplace = async () => {
     try {
       setIsSubmitting(true)
+      setFieldErrors({})
       await updateCliente(conflictRecord.id, {
         ...formData,
         contatos_adicionais: contatos.map(({ id, ...rest }) => rest),
+        atualizado_por: pb.authStore.record?.id,
       })
       await saveDocuments(conflictRecord.id)
       setIsConflictOpen(false)
       resetForm()
       setView('list')
       toast({ title: 'Registro substituído com sucesso' })
-    } catch (err) {
-      toast({ title: 'Erro ao substituir', variant: 'destructive' })
+    } catch (err: any) {
+      const errs = extractFieldErrors(err)
+      if (Object.keys(errs).length > 0) {
+        setFieldErrors(errs)
+        setIsConflictOpen(false)
+        toast({ title: 'Verifique os campos com erro', variant: 'destructive' })
+      } else {
+        toast({ title: 'Erro ao substituir', variant: 'destructive' })
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -302,6 +321,7 @@ export default function Clientes() {
   const handleMerge = async () => {
     try {
       setIsSubmitting(true)
+      setFieldErrors({})
       const mergedData = { ...conflictRecord }
       for (const [key, value] of Object.entries(formData)) {
         if (value && String(value).trim() !== '' && key !== 'id') {
@@ -309,6 +329,7 @@ export default function Clientes() {
         }
       }
       mergedData.contatos_adicionais = contatos.map(({ id, ...rest }) => rest)
+      mergedData.atualizado_por = pb.authStore.record?.id
 
       await updateCliente(conflictRecord.id, mergedData)
       await saveDocuments(conflictRecord.id)
@@ -316,8 +337,15 @@ export default function Clientes() {
       resetForm()
       setView('list')
       toast({ title: 'Registros mesclados com sucesso' })
-    } catch (err) {
-      toast({ title: 'Erro ao mesclar', variant: 'destructive' })
+    } catch (err: any) {
+      const errs = extractFieldErrors(err)
+      if (Object.keys(errs).length > 0) {
+        setFieldErrors(errs)
+        setIsConflictOpen(false)
+        toast({ title: 'Verifique os campos com erro', variant: 'destructive' })
+      } else {
+        toast({ title: 'Erro ao mesclar', variant: 'destructive' })
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -465,11 +493,10 @@ export default function Clientes() {
                         onCheckedChange={toggleAll}
                       />
                     </TableHead>
-                    <TableHead>Fantasia</TableHead>
-                    <TableHead>Contato</TableHead>
-                    <TableHead>Telefone / Celular</TableHead>
-                    <TableHead>E-mail</TableHead>
-                    <TableHead>Data Cad.</TableHead>
+                    <TableHead>Nome Fantasia</TableHead>
+                    <TableHead>Razão Social</TableHead>
+                    <TableHead>CPF/CNPJ</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -483,24 +510,25 @@ export default function Clientes() {
                         />
                       </TableCell>
                       <TableCell className="font-medium text-foreground">{item.fantasia}</TableCell>
-                      <TableCell className="text-muted-foreground">{item.contato}</TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
-                        {item.telefone && <div>{item.telefone}</div>}
-                        {item.celular && <div className="text-xs mt-1">{item.celular}</div>}
+                      <TableCell className="text-muted-foreground">
+                        {item.razao_social || '-'}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.documento || '-'}
                       </TableCell>
                       <TableCell>
-                        <a href={`mailto:${item.email}`} className="text-primary hover:underline">
-                          {item.email}
-                        </a>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
-                        {item.dt_cad}
+                        {item.status === 'Ativo' ? (
+                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                            Ativo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                            {item.status}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-2">
-                          {item.status === 'Ativo' && (
-                            <CheckCircle2 className="h-4 w-4 text-green-500" title="Ativo" />
-                          )}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -522,7 +550,7 @@ export default function Clientes() {
                   ))}
                   {data.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                         Nenhum cliente encontrado.
                       </TableCell>
                     </TableRow>
@@ -542,20 +570,26 @@ export default function Clientes() {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
                 <div className="space-y-2">
-                  <Label>CPF/CNPJ</Label>
+                  <Label className={fieldErrors.documento ? 'text-destructive' : ''}>
+                    CPF/CNPJ
+                  </Label>
                   <Input
                     value={formData.documento}
                     onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
                     placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                    className={fieldErrors.documento ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.documento && (
+                    <p className="text-sm text-destructive">{fieldErrors.documento}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Status</Label>
+                  <Label className={fieldErrors.status ? 'text-destructive' : ''}>Status</Label>
                   <Select
                     value={formData.status}
                     onValueChange={(v) => setFormData({ ...formData, status: v })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={fieldErrors.status ? 'border-destructive' : ''}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -563,24 +597,39 @@ export default function Clientes() {
                       <SelectItem value="Inativo">Inativo</SelectItem>
                     </SelectContent>
                   </Select>
+                  {fieldErrors.status && (
+                    <p className="text-sm text-destructive">{fieldErrors.status}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Data de Cadastro</Label>
                   <Input value={formData.dt_cad} readOnly className="bg-muted" />
                 </div>
                 <div className="space-y-2 lg:col-span-2">
-                  <Label>Razão Social</Label>
+                  <Label className={fieldErrors.razao_social ? 'text-destructive' : ''}>
+                    Razão Social
+                  </Label>
                   <Input
                     value={formData.razao_social}
                     onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}
+                    className={fieldErrors.razao_social ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.razao_social && (
+                    <p className="text-sm text-destructive">{fieldErrors.razao_social}</p>
+                  )}
                 </div>
                 <div className="space-y-2 lg:col-span-1">
-                  <Label>Nome Fantasia</Label>
+                  <Label className={fieldErrors.fantasia ? 'text-destructive' : ''}>
+                    Nome Fantasia
+                  </Label>
                   <Input
                     value={formData.fantasia}
                     onChange={(e) => setFormData({ ...formData, fantasia: e.target.value })}
+                    className={fieldErrors.fantasia ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.fantasia && (
+                    <p className="text-sm text-destructive">{fieldErrors.fantasia}</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -594,55 +643,95 @@ export default function Clientes() {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
                 <div className="space-y-2">
-                  <Label>Nome do Contato Principal</Label>
+                  <Label className={fieldErrors.contato ? 'text-destructive' : ''}>
+                    Nome do Contato Principal
+                  </Label>
                   <Input
                     value={formData.contato}
                     onChange={(e) => setFormData({ ...formData, contato: e.target.value })}
+                    className={fieldErrors.contato ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.contato && (
+                    <p className="text-sm text-destructive">{fieldErrors.contato}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label>E-mail Principal</Label>
+                  <Label className={fieldErrors.email ? 'text-destructive' : ''}>
+                    E-mail Principal
+                  </Label>
                   <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className={fieldErrors.email ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.email && (
+                    <p className="text-sm text-destructive">{fieldErrors.email}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label>E-mail Fiscal</Label>
+                  <Label className={fieldErrors.email_fiscal ? 'text-destructive' : ''}>
+                    E-mail Fiscal
+                  </Label>
                   <Input
                     type="email"
                     value={formData.email_fiscal}
                     onChange={(e) => setFormData({ ...formData, email_fiscal: e.target.value })}
+                    className={fieldErrors.email_fiscal ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.email_fiscal && (
+                    <p className="text-sm text-destructive">{fieldErrors.email_fiscal}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Telefone 1</Label>
+                  <Label className={fieldErrors.telefone ? 'text-destructive' : ''}>
+                    Telefone 1
+                  </Label>
                   <Input
                     value={formData.telefone}
                     onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                    className={fieldErrors.telefone ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.telefone && (
+                    <p className="text-sm text-destructive">{fieldErrors.telefone}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Telefone 2</Label>
+                  <Label className={fieldErrors.telefone_2 ? 'text-destructive' : ''}>
+                    Telefone 2
+                  </Label>
                   <Input
                     value={formData.telefone_2}
                     onChange={(e) => setFormData({ ...formData, telefone_2: e.target.value })}
+                    className={fieldErrors.telefone_2 ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.telefone_2 && (
+                    <p className="text-sm text-destructive">{fieldErrors.telefone_2}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Telefone 3</Label>
+                  <Label className={fieldErrors.telefone_3 ? 'text-destructive' : ''}>
+                    Telefone 3
+                  </Label>
                   <Input
                     value={formData.telefone_3}
                     onChange={(e) => setFormData({ ...formData, telefone_3: e.target.value })}
+                    className={fieldErrors.telefone_3 ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.telefone_3 && (
+                    <p className="text-sm text-destructive">{fieldErrors.telefone_3}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Celular</Label>
+                  <Label className={fieldErrors.celular ? 'text-destructive' : ''}>Celular</Label>
                   <Input
                     value={formData.celular}
                     onChange={(e) => setFormData({ ...formData, celular: e.target.value })}
+                    className={fieldErrors.celular ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.celular && (
+                    <p className="text-sm text-destructive">{fieldErrors.celular}</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -656,60 +745,90 @@ export default function Clientes() {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-6">
                 <div className="space-y-2">
-                  <Label>CEP</Label>
+                  <Label className={fieldErrors.cep ? 'text-destructive' : ''}>CEP</Label>
                   <div className="relative">
                     <Input
                       value={formData.cep}
                       onChange={handleCepChange}
                       placeholder="00000-000"
                       disabled={isFetchingCep}
+                      className={fieldErrors.cep ? 'border-destructive' : ''}
                     />
                     {isFetchingCep && (
                       <Loader2 className="h-4 w-4 animate-spin absolute right-3 top-2.5 text-muted-foreground" />
                     )}
                   </div>
+                  {fieldErrors.cep && <p className="text-sm text-destructive">{fieldErrors.cep}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label>Estado</Label>
+                  <Label className={fieldErrors.estado ? 'text-destructive' : ''}>Estado</Label>
                   <Input
                     value={formData.estado}
                     onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+                    className={fieldErrors.estado ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.estado && (
+                    <p className="text-sm text-destructive">{fieldErrors.estado}</p>
+                  )}
                 </div>
                 <div className="space-y-2 lg:col-span-2">
-                  <Label>Cidade</Label>
+                  <Label className={fieldErrors.cidade ? 'text-destructive' : ''}>Cidade</Label>
                   <Input
                     value={formData.cidade}
                     onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+                    className={fieldErrors.cidade ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.cidade && (
+                    <p className="text-sm text-destructive">{fieldErrors.cidade}</p>
+                  )}
                 </div>
                 <div className="space-y-2 lg:col-span-2">
-                  <Label>Logradouro</Label>
+                  <Label className={fieldErrors.logradouro ? 'text-destructive' : ''}>
+                    Logradouro
+                  </Label>
                   <Input
                     value={formData.logradouro}
                     onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })}
+                    className={fieldErrors.logradouro ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.logradouro && (
+                    <p className="text-sm text-destructive">{fieldErrors.logradouro}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Número</Label>
+                  <Label className={fieldErrors.numero ? 'text-destructive' : ''}>Número</Label>
                   <Input
                     value={formData.numero}
                     onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
+                    className={fieldErrors.numero ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.numero && (
+                    <p className="text-sm text-destructive">{fieldErrors.numero}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Complementos</Label>
+                  <Label className={fieldErrors.complementos ? 'text-destructive' : ''}>
+                    Complementos
+                  </Label>
                   <Input
                     value={formData.complementos}
                     onChange={(e) => setFormData({ ...formData, complementos: e.target.value })}
+                    className={fieldErrors.complementos ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.complementos && (
+                    <p className="text-sm text-destructive">{fieldErrors.complementos}</p>
+                  )}
                 </div>
                 <div className="space-y-2 lg:col-span-2">
-                  <Label>Bairro</Label>
+                  <Label className={fieldErrors.bairro ? 'text-destructive' : ''}>Bairro</Label>
                   <Input
                     value={formData.bairro}
                     onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
+                    className={fieldErrors.bairro ? 'border-destructive' : ''}
                   />
+                  {fieldErrors.bairro && (
+                    <p className="text-sm text-destructive">{fieldErrors.bairro}</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
