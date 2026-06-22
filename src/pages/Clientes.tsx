@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react'
-import { UserCircle, Loader2 } from 'lucide-react'
+import {
+  UserCircle,
+  Loader2,
+  Pencil,
+  Copy,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+} from 'lucide-react'
 import { PageLayout } from '@/components/PageLayout'
-import { PaginationBar } from '@/components/PaginationBar'
-import { SortableHead } from '@/components/SortableHead'
 import {
   Table,
   TableBody,
@@ -30,7 +36,6 @@ import {
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { RegistrationActionBar } from '@/components/RegistrationActionBar'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
 import {
   getClientes,
@@ -55,22 +60,8 @@ export default function Clientes() {
   const [conflictRecord, setConflictRecord] = useState<any>(null)
   const [isConflictOpen, setIsConflictOpen] = useState(false)
 
-  const resetForm = () => {
-    setIsCreateOpen(false)
-    setFormData({
-      fantasia: '',
-      documento: '',
-      contato: '',
-      telefone: '',
-      celular: '',
-      email: '',
-      dt_cad: new Date().toISOString().split('T')[0],
-      status: 'Ativo',
-    })
-    setConflictRecord(null)
-  }
-
   const [formData, setFormData] = useState({
+    id: '',
     fantasia: '',
     documento: '',
     contato: '',
@@ -95,6 +86,54 @@ export default function Clientes() {
       d.contato?.toLowerCase().includes(search.toLowerCase()),
   )
 
+  const resetForm = () => {
+    setFormData({
+      id: '',
+      fantasia: '',
+      documento: '',
+      contato: '',
+      telefone: '',
+      celular: '',
+      email: '',
+      dt_cad: new Date().toISOString().split('T')[0],
+      status: 'Ativo',
+    })
+    setConflictRecord(null)
+    setErrors({})
+  }
+
+  const handleEdit = (item: any) => {
+    setFormData({
+      id: item.id,
+      fantasia: item.fantasia || '',
+      documento: item.documento || '',
+      contato: item.contato || '',
+      telefone: item.telefone || '',
+      celular: item.celular || '',
+      email: item.email || '',
+      dt_cad: item.dt_cad
+        ? item.dt_cad.split('/').reverse().join('-')
+        : new Date().toISOString().split('T')[0],
+      status: item.status || 'Ativo',
+    })
+    setIsCreateOpen(true)
+  }
+
+  const handleDuplicate = (item: any) => {
+    setFormData({
+      id: '',
+      fantasia: item.fantasia ? `${item.fantasia} (Cópia)` : '',
+      documento: '',
+      contato: item.contato || '',
+      telefone: item.telefone || '',
+      celular: item.celular || '',
+      email: item.email || '',
+      dt_cad: new Date().toISOString().split('T')[0],
+      status: 'Ativo',
+    })
+    setIsCreateOpen(true)
+  }
+
   const toggleAll = () =>
     setSelected(
       selected.length === filtered.length && filtered.length > 0 ? [] : filtered.map((d) => d.id),
@@ -112,27 +151,36 @@ export default function Clientes() {
     }
   }
 
-  const handleCreate = async () => {
+  const handleSave = async () => {
     try {
       setIsSubmitting(true)
       setErrors({})
 
-      if (formData.documento) {
-        const existing = await getByDocumento('clientes', formData.documento)
-        if (existing) {
-          setConflictRecord(existing)
-          setIsConflictOpen(true)
-          setIsSubmitting(false)
-          return
-        }
+      const dataToSave = {
+        ...formData,
+        dt_cad: formData.dt_cad ? formData.dt_cad.split('-').reverse().join('/') : '',
       }
 
-      await createCliente({
-        ...formData,
-        dt_cad: formData.dt_cad.split('-').reverse().join('/'),
-      })
-      resetForm()
-      toast({ title: 'Registro criado' })
+      if (formData.id) {
+        await updateCliente(formData.id, dataToSave)
+        toast({ title: 'Registro atualizado com sucesso' })
+        setIsCreateOpen(false)
+        resetForm()
+      } else {
+        if (formData.documento) {
+          const existing = await getByDocumento('clientes', formData.documento)
+          if (existing) {
+            setConflictRecord(existing)
+            setIsConflictOpen(true)
+            setIsSubmitting(false)
+            return
+          }
+        }
+        await createCliente(dataToSave)
+        toast({ title: 'Registro criado com sucesso' })
+        setIsCreateOpen(false)
+        resetForm()
+      }
     } catch (err) {
       setErrors(extractFieldErrors(err))
     } finally {
@@ -145,9 +193,10 @@ export default function Clientes() {
       setIsSubmitting(true)
       await updateCliente(conflictRecord.id, {
         ...formData,
-        dt_cad: formData.dt_cad.split('-').reverse().join('/'),
+        dt_cad: formData.dt_cad ? formData.dt_cad.split('-').reverse().join('/') : '',
       })
       setIsConflictOpen(false)
+      setIsCreateOpen(false)
       resetForm()
       toast({ title: 'Registro substituído com sucesso' })
     } catch (err) {
@@ -162,18 +211,19 @@ export default function Clientes() {
       setIsSubmitting(true)
       const formattedFormData = {
         ...formData,
-        dt_cad: formData.dt_cad ? formData.dt_cad.split('-').reverse().join('/') : formData.dt_cad,
+        dt_cad: formData.dt_cad ? formData.dt_cad.split('-').reverse().join('/') : '',
       }
 
       const mergedData = { ...conflictRecord }
       for (const [key, value] of Object.entries(formattedFormData)) {
-        if (value !== undefined && value !== null && String(value).trim() !== '') {
+        if (value !== undefined && value !== null && String(value).trim() !== '' && key !== 'id') {
           mergedData[key] = value
         }
       }
 
       await updateCliente(conflictRecord.id, mergedData)
       setIsConflictOpen(false)
+      setIsCreateOpen(false)
       resetForm()
       toast({ title: 'Registros mesclados com sucesso' })
     } catch (err) {
@@ -183,72 +233,168 @@ export default function Clientes() {
     }
   }
 
+  const Toolbar = () => (
+    <div className="flex justify-between items-center bg-white p-2 border-b border-slate-200">
+      <div className="flex gap-1.5">
+        <Button
+          className="bg-brand-green hover:bg-brand-green/90 text-white rounded h-8 px-4 text-xs font-bold shadow-sm transition-colors"
+          onClick={() => setShowSearch(!showSearch)}
+        >
+          PESQUISAR
+        </Button>
+        <Button
+          className="bg-brand-green hover:bg-brand-green/90 text-white rounded h-8 px-4 text-xs font-bold shadow-sm transition-colors"
+          onClick={() => {
+            resetForm()
+            setIsCreateOpen(true)
+          }}
+        >
+          NOVO
+        </Button>
+        <Button
+          className="bg-brand-green hover:bg-brand-green/90 text-white rounded h-8 px-4 text-xs font-bold shadow-sm transition-colors"
+          onClick={() =>
+            selected.length > 0 ? setIsDeleteOpen(true) : toast({ title: 'Selecione registros' })
+          }
+        >
+          EXCLUIR
+        </Button>
+      </div>
+      <div className="flex items-center gap-3 text-xs text-slate-500 font-medium mr-2">
+        <span>
+          1 - {filtered.length} of {filtered.length}
+        </span>
+        <div className="flex gap-1">
+          <Button variant="outline" size="sm" className="h-7 w-7 p-0" disabled>
+            <ChevronLeft size={14} />
+          </Button>
+          <Button variant="outline" size="sm" className="h-7 w-7 p-0" disabled>
+            <ChevronRight size={14} />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <PageLayout title="Clientes" icon={UserCircle}>
-      <RegistrationActionBar
-        onSearchToggle={() => setShowSearch(!showSearch)}
-        onNewClick={() => setIsCreateOpen(true)}
-        onDeleteClick={() =>
-          selected.length > 0 ? setIsDeleteOpen(true) : toast({ title: 'Selecione registros' })
-        }
-        showSearch={showSearch}
-        searchQuery={search}
-        onSearchChange={setSearch}
-      />
-      <PaginationBar total={filtered.length} displayTotal={filtered.length} />
-      <div className="overflow-x-auto bg-white rounded-md shadow-sm border border-slate-200">
-        <Table className="min-w-full text-sm">
-          <TableHeader>
-            <TableRow className="border-b-2 border-slate-200 hover:bg-transparent">
-              <TableHead className="w-10">
-                <Checkbox
-                  checked={selected.length === filtered.length && filtered.length > 0}
-                  onCheckedChange={toggleAll}
-                />
-              </TableHead>
-              <SortableHead>Fantasia</SortableHead>
-              <SortableHead>CPF/CNPJ</SortableHead>
-              <SortableHead>Contato</SortableHead>
-              <SortableHead>Telefone</SortableHead>
-              <SortableHead>Celular</SortableHead>
-              <SortableHead>Email</SortableHead>
-              <SortableHead>Status</SortableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((item) => (
-              <TableRow key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <TableCell>
+      <div className="bg-white rounded shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+        <Toolbar />
+
+        {showSearch && (
+          <div className="p-3 bg-slate-50 border-b border-slate-200 animate-in slide-in-from-top-2">
+            <Input
+              placeholder="Buscar por fantasia ou contato..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="max-w-md h-9 text-sm bg-white"
+              autoFocus
+            />
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <Table className="min-w-full text-xs">
+            <TableHeader className="bg-slate-50">
+              <TableRow className="border-b border-slate-200 hover:bg-transparent">
+                <TableHead className="w-12 px-4 py-3">
                   <Checkbox
-                    checked={selected.includes(item.id)}
-                    onCheckedChange={() => toggleOne(item.id)}
+                    checked={selected.length === filtered.length && filtered.length > 0}
+                    onCheckedChange={toggleAll}
                   />
-                </TableCell>
-                <TableCell>
-                  <div className="text-slate-700">{item.fantasia}</div>
-                </TableCell>
-                <TableCell className="text-slate-600">{item.documento}</TableCell>
-                <TableCell className="text-slate-600">{item.contato}</TableCell>
-                <TableCell className="text-slate-600 whitespace-nowrap">{item.telefone}</TableCell>
-                <TableCell className="text-slate-600 whitespace-nowrap">{item.celular}</TableCell>
-                <TableCell className="text-slate-600">{item.email}</TableCell>
-                <TableCell>
-                  <span
-                    className={`text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase ${item.status === 'Ativo' ? 'bg-[#5cb85c]' : 'bg-slate-400'}`}
-                  >
-                    {item.status}
-                  </span>
-                </TableCell>
+                </TableHead>
+                <TableHead className="py-3 text-slate-600 font-bold whitespace-nowrap">
+                  Fantasia
+                </TableHead>
+                <TableHead className="py-3 text-slate-600 font-bold whitespace-nowrap">
+                  Contato
+                </TableHead>
+                <TableHead className="py-3 text-slate-600 font-bold whitespace-nowrap">
+                  Telefone / Celular
+                </TableHead>
+                <TableHead className="py-3 text-slate-600 font-bold whitespace-nowrap">
+                  E-mail
+                </TableHead>
+                <TableHead className="py-3 text-slate-600 font-bold whitespace-nowrap">
+                  Data Cad.
+                </TableHead>
+                <TableHead className="py-3 text-slate-600 font-bold whitespace-nowrap w-10"></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((item) => (
+                <TableRow
+                  key={item.id}
+                  className="border-b border-slate-100 hover:bg-slate-50/80 group"
+                >
+                  <TableCell className="px-4 py-3 align-top">
+                    <Checkbox
+                      checked={selected.includes(item.id)}
+                      onCheckedChange={() => toggleOne(item.id)}
+                    />
+                  </TableCell>
+                  <TableCell className="py-3 align-top">
+                    <div className="text-brand-green font-bold text-sm tracking-tight">
+                      {item.fantasia}
+                    </div>
+                    <div className="flex gap-2 text-[10.5px] mt-1.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleEdit(item)}
+                        className="hover:text-brand-green flex items-center gap-1 font-medium transition-colors"
+                      >
+                        <Pencil size={11} /> Editar
+                      </button>
+                      <span className="text-slate-300">|</span>
+                      <button
+                        onClick={() => handleDuplicate(item)}
+                        className="hover:text-brand-green flex items-center gap-1 font-medium transition-colors"
+                      >
+                        <Copy size={11} /> Duplicar
+                      </button>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-3 align-top text-slate-700">{item.contato}</TableCell>
+                  <TableCell className="py-3 align-top text-slate-700 whitespace-nowrap">
+                    {item.telefone && <div>{item.telefone}</div>}
+                    {item.celular && <div className="text-slate-400 mt-1">{item.celular}</div>}
+                  </TableCell>
+                  <TableCell className="py-3 align-top">
+                    <a href={`mailto:${item.email}`} className="text-brand-green hover:underline">
+                      {item.email}
+                    </a>
+                  </TableCell>
+                  <TableCell className="py-3 align-top text-slate-500 whitespace-nowrap">
+                    {item.dt_cad}
+                  </TableCell>
+                  <TableCell className="py-3 align-top">
+                    {item.status === 'Ativo' && (
+                      <div className="flex justify-center" title="Ativo">
+                        <CheckCircle2 size={16} className="text-green-500" />
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-10 text-slate-500">
+                    Nenhum cliente encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="border-t border-slate-200">
+          <Toolbar />
+        </div>
       </div>
 
       <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <SheetContent className="sm:max-w-md overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Novo Cliente</SheetTitle>
+            <SheetTitle>{formData.id ? 'Editar Cliente' : 'Novo Cliente'}</SheetTitle>
             <SheetDescription>Preencha os detalhes do cliente.</SheetDescription>
           </SheetHeader>
           <div className="space-y-4 py-6">
@@ -346,7 +492,11 @@ export default function Clientes() {
             </div>
           </div>
           <SheetFooter className="mt-4">
-            <Button onClick={handleCreate} disabled={isSubmitting} className="w-full sm:w-auto">
+            <Button
+              onClick={handleSave}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto bg-brand-green hover:bg-brand-green/90"
+            >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSubmitting ? 'Salvando...' : 'Salvar'}
             </Button>

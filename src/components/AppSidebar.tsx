@@ -130,6 +130,7 @@ export function AppSidebar() {
                     isActive={isActive}
                     className={cn(
                       'h-11 rounded-none text-white/80 hover:bg-white/5 hover:text-white active:bg-white/10 data-[active=true]:bg-white/5 data-[active=true]:text-white data-[active=true]:font-semibold',
+                      isActive && 'border-l-4 border-brand-green',
                     )}
                   >
                     <Link
@@ -165,7 +166,8 @@ export function AppSidebar() {
                                 asChild
                                 className={cn(
                                   'text-white/70 hover:bg-white/5 hover:text-white flex items-center gap-3 py-2 px-4 rounded-none h-10',
-                                  isSubActive && 'text-white font-semibold',
+                                  isSubActive &&
+                                    'text-white font-semibold border-l-4 border-brand-green',
                                 )}
                               >
                                 <Link to={subItem.url} draggable={false} className="select-none">
