@@ -23,8 +23,22 @@ export const getByDocumento = async (collection: string, documento: string) => {
 export const getClientesPaginated = (page: number = 1, perPage: number = 50, filter: string = '') =>
   pb.collection('clientes').getList(page, perPage, { sort: '-created', filter })
 export const getClientes = () => pb.collection('clientes').getFullList({ sort: '-created' })
-export const createCliente = (data: any) => pb.collection('clientes').create(data)
-export const updateCliente = (id: string, data: any) => pb.collection('clientes').update(id, data)
+
+const stripMasks = (data: any) => {
+  if (!data) return data
+  const cleanData = { ...data }
+  const fieldsToStrip = ['documento', 'cep', 'telefone', 'celular', 'telefone_2', 'telefone_3']
+  fieldsToStrip.forEach((field) => {
+    if (cleanData[field] && typeof cleanData[field] === 'string') {
+      cleanData[field] = cleanData[field].replace(/\D/g, '')
+    }
+  })
+  return cleanData
+}
+
+export const createCliente = (data: any) => pb.collection('clientes').create(stripMasks(data))
+export const updateCliente = (id: string, data: any) =>
+  pb.collection('clientes').update(id, stripMasks(data))
 export const deleteCliente = (id: string) => pb.collection('clientes').delete(id)
 
 // Representantes

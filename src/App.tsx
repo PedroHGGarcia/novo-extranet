@@ -33,11 +33,13 @@ import Signup from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
 import { AuthProvider } from './hooks/use-auth'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { GlobalAutoFormatter } from './components/GlobalAutoFormatter'
 
 const App = () => (
   <AuthProvider>
     <BrowserRouter>
       <TooltipProvider>
+        <GlobalAutoFormatter />
         <Toaster />
         <Sonner />
         <Routes>
