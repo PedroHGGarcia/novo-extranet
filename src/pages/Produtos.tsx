@@ -80,6 +80,7 @@ export default function Produtos() {
   const fotosInputRef = useRef<HTMLInputElement>(null)
 
   const colunasOptions = [
+    { id: 'foto', label: 'Foto' },
     { id: 'nome', label: 'Nome' },
     { id: 'categoria', label: 'Categoria' },
     { id: 'dt_cad', label: 'Dt Cad.' },
@@ -419,6 +420,9 @@ export default function Produtos() {
                   <TableHead className="w-[50px]">
                     <input type="checkbox" className="rounded border-gray-300" />
                   </TableHead>
+                  {visibleColumns.includes('foto') && (
+                    <TableHead className="w-[60px] font-medium text-brand-cyan">Foto</TableHead>
+                  )}
                   {visibleColumns.includes('nome') && (
                     <TableHead className="font-medium text-brand-cyan">Nome</TableHead>
                   )}
@@ -439,6 +443,22 @@ export default function Produtos() {
                     <TableCell>
                       <input type="checkbox" className="rounded border-gray-300" />
                     </TableCell>
+                    {visibleColumns.includes('foto') && (
+                      <TableCell>
+                        {item.fotos && item.fotos.length > 0 ? (
+                          <img
+                            src={getProdutoFotoUrl(item, item.fotos[0])}
+                            alt={item.nome}
+                            className="w-10 h-10 rounded-md object-cover select-none border border-brand-green/20"
+                            draggable="false"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-md bg-brand-green/10 flex items-center justify-center border border-brand-green/20">
+                            <Package className="w-5 h-5 text-brand-green" />
+                          </div>
+                        )}
+                      </TableCell>
+                    )}
                     {visibleColumns.includes('nome') && (
                       <TableCell>
                         <div className="font-medium text-gray-700">{item.nome}</div>
@@ -687,7 +707,8 @@ export default function Produtos() {
                         <img
                           src={getProdutoFotoUrl(editingItem!, f)}
                           alt="Produto"
-                          className="w-full h-24 object-cover"
+                          className="w-full h-24 object-cover select-none"
+                          draggable="false"
                         />
                         <button
                           type="button"
@@ -709,7 +730,8 @@ export default function Produtos() {
                         <img
                           src={URL.createObjectURL(f)}
                           alt="Novo Produto"
-                          className="w-full h-24 object-cover"
+                          className="w-full h-24 object-cover select-none"
+                          draggable="false"
                         />
                         <div className="absolute top-1 left-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm">
                           Novo
