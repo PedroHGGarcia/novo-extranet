@@ -53,9 +53,21 @@ import {
   getDocumentosCliente,
   createDocumentoCliente,
   deleteDocumentoCliente,
+  clearAllClientes,
 } from '@/services/cadastros'
 import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
 import { useRealtime } from '@/hooks/use-realtime'
+import { useAuth } from '@/hooks/use-auth'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { useToast } from '@/hooks/use-toast'
 import { extractFieldErrors } from '@/lib/pocketbase/errors'
 import pb from '@/lib/pocketbase/client'
@@ -114,6 +126,9 @@ export default function Clientes() {
   const [contatos, setContatos] = useState<Contato[]>([])
   const [documentos, setDocumentos] = useState<Documento[]>([])
   const { toast } = useToast()
+  const { user } = useAuth()
+  const [isClearAllOpen, setIsClearAllOpen] = useState(false)
+  const [isClearing, setIsClearing] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -226,6 +241,20 @@ export default function Clientes() {
       toast({ title: 'Registros excluídos com sucesso' })
     } catch (e) {
       toast({ title: 'Erro ao excluir', variant: 'destructive' })
+    }
+  }
+
+  const handleClearAll = async () => {
+    try {
+      setIsClearing(true)
+      await clearAllClientes()
+      toast({ title: 'Todos os clientes foram excluídos com sucesso' })
+      setIsClearAllOpen(false)
+      loadData()
+    } catch (err: any) {
+      toast({ title: err.message || 'Erro ao excluir clientes', variant: 'destructive' })
+    } finally {
+      setIsClearing(false)
     }
   }
 
@@ -417,6 +446,11 @@ export default function Clientes() {
                 {selected.length > 0 && (
                   <Button variant="destructive" onClick={() => setIsDeleteOpen(true)}>
                     <Trash2 className="h-4 w-4 mr-2" /> Excluir ({selected.length})
+                  </Button>
+                )}
+                {user?.role === 'admin' && (
+                  <Button variant="destructive" onClick={() => setIsClearAllOpen(true)}>
+                    <Trash2 className="h-4 w-4 mr-2" /> Limpar Todos
                   </Button>
                 )}
               </>
@@ -1060,6 +1094,31 @@ export default function Clientes() {
         onMerge={handleMerge}
         isSubmitting={isSubmitting}
       />
+      <AlertDialog open={isClearAllOpen} onOpenChange={setIsClearAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Limpar Todos os Clientes</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja apagar todos os registros de clientes? Esta ação é
+              irreversível.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isClearing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                handleClearAll()
+              }}
+              disabled={isClearing}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isClearing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Apagar Todos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   )
 }

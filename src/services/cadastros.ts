@@ -40,6 +40,7 @@ export const createCliente = (data: any) => pb.collection('clientes').create(str
 export const updateCliente = (id: string, data: any) =>
   pb.collection('clientes').update(id, stripMasks(data))
 export const deleteCliente = (id: string) => pb.collection('clientes').delete(id)
+export const clearAllClientes = () => pb.send('/backend/v1/clientes/clear', { method: 'DELETE' })
 
 // Representantes
 export const getRepresentantes = () =>
