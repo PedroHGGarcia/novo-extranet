@@ -30,8 +30,10 @@ export const updatePreposto = (id: string, data: any) => pb.collection('preposto
 export const deletePreposto = (id: string) => pb.collection('prepostos').delete(id)
 
 // Regiões
-export const getRegioes = () => pb.collection('regioes').getFullList({ sort: '-created' })
+export const getRegioes = () =>
+  pb.collection('regioes').getFullList({ sort: 'nome', expand: 'atualizado_por' })
 export const createRegiao = (data: any) => pb.collection('regioes').create(data)
+export const updateRegiao = (id: string, data: any) => pb.collection('regioes').update(id, data)
 export const deleteRegiao = (id: string) => pb.collection('regioes').delete(id)
 
 // Gerentes
