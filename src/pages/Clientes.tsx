@@ -388,23 +388,25 @@ export default function Clientes() {
                     />
                   </TableCell>
                   <TableCell className="py-3 align-top">
-                    <div className="text-brand-green font-bold text-sm tracking-tight">
-                      {item.fantasia}
-                    </div>
-                    <div className="flex gap-2 text-[10.5px] mt-1.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => handleEdit(item)}
-                        className="hover:text-brand-green flex items-center gap-1 font-medium transition-colors"
-                      >
-                        <Pencil size={11} /> Editar
-                      </button>
-                      <span className="text-slate-300">|</span>
-                      <button
-                        onClick={() => handleDuplicate(item)}
-                        className="hover:text-brand-green flex items-center gap-1 font-medium transition-colors"
-                      >
-                        <Copy size={11} /> Duplicar
-                      </button>
+                    <div className="flex flex-col items-start gap-1.5">
+                      <span className="text-brand-green font-bold text-sm tracking-tight block">
+                        {item.fantasia}
+                      </span>
+                      <div className="flex gap-2 text-[10.5px] text-slate-400 invisible group-hover:visible transition-all select-none">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="hover:text-brand-green flex items-center gap-1 font-medium transition-colors cursor-pointer"
+                        >
+                          <Pencil size={11} /> Editar
+                        </button>
+                        <span className="text-slate-300">|</span>
+                        <button
+                          onClick={() => handleDuplicate(item)}
+                          className="hover:text-brand-green flex items-center gap-1 font-medium transition-colors cursor-pointer"
+                        >
+                          <Copy size={11} /> Duplicar
+                        </button>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="py-3 align-top text-slate-700">{item.contato}</TableCell>
