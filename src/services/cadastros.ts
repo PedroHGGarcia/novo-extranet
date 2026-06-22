@@ -10,6 +10,8 @@ export const getByDocumento = async (collection: string, documento: string) => {
   }
 }
 
+export const getClientesPaginated = (page: number = 1, perPage: number = 50, filter: string = '') =>
+  pb.collection('clientes').getList(page, perPage, { sort: '-created', filter })
 export const getClientes = () => pb.collection('clientes').getFullList({ sort: '-created' })
 export const createCliente = (data: any) => pb.collection('clientes').create(data)
 export const updateCliente = (id: string, data: any) => pb.collection('clientes').update(id, data)

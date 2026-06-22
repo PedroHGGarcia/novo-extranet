@@ -38,7 +38,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
 import {
-  getClientes,
+  getClientesPaginated,
   createCliente,
   updateCliente,
   deleteCliente,
@@ -52,7 +52,12 @@ import { extractFieldErrors } from '@/lib/pocketbase/errors'
 export default function Clientes() {
   const [data, setData] = useState<any[]>([])
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [showSearch, setShowSearch] = useState(false)
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(50)
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [selected, setSelected] = useState<string[]>([])
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
@@ -74,17 +79,37 @@ export default function Clientes() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { toast } = useToast()
 
-  const loadData = async () => setData(await getClientes().catch(() => []))
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+      setPage(1)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  const loadData = async () => {
+    try {
+      let filter = ''
+      if (debouncedSearch) {
+        const s = debouncedSearch.replace(/"/g, '\\"')
+        filter = `fantasia ~ "${s}" || documento ~ "${s}" || contato ~ "${s}"`
+      }
+      const res = await getClientesPaginated(page, perPage, filter)
+      setData(res.items)
+      setTotalItems(res.totalItems)
+      setTotalPages(res.totalPages)
+    } catch (e) {
+      setData([])
+      setTotalItems(0)
+      setTotalPages(0)
+    }
+  }
+
   useEffect(() => {
     loadData()
-  }, [])
-  useRealtime('clientes', loadData)
+  }, [page, perPage, debouncedSearch])
 
-  const filtered = data.filter(
-    (d) =>
-      d.fantasia?.toLowerCase().includes(search.toLowerCase()) ||
-      d.contato?.toLowerCase().includes(search.toLowerCase()),
-  )
+  useRealtime('clientes', loadData)
 
   const resetForm = () => {
     setFormData({
@@ -135,9 +160,7 @@ export default function Clientes() {
   }
 
   const toggleAll = () =>
-    setSelected(
-      selected.length === filtered.length && filtered.length > 0 ? [] : filtered.map((d) => d.id),
-    )
+    setSelected(selected.length === data.length && data.length > 0 ? [] : data.map((d) => d.id))
   const toggleOne = (id: string) =>
     setSelected((p) => (p.includes(id) ? p.filter((i) => i !== id) : [...p, id]))
 
@@ -261,14 +284,45 @@ export default function Clientes() {
         </Button>
       </div>
       <div className="flex items-center gap-3 text-xs text-slate-500 font-medium mr-2">
+        <Select
+          value={String(perPage)}
+          onValueChange={(val) => {
+            setPerPage(Number(val))
+            setPage(1)
+          }}
+        >
+          <SelectTrigger className="h-7 text-xs border-slate-200 w-[70px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="50">50</SelectItem>
+            <SelectItem value="100">100</SelectItem>
+          </SelectContent>
+        </Select>
         <span>
-          1 - {filtered.length} of {filtered.length}
+          {totalItems > 0 ? Math.min((page - 1) * perPage + 1, totalItems) : 0} -{' '}
+          {Math.min(page * perPage, totalItems)} de {totalItems.toLocaleString('pt-BR')}
         </span>
-        <div className="flex gap-1">
-          <Button variant="outline" size="sm" className="h-7 w-7 p-0" disabled>
+        <div className="flex gap-1 items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 w-7 p-0"
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
             <ChevronLeft size={14} />
           </Button>
-          <Button variant="outline" size="sm" className="h-7 w-7 p-0" disabled>
+          <span className="px-2">
+            {page} / {totalPages || 1}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 w-7 p-0"
+            disabled={page >= totalPages || totalPages === 0}
+            onClick={() => setPage((p) => p + 1)}
+          >
             <ChevronRight size={14} />
           </Button>
         </div>
@@ -284,7 +338,7 @@ export default function Clientes() {
         {showSearch && (
           <div className="p-3 bg-slate-50 border-b border-slate-200 animate-in slide-in-from-top-2">
             <Input
-              placeholder="Buscar por fantasia ou contato..."
+              placeholder="Buscar por fantasia, documento ou contato..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="max-w-md h-9 text-sm bg-white"
@@ -299,7 +353,7 @@ export default function Clientes() {
               <TableRow className="border-b border-slate-200 hover:bg-transparent">
                 <TableHead className="w-12 px-4 py-3">
                   <Checkbox
-                    checked={selected.length === filtered.length && filtered.length > 0}
+                    checked={selected.length === data.length && data.length > 0}
                     onCheckedChange={toggleAll}
                   />
                 </TableHead>
@@ -322,7 +376,7 @@ export default function Clientes() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((item) => (
+              {data.map((item) => (
                 <TableRow
                   key={item.id}
                   className="border-b border-slate-100 hover:bg-slate-50/80 group"
@@ -375,7 +429,7 @@ export default function Clientes() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && (
+              {data.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-10 text-slate-500">
                     Nenhum cliente encontrado.
