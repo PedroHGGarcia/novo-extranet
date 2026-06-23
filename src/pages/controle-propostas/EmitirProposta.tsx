@@ -37,6 +37,46 @@ const formatCurrency = (value: number | undefined, currency: string = 'BRL') => 
   }
 }
 
+const CurrencyInput = ({
+  value,
+  onChange,
+  currency,
+  className,
+}: {
+  value: number | undefined
+  onChange: (val: number) => void
+  currency: string
+  className: string
+}) => {
+  const [isFocused, setIsFocused] = useState(false)
+  const [localValue, setLocalValue] = useState('')
+
+  useEffect(() => {
+    if (!isFocused) {
+      if (value === undefined || value === null) {
+        setLocalValue('')
+      } else {
+        setLocalValue(formatCurrency(value, currency))
+      }
+    }
+  }, [value, currency, isFocused])
+
+  return (
+    <input
+      type={isFocused ? 'number' : 'text'}
+      className={className}
+      value={isFocused ? (value ?? '') : localValue}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+      onChange={(e) => {
+        const val = parseFloat(e.target.value)
+        onChange(isNaN(val) ? 0 : val)
+      }}
+      step="0.01"
+    />
+  )
+}
+
 export default function EmitirProposta() {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState('registros')
@@ -64,6 +104,39 @@ export default function EmitirProposta() {
   const [isNotaDialogOpen, setIsNotaDialogOpen] = useState(false)
   const [novaNota, setNovaNota] = useState<number>(1)
   const [isSavingNota, setIsSavingNota] = useState(false)
+
+  const [exchangeRates, setExchangeRates] = useState<{
+    USD: number
+    EUR: number
+    usdPct: number
+    eurPct: number
+  } | null>(null)
+  const [exchangeRatesLoading, setExchangeRatesLoading] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+    fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL')
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted) {
+          setExchangeRates({
+            USD: parseFloat(data.USDBRL.bid),
+            usdPct: parseFloat(data.USDBRL.pctChange),
+            EUR: parseFloat(data.EURBRL.bid),
+            eurPct: parseFloat(data.EURBRL.pctChange),
+          })
+        }
+      })
+      .catch(() => {
+        if (isMounted) setExchangeRates(null)
+      })
+      .finally(() => {
+        if (isMounted) setExchangeRatesLoading(false)
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const loadData = async () => {
     try {
@@ -166,8 +239,47 @@ export default function EmitirProposta() {
   }
 
   const handleVersaoChange = (versaoId: string) => {
-    setFormData((prev) => ({ ...prev, versao: versaoId }))
+    const versao = versoes.find((v) => v.id === versaoId)
+    setFormData((prev) => ({
+      ...prev,
+      versao: versaoId,
+      ...(versao
+        ? {
+            valor_sem_desconto: versao.valor || 0,
+            valor_atual: versao.valor || 0,
+            valor_final: versao.valor || 0,
+            moeda: versao.moeda === 'USD' ? 'US$' : versao.moeda || prev.moeda,
+          }
+        : {}),
+    }))
     loadAcessorios(versaoId)
+  }
+
+  const renderConvertedValue = () => {
+    if (!formData.valor_final || !exchangeRates) return null
+
+    if (formData.moeda === 'US$' || formData.moeda === 'USD') {
+      return (
+        <div className="text-[10px] text-slate-500 mt-1">
+          Aprox. {formatCurrency(formData.valor_final * exchangeRates.USD, 'BRL')}
+        </div>
+      )
+    }
+    if (formData.moeda === 'EUR') {
+      return (
+        <div className="text-[10px] text-slate-500 mt-1">
+          Aprox. {formatCurrency(formData.valor_final * exchangeRates.EUR, 'BRL')}
+        </div>
+      )
+    }
+    if (formData.moeda === 'BRL') {
+      return (
+        <div className="text-[10px] text-slate-500 mt-1">
+          Aprox. {formatCurrency(formData.valor_final / exchangeRates.USD, 'USD')}
+        </div>
+      )
+    }
+    return null
   }
 
   useRealtime('propostas', () => {
@@ -620,14 +732,20 @@ export default function EmitirProposta() {
               </div>
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Valor</label>
-                <input
-                  type="number"
+                <CurrencyInput
                   className={inputClass}
-                  value={formData.valor_final || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, valor_final: Number(e.target.value) })
+                  value={formData.valor_final}
+                  currency={formData.moeda || 'US$'}
+                  onChange={(val) =>
+                    setFormData({
+                      ...formData,
+                      valor_final: val,
+                      valor_atual: val,
+                      valor_sem_desconto: val,
+                    })
                   }
                 />
+                {renderConvertedValue()}
               </div>
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Desconto</label>
@@ -643,8 +761,34 @@ export default function EmitirProposta() {
               </div>
             </div>
 
-            <div className="text-[11px] font-bold text-slate-700 mb-8 w-full border-b border-slate-200 pb-4">
-              EUR: 5,97 US$: 5,11 R$: 1,00
+            <div className="text-[11px] font-bold text-slate-700 mb-8 w-full border-b border-slate-200 pb-4 flex items-center gap-4">
+              {exchangeRatesLoading ? (
+                <span>Carregando cotações...</span>
+              ) : exchangeRates ? (
+                <>
+                  <span className="flex items-center gap-1">
+                    Dólar do Dia (USD): {formatCurrency(exchangeRates.USD, 'BRL')}
+                    <span
+                      className={exchangeRates.usdPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}
+                    >
+                      ({exchangeRates.usdPct > 0 ? '+' : ''}
+                      {exchangeRates.usdPct}%)
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    Euro (EUR): {formatCurrency(exchangeRates.EUR, 'BRL')}
+                    <span
+                      className={exchangeRates.eurPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}
+                    >
+                      ({exchangeRates.eurPct > 0 ? '+' : ''}
+                      {exchangeRates.eurPct}%)
+                    </span>
+                  </span>
+                  <span>R$: 1,00</span>
+                </>
+              ) : (
+                <span className="text-rose-600">Cotações indisponíveis no momento</span>
+              )}
             </div>
 
             <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
