@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-23T19:33:52.504Z",
+  "generatedAt": "2026-06-23T19:41:54.337Z",
   "collections": [
     {
       "name": "users",
@@ -1385,6 +1385,61 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "revisao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "gerente",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "gerentes"
+        },
+        {
+          "name": "moeda",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "valor_sem_desconto",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "valor_atual",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "valor_final",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "prazo_entrega",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "condicoes_pagamento",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "acessorios_proposta",
+          "type": "json",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": []
