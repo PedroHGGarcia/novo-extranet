@@ -360,10 +360,45 @@ export default function EmitirProposta() {
     }
   }
 
+  const convertCurrency = (value: number, from: string, to: string) => {
+    if (!exchangeRates || value === 0) return value
+    const normFrom = from === 'US$' ? 'USD' : from
+    const normTo = to === 'US$' ? 'USD' : to
+    if (normFrom === normTo) return value
+
+    let inBrl = value
+    if (normFrom === 'USD') inBrl = value * exchangeRates.USD
+    if (normFrom === 'EUR') inBrl = value * exchangeRates.EUR
+
+    if (normTo === 'USD') return inBrl / exchangeRates.USD
+    if (normTo === 'EUR') return inBrl / exchangeRates.EUR
+    return inBrl
+  }
+
   const updateAcc = (index: number, field: 'incluir' | 'exibir', value: boolean) => {
     const newAcc = [...acessoriosProposta]
+    const oldIncluir = newAcc[index].incluir
     newAcc[index][field] = value
     setAcessoriosProposta(newAcc)
+
+    if (field === 'incluir' && oldIncluir !== value) {
+      const acc = newAcc[index]
+      const accMoeda = acc.moeda || 'BRL'
+      const propMoeda = formData.moeda || 'US$'
+      const convertedValue = convertCurrency(acc.valor || 0, accMoeda, propMoeda)
+
+      setFormData((prev) => {
+        const current = prev.valor_final || 0
+        const next = value ? current + convertedValue : current - convertedValue
+        const roundedNext = Math.round(next * 100) / 100
+        return {
+          ...prev,
+          valor_final: roundedNext,
+          valor_atual: roundedNext,
+          valor_sem_desconto: roundedNext,
+        }
+      })
+    }
   }
 
   const renderTopPagination = () => {
@@ -723,7 +758,20 @@ export default function EmitirProposta() {
                 <select
                   className={inputClass}
                   value={formData.moeda || ''}
-                  onChange={(e) => setFormData({ ...formData, moeda: e.target.value })}
+                  onChange={(e) => {
+                    const newMoeda = e.target.value
+                    const oldMoeda = formData.moeda || 'US$'
+                    const currentTotal = formData.valor_final || 0
+                    const convertedTotal =
+                      Math.round(convertCurrency(currentTotal, oldMoeda, newMoeda) * 100) / 100
+                    setFormData({
+                      ...formData,
+                      moeda: newMoeda,
+                      valor_final: convertedTotal,
+                      valor_atual: convertedTotal,
+                      valor_sem_desconto: convertedTotal,
+                    })
+                  }}
                 >
                   <option value="BRL">BRL</option>
                   <option value="US$">US$</option>
