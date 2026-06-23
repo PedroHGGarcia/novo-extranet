@@ -56,9 +56,16 @@ const menuItems = [
   },
   {
     title: 'Controle de Propostas',
-    url: '/propostas',
+    url: '/controle-propostas',
     icon: FileText,
-    sub: [{ title: 'Histórico', url: '/propostas' }],
+    sub: [
+      { title: 'Emitir Proposta', url: '/controle-propostas/emitir-proposta' },
+      { title: 'Assinaturas', url: '/controle-propostas/assinaturas' },
+      { title: 'Cotações', url: '/controle-propostas/cotacoes' },
+      { title: 'Propostas Excluídas', url: '/controle-propostas/propostas-excluidas' },
+      { title: 'Tipo de Documentos', url: '/controle-propostas/tipo-documentos' },
+      { title: 'Formas de Pagamento', url: '/controle-propostas/formas-pagamento' },
+    ],
   },
   {
     title: 'Controle de Produtos',

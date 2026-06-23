@@ -10,7 +10,7 @@ import Regioes from './pages/Regioes'
 import Gerentes from './pages/Gerentes'
 import Clientes from './pages/Clientes'
 import Eventos from './pages/Eventos'
-import Propostas from './pages/Propostas'
+import EmitirProposta from './pages/controle-propostas/EmitirProposta'
 import Produtos from './pages/Produtos'
 import Categorias from './pages/produtos/Categorias'
 import Marcas from './pages/produtos/Marcas'
@@ -58,7 +58,7 @@ const App = () => (
               <Route path="/cadastros/representantes" element={<Representantes />} />
               <Route path="/cadastros/prepostos" element={<Prepostos />} />
               <Route path="/eventos" element={<Eventos />} />
-              <Route path="/propostas" element={<Propostas />} />
+              <Route path="/controle-propostas/emitir-proposta" element={<EmitirProposta />} />
               <Route path="/produtos" element={<Produtos />} />
               <Route path="/produtos/categorias" element={<Categorias />} />
               <Route path="/produtos/marcas" element={<Marcas />} />
