@@ -58,6 +58,7 @@ import {
 import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useAuth } from '@/hooks/use-auth'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -98,6 +99,7 @@ export default function Clientes() {
   const [isConflictOpen, setIsConflictOpen] = useState(false)
   const [isFetchingCep, setIsFetchingCep] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [isLoading, setIsLoading] = useState(true)
 
   const defaultForm = {
     id: '',
@@ -140,6 +142,7 @@ export default function Clientes() {
 
   const loadData = async () => {
     try {
+      setIsLoading(true)
       let filter = ''
       if (debouncedSearch) {
         const s = debouncedSearch.replace(/"/g, '\\"')
@@ -153,6 +156,8 @@ export default function Clientes() {
       setData([])
       setTotalItems(0)
       setTotalPages(0)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -471,7 +476,8 @@ export default function Clientes() {
             <div className="flex items-center gap-2">
               <div className="text-sm text-muted-foreground mr-2">
                 {totalItems > 0 ? Math.min((page - 1) * perPage + 1, totalItems) : 0} -{' '}
-                {Math.min(page * perPage, totalItems)} de {totalItems.toLocaleString('pt-BR')}
+                {Math.min(page * perPage, totalItems)} de {totalItems.toLocaleString('pt-BR')}{' '}
+                registros encontrados
               </div>
               <Select
                 value={String(perPage)}
@@ -484,6 +490,8 @@ export default function Clientes() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
                   <SelectItem value="50">50</SelectItem>
                   <SelectItem value="100">100</SelectItem>
                 </SelectContent>
@@ -535,59 +543,87 @@ export default function Clientes() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selected.includes(item.id)}
-                          onCheckedChange={() => toggleOne(item.id)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium text-foreground">{item.fantasia}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {item.razao_social || '-'}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {item.documento || '-'}
-                      </TableCell>
-                      <TableCell>
-                        {item.status === 'Ativo' ? (
-                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
-                            Ativo
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
-                            {item.status}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEdit(item)}>
-                                <Pencil className="h-4 w-4 mr-2" /> Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDuplicate(item)}>
-                                <Copy className="h-4 w-4 mr-2" /> Duplicar
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {data.length === 0 && (
+                  {isLoading ? (
+                    Array.from({ length: Math.min(perPage, 10) }).map((_, i) => (
+                      <TableRow key={`skeleton-${i}`}>
+                        <TableCell>
+                          <Skeleton className="h-4 w-4" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-4 w-[250px]" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-4 w-[200px]" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-4 w-[150px]" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-6 w-[60px] rounded-full" />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end">
+                            <Skeleton className="h-8 w-8 rounded-md" />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : data.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                         Nenhum cliente encontrado.
                       </TableCell>
                     </TableRow>
+                  ) : (
+                    data.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selected.includes(item.id)}
+                            onCheckedChange={() => toggleOne(item.id)}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium text-foreground">
+                          {item.fantasia}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {item.razao_social || '-'}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {item.documento || '-'}
+                        </TableCell>
+                        <TableCell>
+                          {item.status === 'Ativo' ? (
+                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                              Ativo
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                              {item.status}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-2">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEdit(item)}>
+                                  <Pencil className="h-4 w-4 mr-2" /> Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDuplicate(item)}>
+                                  <Copy className="h-4 w-4 mr-2" /> Duplicar
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   )}
                 </TableBody>
               </Table>
