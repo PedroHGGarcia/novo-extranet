@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useLocation } from 'react-router-dom'
 
 interface Props {
   onSearchToggle: () => void
@@ -18,6 +19,9 @@ export function RegistrationActionBar({
   searchQuery,
   onSearchChange,
 }: Props) {
+  const location = useLocation()
+  if (location.pathname === '/cadastros/clientes') return null
+
   return (
     <div className="flex flex-col gap-3 mb-6">
       <div className="flex gap-2">
