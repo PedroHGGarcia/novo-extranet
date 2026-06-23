@@ -82,29 +82,60 @@ export default function EmitirProposta() {
   }, [])
 
   useEffect(() => {
-    if (selectedProposta && activeTab === 'cadastro') {
-      setFormData({
-        ...selectedProposta,
-        revisao: selectedProposta.revisao || 'A',
-        moeda: selectedProposta.moeda || 'US$',
-        valor_sem_desconto: selectedProposta.valor_sem_desconto || 0,
-        valor_atual: selectedProposta.valor_atual || 0,
-        valor_final: selectedProposta.valor_final || 0,
-        prazo_entrega:
-          selectedProposta.prazo_entrega ||
-          'Até 120/150 dias, salvo vendas prévias.\nConfirmar prazo de entrega.\n\n<B>Treinamento e Entrega Técnica</B>\nSerá emitida uma Nota Fiscal de serviços no valor de US$ 1.800,00, já com os impostos inclusos...',
-        condicoes_pagamento:
-          selectedProposta.condicoes_pagamento ||
-          'À vista, Financiamento bancário ou a combinar.\nO valor final do equipamento ora ofertado, estará sujeito a reajuste ou correção de preços (para menos ou para mais) dependendo exclusivamente da variação cambial da moeda Dólar (venda) com relação à moeda nacional "REAL" conforme aos índices cambiais oficiais.',
-        nota_rep: selectedProposta.nota_rep || 1,
-      })
+    if (activeTab === 'cadastro') {
+      if (selectedProposta) {
+        setFormData({
+          ...selectedProposta,
+          revisao: selectedProposta.revisao || 'A',
+          moeda: selectedProposta.moeda || 'US$',
+          valor_sem_desconto: selectedProposta.valor_sem_desconto || 0,
+          valor_atual: selectedProposta.valor_atual || 0,
+          valor_final: selectedProposta.valor_final || 0,
+          prazo_entrega:
+            selectedProposta.prazo_entrega ||
+            'Até 120/150 dias, salvo vendas prévias.\nConfirmar prazo de entrega.\n\n<B>Treinamento e Entrega Técnica</B>\nSerá emitida uma Nota Fiscal de serviços no valor de US$ 1.800,00, já com os impostos inclusos...',
+          condicoes_pagamento:
+            selectedProposta.condicoes_pagamento ||
+            'À vista, Financiamento bancário ou a combinar.\nO valor final do equipamento ora ofertado, estará sujeito a reajuste ou correção de preços (para menos ou para mais) dependendo exclusivamente da variação cambial da moeda Dólar (venda) com relação à moeda nacional "REAL" conforme aos índices cambiais oficiais.',
+          nota_rep: selectedProposta.nota_rep || 1,
+        })
 
-      if (selectedProposta.acessorios_proposta && selectedProposta.acessorios_proposta.length > 0) {
-        setAcessoriosProposta(selectedProposta.acessorios_proposta)
+        if (
+          selectedProposta.acessorios_proposta &&
+          selectedProposta.acessorios_proposta.length > 0
+        ) {
+          setAcessoriosProposta(selectedProposta.acessorios_proposta)
+        } else {
+          const filter = selectedProposta.versao ? `versoes ~ "${selectedProposta.versao}"` : ''
+          pb.collection('acessorios')
+            .getFullList({ filter })
+            .then((list) => {
+              const initial = list.map((a) => ({
+                id: a.id,
+                nome: a.nome,
+                valor: a.valor,
+                moeda: a.moeda,
+                estado: 'exibir',
+              }))
+              setAcessoriosProposta(initial)
+            })
+            .catch(console.error)
+        }
       } else {
-        const filter = selectedProposta.versao ? `versoes ~ "${selectedProposta.versao}"` : ''
+        setFormData({
+          revisao: 'A',
+          moeda: 'US$',
+          valor_sem_desconto: 0,
+          valor_atual: 0,
+          valor_final: 0,
+          prazo_entrega:
+            'Até 120/150 dias, salvo vendas prévias.\nConfirmar prazo de entrega.\n\n<B>Treinamento e Entrega Técnica</B>\nSerá emitida uma Nota Fiscal de serviços no valor de US$ 1.800,00, já com os impostos inclusos...',
+          condicoes_pagamento:
+            'À vista, Financiamento bancário ou a combinar.\nO valor final do equipamento ora ofertado, estará sujeito a reajuste ou correção de preços (para menos ou para mais) dependendo exclusivamente da variação cambial da moeda Dólar (venda) com relação à moeda nacional "REAL" conforme aos índices cambiais oficiais.',
+          nota_rep: 1,
+        })
         pb.collection('acessorios')
-          .getFullList({ filter })
+          .getFullList()
           .then((list) => {
             const initial = list.map((a) => ({
               id: a.id,
@@ -129,17 +160,31 @@ export default function EmitirProposta() {
     setActiveTab('cadastro')
   }
 
+  const handleCreateNew = () => {
+    setSelectedProposta(null)
+    setActiveTab('cadastro')
+  }
+
   const handleSave = async () => {
-    if (!selectedProposta) return
     try {
-      await updateProposta(selectedProposta.id, {
-        ...formData,
-        acessorios_proposta: acessoriosProposta,
-      })
-      toast({ title: 'Proposta atualizada com sucesso' })
+      if (selectedProposta) {
+        await updateProposta(selectedProposta.id, {
+          ...formData,
+          acessorios_proposta: acessoriosProposta,
+        })
+        toast({ title: 'Proposta atualizada com sucesso' })
+      } else {
+        await pb.collection('propostas').create({
+          ...formData,
+          numero_proposta: formData.numero_proposta || `NOVA-${Math.floor(Math.random() * 10000)}`,
+          acessorios_proposta: acessoriosProposta,
+        })
+        toast({ title: 'Proposta criada com sucesso' })
+      }
       loadData()
+      setActiveTab('registros')
     } catch (e) {
-      toast({ title: 'Erro ao atualizar proposta', variant: 'destructive' })
+      toast({ title: 'Erro ao salvar proposta', variant: 'destructive' })
     }
   }
 
@@ -197,15 +242,15 @@ export default function EmitirProposta() {
     const end = Math.min(page * perPage, totalItems)
 
     return (
-      <div className="flex items-center text-sm text-gray-600 gap-4">
-        <div className="flex items-center">
+      <div className="flex items-center text-sm text-gray-400 gap-4">
+        <div className="flex items-center gap-1">
           {pages.map((p) => (
             <button
               key={p}
               onClick={() => setPage(p)}
               className={cn(
-                'px-3 py-1.5 min-w-[32px] text-center text-xs',
-                p === page ? 'bg-[#3b82f6] text-white' : 'text-[#3b82f6] hover:bg-gray-100',
+                'px-3 py-1 min-w-[28px] text-center text-xs rounded-sm',
+                p === page ? 'bg-[#0d6efd] text-white' : 'text-[#0d6efd] hover:bg-[#333]',
               )}
             >
               {p}
@@ -213,7 +258,7 @@ export default function EmitirProposta() {
           ))}
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="px-2 py-1.5 text-[#3b82f6] hover:bg-gray-100 font-bold"
+            className="px-2 py-1 text-gray-400 hover:text-white"
             disabled={page === totalPages}
           >
             ›
@@ -229,7 +274,7 @@ export default function EmitirProposta() {
               setPerPage(Number(e.target.value))
               setPage(1)
             }}
-            className="border border-gray-300 rounded text-xs px-2 py-1 outline-none focus:border-[#3b82f6]"
+            className="bg-[#2a2a2a] border border-[#444] rounded text-xs px-2 py-1 outline-none focus:border-[#0d6efd] text-white"
           >
             <option value={50}>50</option>
             <option value={100}>100</option>
@@ -240,10 +285,10 @@ export default function EmitirProposta() {
   }
 
   const renderSortableHead = (label: string) => (
-    <TableHead className="text-[#3b82f6] font-medium text-[13px] whitespace-nowrap bg-white border-b py-3">
+    <TableHead className="text-[#00d4ff] font-bold text-[13px] whitespace-nowrap bg-[#222] border-b border-[#444] py-3">
       <div className="flex items-center gap-1 cursor-pointer hover:opacity-80">
         <span>{label}</span>
-        <span className="text-gray-300 leading-none inline-flex flex-col text-[10px]">
+        <span className="text-gray-400 leading-none inline-flex flex-col text-[10px]">
           <span>▲</span>
           <span className="-mt-[2px]">▼</span>
         </span>
@@ -252,24 +297,28 @@ export default function EmitirProposta() {
   )
 
   return (
-    <div className="flex flex-col h-full bg-white text-gray-800 p-6 pt-4">
+    <div className="flex flex-col h-full bg-[#1c1c1c] text-gray-300 p-6 pt-4">
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
         className="w-full flex-1 flex flex-col min-h-0"
       >
-        <div className="flex justify-between items-end border-b border-gray-200">
-          <TabsList className="bg-transparent justify-start rounded-none h-auto p-0 space-x-6">
+        <div className="flex justify-between items-end border-b border-[#444]">
+          <TabsList className="bg-transparent justify-start rounded-none h-auto p-0 space-x-2">
             <TabsTrigger
               value="registros"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#3b82f6] data-[state=active]:text-[#3b82f6] data-[state=active]:font-semibold data-[state=active]:shadow-none px-2 py-2 text-sm bg-transparent"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#0d6efd] data-[state=active]:text-[#00d4ff] text-gray-500 font-semibold shadow-none px-4 py-2.5 text-sm bg-transparent"
             >
               Registros
             </TabsTrigger>
             <TabsTrigger
               value="cadastro"
-              disabled={!selectedProposta}
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#3b82f6] data-[state=active]:text-[#3b82f6] data-[state=active]:font-semibold data-[state=active]:shadow-none px-2 py-2 text-sm bg-transparent text-gray-500 disabled:opacity-50"
+              onClick={() => {
+                if (activeTab !== 'cadastro' && !selectedProposta) {
+                  handleCreateNew()
+                }
+              }}
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#0d6efd] data-[state=active]:text-[#00d4ff] text-gray-500 font-semibold shadow-none px-4 py-2.5 text-sm bg-transparent"
             >
               Cadastro
             </TabsTrigger>
@@ -278,16 +327,14 @@ export default function EmitirProposta() {
           {activeTab === 'registros' && <div className="pb-2">{renderTopPagination()}</div>}
         </div>
 
-        <TabsContent
-          value="registros"
-          className="mt-0 outline-none flex-1 flex flex-col min-h-0 pt-4"
-        >
-          <div className="border border-gray-200 overflow-y-auto flex-1 bg-white">
+        <TabsContent value="registros" className="mt-4 outline-none flex-1 flex flex-col min-h-0">
+          <div className="border border-[#444] overflow-y-auto flex-1 bg-[#222] rounded-md">
             <Table>
               <TableHeader>
-                <TableRow className="border-b border-gray-200 hover:bg-transparent">
-                  <TableHead className="w-[40px] text-center bg-white border-b p-2">
+                <TableRow className="border-b border-[#444] hover:bg-transparent">
+                  <TableHead className="w-[40px] text-center bg-[#222] border-b border-[#444] p-2">
                     <Checkbox
+                      className="rounded-full border-gray-400 data-[state=checked]:bg-[#0d6efd] data-[state=checked]:border-[#0d6efd]"
                       checked={data.length > 0 && selectedIds.size === data.length}
                       onCheckedChange={(checked) => toggleSelectAll(!!checked)}
                     />
@@ -318,62 +365,58 @@ export default function EmitirProposta() {
                   </TableRow>
                 ) : (
                   data.map((item) => (
-                    <TableRow
-                      key={item.id}
-                      className="hover:bg-gray-50/50 border-b border-gray-100"
-                    >
+                    <TableRow key={item.id} className="hover:bg-[#2a2a2a] border-b border-[#333]">
                       <TableCell className="align-top py-4 text-center">
                         <Checkbox
+                          className="rounded-full border-gray-400 data-[state=checked]:bg-[#0d6efd] data-[state=checked]:border-[#0d6efd]"
                           checked={selectedIds.has(item.id)}
                           onCheckedChange={(checked) => toggleSelect(item.id, !!checked)}
                         />
                       </TableCell>
                       <TableCell className="align-top py-4 min-w-[120px]">
-                        <div className="font-medium text-gray-700 text-xs">
-                          {item.numero_proposta}
-                        </div>
+                        <div className="font-bold text-white text-xs">{item.numero_proposta}</div>
                         <div className="flex flex-col mt-1.5 gap-1.5">
                           <button
                             onClick={() => handleEdit(item)}
-                            className="flex items-center text-[#3b82f6] hover:underline text-[11px]"
+                            className="flex items-center text-[#00d4ff] hover:underline text-[11px]"
                           >
                             <Pencil className="h-3 w-3 mr-1" /> Editar
                           </button>
-                          <button className="flex items-center text-[#3b82f6] hover:underline text-[11px]">
+                          <button className="flex items-center text-[#00d4ff] hover:underline text-[11px]">
                             <Printer className="h-3 w-3 mr-1" /> Visualizar
                           </button>
                         </div>
                       </TableCell>
                       <TableCell
-                        className="align-top py-4 text-gray-600 text-xs uppercase max-w-[200px] truncate"
+                        className="align-top py-4 text-gray-300 text-xs uppercase max-w-[200px] truncate font-medium"
                         title={item.expand?.cliente?.razao_social || item.expand?.cliente?.fantasia}
                       >
                         {item.expand?.cliente?.razao_social ||
                           item.expand?.cliente?.fantasia ||
                           '-'}
                       </TableCell>
-                      <TableCell className="align-top py-4 text-gray-600 text-xs">
+                      <TableCell className="align-top py-4 text-gray-300 text-xs">
                         {item.contato || '-'}
                       </TableCell>
-                      <TableCell className="align-top py-4 text-gray-600 text-xs whitespace-nowrap">
+                      <TableCell className="align-top py-4 text-gray-300 text-xs whitespace-nowrap">
                         {item.telefone || '-'}
                       </TableCell>
                       <TableCell
-                        className="align-top py-4 text-gray-600 text-xs uppercase max-w-[300px] whitespace-normal leading-relaxed"
+                        className="align-top py-4 text-gray-300 text-xs uppercase max-w-[300px] whitespace-normal leading-relaxed font-semibold"
                         title={item.expand?.versao?.nome}
                       >
                         {item.expand?.versao?.nome || '-'}
                       </TableCell>
-                      <TableCell className="align-top py-4 text-gray-600 text-xs uppercase">
+                      <TableCell className="align-top py-4 text-gray-300 text-xs uppercase">
                         {item.expand?.representante?.fantasia || '-'}
                       </TableCell>
-                      <TableCell className="align-top py-4 text-gray-600 text-xs text-center">
+                      <TableCell className="align-top py-4 text-gray-300 text-xs text-center font-bold">
                         {item.nota_rep || '-'}
                       </TableCell>
-                      <TableCell className="align-top py-4 text-gray-600 text-xs whitespace-nowrap">
+                      <TableCell className="align-top py-4 text-gray-300 text-xs whitespace-nowrap">
                         {item.dt_cad ? format(new Date(item.dt_cad), 'dd/MM/yyyy') : '-'}
                       </TableCell>
-                      <TableCell className="align-top py-4 text-gray-600 text-xs uppercase">
+                      <TableCell className="align-top py-4 text-gray-300 text-xs uppercase font-medium">
                         {item.expand?.user?.name || '-'}
                       </TableCell>
                     </TableRow>
@@ -383,16 +426,16 @@ export default function EmitirProposta() {
             </Table>
           </div>
 
-          <div className="flex items-center gap-2 mt-4 pt-2">
-            <Button className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-sm px-6 py-2 h-9 text-[11px] font-semibold tracking-wider shadow-none">
+          <div className="flex items-center gap-4 mt-6">
+            <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-[11px] font-bold tracking-widest shadow-none">
               PESQUISAR
             </Button>
-            <Button className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-sm px-6 py-2 h-9 text-[11px] font-semibold tracking-wider shadow-none">
+            <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-[11px] font-bold tracking-widest shadow-none">
               EXCLUIR
             </Button>
             <Button
               onClick={openNotaDialog}
-              className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-sm px-6 py-2 h-9 text-[11px] font-semibold tracking-wider shadow-none"
+              className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-[11px] font-bold tracking-widest shadow-none"
             >
               ALTERAR NOTA
             </Button>
@@ -400,18 +443,18 @@ export default function EmitirProposta() {
         </TabsContent>
 
         <Dialog open={isNotaDialogOpen} onOpenChange={setIsNotaDialogOpen}>
-          <DialogContent>
+          <DialogContent className="bg-[#222] text-white border-[#444]">
             <DialogHeader>
               <DialogTitle>Alterar Nota</DialogTitle>
             </DialogHeader>
             <div className="py-4">
-              <label className="block text-sm font-medium mb-2 text-gray-700">
+              <label className="block text-sm font-medium mb-2 text-gray-300">
                 Selecione a nova nota:
               </label>
               <select
                 value={novaNota}
                 onChange={(e) => setNovaNota(Number(e.target.value))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-[#3b82f6]"
+                className="w-full bg-[#1e1e1e] border border-[#444] text-white rounded-md px-3 py-2 outline-none focus:border-[#0d6efd]"
               >
                 <option value={1}>1</option>
                 <option value={2}>2</option>
@@ -423,13 +466,14 @@ export default function EmitirProposta() {
             <DialogFooter>
               <Button
                 variant="outline"
+                className="border-[#444] text-gray-300 hover:text-white hover:bg-[#333]"
                 onClick={() => setIsNotaDialogOpen(false)}
                 disabled={isSavingNota}
               >
                 Cancelar
               </Button>
               <Button
-                className="bg-[#3b82f6] hover:bg-[#2563eb] text-white"
+                className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white"
                 onClick={handleAlterarNota}
                 disabled={isSavingNota}
               >
@@ -439,227 +483,241 @@ export default function EmitirProposta() {
           </DialogContent>
         </Dialog>
 
-        <TabsContent
-          value="cadastro"
-          className="mt-0 outline-none flex-1 flex flex-col min-h-0 pt-4"
-        >
-          {selectedProposta && (
-            <div className="bg-[#242424] text-[#d4d4d4] p-6 font-sans text-sm overflow-y-auto h-full rounded-sm border border-[#333] shadow-inner">
-              <div className="flex gap-2 mb-8">
-                <Button className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-none px-6 py-2 h-9 text-xs font-semibold tracking-wider">
-                  PESQUISAR
-                </Button>
-                <Button className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-none px-6 py-2 h-9 text-xs font-semibold tracking-wider">
-                  VISUALIZAR PROPOSTA
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-none px-6 py-2 h-9 text-xs font-semibold tracking-wider"
-                >
-                  GERAR PROPOSTA
-                </Button>
-                <Button className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-none px-6 py-2 h-9 text-xs font-semibold tracking-wider">
-                  VENDA
-                </Button>
-              </div>
+        <TabsContent value="cadastro" className="mt-4 outline-none flex-1 flex flex-col min-h-0">
+          <div className="bg-[#222] text-gray-300 p-6 font-sans text-sm overflow-y-auto h-full rounded-md border border-[#444] shadow-inner">
+            <div className="flex gap-4 mb-8">
+              <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
+                PESQUISAR
+              </Button>
+              <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
+                VISUALIZAR PROPOSTA
+              </Button>
+              <Button
+                onClick={handleSave}
+                className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest"
+              >
+                GERAR PROPOSTA
+              </Button>
+              <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
+                VENDA
+              </Button>
+            </div>
 
-              <div className="grid grid-cols-2 gap-x-12 gap-y-6 mb-8">
-                <div>
-                  <label className="block text-xs mb-1 text-gray-400">Código</label>
-                  <input
-                    className="w-full bg-[#333] border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#3b82f6] transition-colors"
-                    readOnly
-                    value={formData.numero_proposta || ''}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs mb-1 text-gray-400">Revisão</label>
-                  <input
-                    className="w-full bg-[#333] border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#3b82f6] transition-colors"
-                    value={formData.revisao || ''}
-                    onChange={(e) => setFormData({ ...formData, revisao: e.target.value })}
-                  />
-                </div>
+            <div className="grid grid-cols-2 gap-x-12 gap-y-6 mb-8">
+              <div>
+                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Código</label>
+                <input
+                  className="w-full bg-transparent border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#00d4ff] transition-colors"
+                  readOnly
+                  placeholder="Gerado automaticamente"
+                  value={formData.numero_proposta || ''}
+                  onChange={(e) => setFormData({ ...formData, numero_proposta: e.target.value })}
+                />
               </div>
-
-              <div className="border-b border-[#3b82f6] mb-4 pb-2 flex items-center gap-2">
-                <List className="w-4 h-4 text-white" />
-                <h3 className="text-base font-semibold text-white">Acessórios</h3>
+              <div>
+                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Revisão</label>
+                <input
+                  className="w-full bg-transparent border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#00d4ff] transition-colors"
+                  value={formData.revisao || ''}
+                  onChange={(e) => setFormData({ ...formData, revisao: e.target.value })}
+                />
               </div>
+            </div>
 
-              <div className="mb-8 border border-[#444] rounded-sm overflow-hidden">
-                <table className="w-full text-left text-xs bg-[#2a2a2a]">
-                  <thead className="bg-[#333] text-gray-300">
+            <div className="border-b border-[#00d4ff] mb-4 pb-2 flex items-center gap-2">
+              <List className="w-4 h-4 text-[#00d4ff]" />
+              <h3 className="text-base font-semibold text-white">Acessórios</h3>
+            </div>
+
+            <div className="mb-8 border border-[#444] rounded-sm overflow-hidden">
+              <table className="w-full text-left text-xs bg-[#2a2a2a]">
+                <thead className="bg-[#1e1e1e] text-[#00d4ff] font-semibold border-b border-[#444]">
+                  <tr>
+                    <th className="py-3 px-4">Acessório</th>
+                    <th className="py-3 px-4">Valor</th>
+                    <th className="py-3 px-4 text-center">Incluir na Proposta</th>
+                    <th className="py-3 px-4 text-center">Não exibir na Proposta</th>
+                    <th className="py-3 px-4 text-center">Exibir na Proposta</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {acessoriosProposta.length === 0 ? (
                     <tr>
-                      <th className="py-2.5 px-4 font-normal">Acessório</th>
-                      <th className="py-2.5 px-4 font-normal">Valor</th>
-                      <th className="py-2.5 px-4 font-normal text-center">Incluir na Proposta</th>
-                      <th className="py-2.5 px-4 font-normal text-center">
-                        Não exibir na Proposta
-                      </th>
-                      <th className="py-2.5 px-4 font-normal text-center">Exibir na Proposta</th>
+                      <td colSpan={5} className="py-6 text-center text-gray-500">
+                        Nenhum acessório encontrado.
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {acessoriosProposta.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="py-4 text-center text-gray-500">
-                          Nenhum acessório encontrado.
+                  ) : (
+                    acessoriosProposta.map((acc, idx) => (
+                      <tr key={idx} className="border-t border-[#444] hover:bg-[#333]">
+                        <td className="py-2.5 px-4 font-medium text-white">{acc.nome}</td>
+                        <td className="py-2.5 px-4">{formatCurrency(acc.valor, acc.moeda)}</td>
+                        <td className="py-2.5 px-4 text-center">
+                          <input
+                            type="radio"
+                            name={`acc_${idx}`}
+                            checked={acc.estado === 'incluir'}
+                            className="accent-[#0d6efd] cursor-pointer"
+                            onChange={() => updateAcc(idx, 'incluir')}
+                          />
+                        </td>
+                        <td className="py-2.5 px-4 text-center">
+                          <input
+                            type="radio"
+                            name={`acc_${idx}`}
+                            checked={acc.estado === 'nao_exibir'}
+                            className="accent-[#0d6efd] cursor-pointer"
+                            onChange={() => updateAcc(idx, 'nao_exibir')}
+                          />
+                        </td>
+                        <td className="py-2.5 px-4 text-center">
+                          <input
+                            type="radio"
+                            name={`acc_${idx}`}
+                            checked={acc.estado === 'exibir'}
+                            className="accent-[#0d6efd] cursor-pointer"
+                            onChange={() => updateAcc(idx, 'exibir')}
+                          />
                         </td>
                       </tr>
-                    ) : (
-                      acessoriosProposta.map((acc, idx) => (
-                        <tr key={idx} className="border-t border-[#444] hover:bg-[#333]">
-                          <td className="py-2.5 px-4">{acc.nome}</td>
-                          <td className="py-2.5 px-4">{formatCurrency(acc.valor, acc.moeda)}</td>
-                          <td className="py-2.5 px-4 text-center">
-                            <input
-                              type="radio"
-                              name={`acc_${idx}`}
-                              checked={acc.estado === 'incluir'}
-                              onChange={() => updateAcc(idx, 'incluir')}
-                            />
-                          </td>
-                          <td className="py-2.5 px-4 text-center">
-                            <input
-                              type="radio"
-                              name={`acc_${idx}`}
-                              checked={acc.estado === 'nao_exibir'}
-                              onChange={() => updateAcc(idx, 'nao_exibir')}
-                            />
-                          </td>
-                          <td className="py-2.5 px-4 text-center">
-                            <input
-                              type="radio"
-                              name={`acc_${idx}`}
-                              checked={acc.estado === 'exibir'}
-                              onChange={() => updateAcc(idx, 'exibir')}
-                            />
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-              <div className="grid grid-cols-3 gap-12 mb-6">
-                <div>
-                  <label className="block text-xs mb-1 text-gray-400">Moeda</label>
-                  <input
-                    className="w-full bg-[#333] border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#3b82f6]"
-                    value={formData.moeda || ''}
-                    onChange={(e) => setFormData({ ...formData, moeda: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs mb-1 text-gray-400">Valor sem Desconto</label>
-                  <input
-                    type="number"
-                    className="w-full bg-[#333] border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#3b82f6]"
-                    value={formData.valor_sem_desconto || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, valor_sem_desconto: Number(e.target.value) })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs mb-1 text-gray-400">Valor Atual</label>
-                  <input
-                    type="number"
-                    className="w-full bg-[#333] border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#3b82f6]"
-                    value={formData.valor_atual || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, valor_atual: Number(e.target.value) })
-                    }
-                  />
-                </div>
+            <div className="grid grid-cols-3 gap-12 mb-6">
+              <div>
+                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Moeda</label>
+                <input
+                  className="w-full bg-transparent border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#00d4ff]"
+                  value={formData.moeda || ''}
+                  onChange={(e) => setFormData({ ...formData, moeda: e.target.value })}
+                />
               </div>
-
-              <div className="mb-8">
-                <label className="block text-xs mb-1 text-gray-400">Valor</label>
+              <div>
+                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">
+                  Valor sem Desconto
+                </label>
                 <input
                   type="number"
-                  className="w-1/3 bg-[#333] border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#3b82f6]"
-                  value={formData.valor_final || ''}
+                  className="w-full bg-transparent border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#00d4ff]"
+                  value={formData.valor_sem_desconto || ''}
                   onChange={(e) =>
-                    setFormData({ ...formData, valor_final: Number(e.target.value) })
+                    setFormData({ ...formData, valor_sem_desconto: Number(e.target.value) })
                   }
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-12 mb-8">
-                <div>
-                  <label className="block text-xs mb-1 text-gray-400">Prazo de Entrega</label>
-                  <textarea
-                    className="w-full bg-[#333] border-b border-[#555] px-3 py-2 outline-none text-white resize-none h-32 text-xs focus:border-[#3b82f6]"
-                    value={formData.prazo_entrega || ''}
-                    onChange={(e) => setFormData({ ...formData, prazo_entrega: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs mb-1 text-gray-400">Condições de Pagamento</label>
-                  <textarea
-                    className="w-full bg-[#333] border-b border-[#555] px-3 py-2 outline-none text-white resize-none h-32 text-xs focus:border-[#3b82f6]"
-                    value={formData.condicoes_pagamento || ''}
-                    onChange={(e) =>
-                      setFormData({ ...formData, condicoes_pagamento: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-12 mb-8">
-                <div>
-                  <label className="block text-xs mb-1 text-red-500">Gerente</label>
-                  <select
-                    className="w-full bg-[#333] border-b border-red-500 px-3 py-1.5 outline-none text-white focus:border-[#3b82f6] appearance-none"
-                    value={formData.gerente || ''}
-                    onChange={(e) => setFormData({ ...formData, gerente: e.target.value })}
-                  >
-                    <option value="">Selecione...</option>
-                    {gerentes.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.nome}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs mb-1 text-red-500">Nota</label>
-                  <select
-                    className="w-full bg-[#333] border-b border-red-500 px-3 py-1.5 outline-none text-white focus:border-[#3b82f6] appearance-none"
-                    value={formData.nota_rep || ''}
-                    onChange={(e) => setFormData({ ...formData, nota_rep: Number(e.target.value) })}
-                  >
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-none px-6 py-2 h-9 text-xs font-semibold tracking-wider">
-                  PESQUISAR
-                </Button>
-                <Button className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-none px-6 py-2 h-9 text-xs font-semibold tracking-wider">
-                  VISUALIZAR PROPOSTA
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-none px-6 py-2 h-9 text-xs font-semibold tracking-wider"
-                >
-                  GERAR PROPOSTA
-                </Button>
-                <Button className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-none px-6 py-2 h-9 text-xs font-semibold tracking-wider">
-                  VENDA
-                </Button>
+              <div>
+                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Valor Atual</label>
+                <input
+                  type="number"
+                  className="w-full bg-transparent border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#00d4ff]"
+                  value={formData.valor_atual || ''}
+                  onChange={(e) =>
+                    setFormData({ ...formData, valor_atual: Number(e.target.value) })
+                  }
+                />
               </div>
             </div>
-          )}
+
+            <div className="mb-8">
+              <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Valor</label>
+              <input
+                type="number"
+                className="w-1/3 bg-transparent border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#00d4ff]"
+                value={formData.valor_final || ''}
+                onChange={(e) => setFormData({ ...formData, valor_final: Number(e.target.value) })}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-12 mb-8">
+              <div>
+                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">
+                  Prazo de Entrega
+                </label>
+                <textarea
+                  className="w-full bg-[#1e1e1e] border border-[#555] rounded-md px-3 py-2 outline-none text-white resize-none h-32 text-xs focus:border-[#00d4ff]"
+                  value={formData.prazo_entrega || ''}
+                  onChange={(e) => setFormData({ ...formData, prazo_entrega: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">
+                  Condições de Pagamento
+                </label>
+                <textarea
+                  className="w-full bg-[#1e1e1e] border border-[#555] rounded-md px-3 py-2 outline-none text-white resize-none h-32 text-xs focus:border-[#00d4ff]"
+                  value={formData.condicoes_pagamento || ''}
+                  onChange={(e) =>
+                    setFormData({ ...formData, condicoes_pagamento: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-12 mb-8">
+              <div>
+                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Gerente</label>
+                <select
+                  className="w-full bg-transparent border-b border-[#00d4ff] px-3 py-1.5 outline-none text-white focus:border-white appearance-none"
+                  value={formData.gerente || ''}
+                  onChange={(e) => setFormData({ ...formData, gerente: e.target.value })}
+                >
+                  <option value="" className="bg-[#222]">
+                    Selecione...
+                  </option>
+                  {gerentes.map((g) => (
+                    <option key={g.id} value={g.id} className="bg-[#222]">
+                      {g.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Nota</label>
+                <select
+                  className="w-full bg-transparent border-b border-[#00d4ff] px-3 py-1.5 outline-none text-white focus:border-white appearance-none"
+                  value={formData.nota_rep || ''}
+                  onChange={(e) => setFormData({ ...formData, nota_rep: Number(e.target.value) })}
+                >
+                  <option value="1" className="bg-[#222]">
+                    1
+                  </option>
+                  <option value="2" className="bg-[#222]">
+                    2
+                  </option>
+                  <option value="3" className="bg-[#222]">
+                    3
+                  </option>
+                  <option value="4" className="bg-[#222]">
+                    4
+                  </option>
+                  <option value="5" className="bg-[#222]">
+                    5
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
+                PESQUISAR
+              </Button>
+              <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
+                VISUALIZAR PROPOSTA
+              </Button>
+              <Button
+                onClick={handleSave}
+                className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest"
+              >
+                GERAR PROPOSTA
+              </Button>
+              <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
+                VENDA
+              </Button>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
