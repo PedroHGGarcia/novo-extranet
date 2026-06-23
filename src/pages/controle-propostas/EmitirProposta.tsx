@@ -484,7 +484,7 @@ export default function EmitirProposta() {
         </Dialog>
 
         <TabsContent value="cadastro" className="mt-4 outline-none flex-1 flex flex-col min-h-0">
-          <div className="bg-[#222] text-gray-300 p-6 font-sans text-sm overflow-y-auto h-full rounded-md border border-[#444] shadow-inner">
+          <div className="flex-1 min-h-0 bg-[#222] text-gray-300 p-6 font-sans text-sm overflow-y-auto rounded-md border border-[#444] shadow-inner">
             <div className="flex gap-4 mb-8">
               <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
                 PESQUISAR
