@@ -133,34 +133,48 @@ export function AppSidebar() {
                 className="group/collapsible"
               >
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive}
-                    className={cn(
-                      'h-11 rounded-none text-white/80 hover:bg-white/5 hover:text-white active:bg-white/10 data-[active=true]:bg-white/5 data-[active=true]:text-white data-[active=true]:font-semibold',
-                      isActive && 'border-l-4 border-brand-green',
-                    )}
-                  >
-                    <Link
-                      to={item.url}
-                      draggable={false}
-                      className="select-none flex items-center gap-3 w-full"
-                    >
-                      <item.icon className="h-5 w-5 select-none shrink-0" draggable={false} />
-                      <span className="flex-1">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-
-                  {item.sub.length > 0 && (
+                  {item.sub.length > 0 ? (
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuAction className="text-white/80 hover:bg-white/10 hover:text-white">
-                        <ChevronLeft
-                          className="h-4 w-4 select-none transition-transform duration-200 group-data-[state=open]/collapsible:-rotate-90"
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        className={cn(
+                          'h-11 rounded-none text-white/80 hover:bg-white/5 hover:text-white active:bg-white/10 data-[active=true]:bg-white/5 data-[active=true]:text-white data-[active=true]:font-semibold',
+                          isActive && 'border-l-4 border-brand-green',
+                        )}
+                      >
+                        <Link
+                          to={item.url}
                           draggable={false}
-                        />
-                        <span className="sr-only">Toggle Dropdown</span>
-                      </SidebarMenuAction>
+                          className="select-none flex items-center gap-3 w-full"
+                        >
+                          <item.icon className="h-5 w-5 select-none shrink-0" draggable={false} />
+                          <span className="flex-1">{item.title}</span>
+                          <ChevronLeft
+                            className="h-4 w-4 select-none transition-transform duration-200 group-data-[state=open]/collapsible:-rotate-90 ml-auto"
+                            draggable={false}
+                          />
+                        </Link>
+                      </SidebarMenuButton>
                     </CollapsibleTrigger>
+                  ) : (
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className={cn(
+                        'h-11 rounded-none text-white/80 hover:bg-white/5 hover:text-white active:bg-white/10 data-[active=true]:bg-white/5 data-[active=true]:text-white data-[active=true]:font-semibold',
+                        isActive && 'border-l-4 border-brand-green',
+                      )}
+                    >
+                      <Link
+                        to={item.url}
+                        draggable={false}
+                        className="select-none flex items-center gap-3 w-full"
+                      >
+                        <item.icon className="h-5 w-5 select-none shrink-0" draggable={false} />
+                        <span className="flex-1">{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
                   )}
 
                   {item.sub.length > 0 && (
