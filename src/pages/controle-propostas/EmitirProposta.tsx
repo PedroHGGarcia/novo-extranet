@@ -13,7 +13,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { getPropostasPaginated, updateProposta, type Proposta } from '@/services/propostas'
-import { getGerentes } from '@/services/cadastros'
 import { useRealtime } from '@/hooks/use-realtime'
 import { cn } from '@/lib/utils'
 import pb from '@/lib/pocketbase/client'
@@ -50,8 +49,16 @@ export default function EmitirProposta() {
   const [isLoading, setIsLoading] = useState(true)
 
   const [gerentes, setGerentes] = useState<any[]>([])
+  const [clientes, setClientes] = useState<any[]>([])
+  const [representantes, setRepresentantes] = useState<any[]>([])
+  const [versoes, setVersoes] = useState<any[]>([])
+
   const [formData, setFormData] = useState<Partial<Proposta>>({})
   const [acessoriosProposta, setAcessoriosProposta] = useState<any[]>([])
+
+  // Local UI states for fields not directly in the Proposta schema
+  const [estoqueUI, setEstoqueUI] = useState('')
+  const [descontoUI, setDescontoUI] = useState('')
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isNotaDialogOpen, setIsNotaDialogOpen] = useState(false)
@@ -76,8 +83,21 @@ export default function EmitirProposta() {
   }, [page, perPage])
 
   useEffect(() => {
-    getGerentes()
-      .then((res) => setGerentes(res))
+    pb.collection('gerentes')
+      .getFullList({ sort: 'nome' })
+      .then(setGerentes)
+      .catch(() => {})
+    pb.collection('clientes')
+      .getFullList({ sort: 'fantasia' })
+      .then(setClientes)
+      .catch(() => {})
+    pb.collection('representantes')
+      .getFullList({ sort: 'fantasia' })
+      .then(setRepresentantes)
+      .catch(() => {})
+    pb.collection('versoes')
+      .getFullList({ sort: 'nome' })
+      .then(setVersoes)
       .catch(() => {})
   }, [])
 
@@ -91,12 +111,6 @@ export default function EmitirProposta() {
           valor_sem_desconto: selectedProposta.valor_sem_desconto || 0,
           valor_atual: selectedProposta.valor_atual || 0,
           valor_final: selectedProposta.valor_final || 0,
-          prazo_entrega:
-            selectedProposta.prazo_entrega ||
-            'Até 120/150 dias, salvo vendas prévias.\nConfirmar prazo de entrega.\n\n<B>Treinamento e Entrega Técnica</B>\nSerá emitida uma Nota Fiscal de serviços no valor de US$ 1.800,00, já com os impostos inclusos...',
-          condicoes_pagamento:
-            selectedProposta.condicoes_pagamento ||
-            'À vista, Financiamento bancário ou a combinar.\nO valor final do equipamento ora ofertado, estará sujeito a reajuste ou correção de preços (para menos ou para mais) dependendo exclusivamente da variação cambial da moeda Dólar (venda) com relação à moeda nacional "REAL" conforme aos índices cambiais oficiais.',
           nota_rep: selectedProposta.nota_rep || 1,
         })
 
@@ -106,20 +120,7 @@ export default function EmitirProposta() {
         ) {
           setAcessoriosProposta(selectedProposta.acessorios_proposta)
         } else {
-          const filter = selectedProposta.versao ? `versoes ~ "${selectedProposta.versao}"` : ''
-          pb.collection('acessorios')
-            .getFullList({ filter })
-            .then((list) => {
-              const initial = list.map((a) => ({
-                id: a.id,
-                nome: a.nome,
-                valor: a.valor,
-                moeda: a.moeda,
-                estado: 'exibir',
-              }))
-              setAcessoriosProposta(initial)
-            })
-            .catch(console.error)
+          loadAcessorios(selectedProposta.versao)
         }
       } else {
         setFormData({
@@ -128,28 +129,34 @@ export default function EmitirProposta() {
           valor_sem_desconto: 0,
           valor_atual: 0,
           valor_final: 0,
-          prazo_entrega:
-            'Até 120/150 dias, salvo vendas prévias.\nConfirmar prazo de entrega.\n\n<B>Treinamento e Entrega Técnica</B>\nSerá emitida uma Nota Fiscal de serviços no valor de US$ 1.800,00, já com os impostos inclusos...',
-          condicoes_pagamento:
-            'À vista, Financiamento bancário ou a combinar.\nO valor final do equipamento ora ofertado, estará sujeito a reajuste ou correção de preços (para menos ou para mais) dependendo exclusivamente da variação cambial da moeda Dólar (venda) com relação à moeda nacional "REAL" conforme aos índices cambiais oficiais.',
           nota_rep: 1,
         })
-        pb.collection('acessorios')
-          .getFullList()
-          .then((list) => {
-            const initial = list.map((a) => ({
-              id: a.id,
-              nome: a.nome,
-              valor: a.valor,
-              moeda: a.moeda,
-              estado: 'exibir',
-            }))
-            setAcessoriosProposta(initial)
-          })
-          .catch(console.error)
+        loadAcessorios('')
       }
     }
   }, [selectedProposta, activeTab])
+
+  const loadAcessorios = async (versaoId?: string) => {
+    try {
+      const filter = versaoId ? `versoes ~ "${versaoId}"` : ''
+      const list = await pb.collection('acessorios').getFullList({ filter })
+      const initial = list.map((a) => ({
+        id: a.id,
+        nome: a.nome,
+        valor: a.valor,
+        moeda: a.moeda,
+        estado: 'exibir',
+      }))
+      setAcessoriosProposta(initial)
+    } catch (e) {
+      console.error('Failed to load accessories', e)
+    }
+  }
+
+  const handleVersaoChange = (versaoId: string) => {
+    setFormData((prev) => ({ ...prev, versao: versaoId }))
+    loadAcessorios(versaoId)
+  }
 
   useRealtime('propostas', () => {
     loadData()
@@ -294,6 +301,26 @@ export default function EmitirProposta() {
         </span>
       </div>
     </TableHead>
+  )
+
+  const renderActionBars = () => (
+    <div className="flex gap-2">
+      <Button className="bg-[#2f80ed] hover:bg-[#1f6bd0] text-white rounded-sm px-5 py-2 h-auto text-[11px] font-semibold tracking-wide shadow-none uppercase">
+        PESQUISAR
+      </Button>
+      <Button className="bg-[#2f80ed] hover:bg-[#1f6bd0] text-white rounded-sm px-5 py-2 h-auto text-[11px] font-semibold tracking-wide shadow-none uppercase">
+        VISUALIZAR PROPOSTA
+      </Button>
+      <Button
+        onClick={handleSave}
+        className="bg-[#2f80ed] hover:bg-[#1f6bd0] text-white rounded-sm px-5 py-2 h-auto text-[11px] font-semibold tracking-wide shadow-none uppercase"
+      >
+        GERAR PROPOSTA
+      </Button>
+      <Button className="bg-[#2f80ed] hover:bg-[#1f6bd0] text-white rounded-sm px-5 py-2 h-auto text-[11px] font-semibold tracking-wide shadow-none uppercase">
+        VENDA
+      </Button>
+    </div>
   )
 
   return (
@@ -483,76 +510,116 @@ export default function EmitirProposta() {
           </DialogContent>
         </Dialog>
 
-        <TabsContent value="cadastro" className="mt-4 outline-none flex-1 flex flex-col min-h-0">
-          <div className="flex-1 min-h-0 bg-[#222] text-gray-300 p-6 font-sans text-sm overflow-y-auto rounded-md border border-[#444] shadow-inner">
-            <div className="flex gap-4 mb-8">
-              <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
-                PESQUISAR
-              </Button>
-              <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
-                VISUALIZAR PROPOSTA
-              </Button>
-              <Button
-                onClick={handleSave}
-                className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest"
-              >
-                GERAR PROPOSTA
-              </Button>
-              <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
-                VENDA
-              </Button>
-            </div>
+        <TabsContent
+          value="cadastro"
+          className="mt-0 outline-none flex-1 flex flex-col min-h-0 bg-[#f4f5f7] rounded-b-md border border-[#ddd]"
+        >
+          <div className="flex-1 min-h-0 bg-white text-gray-800 p-6 font-sans overflow-y-auto flex flex-col justify-start items-start w-full">
+            <div className="mb-6 w-full">{renderActionBars()}</div>
 
-            <div className="grid grid-cols-2 gap-x-12 gap-y-6 mb-8">
-              <div>
-                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Código</label>
-                <input
-                  className="w-full bg-transparent border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#00d4ff] transition-colors"
-                  readOnly
-                  placeholder="Gerado automaticamente"
-                  value={formData.numero_proposta || ''}
-                  onChange={(e) => setFormData({ ...formData, numero_proposta: e.target.value })}
-                />
+            <div className="flex flex-col gap-4 mb-8 w-full">
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] text-gray-400 mb-0.5">Código Para pesquisar</label>
+                <div className="border-b border-gray-300 w-full">
+                  <input
+                    className="w-full bg-transparent py-1 outline-none text-gray-700 text-sm"
+                    readOnly
+                    placeholder="Gerado automaticamente"
+                    value={formData.numero_proposta || ''}
+                    onChange={(e) => setFormData({ ...formData, numero_proposta: e.target.value })}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Revisão</label>
-                <input
-                  className="w-full bg-transparent border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#00d4ff] transition-colors"
-                  value={formData.revisao || ''}
-                  onChange={(e) => setFormData({ ...formData, revisao: e.target.value })}
-                />
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] text-gray-400 mb-0.5">Representante</label>
+                <div className="border-b-[1.5px] border-red-600 w-full">
+                  <select
+                    className="w-full bg-transparent py-1 outline-none text-gray-700 text-sm appearance-none"
+                    value={formData.representante || ''}
+                    onChange={(e) => setFormData({ ...formData, representante: e.target.value })}
+                  >
+                    <option value=""></option>
+                    {representantes.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.fantasia}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] text-gray-400 mb-0.5">Cliente</label>
+                <div className="border-b-[1.5px] border-red-600 w-full">
+                  <select
+                    className="w-full bg-transparent py-1 outline-none text-gray-700 text-sm appearance-none"
+                    value={formData.cliente || ''}
+                    onChange={(e) => setFormData({ ...formData, cliente: e.target.value })}
+                  >
+                    <option value=""></option>
+                    {clientes.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.fantasia || c.razao_social}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] text-gray-400 mb-0.5">Versão</label>
+                <div className="border-b-[1.5px] border-red-600 w-full">
+                  <select
+                    className="w-full bg-transparent py-1 outline-none text-gray-700 text-sm appearance-none"
+                    value={formData.versao || ''}
+                    onChange={(e) => handleVersaoChange(e.target.value)}
+                  >
+                    <option value=""></option>
+                    {versoes.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div className="border-b border-[#00d4ff] mb-4 pb-2 flex items-center gap-2">
-              <List className="w-4 h-4 text-[#00d4ff]" />
-              <h3 className="text-base font-semibold text-white">Acessórios</h3>
+            <div className="border-t-[3px] border-[#0d6efd] pt-2 mb-2 flex items-center gap-2 w-full">
+              <List className="w-4 h-4 text-gray-700" />
+              <h3 className="text-[13px] font-bold text-gray-700">Acessórios</h3>
             </div>
 
-            <div className="mb-8 border border-[#444] rounded-sm overflow-hidden">
-              <table className="w-full text-left text-xs bg-[#2a2a2a]">
-                <thead className="bg-[#1e1e1e] text-[#00d4ff] font-semibold border-b border-[#444]">
+            <div className="w-full mb-8 border border-gray-200 rounded-sm overflow-x-auto">
+              <table className="w-full text-left text-[11px] bg-white">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="py-3 px-4">Acessório</th>
-                    <th className="py-3 px-4">Valor</th>
-                    <th className="py-3 px-4 text-center">Incluir na Proposta</th>
-                    <th className="py-3 px-4 text-center">Não exibir na Proposta</th>
-                    <th className="py-3 px-4 text-center">Exibir na Proposta</th>
+                    <th className="py-2.5 px-4 font-medium text-gray-500">Acessório</th>
+                    <th className="py-2.5 px-4 font-medium text-gray-500">Valor</th>
+                    <th className="py-2.5 px-4 font-medium text-gray-500 text-center">
+                      Incluir na Proposta
+                    </th>
+                    <th className="py-2.5 px-4 font-medium text-gray-500 text-center">
+                      Não exibir na Proposta
+                    </th>
+                    <th className="py-2.5 px-4 font-medium text-gray-500 text-center">
+                      Exibir na Proposta
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {acessoriosProposta.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-6 text-center text-gray-500">
+                      <td colSpan={5} className="py-6 text-center text-gray-400">
                         Nenhum acessório encontrado.
                       </td>
                     </tr>
                   ) : (
                     acessoriosProposta.map((acc, idx) => (
-                      <tr key={idx} className="border-t border-[#444] hover:bg-[#333]">
-                        <td className="py-2.5 px-4 font-medium text-white">{acc.nome}</td>
-                        <td className="py-2.5 px-4">{formatCurrency(acc.valor, acc.moeda)}</td>
-                        <td className="py-2.5 px-4 text-center">
+                      <tr key={idx} className="border-t border-gray-100 hover:bg-gray-50">
+                        <td className="py-2 px-4 text-gray-700">{acc.nome}</td>
+                        <td className="py-2 px-4 text-gray-700">
+                          {formatCurrency(acc.valor, acc.moeda)}
+                        </td>
+                        <td className="py-2 px-4 text-center">
                           <input
                             type="radio"
                             name={`acc_${idx}`}
@@ -561,7 +628,7 @@ export default function EmitirProposta() {
                             onChange={() => updateAcc(idx, 'incluir')}
                           />
                         </td>
-                        <td className="py-2.5 px-4 text-center">
+                        <td className="py-2 px-4 text-center">
                           <input
                             type="radio"
                             name={`acc_${idx}`}
@@ -570,7 +637,7 @@ export default function EmitirProposta() {
                             onChange={() => updateAcc(idx, 'nao_exibir')}
                           />
                         </td>
-                        <td className="py-2.5 px-4 text-center">
+                        <td className="py-2 px-4 text-center">
                           <input
                             type="radio"
                             name={`acc_${idx}`}
@@ -586,137 +653,120 @@ export default function EmitirProposta() {
               </table>
             </div>
 
-            <div className="grid grid-cols-3 gap-12 mb-6">
-              <div>
-                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Moeda</label>
-                <input
-                  className="w-full bg-transparent border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#00d4ff]"
-                  value={formData.moeda || ''}
-                  onChange={(e) => setFormData({ ...formData, moeda: e.target.value })}
-                />
+            <div className="grid grid-cols-5 gap-6 mb-3 w-full">
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] text-gray-400 mb-0.5">Tipo de Proposta</label>
+                <div className="border-b border-gray-300 w-full flex items-center">
+                  <select
+                    className="flex-1 bg-transparent py-1 outline-none text-gray-700 text-xs appearance-none"
+                    value={formData.revisao || ''}
+                    onChange={(e) => setFormData({ ...formData, revisao: e.target.value })}
+                  >
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                  </select>
+                  <Pencil className="w-3 h-3 text-blue-500 ml-1 cursor-pointer" />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">
-                  Valor sem Desconto
-                </label>
-                <input
-                  type="number"
-                  className="w-full bg-transparent border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#00d4ff]"
-                  value={formData.valor_sem_desconto || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, valor_sem_desconto: Number(e.target.value) })
-                  }
-                />
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] text-gray-400 mb-0.5">Estoque</label>
+                <div className="border-b border-gray-300 w-full">
+                  <select
+                    className="w-full bg-transparent py-1 outline-none text-gray-700 text-xs appearance-none"
+                    value={estoqueUI}
+                    onChange={(e) => setEstoqueUI(e.target.value)}
+                  >
+                    <option value=""></option>
+                    <option value="disponivel">Disponível</option>
+                    <option value="indisponivel">Indisponível</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Valor Atual</label>
-                <input
-                  type="number"
-                  className="w-full bg-transparent border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#00d4ff]"
-                  value={formData.valor_atual || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, valor_atual: Number(e.target.value) })
-                  }
-                />
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] text-gray-400 mb-0.5">Moeda</label>
+                <div className="border-b border-gray-300 w-full">
+                  <select
+                    className="w-full bg-transparent py-1 outline-none text-gray-700 text-xs appearance-none"
+                    value={formData.moeda || ''}
+                    onChange={(e) => setFormData({ ...formData, moeda: e.target.value })}
+                  >
+                    <option value="BRL">BRL</option>
+                    <option value="US$">US$</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </div>
               </div>
-            </div>
-
-            <div className="mb-8">
-              <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Valor</label>
-              <input
-                type="number"
-                className="w-1/3 bg-transparent border-b border-[#555] px-3 py-1.5 outline-none text-white focus:border-[#00d4ff]"
-                value={formData.valor_final || ''}
-                onChange={(e) => setFormData({ ...formData, valor_final: Number(e.target.value) })}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-12 mb-8">
-              <div>
-                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">
-                  Prazo de Entrega
-                </label>
-                <textarea
-                  className="w-full bg-[#1e1e1e] border border-[#555] rounded-md px-3 py-2 outline-none text-white resize-none h-32 text-xs focus:border-[#00d4ff]"
-                  value={formData.prazo_entrega || ''}
-                  onChange={(e) => setFormData({ ...formData, prazo_entrega: e.target.value })}
-                />
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] text-gray-400 mb-0.5">Valor</label>
+                <div className="border-b border-gray-300 w-full">
+                  <input
+                    type="number"
+                    className="w-full bg-transparent py-1 outline-none text-gray-700 text-xs"
+                    value={formData.valor_final || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, valor_final: Number(e.target.value) })
+                    }
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">
-                  Condições de Pagamento
-                </label>
-                <textarea
-                  className="w-full bg-[#1e1e1e] border border-[#555] rounded-md px-3 py-2 outline-none text-white resize-none h-32 text-xs focus:border-[#00d4ff]"
-                  value={formData.condicoes_pagamento || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, condicoes_pagamento: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-12 mb-8">
-              <div>
-                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Gerente</label>
-                <select
-                  className="w-full bg-transparent border-b border-[#00d4ff] px-3 py-1.5 outline-none text-white focus:border-white appearance-none"
-                  value={formData.gerente || ''}
-                  onChange={(e) => setFormData({ ...formData, gerente: e.target.value })}
-                >
-                  <option value="" className="bg-[#222]">
-                    Selecione...
-                  </option>
-                  {gerentes.map((g) => (
-                    <option key={g.id} value={g.id} className="bg-[#222]">
-                      {g.nome}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs mb-1 text-[#00d4ff] font-medium">Nota</label>
-                <select
-                  className="w-full bg-transparent border-b border-[#00d4ff] px-3 py-1.5 outline-none text-white focus:border-white appearance-none"
-                  value={formData.nota_rep || ''}
-                  onChange={(e) => setFormData({ ...formData, nota_rep: Number(e.target.value) })}
-                >
-                  <option value="1" className="bg-[#222]">
-                    1
-                  </option>
-                  <option value="2" className="bg-[#222]">
-                    2
-                  </option>
-                  <option value="3" className="bg-[#222]">
-                    3
-                  </option>
-                  <option value="4" className="bg-[#222]">
-                    4
-                  </option>
-                  <option value="5" className="bg-[#222]">
-                    5
-                  </option>
-                </select>
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] text-gray-400 mb-0.5">Desconto</label>
+                <div className="border-b border-gray-300 w-full">
+                  <select
+                    className="w-full bg-transparent py-1 outline-none text-gray-700 text-xs appearance-none"
+                    value={descontoUI}
+                    onChange={(e) => setDescontoUI(e.target.value)}
+                  >
+                    <option value=""></option>
+                    <option value="5%">5%</option>
+                    <option value="10%">10%</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-4">
-              <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
-                PESQUISAR
-              </Button>
-              <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
-                VISUALIZAR PROPOSTA
-              </Button>
-              <Button
-                onClick={handleSave}
-                className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest"
-              >
-                GERAR PROPOSTA
-              </Button>
-              <Button className="bg-[#0d6efd] hover:bg-[#0b5ed7] text-white rounded-full px-6 py-2 h-9 text-xs font-bold tracking-widest">
-                VENDA
-              </Button>
+            <div className="text-[11px] font-bold text-gray-700 mb-8 w-full">
+              EUR: 5,97 US$: 5,11 R$: 1,00
             </div>
+
+            <div className="grid grid-cols-2 gap-8 mb-10 w-full">
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] text-gray-400 mb-0.5">Gerente</label>
+                <div className="border-b-[1.5px] border-red-600 w-full">
+                  <select
+                    className="w-full bg-transparent py-1 outline-none text-gray-700 text-sm appearance-none"
+                    value={formData.gerente || ''}
+                    onChange={(e) => setFormData({ ...formData, gerente: e.target.value })}
+                  >
+                    <option value=""></option>
+                    {gerentes.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] text-gray-400 mb-0.5">Nota</label>
+                <div className="border-b-[1.5px] border-red-600 w-full">
+                  <select
+                    className="w-full bg-transparent py-1 outline-none text-gray-700 text-sm appearance-none"
+                    value={formData.nota_rep || ''}
+                    onChange={(e) => setFormData({ ...formData, nota_rep: Number(e.target.value) })}
+                  >
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full mt-auto pt-6">{renderActionBars()}</div>
           </div>
         </TabsContent>
       </Tabs>
