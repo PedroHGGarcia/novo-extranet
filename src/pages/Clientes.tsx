@@ -16,7 +16,6 @@ import {
   MapPin,
   Phone,
 } from 'lucide-react'
-import { PageLayout } from '@/components/PageLayout'
 import {
   Table,
   TableBody,
@@ -398,7 +397,7 @@ export default function Clientes() {
   }
 
   return (
-    <PageLayout title="Clientes" icon={UserCircle}>
+    <div className="flex flex-1 flex-col p-4 md:p-6 w-full">
       <div className="flex flex-col space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-2">
@@ -1098,6 +1097,6 @@ export default function Clientes() {
         onMerge={handleMerge}
         isSubmitting={isSubmitting}
       />
-    </PageLayout>
+    </div>
   )
 }
