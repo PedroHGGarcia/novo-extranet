@@ -18,6 +18,13 @@ import { useRealtime } from '@/hooks/use-realtime'
 import { cn } from '@/lib/utils'
 import pb from '@/lib/pocketbase/client'
 import { useToast } from '@/components/ui/use-toast'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 
 const formatCurrency = (value: number | undefined, currency: string = 'BRL') => {
   if (value === undefined) return '-'
@@ -45,6 +52,11 @@ export default function EmitirProposta() {
   const [gerentes, setGerentes] = useState<any[]>([])
   const [formData, setFormData] = useState<Partial<Proposta>>({})
   const [acessoriosProposta, setAcessoriosProposta] = useState<any[]>([])
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isNotaDialogOpen, setIsNotaDialogOpen] = useState(false)
+  const [novaNota, setNovaNota] = useState<number>(1)
+  const [isSavingNota, setIsSavingNota] = useState(false)
 
   const loadData = async () => {
     try {
@@ -128,6 +140,47 @@ export default function EmitirProposta() {
       loadData()
     } catch (e) {
       toast({ title: 'Erro ao atualizar proposta', variant: 'destructive' })
+    }
+  }
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(new Set(data.map((item) => item.id)))
+    } else {
+      setSelectedIds(new Set())
+    }
+  }
+
+  const toggleSelect = (id: string, checked: boolean) => {
+    const next = new Set(selectedIds)
+    if (checked) next.add(id)
+    else next.delete(id)
+    setSelectedIds(next)
+  }
+
+  const openNotaDialog = () => {
+    if (selectedIds.size === 0) {
+      toast({ title: 'Selecione ao menos uma proposta.', variant: 'destructive' })
+      return
+    }
+    setNovaNota(1)
+    setIsNotaDialogOpen(true)
+  }
+
+  const handleAlterarNota = async () => {
+    setIsSavingNota(true)
+    try {
+      for (const id of Array.from(selectedIds)) {
+        await updateProposta(id, { nota_rep: novaNota })
+      }
+      toast({ title: 'Nota atualizada com sucesso!' })
+      setIsNotaDialogOpen(false)
+      setSelectedIds(new Set())
+      loadData()
+    } catch (error) {
+      toast({ title: 'Erro ao salvar nota. Tente novamente.', variant: 'destructive' })
+    } finally {
+      setIsSavingNota(false)
     }
   }
 
@@ -234,7 +287,10 @@ export default function EmitirProposta() {
               <TableHeader>
                 <TableRow className="border-b border-gray-200 hover:bg-transparent">
                   <TableHead className="w-[40px] text-center bg-white border-b p-2">
-                    <Checkbox />
+                    <Checkbox
+                      checked={data.length > 0 && selectedIds.size === data.length}
+                      onCheckedChange={(checked) => toggleSelectAll(!!checked)}
+                    />
                   </TableHead>
                   {renderSortableHead('Proposta')}
                   {renderSortableHead('Razão Social')}
@@ -267,7 +323,10 @@ export default function EmitirProposta() {
                       className="hover:bg-gray-50/50 border-b border-gray-100"
                     >
                       <TableCell className="align-top py-4 text-center">
-                        <Checkbox />
+                        <Checkbox
+                          checked={selectedIds.has(item.id)}
+                          onCheckedChange={(checked) => toggleSelect(item.id, !!checked)}
+                        />
                       </TableCell>
                       <TableCell className="align-top py-4 min-w-[120px]">
                         <div className="font-medium text-gray-700 text-xs">
@@ -331,11 +390,54 @@ export default function EmitirProposta() {
             <Button className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-sm px-6 py-2 h-9 text-[11px] font-semibold tracking-wider shadow-none">
               EXCLUIR
             </Button>
-            <Button className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-sm px-6 py-2 h-9 text-[11px] font-semibold tracking-wider shadow-none">
+            <Button
+              onClick={openNotaDialog}
+              className="bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-sm px-6 py-2 h-9 text-[11px] font-semibold tracking-wider shadow-none"
+            >
               ALTERAR NOTA
             </Button>
           </div>
         </TabsContent>
+
+        <Dialog open={isNotaDialogOpen} onOpenChange={setIsNotaDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Alterar Nota</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <label className="block text-sm font-medium mb-2 text-gray-700">
+                Selecione a nova nota:
+              </label>
+              <select
+                value={novaNota}
+                onChange={(e) => setNovaNota(Number(e.target.value))}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-[#3b82f6]"
+              >
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+                <option value={4}>4</option>
+                <option value={5}>5</option>
+              </select>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsNotaDialogOpen(false)}
+                disabled={isSavingNota}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="bg-[#3b82f6] hover:bg-[#2563eb] text-white"
+                onClick={handleAlterarNota}
+                disabled={isSavingNota}
+              >
+                {isSavingNota ? 'Salvando...' : 'Salvar Nota'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <TabsContent
           value="cadastro"
