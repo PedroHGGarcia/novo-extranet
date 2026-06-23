@@ -118,7 +118,13 @@ export default function EmitirProposta() {
           selectedProposta.acessorios_proposta &&
           selectedProposta.acessorios_proposta.length > 0
         ) {
-          setAcessoriosProposta(selectedProposta.acessorios_proposta)
+          setAcessoriosProposta(
+            selectedProposta.acessorios_proposta.map((a: any) => ({
+              ...a,
+              incluir: a.incluir ?? a.estado === 'incluir',
+              exibir: a.exibir ?? (a.estado === 'exibir' || a.estado === 'incluir'),
+            })),
+          )
         } else {
           loadAcessorios(selectedProposta.versao)
         }
@@ -137,15 +143,21 @@ export default function EmitirProposta() {
   }, [selectedProposta, activeTab])
 
   const loadAcessorios = async (versaoId?: string) => {
+    if (!versaoId) {
+      setAcessoriosProposta([])
+      return
+    }
     try {
-      const filter = versaoId ? `versoes ~ "${versaoId}"` : ''
+      const filter = `versoes ~ "${versaoId}"`
       const list = await pb.collection('acessorios').getFullList({ filter })
       const initial = list.map((a) => ({
         id: a.id,
         nome: a.nome,
+        tipo: a.tipo,
         valor: a.valor,
         moeda: a.moeda,
-        estado: 'exibir',
+        incluir: false,
+        exibir: true,
       }))
       setAcessoriosProposta(initial)
     } catch (e) {
@@ -236,9 +248,9 @@ export default function EmitirProposta() {
     }
   }
 
-  const updateAcc = (index: number, estado: string) => {
+  const updateAcc = (index: number, field: 'incluir' | 'exibir', value: boolean) => {
     const newAcc = [...acessoriosProposta]
-    newAcc[index].estado = estado
+    newAcc[index][field] = value
     setAcessoriosProposta(newAcc)
   }
 
@@ -663,68 +675,62 @@ export default function EmitirProposta() {
             </div>
 
             <div className="w-full mb-8 border border-slate-200 rounded-sm overflow-x-auto">
-              <table className="w-full text-left text-[11px] bg-white border-collapse">
-                <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr>
-                    <th className="py-2.5 px-4 font-normal text-slate-600">Acessório</th>
-                    <th className="py-2.5 px-4 font-normal text-slate-600">Valor</th>
-                    <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
-                      Incluir na Proposta
-                    </th>
-                    <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
-                      Não exibir na Proposta
-                    </th>
-                    <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
-                      Exibir na Proposta
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {acessoriosProposta.length === 0 ? (
+              {!formData.versao ? (
+                <div className="py-6 text-center text-slate-500 text-sm">
+                  Selecione uma versão para visualizar os acessórios disponíveis.
+                </div>
+              ) : (
+                <table className="w-full text-left text-[11px] bg-white border-collapse">
+                  <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <td colSpan={5} className="py-6 text-center text-slate-400">
-                        Nenhum acessório encontrado.
-                      </td>
+                      <th className="py-2.5 px-4 font-normal text-slate-600">Acessório (Nome)</th>
+                      <th className="py-2.5 px-4 font-normal text-slate-600">Tipo</th>
+                      <th className="py-2.5 px-4 font-normal text-slate-600">Moeda</th>
+                      <th className="py-2.5 px-4 font-normal text-slate-600">Valor</th>
+                      <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
+                        Incluir na Proposta
+                      </th>
+                      <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
+                        Exibir na Proposta
+                      </th>
                     </tr>
-                  ) : (
-                    acessoriosProposta.map((acc, idx) => (
-                      <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="py-2.5 px-4 text-slate-700">{acc.nome}</td>
-                        <td className="py-2.5 px-4 text-slate-700">
-                          {formatCurrency(acc.valor, acc.moeda)}
-                        </td>
-                        <td className="py-2.5 px-4 text-center">
-                          <input
-                            type="radio"
-                            name={`acc_${idx}`}
-                            checked={acc.estado === 'incluir'}
-                            className="accent-[#337ab7] cursor-pointer"
-                            onChange={() => updateAcc(idx, 'incluir')}
-                          />
-                        </td>
-                        <td className="py-2.5 px-4 text-center">
-                          <input
-                            type="radio"
-                            name={`acc_${idx}`}
-                            checked={acc.estado === 'nao_exibir'}
-                            className="accent-[#337ab7] cursor-pointer"
-                            onChange={() => updateAcc(idx, 'nao_exibir')}
-                          />
-                        </td>
-                        <td className="py-2.5 px-4 text-center">
-                          <input
-                            type="radio"
-                            name={`acc_${idx}`}
-                            checked={acc.estado === 'exibir'}
-                            className="accent-[#337ab7] cursor-pointer"
-                            onChange={() => updateAcc(idx, 'exibir')}
-                          />
+                  </thead>
+                  <tbody>
+                    {acessoriosProposta.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-6 text-center text-slate-400">
+                          Nenhum acessório encontrado para esta versão.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      acessoriosProposta.map((acc, idx) => (
+                        <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="py-2.5 px-4 text-slate-700">{acc.nome}</td>
+                          <td className="py-2.5 px-4 text-slate-700">{acc.tipo || '-'}</td>
+                          <td className="py-2.5 px-4 text-slate-700">{acc.moeda || '-'}</td>
+                          <td className="py-2.5 px-4 text-slate-700">
+                            {formatCurrency(acc.valor, acc.moeda)}
+                          </td>
+                          <td className="py-2.5 px-4 text-center">
+                            <Checkbox
+                              checked={acc.incluir}
+                              onCheckedChange={(checked) => updateAcc(idx, 'incluir', !!checked)}
+                              className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
+                            />
+                          </td>
+                          <td className="py-2.5 px-4 text-center">
+                            <Checkbox
+                              checked={acc.exibir}
+                              onCheckedChange={(checked) => updateAcc(idx, 'exibir', !!checked)}
+                              className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
+                            />
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              )}
             </div>
 
             <div className="w-full mt-4 border-t border-slate-200 pt-6">
