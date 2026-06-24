@@ -386,55 +386,59 @@ export default function EmitirProposta() {
     setIsLoadingHistory(true)
 
     try {
-      // Fetch all logs to compute accurate diffs from the beginning
       const logs = await pb.collection('auditoria').getFullList({
         filter: `tabela = 'propostas' && registro_id = '${item.id}'`,
         sort: '+created',
         expand: 'user',
       })
 
-      let currentState: any = {}
-      const processedLogs = []
+      const processedLogs: any[] = []
 
       for (const log of logs) {
-        const logData = log.dados || {}
-        const diffs: any[] = []
+        if (log.acao.toLowerCase() === 'create') {
+          processedLogs.push({ ...log, isCreate: true })
+          continue
+        }
 
-        if (logData.old_data && logData.new_data) {
-          const keys = logData.changes || Object.keys(logData.new_data)
-          for (const key of keys) {
-            if (['updated', 'created'].includes(key)) continue
-            const oldVal = logData.old_data[key]
-            const newVal = logData.new_data[key]
+        if (log.acao.toLowerCase() === 'update') {
+          const oldData = log.dados?.old || {}
+          const newData = log.dados?.new || {}
+          const diffs = []
+
+          for (const key of Object.keys(newData)) {
+            if (
+              [
+                'updated',
+                'created',
+                'id',
+                'collectionId',
+                'collectionName',
+                'expand',
+                'user',
+                'numero_proposta',
+                'revisao',
+              ].includes(key)
+            )
+              continue
+
+            const oldVal = oldData[key]
+            const newVal = newData[key]
+
             if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
               diffs.push({ field: key, oldVal, newVal })
             }
           }
-          currentState = { ...currentState, ...logData.new_data }
-        } else {
-          for (const key of Object.keys(logData)) {
-            if (
-              ['updated', 'created', 'id', 'collectionId', 'collectionName', 'expand'].includes(key)
-            )
-              continue
 
-            const oldVal = currentState[key]
-            const newVal = logData[key]
-
-            if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
-              if (log.acao !== 'Create' && log.acao !== 'create') {
-                if (oldVal !== undefined) {
-                  diffs.push({ field: key, oldVal, newVal })
-                } else if (newVal !== null && newVal !== '') {
-                  diffs.push({ field: key, oldVal: null, newVal })
-                }
-              }
-            }
+          if (diffs.length > 0) {
+            processedLogs.push({
+              ...log,
+              diffs,
+              isUpdate: true,
+              versionOld: oldData.numero_proposta || '?',
+              versionNew: newData.numero_proposta || '?',
+            })
           }
-          currentState = { ...currentState, ...logData }
         }
-
-        processedLogs.push({ ...log, diffs, stateSnapshot: { ...currentState } })
       }
 
       setHistoryLogs(processedLogs.reverse())
@@ -484,32 +488,41 @@ export default function EmitirProposta() {
       }
     }
 
-    if (changes.length === 0)
-      return (
-        <span className="text-slate-500 italic text-sm">Nenhuma alteração nos acessórios.</span>
-      )
+    if (changes.length === 0) return null
 
     return (
-      <div className="flex flex-col gap-1.5 w-full">
-        <span className="font-medium text-slate-700 text-sm">Acessórios da Proposta:</span>
-        <div className="flex flex-col gap-1 ml-2">
+      <div className="flex flex-col gap-1 text-sm border-l-2 border-slate-200 pl-3 py-1">
+        <span className="font-semibold text-slate-700">Acessórios da Proposta</span>
+        <div className="flex flex-col gap-1.5 mt-1">
           {changes.map((c, i) => (
-            <div key={i} className="text-[13px]">
+            <div key={i} className="text-xs">
               {c.type === 'added' && (
-                <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                  <span className="font-semibold">+ Adicionado:</span> {c.name}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-slate-500 w-16">Anterior:</span>
+                  <span className="text-slate-400 italic">Não existia</span>
+                  <span className="font-medium text-slate-500 ml-2 w-10">Atual:</span>
+                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">
+                    + {c.name}
+                  </span>
+                </div>
               )}
               {c.type === 'removed' && (
-                <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded line-through">
-                  <span className="font-semibold">- Removido:</span> {c.name}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-slate-500 w-16">Anterior:</span>
+                  <span className="text-rose-600 bg-rose-50 px-2 py-0.5 rounded line-through decoration-rose-300">
+                    - {c.name}
+                  </span>
+                  <span className="font-medium text-slate-500 ml-2 w-10">Atual:</span>
+                  <span className="text-slate-400 italic">Removido</span>
+                </div>
               )}
               {c.type === 'changed' && (
-                <span className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded block w-fit">
-                  <span className="font-semibold">• Modificado ({c.name}):</span>{' '}
-                  {c.diffs.join(' | ')}
-                </span>
+                <div className="flex flex-col gap-0.5">
+                  <div className="font-medium text-slate-600">• {c.name}:</div>
+                  <div className="pl-3 text-blue-700 bg-blue-50/50 py-1 px-2 rounded w-fit text-[11px]">
+                    {c.diffs.join(' | ')}
+                  </div>
+                </div>
               )}
             </div>
           ))}
@@ -561,26 +574,26 @@ export default function EmitirProposta() {
     }
 
     return (
-      <div className="flex items-center gap-2 text-sm flex-wrap">
-        <span
-          className="font-medium text-slate-700 w-40 truncate shrink-0"
-          title={getFieldName(diff.field)}
-        >
-          {getFieldName(diff.field)}:
-        </span>
-        <span
-          className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded line-through max-w-[250px] truncate"
-          title={String(diff.oldVal)}
-        >
-          {renderDiffValue(diff.oldVal, diff.field)}
-        </span>
-        <span className="text-slate-400 shrink-0">➔</span>
-        <span
-          className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded max-w-[250px] truncate"
-          title={String(diff.newVal)}
-        >
-          {renderDiffValue(diff.newVal, diff.field)}
-        </span>
+      <div className="flex flex-col gap-1 text-sm border-l-2 border-slate-200 pl-3 py-1">
+        <span className="font-semibold text-slate-700">{getFieldName(diff.field)}</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-slate-500 w-16">Anterior:</span>
+          <span
+            className="text-rose-600 bg-rose-50 px-2 py-0.5 rounded line-through decoration-rose-300 max-w-[300px] truncate"
+            title={String(diff.oldVal)}
+          >
+            {renderDiffValue(diff.oldVal, diff.field)}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap mt-0.5">
+          <span className="text-xs text-slate-500 w-16">Atual:</span>
+          <span
+            className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium max-w-[300px] truncate"
+            title={String(diff.newVal)}
+          >
+            {renderDiffValue(diff.newVal, diff.field)}
+          </span>
+        </div>
       </div>
     )
   }
@@ -1258,12 +1271,12 @@ export default function EmitirProposta() {
               <div className="py-12 text-center text-slate-500">Carregando histórico...</div>
             ) : historyLogs.length <= 1 ? (
               <div className="py-12 text-center text-slate-500 bg-slate-50 rounded-md border border-slate-100">
-                Esta é a versão original. Nenhuma alteração registrada.
+                Nenhum histórico de alteração encontrado
               </div>
             ) : (
               <div className="space-y-6">
                 {historyLogs.map((log) => {
-                  if (log.acao === 'Create' || log.acao === 'create') {
+                  if (log.isCreate) {
                     return (
                       <div
                         key={log.id}
@@ -1293,9 +1306,10 @@ export default function EmitirProposta() {
                     )
                   }
 
-                  const versionName = log.dados?.version_saved
-                    ? `Versão ${log.dados.version_saved} ➔ ${log.dados.version_new}`
-                    : `Alteração (Revisão ${log.stateSnapshot?.revisao || '?'})`
+                  const versionName =
+                    log.versionOld && log.versionNew
+                      ? `Versão ${log.versionOld} ➔ ${log.versionNew}`
+                      : `Alteração`
 
                   return (
                     <div
@@ -1324,18 +1338,22 @@ export default function EmitirProposta() {
                       </div>
 
                       {log.diffs && log.diffs.length > 0 ? (
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-3">
                           <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
                             Alterações:
                           </h4>
-                          {log.diffs.map((diff: any, i: number) => (
-                            <div
-                              key={i}
-                              className="bg-slate-50 rounded border border-slate-100 p-3"
-                            >
-                              {renderDiff(diff)}
-                            </div>
-                          ))}
+                          {log.diffs.map((diff: any, i: number) => {
+                            const diffContent = renderDiff(diff)
+                            if (!diffContent) return null
+                            return (
+                              <div
+                                key={i}
+                                className="bg-slate-50/50 rounded-md border border-slate-100 p-3"
+                              >
+                                {diffContent}
+                              </div>
+                            )
+                          })}
                         </div>
                       ) : (
                         <div className="text-sm text-slate-500 italic bg-slate-50 p-3 rounded border border-slate-100">

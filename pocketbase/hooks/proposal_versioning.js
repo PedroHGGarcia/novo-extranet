@@ -37,44 +37,5 @@ onRecordUpdateRequest((e) => {
   e.record.set('numero_proposta', numPart + '-' + nextRev)
   e.record.set('revisao', nextRev)
 
-  try {
-    const auditCol = $app.findCollectionByNameOrId('auditoria')
-    const auditRecord = new Record(auditCol)
-
-    const userId = e.auth?.id || e.record.original().getString('user') || e.record.getString('user')
-    if (userId) {
-      auditRecord.set('user', userId)
-    }
-
-    auditRecord.set('acao', 'new_version')
-    auditRecord.set('tabela', 'propostas')
-    auditRecord.set('registro_id', e.record.id)
-
-    const body = e.requestInfo().body || {}
-    const changedKeys = Object.keys(body).filter(
-      (k) =>
-        k !== 'id' &&
-        k !== 'created' &&
-        k !== 'updated' &&
-        k !== 'numero_proposta' &&
-        k !== 'revisao' &&
-        k !== 'acessorios_proposta',
-    )
-
-    if (body.acessorios_proposta) {
-      changedKeys.push('acessorios')
-    }
-
-    auditRecord.set('dados', {
-      version_saved: oldNumStr,
-      version_new: numPart + '-' + nextRev,
-      changes: changedKeys,
-    })
-
-    $app.saveNoValidate(auditRecord)
-  } catch (err) {
-    console.log('Erro ao salvar histórico de versão: ', err)
-  }
-
   e.next()
 }, 'propostas')
