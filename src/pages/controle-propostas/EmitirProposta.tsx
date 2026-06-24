@@ -124,6 +124,9 @@ export default function EmitirProposta() {
   const [historyLogs, setHistoryLogs] = useState<any[]>([])
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
 
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [viewProposta, setViewProposta] = useState<Proposta | null>(null)
+
   const importConfig: ImportConfig = {
     collection: 'propostas',
     title: 'Importar Propostas',
@@ -381,18 +384,25 @@ export default function EmitirProposta() {
     setHistoryProposta(item)
     setIsHistoryModalOpen(true)
     setIsLoadingHistory(true)
+
     try {
       const logs = await pb.collection('auditoria').getFullList({
-        filter: `tabela = 'propostas' && registro_id = '${item.id}'`,
+        filter: `tabela = 'propostas' && registro_id = '${item.id}' && (acao = 'new_version' || acao = 'update')`,
         sort: '-created',
         expand: 'user',
       })
+
       setHistoryLogs(logs)
     } catch (e) {
       toast({ title: 'Erro ao carregar histórico', variant: 'destructive' })
     } finally {
       setIsLoadingHistory(false)
     }
+  }
+
+  const handleView = (item: Proposta) => {
+    setViewProposta(item)
+    setIsViewModalOpen(true)
   }
 
   const handleCreateNew = () => {
@@ -677,7 +687,10 @@ export default function EmitirProposta() {
                         >
                           <Pencil className="h-3 w-3 mr-1" fill="currentColor" /> Editar
                         </button>
-                        <button className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit">
+                        <button
+                          onClick={() => handleView(item)}
+                          className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit"
+                        >
                           <Eye className="h-3 w-3 mr-1" /> Visualizar
                         </button>
                         <button
@@ -1064,40 +1077,250 @@ export default function EmitirProposta() {
               </div>
             ) : (
               <div className="space-y-4">
-                {historyLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    className="border border-slate-200 rounded p-4 shadow-sm bg-white"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold text-slate-700">
-                          {log.expand?.user?.name || log.expand?.user?.email || 'Sistema'}
-                        </span>
-                        <span className="text-slate-500 text-xs">
-                          {format(new Date(log.created), 'dd/MM/yyyy HH:mm:ss')}
-                        </span>
+                {historyLogs.map((log) => {
+                  let versionName = `Versão Anterior`
+                  let modifiedSummary = 'Nenhum detalhe disponível'
+
+                  if (log.acao === 'new_version') {
+                    versionName = log.dados?.version_saved
+                      ? `${log.dados.version_saved} ➔ ${log.dados.version_new}`
+                      : 'Nova Versão'
+                    if (
+                      log.dados?.changes &&
+                      Array.isArray(log.dados.changes) &&
+                      log.dados.changes.length > 0
+                    ) {
+                      modifiedSummary = `Campos alterados: ${log.dados.changes.join(', ')}`
+                    } else {
+                      modifiedSummary = 'Alteração geral / Atualização de versão.'
+                    }
+                  } else {
+                    // Para os logs genéricos de update que já estavam no sistema
+                    versionName = log.dados?.numero_proposta || `Versão Modificada`
+                    if (log.dados && typeof log.dados === 'object') {
+                      const keys = Object.keys(log.dados).filter(
+                        (k) =>
+                          k !== 'updated' &&
+                          k !== 'created' &&
+                          k !== 'numero_proposta' &&
+                          k !== 'revisao',
+                      )
+                      if (keys.length > 0) {
+                        modifiedSummary = `Campos alterados: ${keys.join(', ')}`
+                      } else if (log.dados.numero_proposta) {
+                        modifiedSummary = 'Apenas versão atualizada.'
+                      }
+                    }
+                  }
+
+                  return (
+                    <div
+                      key={log.id}
+                      className="border border-slate-200 rounded p-4 shadow-sm bg-white"
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold text-slate-700 text-base">
+                            {versionName}
+                          </span>
+                          <span className="text-slate-500 text-sm">
+                            {format(new Date(log.created), 'dd/MM/yyyy HH:mm')}
+                          </span>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className="text-blue-700 bg-blue-50 border-blue-200 font-normal"
+                        >
+                          Modificada
+                        </Badge>
                       </div>
-                      <Badge
-                        variant="outline"
-                        className={
-                          log.acao === 'update'
-                            ? 'text-blue-700 bg-blue-50 border-blue-200'
-                            : 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                        }
-                      >
-                        {log.acao.toUpperCase()}
-                      </Badge>
+                      <div className="text-sm text-slate-600 mb-2">
+                        <strong>Por:</strong>{' '}
+                        {log.expand?.user?.name || log.expand?.user?.email || 'Sistema'}
+                      </div>
+                      <div className="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-100 overflow-x-auto">
+                        <p className="m-0">{modifiedSummary}</p>
+                      </div>
                     </div>
-                    <div className="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-100 overflow-x-auto">
-                      <pre className="whitespace-pre-wrap text-[11px] font-mono m-0">
-                        {JSON.stringify(log.dados, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2 shrink-0">
+            <DialogTitle className="text-xl font-normal text-[#337ab7]">
+              Visualizar Proposta: {viewProposta?.numero_proposta}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto p-6 pt-2">
+            {viewProposta && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm text-slate-700">
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Cliente
+                  </span>
+                  <span className="font-medium">
+                    {viewProposta.expand?.cliente?.fantasia ||
+                      viewProposta.expand?.cliente?.razao_social ||
+                      viewProposta.cliente_original ||
+                      '-'}
+                  </span>
+                </div>
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Contato
+                  </span>
+                  <span className="font-medium">{viewProposta.contato || '-'}</span>
+                </div>
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Telefone
+                  </span>
+                  <span className="font-medium">{viewProposta.telefone || '-'}</span>
+                </div>
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Versão
+                  </span>
+                  <span className="font-medium">
+                    {viewProposta.expand?.versao?.nome || viewProposta.versao_original || '-'}
+                  </span>
+                </div>
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Representante
+                  </span>
+                  <span className="font-medium">
+                    {viewProposta.expand?.representante?.fantasia ||
+                      viewProposta.representante_original ||
+                      '-'}
+                  </span>
+                </div>
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Gerente
+                  </span>
+                  <span className="font-medium">
+                    {viewProposta.expand?.gerente?.nome || viewProposta.gerente_original || '-'}
+                  </span>
+                </div>
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Moeda
+                  </span>
+                  <span className="font-medium">{viewProposta.moeda || '-'}</span>
+                </div>
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Valor Final
+                  </span>
+                  <span className="font-medium text-[#337ab7] text-base">
+                    {formatCurrency(viewProposta.valor_final, viewProposta.moeda)}
+                  </span>
+                </div>
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Prazo de Entrega
+                  </span>
+                  <span className="font-medium">{viewProposta.prazo_entrega || '-'}</span>
+                </div>
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Condições de Pagamento
+                  </span>
+                  <span className="font-medium">{viewProposta.condicoes_pagamento || '-'}</span>
+                </div>
+
+                {viewProposta.acessorios_proposta &&
+                  viewProposta.acessorios_proposta.length > 0 && (
+                    <div className="col-span-1 md:col-span-2 mt-6">
+                      <h4 className="text-sm font-bold text-[#337ab7] mb-3 flex items-center gap-2">
+                        <List className="w-4 h-4" />
+                        Acessórios da Proposta
+                      </h4>
+                      <div className="border border-slate-200 rounded-sm overflow-hidden">
+                        <table className="w-full text-left text-xs bg-white border-collapse">
+                          <thead className="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                              <th className="py-2 px-3 font-semibold text-slate-600">Acessório</th>
+                              <th className="py-2 px-3 font-semibold text-slate-600">Tipo</th>
+                              <th className="py-2 px-3 font-semibold text-slate-600">Moeda</th>
+                              <th className="py-2 px-3 font-semibold text-slate-600">Valor</th>
+                              <th className="py-2 px-3 font-semibold text-slate-600 text-center">
+                                Incluído
+                              </th>
+                              <th className="py-2 px-3 font-semibold text-slate-600 text-center">
+                                Exibido
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {viewProposta.acessorios_proposta.map((acc: any, i: number) => (
+                              <tr
+                                key={i}
+                                className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"
+                              >
+                                <td className="py-2.5 px-3 text-slate-700">{acc.nome}</td>
+                                <td className="py-2.5 px-3 text-slate-700">{acc.tipo || '-'}</td>
+                                <td className="py-2.5 px-3 text-slate-700">{acc.moeda || '-'}</td>
+                                <td className="py-2.5 px-3 text-slate-700">
+                                  {formatCurrency(acc.valor, acc.moeda)}
+                                </td>
+                                <td className="py-2.5 px-3 text-center">
+                                  {acc.incluir || acc.estado === 'incluir' ? (
+                                    <Badge
+                                      variant="outline"
+                                      className="bg-emerald-50 text-emerald-700 border-emerald-200 px-1 py-0 text-[10px]"
+                                    >
+                                      Sim
+                                    </Badge>
+                                  ) : (
+                                    <Badge
+                                      variant="outline"
+                                      className="bg-slate-50 text-slate-500 border-slate-200 px-1 py-0 text-[10px]"
+                                    >
+                                      Não
+                                    </Badge>
+                                  )}
+                                </td>
+                                <td className="py-2.5 px-3 text-center">
+                                  {acc.exibir ||
+                                  acc.estado === 'exibir' ||
+                                  acc.estado === 'incluir' ? (
+                                    <Badge
+                                      variant="outline"
+                                      className="bg-emerald-50 text-emerald-700 border-emerald-200 px-1 py-0 text-[10px]"
+                                    >
+                                      Sim
+                                    </Badge>
+                                  ) : (
+                                    <Badge
+                                      variant="outline"
+                                      className="bg-slate-50 text-slate-500 border-slate-200 px-1 py-0 text-[10px]"
+                                    >
+                                      Não
+                                    </Badge>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+              </div>
+            )}
+          </div>
+          <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
+            <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
+              Fechar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
