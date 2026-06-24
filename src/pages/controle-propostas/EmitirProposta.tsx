@@ -523,13 +523,13 @@ export default function EmitirProposta() {
   const labelClass = 'text-[11px] font-bold text-slate-700 mb-1'
 
   return (
-    <div className="flex flex-col h-full bg-white text-slate-700 font-sans overflow-hidden pt-2">
+    <div className="flex flex-col h-[calc(100vh-7rem)] bg-white text-slate-700 font-sans pt-2 rounded-md shadow-sm border border-slate-200 overflow-hidden">
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
         className="flex-1 flex flex-col min-h-0 w-full"
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-4">
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 shrink-0">
           <TabsList className="bg-transparent justify-start rounded-none h-auto p-0 space-x-2">
             <TabsTrigger
               value="registros"
@@ -565,7 +565,7 @@ export default function EmitirProposta() {
           </div>
         </div>
 
-        <TabsContent value="registros" className="flex-1 min-h-0 m-0 overflow-auto outline-none">
+        <TabsContent value="registros" className="flex-1 min-h-0 m-0 overflow-y-auto outline-none">
           <Table>
             <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
               <TableRow className="border-b-2 border-slate-200 hover:bg-transparent">
@@ -669,7 +669,7 @@ export default function EmitirProposta() {
 
         <TabsContent
           value="cadastro"
-          className="flex-1 min-h-0 m-0 overflow-auto outline-none p-6 bg-white"
+          className="flex-1 min-h-0 m-0 overflow-y-auto outline-none p-6 bg-white"
         >
           <div className="max-w-7xl mx-auto w-full flex flex-col items-start pb-10">
             <div className="mb-6 w-full border-b border-slate-200 pb-4">

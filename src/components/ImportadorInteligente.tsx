@@ -370,8 +370,8 @@ export function ImportadorInteligente({
           )}
 
           {step === 2 && (
-            <div className="flex-1 overflow-auto flex flex-col gap-5">
-              <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg flex items-start gap-3">
+            <div className="flex-1 overflow-y-auto flex flex-col gap-5 pr-2 min-h-0">
+              <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg flex items-start gap-3 shrink-0">
                 <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-semibold text-primary">Mapeamento de Colunas</h4>
@@ -437,7 +437,7 @@ export function ImportadorInteligente({
           )}
 
           {step === 3 && (
-            <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+            <div className="flex-1 flex flex-col gap-4 overflow-hidden min-h-0">
               {isLoadingRelations ? (
                 <div className="flex-1 flex flex-col items-center justify-center">
                   <div className="p-6 rounded-full bg-primary/10 mb-4">
@@ -471,7 +471,7 @@ export function ImportadorInteligente({
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-auto border rounded-lg shadow-sm relative">
+                  <div className="flex-1 overflow-y-auto border rounded-lg shadow-sm relative min-h-0">
                     <Table>
                       <TableHeader className="bg-muted/80 sticky top-0 z-10 backdrop-blur-sm">
                         <TableRow>
