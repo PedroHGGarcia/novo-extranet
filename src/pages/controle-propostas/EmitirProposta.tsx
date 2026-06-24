@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { Pencil, List, Eye, ArrowDownUp, ChevronRight } from 'lucide-react'
+import { Pencil, List, Eye, ArrowDownUp, ChevronRight, UploadCloud } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
+import { ImportadorInteligente, type ImportConfig } from '@/components/ImportadorInteligente'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table,
@@ -102,6 +103,78 @@ export default function EmitirProposta() {
     eurPct: number
   } | null>(null)
   const [exchangeRatesLoading, setExchangeRatesLoading] = useState(true)
+
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+
+  const importConfig: ImportConfig = {
+    collection: 'propostas',
+    title: 'Importar Propostas',
+    fields: [
+      { key: 'numero_proposta', label: 'Nº Proposta', type: 'text', required: true },
+      { key: 'revisao', label: 'Revisão', type: 'text' },
+      {
+        key: 'cliente',
+        label: 'Cliente',
+        type: 'relation',
+        relation: {
+          collection: 'clientes',
+          searchFields: ['documento', 'razao_social', 'fantasia'],
+          displayField: 'fantasia',
+        },
+      },
+      { key: 'contato', label: 'Contato', type: 'text' },
+      { key: 'telefone', label: 'Telefone', type: 'text' },
+      {
+        key: 'versao',
+        label: 'Versão',
+        type: 'relation',
+        relation: {
+          collection: 'versoes',
+          searchFields: ['cod_erp', 'nome'],
+          displayField: 'nome',
+        },
+      },
+      {
+        key: 'representante',
+        label: 'Representante',
+        type: 'relation',
+        relation: {
+          collection: 'representantes',
+          searchFields: ['documento', 'fantasia'],
+          displayField: 'fantasia',
+        },
+      },
+      {
+        key: 'gerente',
+        label: 'Gerente',
+        type: 'relation',
+        relation: {
+          collection: 'gerentes',
+          searchFields: ['nome'],
+          displayField: 'nome',
+        },
+      },
+      {
+        key: 'user',
+        label: 'Usuário',
+        type: 'relation',
+        relation: {
+          collection: 'users',
+          searchFields: ['email', 'name'],
+          displayField: 'name',
+        },
+      },
+      { key: 'nota_rep', label: 'Nota Rep.', type: 'number' },
+      { key: 'dt_cad', label: 'Data Cadastro', type: 'date' },
+      { key: 'moeda', label: 'Moeda', type: 'text' },
+      { key: 'valor_sem_desconto', label: 'Valor sem desc.', type: 'number' },
+      { key: 'valor_atual', label: 'Valor Atual', type: 'number' },
+      { key: 'valor_final', label: 'Valor Final', type: 'number' },
+      { key: 'prazo_entrega', label: 'Prazo Entrega', type: 'text' },
+      { key: 'condicoes_pagamento', label: 'Cond. Pagamento', type: 'text' },
+    ],
+    onSuccess: () => loadData(),
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -476,7 +549,20 @@ export default function EmitirProposta() {
               Cadastro
             </TabsTrigger>
           </TabsList>
-          {activeTab === 'registros' && renderTopPagination()}
+          <div className="flex items-center gap-4">
+            {activeTab === 'registros' && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 border-[#337ab7] text-[#337ab7] hover:bg-[#337ab7] hover:text-white"
+                onClick={() => setIsImportModalOpen(true)}
+              >
+                <UploadCloud className="w-4 h-4 mr-2" />
+                Importar Planilha
+              </Button>
+            )}
+            {activeTab === 'registros' && renderTopPagination()}
+          </div>
         </div>
 
         <TabsContent value="registros" className="flex-1 min-h-0 m-0 overflow-auto outline-none">
@@ -872,6 +958,11 @@ export default function EmitirProposta() {
           </div>
         </TabsContent>
       </Tabs>
+      <ImportadorInteligente
+        open={isImportModalOpen}
+        onOpenChange={setIsImportModalOpen}
+        config={importConfig}
+      />
     </div>
   )
 }
