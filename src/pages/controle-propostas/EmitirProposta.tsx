@@ -590,17 +590,6 @@ export default function EmitirProposta() {
             </TabsTrigger>
           </TabsList>
           <div className="flex items-center gap-4">
-            {activeTab === 'registros' && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 border-[#337ab7] text-[#337ab7] hover:bg-[#337ab7] hover:text-white"
-                onClick={() => setIsImportModalOpen(true)}
-              >
-                <UploadCloud className="w-4 h-4 mr-2" />
-                Importar Planilha
-              </Button>
-            )}
             {activeTab === 'registros' && renderTopPagination()}
           </div>
         </div>
