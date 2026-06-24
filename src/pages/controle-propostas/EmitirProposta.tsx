@@ -386,18 +386,203 @@ export default function EmitirProposta() {
     setIsLoadingHistory(true)
 
     try {
+      // Fetch all logs to compute accurate diffs from the beginning
       const logs = await pb.collection('auditoria').getFullList({
-        filter: `tabela = 'propostas' && registro_id = '${item.id}' && (acao = 'new_version' || acao = 'update')`,
-        sort: '-created',
+        filter: `tabela = 'propostas' && registro_id = '${item.id}'`,
+        sort: '+created',
         expand: 'user',
       })
 
-      setHistoryLogs(logs)
+      let currentState: any = {}
+      const processedLogs = []
+
+      for (const log of logs) {
+        const logData = log.dados || {}
+        const diffs: any[] = []
+
+        if (logData.old_data && logData.new_data) {
+          const keys = logData.changes || Object.keys(logData.new_data)
+          for (const key of keys) {
+            if (['updated', 'created'].includes(key)) continue
+            const oldVal = logData.old_data[key]
+            const newVal = logData.new_data[key]
+            if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+              diffs.push({ field: key, oldVal, newVal })
+            }
+          }
+          currentState = { ...currentState, ...logData.new_data }
+        } else {
+          for (const key of Object.keys(logData)) {
+            if (
+              ['updated', 'created', 'id', 'collectionId', 'collectionName', 'expand'].includes(key)
+            )
+              continue
+
+            const oldVal = currentState[key]
+            const newVal = logData[key]
+
+            if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+              if (log.acao !== 'Create' && log.acao !== 'create') {
+                if (oldVal !== undefined) {
+                  diffs.push({ field: key, oldVal, newVal })
+                } else if (newVal !== null && newVal !== '') {
+                  diffs.push({ field: key, oldVal: null, newVal })
+                }
+              }
+            }
+          }
+          currentState = { ...currentState, ...logData }
+        }
+
+        processedLogs.push({ ...log, diffs, stateSnapshot: { ...currentState } })
+      }
+
+      setHistoryLogs(processedLogs.reverse())
     } catch (e) {
       toast({ title: 'Erro ao carregar histórico', variant: 'destructive' })
     } finally {
       setIsLoadingHistory(false)
     }
+  }
+
+  const renderAcessoriosDiff = (oldVal: any[], newVal: any[]) => {
+    const oldArr = Array.isArray(oldVal) ? oldVal : []
+    const newArr = Array.isArray(newVal) ? newVal : []
+
+    const allNames = Array.from(
+      new Set([...oldArr.map((a) => a.nome), ...newArr.map((a) => a.nome)]),
+    )
+
+    const changes = []
+
+    for (const name of allNames) {
+      const oldAcc = oldArr.find((a) => a.nome === name)
+      const newAcc = newArr.find((a) => a.nome === name)
+
+      if (!oldAcc && newAcc) {
+        changes.push({ type: 'added', name, newVal: newAcc })
+      } else if (oldAcc && !newAcc) {
+        changes.push({ type: 'removed', name, oldVal: oldAcc })
+      } else if (oldAcc && newAcc) {
+        const accDiffs = []
+        if (oldAcc.incluir !== newAcc.incluir)
+          accDiffs.push(
+            `Incluir: ${oldAcc.incluir ? 'Sim' : 'Não'} ➔ ${newAcc.incluir ? 'Sim' : 'Não'}`,
+          )
+        if (oldAcc.exibir !== newAcc.exibir)
+          accDiffs.push(
+            `Exibir: ${oldAcc.exibir ? 'Sim' : 'Não'} ➔ ${newAcc.exibir ? 'Sim' : 'Não'}`,
+          )
+        if (oldAcc.valor !== newAcc.valor)
+          accDiffs.push(
+            `Valor: ${formatCurrency(oldAcc.valor, oldAcc.moeda)} ➔ ${formatCurrency(newAcc.valor, newAcc.moeda)}`,
+          )
+
+        if (accDiffs.length > 0) {
+          changes.push({ type: 'changed', name, diffs: accDiffs })
+        }
+      }
+    }
+
+    if (changes.length === 0)
+      return (
+        <span className="text-slate-500 italic text-sm">Nenhuma alteração nos acessórios.</span>
+      )
+
+    return (
+      <div className="flex flex-col gap-1.5 w-full">
+        <span className="font-medium text-slate-700 text-sm">Acessórios da Proposta:</span>
+        <div className="flex flex-col gap-1 ml-2">
+          {changes.map((c, i) => (
+            <div key={i} className="text-[13px]">
+              {c.type === 'added' && (
+                <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                  <span className="font-semibold">+ Adicionado:</span> {c.name}
+                </span>
+              )}
+              {c.type === 'removed' && (
+                <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded line-through">
+                  <span className="font-semibold">- Removido:</span> {c.name}
+                </span>
+              )}
+              {c.type === 'changed' && (
+                <span className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded block w-fit">
+                  <span className="font-semibold">• Modificado ({c.name}):</span>{' '}
+                  {c.diffs.join(' | ')}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  const renderDiffValue = (val: any, field: string) => {
+    if (val === null || val === undefined || val === '')
+      return <span className="italic text-slate-400">Vazio</span>
+    if (field.includes('valor') || field.includes('desconto')) {
+      const num = Number(val)
+      if (!isNaN(num)) return formatCurrency(num, 'BRL') // Defaults to BRL if not available
+    }
+    if (typeof val === 'object') return JSON.stringify(val)
+    return String(val)
+  }
+
+  const getFieldName = (key: string) => {
+    const fieldNamesMap: Record<string, string> = {
+      numero_proposta: 'Nº Proposta',
+      cliente: 'Cliente',
+      contato: 'Contato',
+      telefone: 'Telefone',
+      versao: 'Versão',
+      representante: 'Representante',
+      gerente: 'Gerente',
+      moeda: 'Moeda',
+      valor_sem_desconto: 'Valor sem Desconto',
+      valor_atual: 'Valor Atual',
+      valor_final: 'Valor Final',
+      prazo_entrega: 'Prazo de Entrega',
+      condicoes_pagamento: 'Condições de Pagamento',
+      acessorios_proposta: 'Acessórios da Proposta',
+      cliente_original: 'Cliente (Texto)',
+      versao_original: 'Versão (Texto)',
+      representante_original: 'Representante (Texto)',
+      gerente_original: 'Gerente (Texto)',
+      nota_rep: 'Nota Rep.',
+      revisao: 'Revisão',
+    }
+    return fieldNamesMap[key] || key
+  }
+
+  const renderDiff = (diff: any) => {
+    if (diff.field === 'acessorios_proposta') {
+      return renderAcessoriosDiff(diff.oldVal, diff.newVal)
+    }
+
+    return (
+      <div className="flex items-center gap-2 text-sm flex-wrap">
+        <span
+          className="font-medium text-slate-700 w-40 truncate shrink-0"
+          title={getFieldName(diff.field)}
+        >
+          {getFieldName(diff.field)}:
+        </span>
+        <span
+          className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded line-through max-w-[250px] truncate"
+          title={String(diff.oldVal)}
+        >
+          {renderDiffValue(diff.oldVal, diff.field)}
+        </span>
+        <span className="text-slate-400 shrink-0">➔</span>
+        <span
+          className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded max-w-[250px] truncate"
+          title={String(diff.newVal)}
+        >
+          {renderDiffValue(diff.newVal, diff.field)}
+        </span>
+      </div>
+    )
   }
 
   const handleView = (item: Proposta) => {
@@ -1062,8 +1247,8 @@ export default function EmitirProposta() {
       />
 
       <Dialog open={isHistoryModalOpen} onOpenChange={setIsHistoryModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col p-6">
-          <DialogHeader className="mb-4">
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-6">
+          <DialogHeader className="mb-4 shrink-0">
             <DialogTitle className="text-lg font-normal text-slate-700">
               Histórico da Proposta: {historyProposta?.numero_proposta}
             </DialogTitle>
@@ -1071,56 +1256,55 @@ export default function EmitirProposta() {
           <div className="flex-1 overflow-y-auto pr-2">
             {isLoadingHistory ? (
               <div className="py-12 text-center text-slate-500">Carregando histórico...</div>
-            ) : historyLogs.length === 0 ? (
-              <div className="py-12 text-center text-slate-500">
-                Nenhum histórico encontrado para esta proposta.
+            ) : historyLogs.length <= 1 ? (
+              <div className="py-12 text-center text-slate-500 bg-slate-50 rounded-md border border-slate-100">
+                Esta é a versão original. Nenhuma alteração registrada.
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {historyLogs.map((log) => {
-                  let versionName = `Versão Anterior`
-                  let modifiedSummary = 'Nenhum detalhe disponível'
-
-                  if (log.acao === 'new_version') {
-                    versionName = log.dados?.version_saved
-                      ? `${log.dados.version_saved} ➔ ${log.dados.version_new}`
-                      : 'Nova Versão'
-                    if (
-                      log.dados?.changes &&
-                      Array.isArray(log.dados.changes) &&
-                      log.dados.changes.length > 0
-                    ) {
-                      modifiedSummary = `Campos alterados: ${log.dados.changes.join(', ')}`
-                    } else {
-                      modifiedSummary = 'Alteração geral / Atualização de versão.'
-                    }
-                  } else {
-                    // Para os logs genéricos de update que já estavam no sistema
-                    versionName = log.dados?.numero_proposta || `Versão Modificada`
-                    if (log.dados && typeof log.dados === 'object') {
-                      const keys = Object.keys(log.dados).filter(
-                        (k) =>
-                          k !== 'updated' &&
-                          k !== 'created' &&
-                          k !== 'numero_proposta' &&
-                          k !== 'revisao',
-                      )
-                      if (keys.length > 0) {
-                        modifiedSummary = `Campos alterados: ${keys.join(', ')}`
-                      } else if (log.dados.numero_proposta) {
-                        modifiedSummary = 'Apenas versão atualizada.'
-                      }
-                    }
+                  if (log.acao === 'Create' || log.acao === 'create') {
+                    return (
+                      <div
+                        key={log.id}
+                        className="border border-slate-200 rounded-md p-4 shadow-sm bg-slate-50"
+                      >
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="flex items-center gap-3">
+                            <span className="font-semibold text-slate-700 text-base">
+                              Proposta Criada
+                            </span>
+                            <span className="text-slate-500 text-sm">
+                              {format(new Date(log.created), 'dd/MM/yyyy HH:mm')}
+                            </span>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className="text-slate-500 bg-white border-slate-200 font-normal"
+                          >
+                            Original
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-slate-600">
+                          <strong>Por:</strong>{' '}
+                          {log.expand?.user?.name || log.expand?.user?.email || 'Sistema'}
+                        </div>
+                      </div>
+                    )
                   }
+
+                  const versionName = log.dados?.version_saved
+                    ? `Versão ${log.dados.version_saved} ➔ ${log.dados.version_new}`
+                    : `Alteração (Revisão ${log.stateSnapshot?.revisao || '?'})`
 
                   return (
                     <div
                       key={log.id}
-                      className="border border-slate-200 rounded p-4 shadow-sm bg-white"
+                      className="border border-slate-200 rounded-md p-5 shadow-sm bg-white"
                     >
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-3">
-                          <span className="font-semibold text-slate-700 text-base">
+                          <span className="font-semibold text-[#337ab7] text-base">
                             {versionName}
                           </span>
                           <span className="text-slate-500 text-sm">
@@ -1134,13 +1318,30 @@ export default function EmitirProposta() {
                           Modificada
                         </Badge>
                       </div>
-                      <div className="text-sm text-slate-600 mb-2">
+                      <div className="text-sm text-slate-600 mb-4">
                         <strong>Por:</strong>{' '}
                         {log.expand?.user?.name || log.expand?.user?.email || 'Sistema'}
                       </div>
-                      <div className="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-100 overflow-x-auto">
-                        <p className="m-0">{modifiedSummary}</p>
-                      </div>
+
+                      {log.diffs && log.diffs.length > 0 ? (
+                        <div className="flex flex-col gap-2">
+                          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                            Alterações:
+                          </h4>
+                          {log.diffs.map((diff: any, i: number) => (
+                            <div
+                              key={i}
+                              className="bg-slate-50 rounded border border-slate-100 p-3"
+                            >
+                              {renderDiff(diff)}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-slate-500 italic bg-slate-50 p-3 rounded border border-slate-100">
+                          Nenhum campo principal alterado nesta revisão.
+                        </div>
+                      )}
                     </div>
                   )
                 })}
