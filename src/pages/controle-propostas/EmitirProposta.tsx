@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { Pencil, List, Eye, ArrowDownUp, ChevronRight, UploadCloud } from 'lucide-react'
+import {
+  Pencil,
+  List,
+  Eye,
+  ArrowDownUp,
+  ArrowUp,
+  ArrowDown,
+  ChevronRight,
+  UploadCloud,
+} from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { ImportadorInteligente, type ImportConfig } from '@/components/ImportadorInteligente'
@@ -78,6 +87,8 @@ export default function EmitirProposta() {
 
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(50)
+  const [sortField, setSortField] = useState<string>('created')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [data, setData] = useState<Proposta[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -208,7 +219,8 @@ export default function EmitirProposta() {
   const loadData = async () => {
     try {
       setIsLoading(true)
-      const res = await getPropostasPaginated(page, perPage)
+      const sortParam = sortDirection === 'desc' ? `-${sortField}` : sortField
+      const res = await getPropostasPaginated(page, perPage, sortParam)
       setData(res.items)
       setTotalItems(res.totalItems)
     } catch (error) {
@@ -220,7 +232,7 @@ export default function EmitirProposta() {
 
   useEffect(() => {
     loadData()
-  }, [page, perPage])
+  }, [page, perPage, sortField, sortDirection])
 
   useEffect(() => {
     pb.collection('gerentes')
@@ -493,14 +505,38 @@ export default function EmitirProposta() {
     )
   }
 
-  const renderSortableHead = (label: string) => (
-    <TableHead className="text-[#337ab7] font-normal text-[11px] whitespace-nowrap bg-white border-b-2 border-slate-200 py-3 px-3 h-auto">
-      <div className="flex items-center gap-1 cursor-pointer hover:underline">
-        {label}
-        <ArrowDownUp className="w-3 h-3 opacity-50" />
-      </div>
-    </TableHead>
-  )
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+    setPage(1)
+  }
+
+  const renderSortableHead = (label: string, field: string) => {
+    const isActive = sortField === field
+    return (
+      <TableHead className="text-[#337ab7] font-normal text-[11px] whitespace-nowrap bg-white border-b-2 border-slate-200 py-3 px-3 h-auto">
+        <div
+          className="flex items-center gap-1 cursor-pointer hover:underline"
+          onClick={() => handleSort(field)}
+        >
+          {label}
+          {isActive ? (
+            sortDirection === 'asc' ? (
+              <ArrowUp className="w-3 h-3" />
+            ) : (
+              <ArrowDown className="w-3 h-3" />
+            )
+          ) : (
+            <ArrowDownUp className="w-3 h-3 opacity-50" />
+          )}
+        </div>
+      </TableHead>
+    )
+  }
 
   const renderCadastroActionBars = () => (
     <div className="flex gap-2">
@@ -580,27 +616,28 @@ export default function EmitirProposta() {
                     onCheckedChange={(checked) => toggleSelectAll(!!checked)}
                   />
                 </TableHead>
-                {renderSortableHead('Proposta')}
-                {renderSortableHead('Razão Social')}
-                {renderSortableHead('Contato')}
-                {renderSortableHead('Telefone')}
-                {renderSortableHead('Versão')}
-                {renderSortableHead('Representante')}
-                {renderSortableHead('Nota Rep.')}
-                {renderSortableHead('Dt. Cad')}
-                {renderSortableHead('Por')}
+                {renderSortableHead('Proposta', 'numero_proposta')}
+                {renderSortableHead('Razão Social', 'cliente_original')}
+                {renderSortableHead('Contato', 'contato')}
+                {renderSortableHead('Telefone', 'telefone')}
+                {renderSortableHead('Versão', 'versao_original')}
+                {renderSortableHead('Representante', 'representante_original')}
+                {renderSortableHead('Nota Rep.', 'nota_rep')}
+                {renderSortableHead('Valor', 'valor_final')}
+                {renderSortableHead('Dt. Cad', 'dt_cad')}
+                {renderSortableHead('Por', 'created')}
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={11} className="text-center py-8 text-slate-500">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={11} className="text-center py-8 text-slate-500">
                     Nenhuma proposta encontrada.
                   </TableCell>
                 </TableRow>
@@ -664,6 +701,9 @@ export default function EmitirProposta() {
                     </TableCell>
                     <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px]">
                       {item.nota_rep || '-'}
+                    </TableCell>
+                    <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] whitespace-nowrap">
+                      {formatCurrency(item.valor_final, item.moeda)}
                     </TableCell>
                     <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] whitespace-nowrap">
                       {item.dt_cad ? format(new Date(item.dt_cad), 'dd/MM/yyyy') : '-'}

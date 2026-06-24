@@ -35,9 +35,9 @@ export interface Proposta {
   }
 }
 
-export const getPropostasPaginated = async (page = 1, perPage = 50) => {
+export const getPropostasPaginated = async (page = 1, perPage = 50, sort = '-created') => {
   return pb.collection('propostas').getList<Proposta>(page, perPage, {
-    sort: '-created',
+    sort,
     expand: 'cliente,versao,representante,gerente,user',
   })
 }
