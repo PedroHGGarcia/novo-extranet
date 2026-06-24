@@ -114,7 +114,7 @@ export default function EmitirProposta() {
       { key: 'revisao', label: 'Revisão', type: 'text' },
       {
         key: 'cliente',
-        label: 'Cliente',
+        label: 'Cliente (Relacionamento)',
         type: 'relation',
         relation: {
           collection: 'clientes',
@@ -122,11 +122,12 @@ export default function EmitirProposta() {
           displayField: 'fantasia',
         },
       },
+      { key: 'cliente_original', label: 'Cliente (Texto Original)', type: 'text' },
       { key: 'contato', label: 'Contato', type: 'text' },
       { key: 'telefone', label: 'Telefone', type: 'text' },
       {
         key: 'versao',
-        label: 'Versão',
+        label: 'Versão (Relacionamento)',
         type: 'relation',
         relation: {
           collection: 'versoes',
@@ -134,9 +135,10 @@ export default function EmitirProposta() {
           displayField: 'nome',
         },
       },
+      { key: 'versao_original', label: 'Versão (Texto Original)', type: 'text' },
       {
         key: 'representante',
-        label: 'Representante',
+        label: 'Representante (Relacionamento)',
         type: 'relation',
         relation: {
           collection: 'representantes',
@@ -144,9 +146,10 @@ export default function EmitirProposta() {
           displayField: 'fantasia',
         },
       },
+      { key: 'representante_original', label: 'Representante (Texto Original)', type: 'text' },
       {
         key: 'gerente',
-        label: 'Gerente',
+        label: 'Gerente (Relacionamento)',
         type: 'relation',
         relation: {
           collection: 'gerentes',
@@ -154,6 +157,7 @@ export default function EmitirProposta() {
           displayField: 'nome',
         },
       },
+      { key: 'gerente_original', label: 'Gerente (Texto Original)', type: 'text' },
       {
         key: 'user',
         label: 'Usuário',
@@ -632,9 +636,16 @@ export default function EmitirProposta() {
                     </TableCell>
                     <TableCell
                       className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase max-w-[200px] truncate"
-                      title={item.expand?.cliente?.razao_social || item.expand?.cliente?.fantasia}
+                      title={
+                        item.expand?.cliente?.razao_social ||
+                        item.expand?.cliente?.fantasia ||
+                        item.cliente_original
+                      }
                     >
-                      {item.expand?.cliente?.razao_social || item.expand?.cliente?.fantasia || '-'}
+                      {item.expand?.cliente?.razao_social ||
+                        item.expand?.cliente?.fantasia ||
+                        item.cliente_original ||
+                        '-'}
                     </TableCell>
                     <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px]">
                       {item.contato || '-'}
@@ -644,12 +655,12 @@ export default function EmitirProposta() {
                     </TableCell>
                     <TableCell
                       className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase max-w-[300px] whitespace-normal leading-relaxed"
-                      title={item.expand?.versao?.nome}
+                      title={item.expand?.versao?.nome || item.versao_original}
                     >
-                      {item.expand?.versao?.nome || '-'}
+                      {item.expand?.versao?.nome || item.versao_original || '-'}
                     </TableCell>
                     <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase">
-                      {item.expand?.representante?.fantasia || '-'}
+                      {item.expand?.representante?.fantasia || item.representante_original || '-'}
                     </TableCell>
                     <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px]">
                       {item.nota_rep || '-'}
@@ -701,6 +712,11 @@ export default function EmitirProposta() {
                     </option>
                   ))}
                 </select>
+                {formData.representante_original && !formData.representante && (
+                  <span className="text-[10px] text-amber-600 mt-0.5">
+                    Original: {formData.representante_original}
+                  </span>
+                )}
               </div>
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Cliente</label>
@@ -716,6 +732,11 @@ export default function EmitirProposta() {
                     </option>
                   ))}
                 </select>
+                {formData.cliente_original && !formData.cliente && (
+                  <span className="text-[10px] text-amber-600 mt-0.5">
+                    Original: {formData.cliente_original}
+                  </span>
+                )}
               </div>
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Gerente</label>
@@ -731,6 +752,11 @@ export default function EmitirProposta() {
                     </option>
                   ))}
                 </select>
+                {formData.gerente_original && !formData.gerente && (
+                  <span className="text-[10px] text-amber-600 mt-0.5">
+                    Original: {formData.gerente_original}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -749,6 +775,11 @@ export default function EmitirProposta() {
                     </option>
                   ))}
                 </select>
+                {formData.versao_original && !formData.versao && (
+                  <span className="text-[10px] text-amber-600 mt-0.5">
+                    Original: {formData.versao_original}
+                  </span>
+                )}
               </div>
             </div>
 

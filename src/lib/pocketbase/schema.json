@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-24T12:25:04.265Z",
+  "generatedAt": "2026-06-24T12:33:55.200Z",
   "collections": [
     {
       "name": "users",
@@ -1438,6 +1438,30 @@
         {
           "name": "acessorios_proposta",
           "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "cliente_original",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "versao_original",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "representante_original",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "gerente_original",
+          "type": "text",
           "required": false,
           "system": false
         }

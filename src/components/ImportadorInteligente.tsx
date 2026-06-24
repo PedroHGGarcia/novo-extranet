@@ -167,6 +167,9 @@ export function ImportadorInteligente({
     setStep(3)
 
     const relationData: Record<string, any[]> = {}
+    const relationLookup: Record<string, Map<string, { id: string; display: string }>> = {}
+    const clean = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+
     for (const f of config.fields) {
       if (f.type === 'relation' && f.relation) {
         if (!relationData[f.relation.collection]) {
@@ -177,12 +180,23 @@ export function ImportadorInteligente({
             console.error('Failed to fetch', f.relation.collection, err)
           }
         }
+
+        const records = relationData[f.relation.collection] || []
+        const lookup = new Map<string, { id: string; display: string }>()
+        records.forEach((r) => {
+          f.relation!.searchFields.forEach((sf) => {
+            const c = clean(r[sf])
+            if (c && !lookup.has(c)) {
+              lookup.set(c, { id: r.id, display: r[f.relation!.displayField] })
+            }
+          })
+        })
+        relationLookup[f.key] = lookup
       }
     }
 
     const rawRows = csvData.slice(1)
     const rows = rawRows.filter((r) => r.some((cell) => cell.trim() !== ''))
-    const clean = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 
     const preview = rows.map((row, index) => {
       const pRow: any = {
@@ -217,22 +231,13 @@ export function ImportadorInteligente({
 
         if (f.type === 'relation' && f.relation) {
           const valClean = clean(rawValue)
-          const records = relationData[f.relation.collection] || []
-          let matched = false
+          const lookup = relationLookup[f.key]
 
-          for (const record of records) {
-            for (const searchField of f.relation.searchFields) {
-              if (clean(record[searchField]) === valClean) {
-                pRow._resolved[f.key] = record.id
-                pRow._display[f.key] = record[f.relation.displayField]
-                matched = true
-                break
-              }
-            }
-            if (matched) break
-          }
-
-          if (!matched) {
+          if (lookup && lookup.has(valClean)) {
+            const matched = lookup.get(valClean)!
+            pRow._resolved[f.key] = matched.id
+            pRow._display[f.key] = matched.display
+          } else {
             pRow._isValid = false
             pRow._errors[f.key] = `Registro (${rawValue}) não encontrado.`
           }
@@ -315,6 +320,9 @@ export function ImportadorInteligente({
         }),
       )
       setImportProgress((processed / validRows.length) * 100)
+
+      // Yield to the event loop so the UI (progress bar) updates frequently during large imports
+      await new Promise((resolve) => setTimeout(resolve, 0))
     }
 
     toast({

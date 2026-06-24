@@ -17,6 +17,10 @@ export interface Proposta {
   prazo_entrega?: string
   condicoes_pagamento?: string
   acessorios_proposta?: any
+  cliente_original?: string
+  versao_original?: string
+  representante_original?: string
+  gerente_original?: string
   nota_rep: number
   dt_cad: string
   user: string
