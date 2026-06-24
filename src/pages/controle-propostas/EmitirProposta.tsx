@@ -8,9 +8,11 @@ import {
   ArrowUp,
   ArrowDown,
   ChevronRight,
-  UploadCloud,
+  History,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ImportadorInteligente, type ImportConfig } from '@/components/ImportadorInteligente'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -116,6 +118,11 @@ export default function EmitirProposta() {
   const [exchangeRatesLoading, setExchangeRatesLoading] = useState(true)
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
+  const [historyProposta, setHistoryProposta] = useState<Proposta | null>(null)
+  const [historyLogs, setHistoryLogs] = useState<any[]>([])
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
 
   const importConfig: ImportConfig = {
     collection: 'propostas',
@@ -370,6 +377,24 @@ export default function EmitirProposta() {
     setActiveTab('cadastro')
   }
 
+  const handleHistory = async (item: Proposta) => {
+    setHistoryProposta(item)
+    setIsHistoryModalOpen(true)
+    setIsLoadingHistory(true)
+    try {
+      const logs = await pb.collection('auditoria').getFullList({
+        filter: `tabela = 'propostas' && registro_id = '${item.id}'`,
+        sort: '-created',
+        expand: 'user',
+      })
+      setHistoryLogs(logs)
+    } catch (e) {
+      toast({ title: 'Erro ao carregar histórico', variant: 'destructive' })
+    } finally {
+      setIsLoadingHistory(false)
+    }
+  }
+
   const handleCreateNew = () => {
     setSelectedProposta(null)
     setActiveTab('cadastro')
@@ -386,7 +411,7 @@ export default function EmitirProposta() {
       } else {
         await pb.collection('propostas').create({
           ...formData,
-          numero_proposta: formData.numero_proposta || `NOVA-${Math.floor(Math.random() * 10000)}`,
+          numero_proposta: formData.numero_proposta || 'NOVA-0',
           acessorios_proposta: acessoriosProposta,
         })
         toast({ title: 'Proposta criada com sucesso' })
@@ -643,20 +668,23 @@ export default function EmitirProposta() {
                         onCheckedChange={(checked) => toggleSelect(item.id, !!checked)}
                       />
                     </TableCell>
-                    <TableCell className="align-top py-2.5 px-3 min-w-[100px]">
-                      <div className="text-slate-600 text-xs">
-                        {item.numero_proposta}
-                        {item.revisao ? `-${item.revisao}` : ''}
-                      </div>
-                      <div className="flex flex-col mt-0.5 gap-0.5">
+                    <TableCell className="align-top py-2 px-3 min-w-[100px] border-r border-slate-100">
+                      <div className="text-slate-600 text-xs mb-1">{item.numero_proposta}</div>
+                      <div className="flex flex-col gap-1 mt-1">
                         <button
                           onClick={() => handleEdit(item)}
-                          className="flex items-center text-[#337ab7] hover:underline text-[10px] w-fit"
+                          className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit"
                         >
-                          <Pencil className="h-2.5 w-2.5 mr-1" fill="currentColor" /> Editar
+                          <Pencil className="h-3 w-3 mr-1" fill="currentColor" /> Editar
                         </button>
-                        <button className="flex items-center text-[#337ab7] hover:underline text-[10px] w-fit">
-                          <Eye className="h-2.5 w-2.5 mr-1" /> Visualizar
+                        <button className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit">
+                          <Eye className="h-3 w-3 mr-1" /> Visualizar
+                        </button>
+                        <button
+                          onClick={() => handleHistory(item)}
+                          className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit"
+                        >
+                          <History className="h-3 w-3 mr-1" /> Histórico
                         </button>
                       </div>
                     </TableCell>
@@ -720,11 +748,10 @@ export default function EmitirProposta() {
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Código Para pesquisar</label>
                 <input
-                  className={inputClass}
+                  className={cn(inputClass, 'bg-slate-50')}
                   readOnly
                   placeholder="Gerado automaticamente"
                   value={formData.numero_proposta || ''}
-                  onChange={(e) => setFormData({ ...formData, numero_proposta: e.target.value })}
                 />
               </div>
               <div className="flex flex-col w-full">
@@ -816,16 +843,13 @@ export default function EmitirProposta() {
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Tipo de Proposta</label>
                 <div className="flex items-center gap-2">
-                  <select
-                    className={cn(inputClass, 'flex-1')}
+                  <input
+                    className={cn(inputClass, 'flex-1 bg-slate-50')}
                     value={formData.revisao || ''}
-                    onChange={(e) => setFormData({ ...formData, revisao: e.target.value })}
-                  >
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                  </select>
-                  <Pencil className="w-4 h-4 text-[#337ab7] cursor-pointer shrink-0" />
+                    readOnly
+                    placeholder="Automático"
+                  />
+                  <Pencil className="w-4 h-4 text-[#337ab7] shrink-0 opacity-50" />
                 </div>
               </div>
               <div className="flex flex-col w-full">
@@ -1023,6 +1047,60 @@ export default function EmitirProposta() {
         onOpenChange={setIsImportModalOpen}
         config={importConfig}
       />
+
+      <Dialog open={isHistoryModalOpen} onOpenChange={setIsHistoryModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col p-6">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-lg font-normal text-slate-700">
+              Histórico da Proposta: {historyProposta?.numero_proposta}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto pr-2">
+            {isLoadingHistory ? (
+              <div className="py-12 text-center text-slate-500">Carregando histórico...</div>
+            ) : historyLogs.length === 0 ? (
+              <div className="py-12 text-center text-slate-500">
+                Nenhum histórico encontrado para esta proposta.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {historyLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="border border-slate-200 rounded p-4 shadow-sm bg-white"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold text-slate-700">
+                          {log.expand?.user?.name || log.expand?.user?.email || 'Sistema'}
+                        </span>
+                        <span className="text-slate-500 text-xs">
+                          {format(new Date(log.created), 'dd/MM/yyyy HH:mm:ss')}
+                        </span>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={
+                          log.acao === 'update'
+                            ? 'text-blue-700 bg-blue-50 border-blue-200'
+                            : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                        }
+                      >
+                        {log.acao.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-slate-600 bg-slate-50 p-3 rounded border border-slate-100 overflow-x-auto">
+                      <pre className="whitespace-pre-wrap text-[11px] font-mono m-0">
+                        {JSON.stringify(log.dados, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
