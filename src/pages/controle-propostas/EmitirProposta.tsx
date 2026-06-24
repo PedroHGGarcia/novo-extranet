@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { Pencil, Printer, List, Eye, ArrowDownUp, ChevronRight } from 'lucide-react'
+import { Pencil, List, Eye, ArrowDownUp, ChevronRight } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -17,13 +17,6 @@ import { useRealtime } from '@/hooks/use-realtime'
 import { cn } from '@/lib/utils'
 import pb from '@/lib/pocketbase/client'
 import { useToast } from '@/components/ui/use-toast'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
 
 const formatCurrency = (value: number | undefined, currency: string = 'BRL') => {
   if (value === undefined) return '-'
@@ -101,9 +94,6 @@ export default function EmitirProposta() {
   const [descontoUI, setDescontoUI] = useState('')
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [isNotaDialogOpen, setIsNotaDialogOpen] = useState(false)
-  const [novaNota, setNovaNota] = useState<number>(1)
-  const [isSavingNota, setIsSavingNota] = useState(false)
 
   const [exchangeRates, setExchangeRates] = useState<{
     USD: number
@@ -334,32 +324,6 @@ export default function EmitirProposta() {
     setSelectedIds(next)
   }
 
-  const openNotaDialog = () => {
-    if (selectedIds.size === 0) {
-      toast({ title: 'Selecione ao menos uma proposta.', variant: 'destructive' })
-      return
-    }
-    setNovaNota(1)
-    setIsNotaDialogOpen(true)
-  }
-
-  const handleAlterarNota = async () => {
-    setIsSavingNota(true)
-    try {
-      for (const id of Array.from(selectedIds)) {
-        await updateProposta(id, { nota_rep: novaNota })
-      }
-      toast({ title: 'Nota atualizada com sucesso!' })
-      setIsNotaDialogOpen(false)
-      setSelectedIds(new Set())
-      loadData()
-    } catch (error) {
-      toast({ title: 'Erro ao salvar nota. Tente novamente.', variant: 'destructive' })
-    } finally {
-      setIsSavingNota(false)
-    }
-  }
-
   const convertCurrency = (value: number, from: string, to: string) => {
     if (!exchangeRates || value === 0) return value
     const normFrom = from === 'US$' ? 'USD' : from
@@ -486,30 +450,7 @@ export default function EmitirProposta() {
   const labelClass = 'text-[11px] font-bold text-slate-700 mb-1'
 
   return (
-    <div className="flex flex-col h-full bg-white text-slate-700 font-sans overflow-hidden">
-      {/* Header */}
-      <div className="p-4 flex items-center gap-2">
-        <Printer className="w-6 h-6 text-slate-700" />
-        <h1 className="text-2xl font-normal text-slate-700 tracking-tight">Emitir Proposta</h1>
-      </div>
-      <div className="w-full border-b border-slate-200"></div>
-
-      {/* Actions */}
-      <div className="px-4 py-3 flex items-center gap-2 bg-white border-b border-slate-200">
-        <Button className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal tracking-wide">
-          PESQUISAR
-        </Button>
-        <Button className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal tracking-wide">
-          EXCLUIR
-        </Button>
-        <Button
-          onClick={openNotaDialog}
-          className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal tracking-wide"
-        >
-          ALTERAR NOTA
-        </Button>
-      </div>
-
+    <div className="flex flex-col h-full bg-white text-slate-700 font-sans overflow-hidden pt-2">
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
@@ -931,47 +872,6 @@ export default function EmitirProposta() {
           </div>
         </TabsContent>
       </Tabs>
-
-      <Dialog open={isNotaDialogOpen} onOpenChange={setIsNotaDialogOpen}>
-        <DialogContent className="bg-white text-slate-800 border-slate-200 rounded-sm">
-          <DialogHeader>
-            <DialogTitle>Alterar Nota</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <label className="block text-sm font-medium mb-2 text-slate-700">
-              Selecione a nova nota:
-            </label>
-            <select
-              value={novaNota}
-              onChange={(e) => setNovaNota(Number(e.target.value))}
-              className="w-full bg-white border border-slate-300 text-slate-700 rounded-sm px-3 py-2 outline-none focus:border-[#337ab7]"
-            >
-              <option value={1}>1</option>
-              <option value={2}>2</option>
-              <option value={3}>3</option>
-              <option value={4}>4</option>
-              <option value={5}>5</option>
-            </select>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              className="border-slate-300 text-slate-700 hover:bg-slate-50 rounded-sm"
-              onClick={() => setIsNotaDialogOpen(false)}
-              disabled={isSavingNota}
-            >
-              Cancelar
-            </Button>
-            <Button
-              className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm"
-              onClick={handleAlterarNota}
-              disabled={isSavingNota}
-            >
-              {isSavingNota ? 'Salvando...' : 'Salvar Nota'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
