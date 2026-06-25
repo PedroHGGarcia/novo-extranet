@@ -13,6 +13,7 @@ export interface Proposta {
   gerente?: string
   moeda?: string
   valor_sem_desconto?: number
+  percentual_desconto?: number
   valor_atual?: number
   valor_final?: number
   prazo_entrega?: string

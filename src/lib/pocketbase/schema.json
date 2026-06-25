@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-25T20:03:04.434Z",
+  "generatedAt": "2026-06-25T20:07:45.202Z",
   "collections": [
     {
       "name": "users",
@@ -1471,6 +1471,12 @@
           "required": false,
           "system": false,
           "collectionRef": "tipos_proposta"
+        },
+        {
+          "name": "percentual_desconto",
+          "type": "number",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [

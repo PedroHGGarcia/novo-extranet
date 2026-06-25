@@ -48,11 +48,15 @@ const CurrencyInput = ({
   onChange,
   currency,
   className,
+  readOnly,
+  onClick,
 }: {
   value: number | undefined
   onChange: (val: number) => void
   currency: string
   className: string
+  readOnly?: boolean
+  onClick?: () => void
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const [localValue, setLocalValue] = useState('')
@@ -69,15 +73,18 @@ const CurrencyInput = ({
 
   return (
     <input
-      type={isFocused ? 'number' : 'text'}
+      type={isFocused && !readOnly ? 'number' : 'text'}
       className={className}
-      value={isFocused ? (value ?? '') : localValue}
-      onFocus={() => setIsFocused(true)}
-      onBlur={() => setIsFocused(false)}
+      value={isFocused && !readOnly ? (value ?? '') : localValue}
+      onFocus={() => !readOnly && setIsFocused(true)}
+      onBlur={() => !readOnly && setIsFocused(false)}
       onChange={(e) => {
+        if (readOnly) return
         const val = parseFloat(e.target.value)
         onChange(isNaN(val) ? 0 : val)
       }}
+      readOnly={readOnly}
+      onClick={onClick}
       step="0.01"
     />
   )
@@ -107,7 +114,6 @@ export default function EmitirProposta() {
 
   // Local UI states for fields not directly in the Proposta schema
   const [estoqueUI, setEstoqueUI] = useState('')
-  const [descontoUI, setDescontoUI] = useState('')
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
@@ -195,6 +201,7 @@ export default function EmitirProposta() {
       { key: 'dt_cad', label: 'Data Cadastro', type: 'date' },
       { key: 'moeda', label: 'Moeda', type: 'text' },
       { key: 'valor_sem_desconto', label: 'Valor sem desc.', type: 'number' },
+      { key: 'percentual_desconto', label: 'Desconto (%)', type: 'number' },
       { key: 'valor_atual', label: 'Valor Atual', type: 'number' },
       { key: 'valor_final', label: 'Valor Final', type: 'number' },
       { key: 'prazo_entrega', label: 'Prazo Entrega', type: 'text' },
@@ -278,6 +285,7 @@ export default function EmitirProposta() {
           valor_sem_desconto: selectedProposta.valor_sem_desconto || 0,
           valor_atual: selectedProposta.valor_atual || 0,
           valor_final: selectedProposta.valor_final || 0,
+          percentual_desconto: selectedProposta.percentual_desconto || 0,
           nota_rep: selectedProposta.nota_rep || 1,
         })
 
@@ -302,6 +310,7 @@ export default function EmitirProposta() {
           valor_sem_desconto: 0,
           valor_atual: 0,
           valor_final: 0,
+          percentual_desconto: 0,
           nota_rep: 1,
         })
         loadAcessorios('')
@@ -335,14 +344,19 @@ export default function EmitirProposta() {
   const handleVersaoChange = (versaoId: string) => {
     const versao = versoes.find((v) => v.id === versaoId)
     if (versao) {
-      setFormData((prev) => ({
-        ...prev,
-        versao: versaoId,
-        valor_sem_desconto: versao.valor || 0,
-        valor_atual: versao.valor || 0,
-        valor_final: versao.valor || 0,
-        moeda: versao.moeda === 'USD' ? 'US$' : versao.moeda || 'US$',
-      }))
+      setFormData((prev) => {
+        const base = versao.valor || 0
+        const desc = prev.percentual_desconto || 0
+        const final = Math.round(base * (1 - desc / 100) * 100) / 100
+        return {
+          ...prev,
+          versao: versaoId,
+          valor_sem_desconto: base,
+          valor_atual: final,
+          valor_final: final,
+          moeda: versao.moeda === 'USD' ? 'US$' : versao.moeda || 'US$',
+        }
+      })
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -546,7 +560,10 @@ export default function EmitirProposta() {
   const renderDiffValue = (val: any, field: string) => {
     if (val === null || val === undefined || val === '')
       return <span className="italic text-slate-400">Vazio</span>
-    if (field.includes('valor') || field.includes('desconto')) {
+    if (field === 'percentual_desconto') {
+      return `${val}%`
+    }
+    if (field.includes('valor')) {
       const num = Number(val)
       if (!isNaN(num)) return formatCurrency(num, 'BRL') // Defaults to BRL if not available
     }
@@ -565,6 +582,7 @@ export default function EmitirProposta() {
       gerente: 'Gerente',
       moeda: 'Moeda',
       valor_sem_desconto: 'Valor sem Desconto',
+      percentual_desconto: 'Desconto (%)',
       valor_atual: 'Valor Atual',
       valor_final: 'Valor Final',
       prazo_entrega: 'Prazo de Entrega',
@@ -621,6 +639,11 @@ export default function EmitirProposta() {
   }
 
   const handleSave = async () => {
+    if ((formData.percentual_desconto || 0) > 28) {
+      toast({ title: 'O desconto máximo permitido é 28%', variant: 'destructive' })
+      return
+    }
+
     if (!formData.tipo_proposta) {
       toast({ title: 'Selecione um Tipo de Proposta obrigatório', variant: 'destructive' })
       return
@@ -699,14 +722,19 @@ export default function EmitirProposta() {
       const convertedValue = convertCurrency(acc.valor || 0, accMoeda, propMoeda)
 
       setFormData((prev) => {
-        const current = prev.valor_final || 0
-        const next = value ? current + convertedValue : current - convertedValue
-        const roundedNext = Math.round(next * 100) / 100
+        const currentBase = prev.valor_sem_desconto || 0
+        const nextBase = value ? currentBase + convertedValue : currentBase - convertedValue
+        const roundedBase = Math.round(nextBase * 100) / 100
+
+        const desc = prev.percentual_desconto || 0
+        const nextFinal = roundedBase * (1 - desc / 100)
+        const roundedFinal = Math.round(nextFinal * 100) / 100
+
         return {
           ...prev,
-          valor_final: roundedNext,
-          valor_atual: roundedNext,
-          valor_sem_desconto: roundedNext,
+          valor_sem_desconto: roundedBase,
+          valor_final: roundedFinal,
+          valor_atual: roundedFinal,
         }
       })
     }
@@ -796,35 +824,40 @@ export default function EmitirProposta() {
     )
   }
 
-  const renderCadastroActionBars = () => (
-    <div className="flex gap-2">
-      <Button className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal">
-        PESQUISAR
-      </Button>
-      <Button className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal">
-        VISUALIZAR PROPOSTA
-      </Button>
-      <Button
-        onClick={handleSave}
-        className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal"
-      >
-        SALVAR PROPOSTA
-      </Button>
-      <Button
-        onClick={() => {
-          if (selectedProposta) {
-            printProposal(selectedProposta)
-          } else {
-            toast({ title: 'Salve a proposta antes de gerar o PDF', variant: 'default' })
-          }
-        }}
-        disabled={!selectedProposta}
-        className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50"
-      >
-        GERAR PDF
-      </Button>
-    </div>
-  )
+  const renderCadastroActionBars = () => {
+    const isOverDiscount = (formData.percentual_desconto || 0) > 28
+
+    return (
+      <div className="flex gap-2">
+        <Button className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal">
+          PESQUISAR
+        </Button>
+        <Button className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal">
+          VISUALIZAR PROPOSTA
+        </Button>
+        <Button
+          onClick={handleSave}
+          disabled={isOverDiscount}
+          className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          SALVAR PROPOSTA
+        </Button>
+        <Button
+          onClick={() => {
+            if (selectedProposta) {
+              printProposal(selectedProposta)
+            } else {
+              toast({ title: 'Salve a proposta antes de gerar o PDF', variant: 'default' })
+            }
+          }}
+          disabled={!selectedProposta || isOverDiscount}
+          className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          GERAR PDF
+        </Button>
+      </div>
+    )
+  }
 
   const inputClass =
     'w-full bg-white border border-slate-300 rounded-sm px-2 py-1.5 outline-none text-slate-700 text-xs focus:border-[#337ab7] min-h-[30px]'
@@ -1123,7 +1156,7 @@ export default function EmitirProposta() {
               </div>
             </div>
 
-            <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Estoque</label>
                 <select
@@ -1144,15 +1177,18 @@ export default function EmitirProposta() {
                   onChange={(e) => {
                     const newMoeda = e.target.value
                     const oldMoeda = formData.moeda || 'US$'
-                    const currentTotal = formData.valor_final || 0
-                    const convertedTotal =
-                      Math.round(convertCurrency(currentTotal, oldMoeda, newMoeda) * 100) / 100
+                    const currentBase = formData.valor_sem_desconto || 0
+                    const convertedBase =
+                      Math.round(convertCurrency(currentBase, oldMoeda, newMoeda) * 100) / 100
+                    const desc = formData.percentual_desconto || 0
+                    const convertedFinal = Math.round(convertedBase * (1 - desc / 100) * 100) / 100
+
                     setFormData({
                       ...formData,
                       moeda: newMoeda,
-                      valor_final: convertedTotal,
-                      valor_atual: convertedTotal,
-                      valor_sem_desconto: convertedTotal,
+                      valor_sem_desconto: convertedBase,
+                      valor_final: convertedFinal,
+                      valor_atual: convertedFinal,
                     })
                   }}
                 >
@@ -1162,33 +1198,80 @@ export default function EmitirProposta() {
                 </select>
               </div>
               <div className="flex flex-col w-full">
-                <label className={labelClass}>Valor</label>
+                <label className={labelClass}>Valor sem Desconto</label>
                 <CurrencyInput
-                  className={inputClass}
+                  className={cn(inputClass, 'bg-slate-50 cursor-not-allowed')}
+                  value={formData.valor_sem_desconto}
+                  currency={formData.moeda || 'US$'}
+                  onChange={() => {}}
+                  readOnly
+                  onClick={() =>
+                    toast({
+                      title:
+                        'Este campo é calculado automaticamente e não pode ser editado manualmente.',
+                      variant: 'default',
+                    })
+                  }
+                />
+              </div>
+              <div className="flex flex-col w-full">
+                <label className={labelClass}>Desconto (%)</label>
+                <input
+                  type="number"
+                  className={cn(
+                    inputClass,
+                    (formData.percentual_desconto || 0) > 28 &&
+                      'border-rose-500 text-rose-600 bg-rose-50 focus:border-rose-500',
+                  )}
+                  value={
+                    formData.percentual_desconto === undefined ? '' : formData.percentual_desconto
+                  }
+                  onChange={(e) => {
+                    let valStr = e.target.value
+                    let val = valStr === '' ? undefined : parseFloat(valStr)
+                    if (val !== undefined && isNaN(val)) return
+
+                    if (val !== undefined && val > 28) {
+                      toast({ title: 'O desconto máximo permitido é 28%', variant: 'destructive' })
+                    }
+
+                    setFormData((prev) => {
+                      const base = prev.valor_sem_desconto || 0
+                      const final = Math.round(base * (1 - (val || 0) / 100) * 100) / 100
+                      return {
+                        ...prev,
+                        percentual_desconto: val,
+                        valor_final: final,
+                        valor_atual: final,
+                      }
+                    })
+                  }}
+                  step="0.01"
+                  min="0"
+                />
+                {(formData.percentual_desconto || 0) > 28 && (
+                  <span className="text-[10px] text-rose-600 mt-1 leading-tight">
+                    O desconto máximo permitido é 28%
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col w-full">
+                <label className={labelClass}>Valor Final</label>
+                <CurrencyInput
+                  className={cn(inputClass, 'bg-slate-50 cursor-not-allowed')}
                   value={formData.valor_final}
                   currency={formData.moeda || 'US$'}
-                  onChange={(val) =>
-                    setFormData({
-                      ...formData,
-                      valor_final: val,
-                      valor_atual: val,
-                      valor_sem_desconto: val,
+                  onChange={() => {}}
+                  readOnly
+                  onClick={() =>
+                    toast({
+                      title:
+                        'Este campo é calculado automaticamente e não pode ser editado manualmente.',
+                      variant: 'default',
                     })
                   }
                 />
                 {renderConvertedValue()}
-              </div>
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Desconto</label>
-                <select
-                  className={inputClass}
-                  value={descontoUI}
-                  onChange={(e) => setDescontoUI(e.target.value)}
-                >
-                  <option value=""></option>
-                  <option value="5%">5%</option>
-                  <option value="10%">10%</option>
-                </select>
               </div>
             </div>
 
