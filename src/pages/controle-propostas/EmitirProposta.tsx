@@ -28,6 +28,7 @@ import { getPropostasPaginated, updateProposta, type Proposta } from '@/services
 import { getTiposProposta, type TipoProposta } from '@/services/tipos-propostas'
 import { useRealtime } from '@/hooks/use-realtime'
 import { cn } from '@/lib/utils'
+import { PropostaDocument } from '@/components/PropostaDocument'
 import pb from '@/lib/pocketbase/client'
 import { useToast } from '@/components/ui/use-toast'
 
@@ -134,6 +135,8 @@ export default function EmitirProposta() {
 
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [viewProposta, setViewProposta] = useState<Proposta | null>(null)
+
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
 
   const importConfig: ImportConfig = {
     collection: 'propostas',
@@ -825,6 +828,20 @@ export default function EmitirProposta() {
     )
   }
 
+  const handlePreviewPDF = () => {
+    if ((formData.percentual_desconto || 0) > 28) {
+      toast({ title: 'O desconto máximo permitido é 28%', variant: 'destructive' })
+      return
+    }
+
+    // Set dt_cad if not present, though it defaults on init.
+    if (!formData.dt_cad) {
+      setFormData((prev) => ({ ...prev, dt_cad: format(new Date(), 'yyyy-MM-dd') }))
+    }
+
+    setIsPreviewModalOpen(true)
+  }
+
   const renderCadastroActionBars = () => {
     const isOverDiscount = (formData.percentual_desconto || 0) > 28
 
@@ -833,8 +850,12 @@ export default function EmitirProposta() {
         <Button className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal">
           PESQUISAR
         </Button>
-        <Button className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal">
-          VISUALIZAR PROPOSTA
+        <Button
+          onClick={handlePreviewPDF}
+          disabled={isOverDiscount}
+          className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          VISUALIZAR PDF
         </Button>
         <Button
           onClick={handleSave}
@@ -1695,6 +1716,54 @@ export default function EmitirProposta() {
           <div className="p-4 border-t border-slate-100 flex justify-end shrink-0">
             <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
               Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-100">
+          <DialogHeader className="p-4 pb-2 shrink-0 bg-white border-b border-slate-200 flex flex-row items-center justify-between">
+            <DialogTitle className="text-lg font-normal text-[#337ab7]">
+              Pré-visualização do PDF
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center w-full">
+            <div className="shadow-lg transform scale-100 md:scale-95 origin-top w-fit">
+              <PropostaDocument
+                proposta={formData as Partial<Proposta>}
+                tipoProposta={tiposProposta.find((t) => t.id === formData.tipo_proposta) || null}
+                clienteNome={
+                  clientes.find((c) => c.id === formData.cliente)?.fantasia ||
+                  clientes.find((c) => c.id === formData.cliente)?.razao_social ||
+                  formData.cliente_original ||
+                  '-'
+                }
+                representanteNome={
+                  representantes.find((r) => r.id === formData.representante)?.fantasia ||
+                  formData.representante_original ||
+                  '-'
+                }
+                versaoNome={
+                  versoes.find((v) => v.id === formData.versao)?.nome ||
+                  formData.versao_original ||
+                  '-'
+                }
+                gerenteNome={
+                  gerentes.find((g) => g.id === formData.gerente)?.nome ||
+                  formData.gerente_original ||
+                  '-'
+                }
+                acessorios={acessoriosProposta.filter((a) => a.incluir)}
+              />
+            </div>
+          </div>
+          <div className="p-4 border-t border-slate-200 bg-white flex justify-end shrink-0 gap-2">
+            <Button variant="outline" onClick={() => setIsPreviewModalOpen(false)}>
+              Fechar
+            </Button>
+            <Button onClick={handleSave} className="bg-[#337ab7] hover:bg-[#286090]">
+              Salvar e Fechar
             </Button>
           </div>
         </DialogContent>
