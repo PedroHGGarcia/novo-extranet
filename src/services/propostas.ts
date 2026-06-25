@@ -27,6 +27,8 @@ export interface Proposta {
   dt_cad: string
   user: string
   tipo_proposta?: string
+  status?: string
+  data_alteracao_status?: string
   created: string
   updated: string
   expand?: {
@@ -34,7 +36,7 @@ export interface Proposta {
     versao?: { nome: string }
     representante?: { fantasia: string; sigla?: string }
     gerente?: { nome: string }
-    user?: { name: string }
+    user?: { name: string; assinatura?: string; id: string }
     tipo_proposta?: TipoProposta
   }
 }

@@ -218,12 +218,45 @@ export function PropostaDocument({
         </div>
       )}
 
-      {/* Footer info */}
-      <div className="mt-16 pt-6 border-t border-slate-300 text-center text-slate-500 text-xs print-break-inside-avoid">
-        <p className="font-semibold text-slate-700 mb-1">
-          Bener - Soluções em Máquinas e Equipamentos
-        </p>
-        <p>Este é um documento gerado eletronicamente e tem validade como proposta comercial.</p>
+      {/* Footer info & Assinatura/QR Code */}
+      <div className="mt-16 pt-6 border-t border-slate-300 grid grid-cols-3 gap-4 print-break-inside-avoid items-end">
+        <div className="flex flex-col items-center justify-end text-center h-full">
+          {proposta.expand?.user?.assinatura && proposta.expand?.user?.id && (
+            <img
+              src={`${import.meta.env.VITE_POCKETBASE_URL}/api/files/users/${proposta.expand.user.id}/${proposta.expand.user.assinatura}`}
+              alt="Assinatura"
+              className="h-16 object-contain mb-2"
+            />
+          )}
+          <div className="w-48 border-t border-slate-400"></div>
+          <p className="font-semibold text-slate-700 mt-2 text-xs">
+            {proposta.expand?.user?.name || gerenteNome}
+          </p>
+          <p className="text-slate-500 text-[10px]">Assinatura Eletrônica</p>
+        </div>
+
+        <div className="text-center text-slate-500 text-xs flex flex-col justify-end h-full">
+          <p className="font-semibold text-slate-700 mb-1">
+            Bener - Soluções em Máquinas e Equipamentos
+          </p>
+          <p>Este é um documento gerado eletronicamente e tem validade como proposta comercial.</p>
+        </div>
+
+        <div className="flex flex-col items-center justify-end h-full text-center">
+          {proposta.id && (
+            <>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://extranetgourmet.goskip.app/validar-proposta/${proposta.id}`)}`}
+                alt="QR Code de Validação"
+                className="w-[72px] h-[72px] mb-2"
+              />
+              <p className="text-[10px] text-slate-500 leading-tight">
+                Escaneie para validar
+                <br />a autenticidade
+              </p>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

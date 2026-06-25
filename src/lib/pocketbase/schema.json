@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-25T20:12:45.584Z",
+  "generatedAt": "2026-06-25T20:24:59.303Z",
   "collections": [
     {
       "name": "users",
@@ -44,6 +44,12 @@
           "required": true,
           "system": false,
           "selectValues": ["admin", "user"]
+        },
+        {
+          "name": "assinatura",
+          "type": "file",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
@@ -1475,6 +1481,19 @@
         {
           "name": "percentual_desconto",
           "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["Em Análise", "Aprovada", "Recusada"]
+        },
+        {
+          "name": "data_alteracao_status",
+          "type": "date",
           "required": false,
           "system": false
         }

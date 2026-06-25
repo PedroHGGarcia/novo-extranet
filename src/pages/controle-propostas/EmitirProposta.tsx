@@ -310,14 +310,14 @@ export default function EmitirProposta() {
         setFormData({
           revisao: 'A',
           moeda: 'US$',
+          status: 'Em Análise',
           valor_sem_desconto: 0,
           valor_atual: 0,
           valor_final: 0,
           percentual_desconto: 0,
           nota_rep: 1,
           dt_cad: format(new Date(), 'yyyy-MM-dd'),
-        })
-        loadAcessorios('')
+        })        loadAcessorios('')
       }
     }
   }, [selectedProposta, activeTab])
@@ -598,6 +598,7 @@ export default function EmitirProposta() {
       gerente_original: 'Gerente (Texto)',
       nota_rep: 'Nota Rep.',
       revisao: 'Revisão',
+      status: 'Status',
     }
     return fieldNamesMap[key] || key
   }
@@ -934,7 +935,7 @@ export default function EmitirProposta() {
                 {renderSortableHead('Telefone', 'telefone')}
                 {renderSortableHead('Versão', 'versao_original')}
                 {renderSortableHead('Representante', 'representante_original')}
-                {renderSortableHead('Nota Rep.', 'nota_rep')}
+                {renderSortableHead('Status', 'status')}
                 {renderSortableHead('Valor', 'valor_final')}
                 {renderSortableHead('Dt. Cad', 'dt_cad')}
                 {renderSortableHead('Por', 'created')}
@@ -1023,8 +1024,16 @@ export default function EmitirProposta() {
                     <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase">
                       {item.expand?.representante?.fantasia || item.representante_original || '-'}
                     </TableCell>
-                    <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px]">
-                      {item.nota_rep || '-'}
+                    <TableCell className="align-top py-2 px-3">
+                      <Badge variant="outline" className={cn(
+                        "text-[10px] font-normal border whitespace-nowrap px-1.5 py-0",
+                        item.status === 'Aprovada' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                        item.status === 'Recusada' && 'bg-rose-50 text-rose-700 border-rose-200',
+                        item.status === 'Em Análise' && 'bg-amber-50 text-amber-700 border-amber-200',
+                        !item.status && 'bg-amber-50 text-amber-700 border-amber-200'
+                      )}>
+                        {item.status || 'Em Análise'}
+                      </Badge>
                     </TableCell>
                     <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] whitespace-nowrap">
                       {formatCurrency(item.valor_final, item.moeda)}
@@ -1125,7 +1134,7 @@ export default function EmitirProposta() {
               </div>
             </div>
 
-            <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Data de Emissão</label>
                 <input
@@ -1134,6 +1143,18 @@ export default function EmitirProposta() {
                   value={formData.dt_cad ? formData.dt_cad.substring(0, 10) : ''}
                   onChange={(e) => setFormData({ ...formData, dt_cad: e.target.value })}
                 />
+              </div>
+              <div className="flex flex-col w-full">
+                <label className={labelClass}>Status</label>
+                <select
+                  className={inputClass}
+                  value={formData.status || 'Em Análise'}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                >
+                  <option value="Em Análise">Em Análise</option>
+                  <option value="Aprovada">Aprovada</option>
+                  <option value="Recusada">Recusada</option>
+                </select>
               </div>
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Versão</label>
@@ -1604,6 +1625,12 @@ export default function EmitirProposta() {
                   <span className="font-medium">
                     {viewProposta.expand?.gerente?.nome || viewProposta.gerente_original || '-'}
                   </span>
+                </div>
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Status
+                  </span>
+                  <span className="font-medium">{viewProposta.status || 'Em Análise'}</span>
                 </div>
                 <div className="flex flex-col border-b border-slate-100 pb-2">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
