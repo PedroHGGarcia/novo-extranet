@@ -57,6 +57,19 @@ export default function TiposPropostas() {
   const [formData, setFormData] = useState<Partial<TipoProposta>>({
     status: 'Ativo',
     tem_fator: false,
+    comissao: 0,
+    frase_preco: '',
+    frase_comissao: '',
+    prazo_entrega: '',
+    condicoes_pagamento: '',
+    garantia: '',
+    assistencia_tecnica: '',
+    treinamento_tecnico: '',
+    transporte_seguro: '',
+    validade_oferta: '',
+    imposto_ipi: '',
+    imposto_icms: '',
+    formas_pagamento_selecionadas: [],
   })
   const [selectedItem, setSelectedItem] = useState<TipoProposta | null>(null)
 
@@ -142,9 +155,7 @@ export default function TiposPropostas() {
   const handleEdit = (item: TipoProposta) => {
     setSelectedItem(item)
     setFormData({
-      nome: item.nome,
-      tem_fator: item.tem_fator,
-      status: item.status,
+      ...item,
     })
     setActiveTab('cadastro')
   }
@@ -152,9 +163,9 @@ export default function TiposPropostas() {
   const handleDuplicate = (item: TipoProposta) => {
     setSelectedItem(null)
     setFormData({
+      ...item,
+      id: undefined,
       nome: `${item.nome} (Cópia)`,
-      tem_fator: item.tem_fator,
-      status: item.status,
     })
     setActiveTab('cadastro')
   }
@@ -196,11 +207,11 @@ export default function TiposPropostas() {
         <h2 className="text-2xl font-bold tracking-tight">Tipos de Propostas</h2>
       </div>
 
-      <div className="flex-1 p-4 md:p-6 overflow-auto">
+      <div className="flex-1 p-4 md:p-6 overflow-auto bg-slate-50/50">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
-          className="w-full bg-white rounded-md border shadow-sm"
+          className="w-full bg-white rounded-md border shadow-sm flex flex-col min-h-[500px]"
         >
           <div className="border-b px-4">
             <TabsList className="bg-transparent h-12 p-0 w-full justify-start">
@@ -347,70 +358,318 @@ export default function TiposPropostas() {
             />
           </TabsContent>
 
-          <TabsContent value="cadastro" className="p-6 outline-none m-0">
-            <form onSubmit={handleSave} className="space-y-8 max-w-3xl">
-              <div className="grid gap-6 bg-slate-50 p-6 rounded-md border">
-                <div className="grid gap-2">
-                  <Label htmlFor="nome" className="font-semibold text-slate-700">
-                    Nome da Proposta *
-                  </Label>
-                  <Input
-                    id="nome"
-                    value={formData.nome || ''}
-                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    placeholder="Ex: Nacionalizada"
-                    required
-                    className="bg-white"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label className="font-semibold text-slate-700">Configurações Adicionais</Label>
-                  <div className="flex items-center space-x-3 bg-white p-3 rounded-md border">
-                    <Switch
-                      id="tem_fator"
-                      checked={formData.tem_fator || false}
-                      onCheckedChange={(c) => setFormData({ ...formData, tem_fator: c })}
-                    />
-                    <Label htmlFor="tem_fator" className="cursor-pointer text-slate-600">
-                      Aplicar fator de cálculo (Tem Fator)
-                    </Label>
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label className="font-semibold text-slate-700">Status</Label>
-                  <Select
-                    value={formData.status || 'Ativo'}
-                    onValueChange={(val: 'Ativo' | 'Inativo') =>
-                      setFormData({ ...formData, status: val })
-                    }
-                  >
-                    <SelectTrigger className="w-full md:w-[240px] bg-white">
-                      <SelectValue placeholder="Selecione o status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Inativo">Inativo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
+          <TabsContent value="cadastro" className="p-0 outline-none m-0 flex-1 flex flex-col">
+            <form onSubmit={handleSave} className="flex-1 flex flex-col">
+              <div className="p-4 border-b bg-white flex gap-2 shrink-0">
                 <Button
-                  type="submit"
-                  className="px-8 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                  type="button"
+                  variant="default"
+                  className="bg-[#337ab7] hover:bg-[#286090] uppercase text-xs h-8 px-4 font-normal shadow-none rounded-sm"
                 >
-                  Salvar
+                  Pesquisar
                 </Button>
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => setActiveTab('registros')}
-                  className="px-8 text-slate-600"
+                  onClick={handleNew}
+                  className="bg-[#337ab7] hover:bg-[#286090] uppercase text-xs h-8 px-4 font-normal shadow-none rounded-sm"
                 >
-                  Cancelar
+                  Novo
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-[#337ab7] hover:bg-[#286090] uppercase text-xs h-8 px-4 font-normal shadow-none rounded-sm"
+                >
+                  Salvar
+                </Button>
+              </div>
+
+              <div className="flex flex-1 p-4 md:p-6 gap-6 bg-slate-50 items-start">
+                <div className="flex-1 bg-white border border-slate-200 rounded-sm shadow-sm p-4">
+                  <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+                    <List className="w-4 h-4 text-slate-500" />
+                    <h3 className="font-semibold text-slate-700">Dados</h3>
+                  </div>
+
+                  <div className="space-y-5">
+                    <div className="flex gap-4">
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Nome</Label>
+                        <Input
+                          required
+                          value={formData.nome || ''}
+                          onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                          className="h-8 text-sm bg-transparent border-0 border-b border-slate-300 rounded-none focus-visible:ring-0 focus-visible:border-[#337ab7] px-0"
+                          placeholder="FCS Nacionalizada: SEM % - <B>2026</B>"
+                        />
+                      </div>
+                      <div className="w-[180px] space-y-1.5">
+                        <Label className="text-xs text-slate-500">Status</Label>
+                        <Select
+                          value={formData.status || 'Ativo'}
+                          onValueChange={(val: 'Ativo' | 'Inativo') =>
+                            setFormData({ ...formData, status: val })
+                          }
+                        >
+                          <SelectTrigger className="h-8 text-sm border-0 border-b border-slate-300 rounded-none focus:ring-0 px-0 bg-transparent">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Ativo">Ativo</SelectItem>
+                            <SelectItem value="Inativo">Inativo</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">
+                          Aplicar Fator de Nacionalização
+                        </Label>
+                        <Select
+                          value={formData.tem_fator ? 'Sim' : 'Não'}
+                          onValueChange={(val) =>
+                            setFormData({ ...formData, tem_fator: val === 'Sim' })
+                          }
+                        >
+                          <SelectTrigger className="h-8 text-sm border-0 border-b border-slate-300 rounded-none focus:ring-0 px-0 bg-transparent">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Sim">Sim</SelectItem>
+                            <SelectItem value="Não">Não</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Comissão (%)</Label>
+                        <Input
+                          type="number"
+                          value={formData.comissao || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, comissao: parseFloat(e.target.value) || 0 })
+                          }
+                          className="h-8 text-sm border-0 border-b border-slate-300 rounded-none focus-visible:ring-0 focus-visible:border-[#337ab7] px-0 bg-transparent"
+                          placeholder="Comissão (%)"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Frase do Preço</Label>
+                        <Input
+                          value={formData.frase_preco || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, frase_preco: e.target.value })
+                          }
+                          className="h-8 text-sm border-0 border-b border-slate-300 rounded-none focus-visible:ring-0 focus-visible:border-[#337ab7] px-0 bg-transparent"
+                          placeholder="Pacote de Máquinas FOB CHINA"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Frase Comissão</Label>
+                        <Input
+                          value={formData.frase_comissao || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, frase_comissao: e.target.value })
+                          }
+                          className="h-8 text-sm border-0 border-b border-slate-300 rounded-none focus-visible:ring-0 focus-visible:border-[#337ab7] px-0 bg-transparent"
+                          placeholder="Frase Comissão"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Prazo de Entrega</Label>
+                        <textarea
+                          value={formData.prazo_entrega || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, prazo_entrega: e.target.value })
+                          }
+                          className="w-full min-h-[60px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
+                          placeholder="A combinar."
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Condições de Pagamento</Label>
+                        <textarea
+                          value={formData.condicoes_pagamento || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, condicoes_pagamento: e.target.value })
+                          }
+                          className="w-full min-h-[60px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
+                          placeholder="<B>Pedido 1:</B> USD Sendo: Entrada (%) USD..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Garantia</Label>
+                        <textarea
+                          value={formData.garantia || ''}
+                          onChange={(e) => setFormData({ ...formData, garantia: e.target.value })}
+                          className="w-full min-h-[120px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Assistência Técnica</Label>
+                        <textarea
+                          value={formData.assistencia_tecnica || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, assistencia_tecnica: e.target.value })
+                          }
+                          className="w-full min-h-[120px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Treinamento Técnico</Label>
+                        <textarea
+                          value={formData.treinamento_tecnico || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, treinamento_tecnico: e.target.value })
+                          }
+                          className="w-full min-h-[100px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Transporte/Seguro</Label>
+                        <textarea
+                          value={formData.transporte_seguro || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, transporte_seguro: e.target.value })
+                          }
+                          className="w-full min-h-[100px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Validade desta Oferta</Label>
+                        <textarea
+                          value={formData.validade_oferta || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, validade_oferta: e.target.value })
+                          }
+                          className="w-full min-h-[80px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Imposto IPI</Label>
+                        <textarea
+                          value={formData.imposto_ipi || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, imposto_ipi: e.target.value })
+                          }
+                          className="w-full min-h-[80px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Imposto ICMS</Label>
+                        <textarea
+                          value={formData.imposto_icms || ''}
+                          onChange={(e) =>
+                            setFormData({ ...formData, imposto_icms: e.target.value })
+                          }
+                          className="w-full min-h-[80px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs text-slate-500">Dt. Cad</Label>
+                        <Input
+                          readOnly
+                          value={
+                            selectedItem?.created
+                              ? format(new Date(selectedItem.created), 'dd/MM/yyyy HH:mm:ss')
+                              : ''
+                          }
+                          className="h-8 text-sm bg-slate-100 border-0 border-b border-slate-300 rounded-none px-2 text-slate-500 w-[200px]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="w-[300px] shrink-0 bg-white border border-slate-200 rounded-sm shadow-sm p-4">
+                  <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+                    <List className="w-4 h-4 text-slate-500" />
+                    <h3 className="font-semibold text-slate-700 leading-tight">
+                      Formas de Pagamento
+                      <br />
+                      do Pedido
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    {[
+                      'Faturamento a vista',
+                      'Financiamento C.D.C.I. 1 a 9 parcelas',
+                      'Financiamento C.D.C.I. 10 a 17 parcelas',
+                    ].map((label) => {
+                      const isChecked = formData.formas_pagamento_selecionadas?.includes(label)
+                      return (
+                        <div key={label} className="flex items-start space-x-2">
+                          <Checkbox
+                            id={`pgto-${label}`}
+                            checked={isChecked}
+                            onCheckedChange={(c) => {
+                              const current = formData.formas_pagamento_selecionadas || []
+                              if (c) {
+                                setFormData({
+                                  ...formData,
+                                  formas_pagamento_selecionadas: [...current, label],
+                                })
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  formas_pagamento_selecionadas: current.filter((x) => x !== label),
+                                })
+                              }
+                            }}
+                            className="mt-0.5 border-slate-400 data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
+                          />
+                          <Label
+                            htmlFor={`pgto-${label}`}
+                            className="text-sm font-normal cursor-pointer leading-snug"
+                          >
+                            {label}
+                          </Label>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 border-t bg-white flex gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant="default"
+                  className="bg-[#337ab7] hover:bg-[#286090] uppercase text-xs h-8 px-4 font-normal shadow-none rounded-sm"
+                >
+                  Pesquisar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleNew}
+                  className="bg-[#337ab7] hover:bg-[#286090] uppercase text-xs h-8 px-4 font-normal shadow-none rounded-sm"
+                >
+                  Novo
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-[#337ab7] hover:bg-[#286090] uppercase text-xs h-8 px-4 font-normal shadow-none rounded-sm"
+                >
+                  Salvar
                 </Button>
               </div>
             </form>

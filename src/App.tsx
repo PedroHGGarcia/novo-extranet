@@ -12,6 +12,7 @@ import Clientes from './pages/ClientesWrapper'
 import Eventos from './pages/Eventos'
 import EmitirProposta from './pages/controle-propostas/EmitirProposta'
 import TiposPropostas from './pages/controle-propostas/TiposPropostas'
+import PropostaPDF from './pages/controle-propostas/PropostaPDF'
 import Produtos from './pages/Produtos'
 import Categorias from './pages/produtos/Categorias'
 import Marcas from './pages/produtos/Marcas'
@@ -65,6 +66,7 @@ const App = () => (
               />
               <Route path="/controle-propostas/emitir-proposta" element={<EmitirProposta />} />
               <Route path="/controle-propostas/tipos-propostas" element={<TiposPropostas />} />
+              <Route path="/controle-propostas/proposta-pdf/:id" element={<PropostaPDF />} />
               <Route path="/produtos" element={<Produtos />} />
               <Route path="/produtos/categorias" element={<Categorias />} />
               <Route path="/produtos/marcas" element={<Marcas />} />

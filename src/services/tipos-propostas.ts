@@ -5,6 +5,19 @@ export interface TipoProposta {
   nome: string
   tem_fator: boolean
   status: 'Ativo' | 'Inativo'
+  comissao?: number
+  frase_preco?: string
+  frase_comissao?: string
+  prazo_entrega?: string
+  condicoes_pagamento?: string
+  garantia?: string
+  assistencia_tecnica?: string
+  treinamento_tecnico?: string
+  transporte_seguro?: string
+  validade_oferta?: string
+  imposto_ipi?: string
+  imposto_icms?: string
+  formas_pagamento_selecionadas?: string[]
   created: string
   updated: string
 }

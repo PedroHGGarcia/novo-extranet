@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-25T14:04:47.107Z",
+  "generatedAt": "2026-06-25T14:24:01.154Z",
   "collections": [
     {
       "name": "users",
@@ -1464,6 +1464,13 @@
           "type": "text",
           "required": false,
           "system": false
+        },
+        {
+          "name": "tipo_proposta",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "tipos_proposta"
         }
       ],
       "indexes": [
@@ -1516,6 +1523,84 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "comissao",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "frase_preco",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "frase_comissao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "prazo_entrega",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "condicoes_pagamento",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "garantia",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "assistencia_tecnica",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "treinamento_tecnico",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "transporte_seguro",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "validade_oferta",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "imposto_ipi",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "imposto_icms",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "formas_pagamento_selecionadas",
+          "type": "json",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": ["CREATE UNIQUE INDEX idx_tipos_proposta_nome ON tipos_proposta (nome)"]
