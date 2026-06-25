@@ -43,7 +43,7 @@ export default function DashboardPropostas() {
 
       const records = await pb.collection('propostas').getFullList({
         filter: `created >= "${startStr}" && created <= "${endStr}"`,
-        expand: 'cliente,versao,user',
+        expand: 'cliente,versao,user,ultimo_usuario_status',
       })
       setPropostas(records)
     } catch (err) {
@@ -275,6 +275,15 @@ export default function DashboardPropostas() {
               {selectedProposta?.created
                 ? format(new Date(selectedProposta.created), 'dd/MM/yyyy')
                 : ''}
+              {selectedProposta?.expand?.ultimo_usuario_status?.name && (
+                <>
+                  <br />
+                  Última alteração por:{' '}
+                  <span className="font-medium text-slate-900 dark:text-slate-200">
+                    {selectedProposta.expand.ultimo_usuario_status.name}
+                  </span>
+                </>
+              )}
             </SheetDescription>
           </SheetHeader>
           <div className="mt-6">

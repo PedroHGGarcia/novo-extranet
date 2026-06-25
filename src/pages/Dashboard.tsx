@@ -3,19 +3,17 @@ import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import pb from '@/lib/pocketbase/client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import {
-  Bell,
-  Calendar,
-  Package,
-  Users,
-  Briefcase,
-  CheckCircle2,
-  DollarSign,
-  Trophy,
-} from 'lucide-react'
+import { Bell, Calendar, CheckCircle2, DollarSign, Trophy, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from 'recharts'
-import { ChartContainer, ChartTooltip } from '@/components/ui/chart'
+import { startOfMonth, endOfMonth, format } from 'date-fns'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -39,8 +37,15 @@ const MetricCard = ({ title, value, colorClass, icon: Icon }: MetricCardProps) =
     )}
   >
     <div className="relative z-10 flex flex-col gap-1">
-      <span className="text-5xl font-bold tracking-tight">{value}</span>
-      <span className="text-sm font-medium opacity-90">{title}</span>
+      <span
+        className={cn(
+          'font-bold tracking-tight',
+          typeof value === 'string' && value.length > 10 ? 'text-3xl mt-1' : 'text-5xl',
+        )}
+      >
+        {value}
+      </span>
+      <span className="text-sm font-medium opacity-90 mt-1">{title}</span>
     </div>
     <Icon
       className="absolute -bottom-6 -right-4 h-32 w-32 opacity-20 transition-transform duration-500 hover:scale-110 select-none"
@@ -52,11 +57,6 @@ const MetricCard = ({ title, value, colorClass, icon: Icon }: MetricCardProps) =
 
 export default function Dashboard() {
   const { user } = useAuth()
-
-  const [totalClientes, setTotalClientes] = useState(0)
-  const [produtosAtivos, setProdutosAtivos] = useState(0)
-  const [totalRepresentantes, setTotalRepresentantes] = useState(0)
-  const [eventosHoje, setEventosHoje] = useState(0)
 
   const [notificacoes, setNotificacoes] = useState<any[]>([])
   const [eventos, setEventos] = useState<any[]>([])
@@ -79,32 +79,22 @@ export default function Dashboard() {
     try {
       const todayStart = new Date()
       todayStart.setHours(0, 0, 0, 0)
-      const todayEnd = new Date()
-      todayEnd.setHours(23, 59, 59, 999)
-      const startStr = todayStart.toISOString().replace('T', ' ')
-      const endStr = todayEnd.toISOString().replace('T', ' ')
+      const startTodayStr = todayStart.toISOString().replace('T', ' ')
 
-      const [clientesRes, prodRes, repsRes, eventosRes, propostasRes] = await Promise.all([
-        pb.collection('clientes').getList(1, 1),
-        pb.collection('produtos').getList(1, 1, { filter: "status = 'Ativo'" }),
-        pb.collection('representantes').getList(1, 1),
-        pb
-          .collection('eventos')
-          .getList(1, 1, { filter: `data >= "${startStr}" && data <= "${endStr}"` }),
-        pb.collection('propostas').getFullList({ expand: 'representante' }),
-      ])
+      const startMonthStr = format(startOfMonth(new Date()), 'yyyy-MM-dd 00:00:00')
+      const endMonthStr = format(endOfMonth(new Date()), 'yyyy-MM-dd 23:59:59')
 
-      setTotalClientes(clientesRes.totalItems)
-      setProdutosAtivos(prodRes.totalItems)
-      setTotalRepresentantes(repsRes.totalItems)
-      setEventosHoje(eventosRes.totalItems)
+      const propostasMesRes = await pb.collection('propostas').getFullList({
+        filter: `created >= "${startMonthStr}" && created <= "${endMonthStr}"`,
+        expand: 'representante',
+      })
 
-      const approved = propostasRes.filter((p) => p.status === 'Aprovada')
-      const consolidatedValue = approved.reduce((acc, p) => acc + (p.valor_final || 0), 0)
+      const approvedMonth = propostasMesRes.filter((p) => p.status === 'Aprovada')
+      const consolidatedValueMonth = approvedMonth.reduce((acc, p) => acc + (p.valor_final || 0), 0)
 
       const repStats: Record<string, { name: string; approved: number; total: number }> = {}
 
-      propostasRes.forEach((p) => {
+      propostasMesRes.forEach((p) => {
         const repId = p.representante
         const repName = p.expand?.representante?.fantasia
         if (!repId || !repName) return
@@ -123,16 +113,18 @@ export default function Dashboard() {
           name: r.name,
           approved: r.approved,
           total: r.total,
-          conversionRate: (r.approved / r.total) * 100,
+          conversionRate: r.total > 0 ? (r.approved / r.total) * 100 : 0,
         }))
         .sort((a, b) => b.conversionRate - a.conversionRate)
         .slice(0, 10)
 
       setMetrics({
-        totalProposals: propostasRes.length,
-        approvedProposals: approved.length,
-        approvalRate: propostasRes.length ? (approved.length / propostasRes.length) * 100 : 0,
-        consolidatedValue,
+        totalProposals: propostasMesRes.length,
+        approvedProposals: approvedMonth.length,
+        approvalRate: propostasMesRes.length
+          ? (approvedMonth.length / propostasMesRes.length) * 100
+          : 0,
+        consolidatedValue: consolidatedValueMonth,
         representativesRanking: ranking,
       })
 
@@ -145,7 +137,7 @@ export default function Dashboard() {
       }
 
       const evtRes = await pb.collection('eventos').getList(1, 3, {
-        filter: `data >= "${startStr}"`,
+        filter: `data >= "${startTodayStr}"`,
         sort: '+data',
       })
       setEventos(evtRes.items)
@@ -167,9 +159,6 @@ export default function Dashboard() {
     loadData()
   }, [user])
 
-  useRealtime('clientes', () => loadData())
-  useRealtime('produtos', () => loadData())
-  useRealtime('representantes', () => loadData())
   useRealtime('eventos', () => loadData())
   useRealtime('notificacoes', () => loadData())
   useRealtime('configuracoes_dashboard', () => loadData())
@@ -185,72 +174,36 @@ export default function Dashboard() {
             Olá, {user?.name || 'Usuário'}!
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Aqui está o resumo das suas atividades e informações importantes.
+            Aqui está o resumo de performance de vendas.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card className="border-t-4 border-t-emerald-500 shadow-sm rounded-2xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500 flex items-center justify-between">
-              Taxa de Aprovação Global
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-              {metrics.approvalRate.toFixed(1)}%
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              {metrics.approvedProposals} aprovadas de {metrics.totalProposals} totais
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-t-4 border-t-blue-500 shadow-sm rounded-2xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500 flex items-center justify-between">
-              Volume de Negócios
-              <DollarSign className="h-4 w-4 text-blue-500" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-              {formatCurrency(metrics.consolidatedValue)}
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Soma do valor final das propostas aprovadas
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {isVisible('cards_resumo') && (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <MetricCard
-            title="Total Clientes"
-            value={totalClientes}
-            colorClass="bg-brand-blue"
-            icon={Users}
+            title="Total de Propostas (Mês)"
+            value={metrics.totalProposals}
+            colorClass="bg-[#3b82f6]"
+            icon={FileText}
           />
           <MetricCard
-            title="Produtos Ativos"
-            value={produtosAtivos}
-            colorClass="bg-brand-cyan"
-            icon={Package}
+            title="Propostas Aprovadas (Mês)"
+            value={metrics.approvedProposals}
+            colorClass="bg-[#06b6d4]"
+            icon={CheckCircle2}
           />
           <MetricCard
-            title="Representantes"
-            value={totalRepresentantes}
-            colorClass="bg-brand-orange"
-            icon={Briefcase}
+            title="Taxa de Aprovação (Mês)"
+            value={`${metrics.approvalRate.toFixed(1)}%`}
+            colorClass="bg-[#f59e0b]"
+            icon={Trophy}
           />
           <MetricCard
-            title="Eventos Hoje"
-            value={eventosHoje}
-            colorClass="bg-brand-green"
-            icon={Calendar}
+            title="Volume de Negócios (Mês)"
+            value={formatCurrency(metrics.consolidatedValue)}
+            colorClass="bg-[#14532d]"
+            icon={DollarSign}
           />
         </div>
       )}
@@ -263,89 +216,51 @@ export default function Dashboard() {
               Ranking de Representantes (Conversão)
             </CardTitle>
             <CardDescription>
-              Top 10 representantes com maior taxa de conversão (Propostas Aprovadas / Total)
+              Top 10 representantes com maior taxa de conversão neste mês (Propostas Aprovadas /
+              Total)
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6 pl-0">
+          <CardContent className="pt-2">
             {metrics.representativesRanking.length === 0 ? (
-              <p className="text-sm text-slate-500 pl-6">Nenhum dado de conversão disponível.</p>
+              <p className="text-sm text-slate-500">
+                Nenhum dado de conversão disponível neste mês.
+              </p>
             ) : (
-              <ChartContainer
-                config={{
-                  conversionRate: { label: 'Taxa de Conversão (%)', color: 'hsl(var(--primary))' },
-                }}
-                className="h-[350px] w-full"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={metrics.representativesRanking}
-                    layout="vertical"
-                    margin={{ top: 0, right: 30, left: 40, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                    <XAxis
-                      type="number"
-                      unit="%"
-                      tickLine={false}
-                      axisLine={false}
-                      domain={[0, 100]}
-                    />
-                    <YAxis
-                      dataKey="name"
-                      type="category"
-                      tickLine={false}
-                      axisLine={false}
-                      width={120}
-                    />
-                    <ChartTooltip
-                      cursor={{ fill: 'transparent' }}
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const data = payload[0].payload
-                          return (
-                            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-lg shadow-sm text-sm">
-                              <p className="font-bold text-slate-900 dark:text-slate-100">
-                                {data.name}
-                              </p>
-                              <div className="mt-2 space-y-1">
-                                <p className="text-slate-600 dark:text-slate-400">
-                                  Conversão:{' '}
-                                  <span className="font-semibold text-brand-orange">
-                                    {data.conversionRate.toFixed(1)}%
-                                  </span>
-                                </p>
-                                <p className="text-slate-600 dark:text-slate-400">
-                                  Propostas Aprovadas:{' '}
-                                  <span className="font-medium text-slate-900 dark:text-slate-100">
-                                    {data.approved}
-                                  </span>
-                                </p>
-                                <p className="text-slate-600 dark:text-slate-400">
-                                  Total Propostas:{' '}
-                                  <span className="font-medium text-slate-900 dark:text-slate-100">
-                                    {data.total}
-                                  </span>
-                                </p>
-                              </div>
-                            </div>
-                          )
-                        }
-                        return null
-                      }}
-                    />
-                    <Bar
-                      dataKey="conversionRate"
-                      fill="var(--color-conversionRate)"
-                      radius={[0, 4, 4, 0]}
-                      barSize={24}
-                    >
-                      {metrics.representativesRanking.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill="var(--color-conversionRate)" />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
+              <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
+                <Table>
+                  <TableHeader className="bg-slate-50 dark:bg-slate-900/50">
+                    <TableRow>
+                      <TableHead className="w-[100px]">Posição</TableHead>
+                      <TableHead>Representante</TableHead>
+                      <TableHead className="text-right">Total Propostas</TableHead>
+                      <TableHead className="text-right">Aprovadas</TableHead>
+                      <TableHead className="text-right">Taxa de Conversão</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {metrics.representativesRanking.map((rep, index) => (
+                      <TableRow
+                        key={index}
+                        className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                      >
+                        <TableCell className="font-bold text-slate-400">{index + 1}º</TableCell>
+                        <TableCell className="font-medium text-slate-700 dark:text-slate-300">
+                          {rep.name}
+                        </TableCell>
+                        <TableCell className="text-right text-slate-600 dark:text-slate-400">
+                          {rep.total}
+                        </TableCell>
+                        <TableCell className="text-right text-slate-600 dark:text-slate-400">
+                          {rep.approved}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-[#f59e0b]">
+                          {rep.conversionRate.toFixed(1)}%
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
