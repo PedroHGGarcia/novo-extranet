@@ -1,14 +1,5 @@
 import { useState, useEffect } from 'react'
-import {
-  Edit,
-  Copy,
-  List,
-  ArrowUp,
-  ArrowDown,
-  ArrowDownUp,
-  FileText,
-  Network
-} from 'lucide-react'
+import { Edit, Copy, List, ArrowUp, ArrowDown, ArrowDownUp, FileText, Network } from 'lucide-react'
 import { format } from 'date-fns'
 
 import { Button } from '@/components/ui/button'
@@ -158,8 +149,8 @@ export default function TiposPropostas() {
 
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
-    
-    if (activeTab === 'registros') return;
+
+    if (activeTab === 'registros') return
 
     if (!formData.nome) {
       toast({ title: 'Nome é obrigatório', variant: 'destructive' })
@@ -374,13 +365,19 @@ export default function TiposPropostas() {
                     <TableBody>
                       {isLoading ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-slate-500 text-sm">
+                          <TableCell
+                            colSpan={5}
+                            className="text-center py-8 text-slate-500 text-sm"
+                          >
                             Carregando...
                           </TableCell>
                         </TableRow>
                       ) : data.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-slate-500 text-sm">
+                          <TableCell
+                            colSpan={5}
+                            className="text-center py-8 text-slate-500 text-sm"
+                          >
                             Nenhum registro encontrado.
                           </TableCell>
                         </TableRow>
@@ -428,6 +425,8 @@ export default function TiposPropostas() {
                                   'px-1.5 py-0.5 text-[10px] rounded-[3px] text-white',
                                   item.status === 'Ativo' ? 'bg-[#5cb85c]' : 'bg-[#d9534f]',
                                 )}
+                              >
+                                {item.status}
                               </span>
                             </TableCell>
                           </TableRow>
@@ -445,7 +444,7 @@ export default function TiposPropostas() {
                     <FileText className="w-4 h-4 text-slate-600" />
                     <h3 className="font-normal text-slate-700 text-sm">Dados</h3>
                   </div>
-                  
+
                   <div className="p-4 space-y-6">
                     <div className="grid grid-cols-[1fr_150px] gap-6">
                       <div className="flex flex-col">
@@ -507,7 +506,9 @@ export default function TiposPropostas() {
                         <input
                           className={inputClass}
                           value={formData.frase_preco || ''}
-                          onChange={(e) => setFormData({ ...formData, frase_preco: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, frase_preco: e.target.value })
+                          }
                           placeholder="Frase do Preço"
                         />
                       </div>
@@ -607,7 +608,9 @@ export default function TiposPropostas() {
                         <textarea
                           className={cn(inputClass, 'min-h-[100px] resize-y leading-relaxed')}
                           value={formData.imposto_ipi || ''}
-                          onChange={(e) => setFormData({ ...formData, imposto_ipi: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, imposto_ipi: e.target.value })
+                          }
                           placeholder="Imposto IPI"
                         />
                       </div>
@@ -619,7 +622,9 @@ export default function TiposPropostas() {
                         <textarea
                           className={cn(inputClass, 'min-h-[60px] resize-y leading-relaxed')}
                           value={formData.imposto_icms || ''}
-                          onChange={(e) => setFormData({ ...formData, imposto_icms: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, imposto_icms: e.target.value })
+                          }
                           placeholder="Imposto ICMS"
                         />
                       </div>
@@ -627,8 +632,15 @@ export default function TiposPropostas() {
                         <label className={labelClass}>Dt. Cad</label>
                         <input
                           readOnly
-                          className={cn(inputClass, 'bg-slate-100 border-none px-2 rounded-sm text-slate-500 mt-1')}
-                          value={selectedItem?.created ? format(new Date(selectedItem.created), 'dd/MM/yyyy HH:mm:ss') : ''}
+                          className={cn(
+                            inputClass,
+                            'bg-slate-100 border-none px-2 rounded-sm text-slate-500 mt-1',
+                          )}
+                          value={
+                            selectedItem?.created
+                              ? format(new Date(selectedItem.created), 'dd/MM/yyyy HH:mm:ss')
+                              : ''
+                          }
                         />
                       </div>
                     </div>
@@ -643,7 +655,7 @@ export default function TiposPropostas() {
                       Formas de Pagamento do Pedido
                     </h3>
                   </div>
-                  
+
                   <div className="p-4 space-y-3">
                     {[
                       'Faturamento a vista',
