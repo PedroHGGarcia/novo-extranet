@@ -29,6 +29,7 @@ import { getTiposProposta, type TipoProposta } from '@/services/tipos-propostas'
 import { useRealtime } from '@/hooks/use-realtime'
 import { cn } from '@/lib/utils'
 import { PropostaDocument } from '@/components/PropostaDocument'
+import { ProposalHistory } from '@/components/ProposalHistory'
 import pb from '@/lib/pocketbase/client'
 import { useToast } from '@/components/ui/use-toast'
 
@@ -1150,17 +1151,37 @@ export default function EmitirProposta() {
                   onChange={(e) => setFormData({ ...formData, dt_cad: e.target.value })}
                 />
               </div>
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Status</label>
-                <select
-                  className={inputClass}
-                  value={formData.status || 'Em Análise'}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                >
-                  <option value="Em Análise">Em Análise</option>
-                  <option value="Aprovada">Aprovada</option>
-                  <option value="Recusada">Recusada</option>
-                </select>
+              <div className="flex flex-col w-full relative">
+                <label className={labelClass}>Status da Proposta</label>
+                <div className="flex bg-slate-100 rounded-sm p-1 gap-1 border border-slate-200">
+                  {['Em Análise', 'Aprovada', 'Recusada'].map((statusOption) => {
+                    const isSelected = (formData.status || 'Em Análise') === statusOption
+                    return (
+                      <button
+                        key={statusOption}
+                        onClick={() => setFormData({ ...formData, status: statusOption })}
+                        className={cn(
+                          'flex-1 text-[11px] font-medium py-1.5 rounded-sm transition-all',
+                          isSelected
+                            ? statusOption === 'Aprovada'
+                              ? 'bg-emerald-500 text-white shadow-sm'
+                              : statusOption === 'Recusada'
+                                ? 'bg-rose-500 text-white shadow-sm'
+                                : 'bg-amber-500 text-white shadow-sm'
+                            : 'text-slate-500 hover:bg-slate-200',
+                        )}
+                      >
+                        {statusOption}
+                      </button>
+                    )
+                  })}
+                </div>
+                {(formData.status === 'Aprovada' || formData.status === 'Recusada') && (
+                  <span className="text-[10px] text-slate-500 mt-1 leading-tight">
+                    O status finalizado possui validade de auditoria. Alterações serão registradas
+                    no histórico.
+                  </span>
+                )}
               </div>
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Versão</label>
@@ -1450,6 +1471,12 @@ export default function EmitirProposta() {
                 </table>
               )}
             </div>
+
+            {selectedProposta && (
+              <div className="w-full mt-8">
+                <ProposalHistory proposalId={selectedProposta.id} />
+              </div>
+            )}
 
             <div className="w-full mt-4 border-t border-slate-200 pt-6">
               {renderCadastroActionBars()}

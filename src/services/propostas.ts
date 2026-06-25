@@ -31,6 +31,7 @@ export interface Proposta {
   data_alteracao_status?: string
   created: string
   updated: string
+  ultimo_usuario_status?: string
   expand?: {
     cliente?: { fantasia: string; razao_social?: string }
     versao?: { nome: string }
@@ -38,19 +39,20 @@ export interface Proposta {
     gerente?: { nome: string }
     user?: { name: string; assinatura?: string; id: string }
     tipo_proposta?: TipoProposta
+    ultimo_usuario_status?: { name: string; email: string; id: string }
   }
 }
 
 export const getPropostasPaginated = async (page = 1, perPage = 50, sort = '-created') => {
   return pb.collection('propostas').getList<Proposta>(page, perPage, {
     sort,
-    expand: 'cliente,versao,representante,gerente,user,tipo_proposta',
+    expand: 'cliente,versao,representante,gerente,user,tipo_proposta,ultimo_usuario_status',
   })
 }
 
 export const getProposta = async (id: string) => {
   return pb.collection('propostas').getOne<Proposta>(id, {
-    expand: 'cliente,versao,representante,gerente,user,tipo_proposta',
+    expand: 'cliente,versao,representante,gerente,user,tipo_proposta,ultimo_usuario_status',
   })
 }
 

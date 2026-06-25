@@ -4,6 +4,9 @@ onRecordUpdateRequest((e) => {
 
   if (newStatus && oldStatus !== newStatus) {
     e.record.set('data_alteracao_status', new Date().toISOString())
+    if (e.auth?.id) {
+      e.record.set('ultimo_usuario_status', e.auth.id)
+    }
   }
 
   e.next()
@@ -12,6 +15,9 @@ onRecordUpdateRequest((e) => {
 onRecordCreateRequest((e) => {
   if (e.record.getString('status')) {
     e.record.set('data_alteracao_status', new Date().toISOString())
+    if (e.auth?.id) {
+      e.record.set('ultimo_usuario_status', e.auth.id)
+    }
   }
   e.next()
 }, 'propostas')
