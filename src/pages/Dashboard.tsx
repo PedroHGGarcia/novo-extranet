@@ -5,7 +5,6 @@ import pb from '@/lib/pocketbase/client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Bell, Calendar, Trophy } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { startOfMonth, endOfMonth, format } from 'date-fns'
 import {
   Table,
   TableBody,
@@ -25,9 +24,7 @@ export default function Dashboard() {
   const [metrics, setMetrics] = useState({
     representativesRanking: [] as {
       name: string
-      conversionRate: number
-      approved: number
-      total: number
+      totalSales: number
     }[],
   })
 
@@ -37,38 +34,26 @@ export default function Dashboard() {
       todayStart.setHours(0, 0, 0, 0)
       const startTodayStr = todayStart.toISOString().replace('T', ' ')
 
-      const startMonthStr = format(startOfMonth(new Date()), 'yyyy-MM-dd 00:00:00')
-      const endMonthStr = format(endOfMonth(new Date()), 'yyyy-MM-dd 23:59:59')
-
-      const propostasMesRes = await pb.collection('propostas').getFullList({
-        filter: `dt_cad >= "${startMonthStr}" && dt_cad <= "${endMonthStr}"`,
+      const propostasAprovadas = await pb.collection('propostas').getFullList({
+        filter: `status = "Aprovada"`,
         expand: 'representante',
       })
 
-      const repStats: Record<string, { name: string; approved: number; total: number }> = {}
+      const repStats: Record<string, { name: string; totalSales: number }> = {}
 
-      propostasMesRes.forEach((p) => {
+      propostasAprovadas.forEach((p) => {
         const repId = p.representante
         const repName = p.expand?.representante?.fantasia
         if (!repId || !repName) return
 
         if (!repStats[repId]) {
-          repStats[repId] = { name: repName, approved: 0, total: 0 }
+          repStats[repId] = { name: repName, totalSales: 0 }
         }
-        repStats[repId].total += 1
-        if (p.status === 'Aprovada') {
-          repStats[repId].approved += 1
-        }
+        repStats[repId].totalSales += p.valor_final || 0
       })
 
       const ranking = Object.values(repStats)
-        .map((r) => ({
-          name: r.name,
-          approved: r.approved,
-          total: r.total,
-          conversionRate: r.total > 0 ? (r.approved / r.total) * 100 : 0,
-        }))
-        .sort((a, b) => b.conversionRate - a.conversionRate)
+        .sort((a, b) => b.totalSales - a.totalSales)
         .slice(0, 10)
 
       setMetrics({
@@ -131,18 +116,15 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-brand-orange" />
-              Ranking de Representantes (Conversão)
+              Ranking de Representantes (Vendas)
             </CardTitle>
             <CardDescription>
-              Top 10 representantes com maior taxa de conversão neste mês (Propostas Aprovadas /
-              Total)
+              Top 10 representantes com maior volume de vendas em propostas aprovadas
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-2">
             {metrics.representativesRanking.length === 0 ? (
-              <p className="text-sm text-slate-500">
-                Nenhum dado de conversão disponível neste mês.
-              </p>
+              <p className="text-sm text-slate-500">Nenhum dado disponível.</p>
             ) : (
               <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
                 <Table>
@@ -150,9 +132,7 @@ export default function Dashboard() {
                     <TableRow>
                       <TableHead className="w-[100px]">Posição</TableHead>
                       <TableHead>Representante</TableHead>
-                      <TableHead className="text-right">Total Propostas</TableHead>
-                      <TableHead className="text-right">Aprovadas</TableHead>
-                      <TableHead className="text-right">Taxa de Conversão</TableHead>
+                      <TableHead className="text-right">Volume de Vendas</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -165,14 +145,11 @@ export default function Dashboard() {
                         <TableCell className="font-medium text-slate-700 dark:text-slate-300">
                           {rep.name}
                         </TableCell>
-                        <TableCell className="text-right text-slate-600 dark:text-slate-400">
-                          {rep.total}
-                        </TableCell>
-                        <TableCell className="text-right text-slate-600 dark:text-slate-400">
-                          {rep.approved}
-                        </TableCell>
                         <TableCell className="text-right font-bold text-[#f59e0b]">
-                          {rep.conversionRate.toFixed(1)}%
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          }).format(rep.totalSales)}
                         </TableCell>
                       </TableRow>
                     ))}
