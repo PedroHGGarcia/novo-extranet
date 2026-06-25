@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Edit, Copy, List, ArrowUp, ArrowDown, ArrowDownUp, FileText, Network } from 'lucide-react'
+import {
+  Edit,
+  Copy,
+  List,
+  ArrowUp,
+  ArrowDown,
+  ArrowDownUp,
+  FileText,
+  Network,
+  AlertCircle,
+} from 'lucide-react'
 import { format } from 'date-fns'
 
 import { Button } from '@/components/ui/button'
@@ -27,6 +37,99 @@ import {
 } from '@/services/tipos-propostas'
 import { extractFieldErrors } from '@/lib/pocketbase/errors'
 
+const inputClass =
+  'w-full bg-transparent border-0 border-b border-slate-300 rounded-none px-0 py-1.5 outline-none text-slate-700 text-xs focus:border-[#337ab7] focus:ring-0 transition-colors'
+const labelClass = 'text-[11px] text-slate-500 mb-0.5'
+
+const PercentageInput = ({
+  value,
+  onChange,
+  isNumber = false,
+  placeholder = '',
+}: {
+  value: any
+  onChange: (val: any) => void
+  isNumber?: boolean
+  placeholder?: string
+}) => {
+  const [display, setDisplay] = useState('')
+
+  useEffect(() => {
+    if (value == null || value === '') {
+      setDisplay('')
+      return
+    }
+    if (isNumber) {
+      const v = parseFloat(value as string)
+      if (!isNaN(v)) {
+        setDisplay(
+          v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%',
+        )
+      } else {
+        setDisplay('')
+      }
+    } else {
+      const str = String(value)
+      if (str && !str.includes('%') && /^[0-9.,]+$/.test(str)) {
+        const num = parseFloat(str.replace(',', '.'))
+        if (!isNaN(num)) {
+          setDisplay(
+            num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+              '%',
+          )
+        } else {
+          setDisplay(str)
+        }
+      } else {
+        setDisplay(str)
+      }
+    }
+  }, [value, isNumber])
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/[^0-9.,]/g, '')
+    if (!val) {
+      onChange(isNumber ? 0 : '')
+      setDisplay('')
+      return
+    }
+    val = val.replace(',', '.')
+    const num = parseFloat(val)
+    if (isNaN(num)) {
+      onChange(isNumber ? 0 : '')
+      setDisplay('')
+      return
+    }
+
+    if (isNumber) {
+      onChange(num)
+      setDisplay(
+        num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%',
+      )
+    } else {
+      const formatted =
+        num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%'
+      onChange(formatted)
+      setDisplay(formatted)
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDisplay(e.target.value)
+  }
+
+  return (
+    <input
+      type="text"
+      className={inputClass}
+      value={display}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      placeholder={placeholder}
+    />
+  )
+}
+
 export default function TiposPropostas() {
   const { toast } = useToast()
 
@@ -41,6 +144,7 @@ export default function TiposPropostas() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingForm, setIsLoadingForm] = useState(false)
+  const [loadError, setLoadError] = useState<{ id: string; message: string } | null>(null)
 
   const [formData, setFormData] = useState<Partial<TipoProposta>>({
     status: 'Ativo',
@@ -122,7 +226,7 @@ export default function TiposPropostas() {
       for (const id of selectedIds) {
         await deleteTipoProposta(id)
       }
-      toast({ title: 'Itens excluídos com sucesso' })
+      toast({ title: 'Sucesso: Dados salvos com sucesso!' })
       setIsDeleteModalOpen(false)
       loadData()
     } catch (e) {
@@ -130,47 +234,76 @@ export default function TiposPropostas() {
     }
   }
 
-  const handleEdit = async (item: TipoProposta) => {
-    setActiveTab('cadastro')
+  const loadFullItem = async (id: string) => {
     setIsLoadingForm(true)
-    setFormData({ status: 'Ativo', tem_fator: false, formas_pagamento_selecionadas: [] })
+    setLoadError(null)
     try {
-      const fullItem = await getTipoProposta(item.id)
-      setSelectedItem(fullItem)
-      setFormData({
-        ...fullItem,
-        formas_pagamento_selecionadas: fullItem.formas_pagamento_selecionadas || [],
-      })
+      const fullItem = await getTipoProposta(id)
+      return fullItem
     } catch (err) {
-      console.error('Error fetching TipoProposta for edit:', err)
-      toast({ title: 'Erro ao carregar dados do tipo de proposta', variant: 'destructive' })
-      setActiveTab('registros')
+      console.error(err)
+      setLoadError({
+        id,
+        message:
+          'Não foi possível carregar os dados do tipo de proposta. O registro pode ter sido excluído.',
+      })
+      return null
     } finally {
       setIsLoadingForm(false)
     }
   }
 
-  const handleDuplicate = async (item: TipoProposta) => {
+  const handleEdit = async (item: TipoProposta) => {
     setActiveTab('cadastro')
-    setIsLoadingForm(true)
     setFormData({ status: 'Ativo', tem_fator: false, formas_pagamento_selecionadas: [] })
-    try {
-      const fullItem = await getTipoProposta(item.id)
-      setSelectedItem(null)
+    const fullItem = await loadFullItem(item.id)
+    if (fullItem) {
+      setSelectedItem(fullItem)
       setFormData({
         ...fullItem,
-        id: undefined,
+        formas_pagamento_selecionadas: fullItem.formas_pagamento_selecionadas || [],
+      })
+    }
+  }
+
+  const retryLoad = async () => {
+    if (!loadError) return
+    const fullItem = await loadFullItem(loadError.id)
+    if (fullItem) {
+      setSelectedItem(fullItem)
+      setFormData({
+        ...fullItem,
+        formas_pagamento_selecionadas: fullItem.formas_pagamento_selecionadas || [],
+      })
+    }
+  }
+
+  const handleDuplicate = async (item: TipoProposta) => {
+    try {
+      setIsLoading(true)
+      const fullItem = await getTipoProposta(item.id)
+      const newItemData = {
+        ...fullItem,
         nome: `${fullItem.nome} - Cópia`,
+        id: undefined,
         created: undefined,
         updated: undefined,
         formas_pagamento_selecionadas: fullItem.formas_pagamento_selecionadas || [],
+      }
+      const newItem = await createTipoProposta(newItemData)
+      toast({ title: 'Sucesso: Dados salvos com sucesso!' })
+
+      setActiveTab('cadastro')
+      setSelectedItem(newItem)
+      setFormData({
+        ...newItem,
+        formas_pagamento_selecionadas: newItem.formas_pagamento_selecionadas || [],
       })
+      loadData()
     } catch (err) {
-      console.error('Error fetching TipoProposta for duplicate:', err)
-      toast({ title: 'Erro ao carregar dados do tipo de proposta', variant: 'destructive' })
-      setActiveTab('registros')
+      toast({ title: 'Erro ao duplicar tipo de proposta', variant: 'destructive' })
     } finally {
-      setIsLoadingForm(false)
+      setIsLoading(false)
     }
   }
 
@@ -180,17 +313,17 @@ export default function TiposPropostas() {
     if (activeTab === 'registros') return
 
     if (!formData.nome) {
-      toast({ title: 'Nome é obrigatório', variant: 'destructive' })
+      toast({ title: 'O campo Nome é obrigatório', variant: 'destructive' })
       return
     }
 
     try {
       if (selectedItem) {
         await updateTipoProposta(selectedItem.id, formData)
-        toast({ title: 'Item atualizado com sucesso' })
+        toast({ title: 'Sucesso: Dados salvos com sucesso!' })
       } else {
         await createTipoProposta(formData)
-        toast({ title: 'Item criado com sucesso' })
+        toast({ title: 'Sucesso: Dados salvos com sucesso!' })
       }
       setActiveTab('registros')
       setSelectedItem(null)
@@ -201,7 +334,10 @@ export default function TiposPropostas() {
       if (fieldErrs.nome) {
         toast({ title: 'Erro no nome: ' + fieldErrs.nome, variant: 'destructive' })
       } else {
-        toast({ title: 'Erro ao salvar item', variant: 'destructive' })
+        toast({
+          title: 'Erro ao salvar os dados. Verifique os campos e tente novamente.',
+          variant: 'destructive',
+        })
       }
     }
   }
@@ -209,6 +345,7 @@ export default function TiposPropostas() {
   const handleNew = () => {
     setSelectedItem(null)
     setFormData({ status: 'Ativo', tem_fator: false, formas_pagamento_selecionadas: [] })
+    setLoadError(null)
     setActiveTab('cadastro')
   }
 
@@ -256,10 +393,6 @@ export default function TiposPropostas() {
 
   const startItem = totalItems === 0 ? 0 : (page - 1) * perPage + 1
   const endItem = Math.min(page * perPage, totalItems)
-
-  const inputClass =
-    'w-full bg-transparent border-0 border-b border-slate-300 rounded-none px-0 py-1.5 outline-none text-slate-700 text-xs focus:border-[#337ab7] focus:ring-0 transition-colors'
-  const labelClass = 'text-[11px] text-slate-500 mb-0.5'
 
   return (
     <div className="flex flex-col h-full bg-[#f1f5f9] font-sans">
@@ -396,7 +529,10 @@ export default function TiposPropostas() {
                             colSpan={5}
                             className="text-center py-8 text-slate-500 text-sm"
                           >
-                            Carregando...
+                            <div className="flex justify-center items-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#337ab7]"></div>
+                              Carregando...
+                            </div>
                           </TableCell>
                         </TableRow>
                       ) : data.length === 0 ? (
@@ -422,7 +558,9 @@ export default function TiposPropostas() {
                               />
                             </TableCell>
                             <TableCell className="align-top py-2.5 px-3 border-r border-slate-100">
-                              <div className="text-slate-600 text-xs mb-1">{item.nome}</div>
+                              <div className="text-slate-600 text-xs mb-1 font-medium">
+                                {item.nome}
+                              </div>
                               <div className="flex items-center gap-3 mt-1">
                                 <button
                                   type="button"
@@ -463,10 +601,21 @@ export default function TiposPropostas() {
                   </Table>
                 </div>
               </div>
+            ) : loadError ? (
+              <div className="flex flex-col items-center justify-center py-16 text-slate-600">
+                <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+                <p className="font-medium text-lg text-slate-800 mb-2">Erro ao carregar</p>
+                <p className="text-sm text-slate-500 mb-6 max-w-md text-center">
+                  {loadError.message}
+                </p>
+                <Button onClick={retryLoad} className="bg-[#337ab7] hover:bg-[#286090]">
+                  Tentar Novamente
+                </Button>
+              </div>
             ) : isLoadingForm ? (
-              <div className="flex justify-center items-center py-12 text-slate-500">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#337ab7]"></div>
-                <span className="ml-3 text-sm">Carregando dados...</span>
+              <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#337ab7] mb-4"></div>
+                <span className="text-sm font-medium">Carregando dados do tipo de proposta...</span>
               </div>
             ) : (
               <form onSubmit={handleSave} className="flex flex-col md:flex-row gap-4 items-start">
@@ -521,18 +670,11 @@ export default function TiposPropostas() {
                       </div>
                       <div className="flex flex-col">
                         <label className={labelClass}>Comissão (%)</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          className={inputClass}
-                          value={formData.comissao ?? ''}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              comissao: e.target.value ? parseFloat(e.target.value) : 0,
-                            })
-                          }
-                          placeholder="Comissão (%)"
+                        <PercentageInput
+                          value={formData.comissao}
+                          onChange={(v) => setFormData({ ...formData, comissao: v })}
+                          isNumber={true}
+                          placeholder="0,00%"
                         />
                       </div>
                     </div>
@@ -640,31 +782,6 @@ export default function TiposPropostas() {
                           }
                         />
                       </div>
-                      <div className="flex flex-col h-full">
-                        <label className={labelClass}>Imposto IPI</label>
-                        <textarea
-                          className={cn(inputClass, 'min-h-[100px] resize-y leading-relaxed')}
-                          value={formData.imposto_ipi || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, imposto_ipi: e.target.value })
-                          }
-                          placeholder="Imposto IPI"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="flex flex-col h-full">
-                        <label className={labelClass}>Imposto ICMS</label>
-                        <textarea
-                          className={cn(inputClass, 'min-h-[60px] resize-y leading-relaxed')}
-                          value={formData.imposto_icms || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, imposto_icms: e.target.value })
-                          }
-                          placeholder="Imposto ICMS"
-                        />
-                      </div>
                       <div className="flex flex-col">
                         <label className={labelClass}>Dt. Cad</label>
                         <input
@@ -678,6 +795,27 @@ export default function TiposPropostas() {
                               ? format(new Date(selectedItem.created), 'dd/MM/yyyy HH:mm:ss')
                               : ''
                           }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="flex flex-col h-full">
+                        <label className={labelClass}>Imposto IPI</label>
+                        <PercentageInput
+                          value={formData.imposto_ipi}
+                          onChange={(v) => setFormData({ ...formData, imposto_ipi: v })}
+                          isNumber={false}
+                          placeholder="0,00%"
+                        />
+                      </div>
+                      <div className="flex flex-col h-full">
+                        <label className={labelClass}>Imposto ICMS</label>
+                        <PercentageInput
+                          value={formData.imposto_icms}
+                          onChange={(v) => setFormData({ ...formData, imposto_icms: v })}
+                          isNumber={false}
+                          placeholder="0,00%"
                         />
                       </div>
                     </div>
@@ -736,7 +874,7 @@ export default function TiposPropostas() {
             )}
 
             {/* Bottom Actions for Cadastro Tab */}
-            {activeTab === 'cadastro' && (
+            {activeTab === 'cadastro' && !loadError && !isLoadingForm && (
               <div className="mt-4 pt-4 border-t border-slate-200 flex gap-2">
                 <Button
                   type="button"
