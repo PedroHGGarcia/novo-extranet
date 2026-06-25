@@ -27,7 +27,6 @@ import {
 import { getPropostasPaginated, updateProposta, type Proposta } from '@/services/propostas'
 import { getTiposProposta, type TipoProposta } from '@/services/tipos-propostas'
 import { useRealtime } from '@/hooks/use-realtime'
-import { printProposal } from '@/lib/pdf-generator'
 import { cn } from '@/lib/utils'
 import pb from '@/lib/pocketbase/client'
 import { useToast } from '@/components/ui/use-toast'
@@ -642,164 +641,12 @@ export default function EmitirProposta() {
     }
   }
 
-  const handleGerarPDF = () => {
-    if (!selectedProposta) {
-      toast({
-        title: 'Selecione ou salve uma proposta primeiro para gerar o PDF',
-        variant: 'destructive',
-      })
+  const printProposal = (item: Proposta) => {
+    if (!item.id) {
+      toast({ title: 'Salve a proposta antes de gerar o PDF', variant: 'default' })
       return
     }
-
-    const tp = selectedProposta.expand?.tipo_proposta
-    const cliente = selectedProposta.expand?.cliente
-    const versao = selectedProposta.expand?.versao
-    const representante = selectedProposta.expand?.representante
-
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) {
-      toast({ title: 'O bloqueador de pop-ups bloqueou a impressão.', variant: 'destructive' })
-      return
-    }
-
-    const tpCondPagto =
-      selectedProposta.condicoes_pagamento || tp?.condicoes_pagamento || 'A combinar.'
-    const tpPrazo = selectedProposta.prazo_entrega || tp?.prazo_entrega || 'A combinar.'
-    const formasPagto = tp?.formas_pagamento_selecionadas?.length
-      ? tp.formas_pagamento_selecionadas.join(', ')
-      : ''
-
-    const acessoriosHTML =
-      selectedProposta.acessorios_proposta?.length > 0
-        ? `
-        <div class="section">
-          <h3>Acessórios Inclusos</h3>
-          <ul class="acc-list">
-            ${selectedProposta.acessorios_proposta
-              .filter((a: any) => a.incluir || a.estado === 'incluir')
-              .map((a: any) => `<li>${a.nome}</li>`)
-              .join('')}
-          </ul>
-        </div>
-        `
-        : ''
-
-    const termosHTML = tp
-      ? `
-      <div class="section terms">
-        <h3>Termos e Condições Comerciais (${tp.nome})</h3>
-        
-        <div class="terms-grid">
-          ${tp.frase_preco ? `<div class="term-box"><strong>Frase do Preço:</strong> ${tp.frase_preco}</div>` : ''}
-          <div class="term-box"><strong>Prazo de Entrega:</strong> ${tpPrazo}</div>
-          <div class="term-box"><strong>Condições de Pagamento:</strong> ${tpCondPagto}</div>
-          ${formasPagto ? `<div class="term-box"><strong>Formas de Pagamento (Pedido):</strong> ${formasPagto}</div>` : ''}
-        </div>
-
-        ${tp.garantia ? `<div class="term-content"><h4>Garantia</h4><p>${tp.garantia}</p></div>` : ''}
-        ${tp.assistencia_tecnica ? `<div class="term-content"><h4>Assistência Técnica</h4><p>${tp.assistencia_tecnica}</p></div>` : ''}
-        ${tp.treinamento_tecnico ? `<div class="term-content"><h4>Treinamento Técnico</h4><p>${tp.treinamento_tecnico}</p></div>` : ''}
-        ${tp.transporte_seguro ? `<div class="term-content"><h4>Transporte/Seguro</h4><p>${tp.transporte_seguro}</p></div>` : ''}
-        ${tp.validade_oferta ? `<div class="term-content"><h4>Validade desta Oferta</h4><p>${tp.validade_oferta}</p></div>` : ''}
-        ${tp.imposto_ipi ? `<div class="term-content"><h4>Imposto IPI</h4><p>${tp.imposto_ipi}</p></div>` : ''}
-        ${tp.imposto_icms ? `<div class="term-content"><h4>Imposto ICMS</h4><p>${tp.imposto_icms}</p></div>` : ''}
-      </div>
-    `
-      : ''
-
-    const html = `
-      <!DOCTYPE html>
-      <html lang="pt-BR">
-      <head>
-        <meta charset="UTF-8">
-        <title>Proposta Comercial - ${selectedProposta.numero_proposta}</title>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-          body { 
-            font-family: 'Inter', sans-serif; 
-            padding: 40px; 
-            color: #1e293b; 
-            line-height: 1.6; 
-            max-width: 900px;
-            margin: 0 auto;
-          }
-          h1 { color: #0f172a; border-bottom: 2px solid #cbd5e1; padding-bottom: 15px; margin-bottom: 30px; }
-          h2 { color: #334155; margin-top: 40px; font-size: 1.25em; font-weight: 600; }
-          h3 { color: #337ab7; margin-top: 30px; font-size: 1.1em; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
-          .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; }
-          .info-block { background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; }
-          .info-block p { margin: 8px 0; font-size: 0.95em; }
-          .info-block strong { color: #475569; display: inline-block; min-width: 120px; }
-          .section { margin-top: 40px; }
-          .acc-list { margin: 0; padding-left: 20px; font-size: 0.95em; color: #475569; }
-          .acc-list li { margin-bottom: 5px; }
-          .total-box { 
-            margin-top: 40px; 
-            padding: 20px; 
-            background: #f0fdf4; 
-            border: 1px solid #bbf7d0; 
-            border-radius: 6px; 
-            text-align: right; 
-          }
-          .total-box span { display: block; font-size: 0.9em; color: #166534; margin-bottom: 5px; }
-          .total-box strong { font-size: 1.5em; color: #15803d; }
-          .terms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0 30px 0; }
-          .term-box { background: #f1f5f9; padding: 12px 15px; border-radius: 4px; font-size: 0.9em; }
-          .term-box strong { display: block; color: #334155; margin-bottom: 4px; }
-          .term-content { margin-bottom: 25px; }
-          .term-content h4 { margin: 0 0 8px 0; color: #475569; font-size: 1em; }
-          .term-content p { margin: 0; font-size: 0.9em; color: #64748b; white-space: pre-wrap; text-align: justify; }
-          @media print {
-            body { padding: 0; }
-            .info-block, .term-box, .total-box { break-inside: avoid; border: 1px solid #ccc; }
-            .term-content { break-inside: avoid; }
-          }
-        </style>
-      </head>
-      <body>
-        <h1>Proposta Comercial #${selectedProposta.numero_proposta}</h1>
-
-        <div class="header-grid">
-          <div class="info-block">
-            <h3 style="margin-top:0; color:#334155">Cliente</h3>
-            <p><strong>Nome/Razão:</strong> ${cliente?.fantasia || cliente?.razao_social || selectedProposta.cliente_original || '-'}</p>
-            <p><strong>Contato:</strong> ${selectedProposta.contato || '-'}</p>
-            <p><strong>Telefone:</strong> ${selectedProposta.telefone || '-'}</p>
-          </div>
-          <div class="info-block">
-            <h3 style="margin-top:0; color:#334155">Informações da Proposta</h3>
-            <p><strong>Data de Emissão:</strong> ${format(new Date(selectedProposta.created || new Date()), 'dd/MM/yyyy')}</p>
-            <p><strong>Representante:</strong> ${representante?.fantasia || selectedProposta.representante_original || '-'}</p>
-            <p><strong>Revisão:</strong> ${selectedProposta.revisao || 'A'}</p>
-          </div>
-        </div>
-
-        <div class="section">
-          <h3>Equipamento / Modelo</h3>
-          <p style="font-size: 1.1em; color: #1e293b; font-weight: 600;">
-            ${versao?.nome || selectedProposta.versao_original || 'Não especificado'}
-          </p>
-        </div>
-
-        ${acessoriosHTML}
-
-        <div class="total-box">
-          <span>Valor Total Final</span>
-          <strong>${formatCurrency(selectedProposta.valor_final, selectedProposta.moeda)}</strong>
-        </div>
-
-        ${termosHTML}
-
-      </body>
-      </html>
-    `
-
-    printWindow.document.write(html)
-    printWindow.document.close()
-    printWindow.focus()
-    setTimeout(() => {
-      printWindow.print()
-    }, 700)
+    window.open(`/controle-propostas/proposta-pdf/${item.id}`, '_blank')
   }
 
   const toggleSelectAll = (checked: boolean) => {
