@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 import {
   TipoProposta,
   getTiposPropostaPaginated,
+  getTipoProposta,
   createTipoProposta,
   updateTipoProposta,
   deleteTipoProposta,
@@ -141,6 +142,7 @@ export default function TiposPropostas() {
         formas_pagamento_selecionadas: fullItem.formas_pagamento_selecionadas || [],
       })
     } catch (err) {
+      console.error('Error fetching TipoProposta for edit:', err)
       toast({ title: 'Erro ao carregar dados do tipo de proposta', variant: 'destructive' })
       setActiveTab('registros')
     } finally {
@@ -164,6 +166,7 @@ export default function TiposPropostas() {
         formas_pagamento_selecionadas: fullItem.formas_pagamento_selecionadas || [],
       })
     } catch (err) {
+      console.error('Error fetching TipoProposta for duplicate:', err)
       toast({ title: 'Erro ao carregar dados do tipo de proposta', variant: 'destructive' })
       setActiveTab('registros')
     } finally {
