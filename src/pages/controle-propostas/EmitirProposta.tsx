@@ -312,6 +312,7 @@ export default function EmitirProposta() {
           valor_final: 0,
           percentual_desconto: 0,
           nota_rep: 1,
+          dt_cad: format(new Date(), 'yyyy-MM-dd'),
         })
         loadAcessorios('')
       }
@@ -1008,7 +1009,9 @@ export default function EmitirProposta() {
                       {formatCurrency(item.valor_final, item.moeda)}
                     </TableCell>
                     <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] whitespace-nowrap">
-                      {item.dt_cad ? format(new Date(item.dt_cad), 'dd/MM/yyyy') : '-'}
+                      {item.dt_cad
+                        ? item.dt_cad.substring(0, 10).split('-').reverse().join('/')
+                        : '-'}
                     </TableCell>
                     <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase">
                       {item.expand?.user?.name || '-'}
@@ -1101,7 +1104,16 @@ export default function EmitirProposta() {
               </div>
             </div>
 
-            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="flex flex-col w-full">
+                <label className={labelClass}>Data de Emissão</label>
+                <input
+                  type="date"
+                  className={inputClass}
+                  value={formData.dt_cad ? formData.dt_cad.substring(0, 10) : ''}
+                  onChange={(e) => setFormData({ ...formData, dt_cad: e.target.value })}
+                />
+              </div>
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Versão</label>
                 <select

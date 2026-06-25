@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getProposta, type Proposta } from '@/services/propostas'
 import { getTipoProposta, type TipoProposta } from '@/services/tipos-propostas'
-import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Printer, AlertCircle } from 'lucide-react'
 import benerLogoUrl from '@/assets/bener-thumb-c5c1b.png'
@@ -121,7 +120,9 @@ export default function PropostaPDF() {
             </p>
             <p className="text-slate-500 text-sm mt-1">
               Data da Emissão:{' '}
-              {proposta.dt_cad ? format(new Date(proposta.dt_cad), 'dd/MM/yyyy') : '-'}
+              {proposta.dt_cad
+                ? proposta.dt_cad.substring(0, 10).split('-').reverse().join('/')
+                : '-'}
             </p>
           </div>
         </div>
