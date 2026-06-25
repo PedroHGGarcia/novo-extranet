@@ -25,6 +25,7 @@ export default function Dashboard() {
     representativesRanking: [] as {
       name: string
       totalSales: number
+      totalProposals: number
     }[],
   })
 
@@ -34,26 +35,31 @@ export default function Dashboard() {
       todayStart.setHours(0, 0, 0, 0)
       const startTodayStr = todayStart.toISOString().replace('T', ' ')
 
-      const propostasAprovadas = await pb.collection('propostas').getFullList({
-        filter: `status = "Aprovada"`,
+      const todasPropostas = await pb.collection('propostas').getFullList({
         expand: 'representante',
       })
 
-      const repStats: Record<string, { name: string; totalSales: number }> = {}
+      const repStats: Record<string, { name: string; totalSales: number; totalProposals: number }> =
+        {}
 
-      propostasAprovadas.forEach((p) => {
+      todasPropostas.forEach((p) => {
         const repId = p.representante
         const repName = p.expand?.representante?.fantasia
         if (!repId || !repName) return
 
         if (!repStats[repId]) {
-          repStats[repId] = { name: repName, totalSales: 0 }
+          repStats[repId] = { name: repName, totalSales: 0, totalProposals: 0 }
         }
-        repStats[repId].totalSales += p.valor_final || 0
+
+        repStats[repId].totalProposals += 1
+
+        if (p.status === 'Aprovada') {
+          repStats[repId].totalSales += p.valor_final || 0
+        }
       })
 
       const ranking = Object.values(repStats)
-        .sort((a, b) => b.totalSales - a.totalSales)
+        .sort((a, b) => b.totalSales - a.totalSales || b.totalProposals - a.totalProposals)
         .slice(0, 10)
 
       setMetrics({
@@ -132,7 +138,8 @@ export default function Dashboard() {
                     <TableRow>
                       <TableHead className="w-[100px]">Posição</TableHead>
                       <TableHead>Representante</TableHead>
-                      <TableHead className="text-right">Volume de Vendas</TableHead>
+                      <TableHead className="text-center">Propostas (Qtd.)</TableHead>
+                      <TableHead className="text-right">Volume Aprovado</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -144,6 +151,9 @@ export default function Dashboard() {
                         <TableCell className="font-bold text-slate-400">{index + 1}º</TableCell>
                         <TableCell className="font-medium text-slate-700 dark:text-slate-300">
                           {rep.name}
+                        </TableCell>
+                        <TableCell className="text-center text-slate-600 dark:text-slate-400">
+                          {rep.totalProposals}
                         </TableCell>
                         <TableCell className="text-right font-bold text-[#f59e0b]">
                           {new Intl.NumberFormat('pt-BR', {
