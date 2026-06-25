@@ -334,18 +334,25 @@ export default function EmitirProposta() {
 
   const handleVersaoChange = (versaoId: string) => {
     const versao = versoes.find((v) => v.id === versaoId)
-    setFormData((prev) => ({
-      ...prev,
-      versao: versaoId,
-      ...(versao
-        ? {
-            valor_sem_desconto: versao.valor || 0,
-            valor_atual: versao.valor || 0,
-            valor_final: versao.valor || 0,
-            moeda: versao.moeda === 'USD' ? 'US$' : versao.moeda || prev.moeda,
-          }
-        : {}),
-    }))
+    if (versao) {
+      setFormData((prev) => ({
+        ...prev,
+        versao: versaoId,
+        valor_sem_desconto: versao.valor || 0,
+        valor_atual: versao.valor || 0,
+        valor_final: versao.valor || 0,
+        moeda: versao.moeda === 'USD' ? 'US$' : versao.moeda || 'US$',
+      }))
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        versao: '',
+        valor_sem_desconto: 0,
+        valor_atual: 0,
+        valor_final: 0,
+        moeda: 'US$',
+      }))
+    }
     loadAcessorios(versaoId)
   }
 
