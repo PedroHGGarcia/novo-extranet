@@ -102,7 +102,6 @@ export default function EmitirProposta() {
   const [representantes, setRepresentantes] = useState<any[]>([])
   const [versoes, setVersoes] = useState<any[]>([])
   const [tiposProposta, setTiposProposta] = useState<TipoProposta[]>([])
-  const [tiposProposta, setTiposProposta] = useState<TipoProposta[]>([])
 
   const [formData, setFormData] = useState<Partial<Proposta>>({})
   const [acessoriosProposta, setAcessoriosProposta] = useState<any[]>([])
