@@ -30,29 +30,31 @@ interface MetricCardProps {
 }
 
 const MetricCard = ({ title, value, colorClass, icon: Icon }: MetricCardProps) => (
-  <div
+  <Card
     className={cn(
-      'relative overflow-hidden rounded-2xl p-6 text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md',
+      'relative overflow-hidden rounded-2xl border-0 text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md',
       colorClass,
     )}
   >
-    <div className="relative z-10 flex flex-col gap-1">
-      <span
-        className={cn(
-          'font-bold tracking-tight',
-          typeof value === 'string' && value.length > 10 ? 'text-3xl mt-1' : 'text-5xl',
-        )}
-      >
-        {value}
-      </span>
-      <span className="text-sm font-medium opacity-90 mt-1">{title}</span>
-    </div>
-    <Icon
-      className="absolute -bottom-6 -right-4 h-32 w-32 opacity-20 transition-transform duration-500 hover:scale-110 select-none"
-      strokeWidth={1.5}
-      draggable={false}
-    />
-  </div>
+    <CardContent className="p-6">
+      <div className="relative z-10 flex flex-col gap-1">
+        <span
+          className={cn(
+            'font-bold tracking-tight',
+            typeof value === 'string' && value.length > 10 ? 'text-3xl mt-1' : 'text-5xl',
+          )}
+        >
+          {value}
+        </span>
+        <span className="text-sm font-medium opacity-90 mt-1">{title}</span>
+      </div>
+      <Icon
+        className="absolute -bottom-6 -right-4 h-32 w-32 opacity-20 transition-transform duration-500 hover:scale-110 select-none"
+        strokeWidth={1.5}
+        draggable={false}
+      />
+    </CardContent>
+  </Card>
 )
 
 export default function Dashboard() {
@@ -85,7 +87,7 @@ export default function Dashboard() {
       const endMonthStr = format(endOfMonth(new Date()), 'yyyy-MM-dd 23:59:59')
 
       const propostasMesRes = await pb.collection('propostas').getFullList({
-        filter: `created >= "${startMonthStr}" && created <= "${endMonthStr}"`,
+        filter: `dt_cad >= "${startMonthStr}" && dt_cad <= "${endMonthStr}"`,
         expand: 'representante',
       })
 
@@ -182,20 +184,20 @@ export default function Dashboard() {
       {isVisible('cards_resumo') && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <MetricCard
-            title="Total de Propostas (Mês)"
+            title="Total de propostas (Mês)"
             value={metrics.totalProposals}
             colorClass="bg-[#3b82f6]"
             icon={FileText}
           />
           <MetricCard
-            title="Propostas Aprovadas (Mês)"
+            title="Propostas aprovadas (Mês)"
             value={metrics.approvedProposals}
             colorClass="bg-[#06b6d4]"
             icon={CheckCircle2}
           />
           <MetricCard
             title="Taxa de Aprovação (Mês)"
-            value={`${metrics.approvalRate.toFixed(1)}%`}
+            value={`${Math.round(metrics.approvalRate)}%`}
             colorClass="bg-[#f59e0b]"
             icon={Trophy}
           />
