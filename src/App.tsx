@@ -13,6 +13,7 @@ import Eventos from './pages/Eventos'
 import EmitirProposta from './pages/controle-propostas/EmitirProposta'
 import TiposPropostas from './pages/controle-propostas/TiposPropostas'
 import PropostaPDF from './pages/controle-propostas/PropostaPDF'
+import DashboardPropostas from './pages/controle-propostas/DashboardPropostas'
 import Produtos from './pages/Produtos'
 import Categorias from './pages/produtos/Categorias'
 import Marcas from './pages/produtos/Marcas'
@@ -66,8 +67,9 @@ const App = () => (
                 <Route path="/eventos" element={<Eventos />} />
                 <Route
                   path="/controle-propostas"
-                  element={<Navigate to="/controle-propostas/emitir-proposta" replace />}
+                  element={<Navigate to="/controle-propostas/dashboard" replace />}
                 />
+                <Route path="/controle-propostas/dashboard" element={<DashboardPropostas />} />
                 <Route path="/controle-propostas/emitir-proposta" element={<EmitirProposta />} />
                 <Route path="/controle-propostas/tipos-propostas" element={<TiposPropostas />} />
                 <Route path="/controle-propostas/proposta-pdf/:id" element={<PropostaPDF />} />
