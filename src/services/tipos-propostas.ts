@@ -35,6 +35,10 @@ export const getTiposProposta = async () => {
   return pb.collection('tipos_proposta').getFullList<TipoProposta>({ sort: 'nome' })
 }
 
+export const getTipoProposta = async (id: string) => {
+  return pb.collection('tipos_proposta').getOne<TipoProposta>(id)
+}
+
 export const createTipoProposta = async (data: Partial<TipoProposta>) => {
   return pb.collection('tipos_proposta').create<TipoProposta>(data)
 }
