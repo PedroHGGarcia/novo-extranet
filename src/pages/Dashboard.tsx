@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import pb from '@/lib/pocketbase/client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Bell, Calendar, CheckCircle2, DollarSign, Trophy, FileText } from 'lucide-react'
+import { Bell, Calendar, Trophy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { startOfMonth, endOfMonth, format } from 'date-fns'
 import {
@@ -15,48 +15,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value)
-}
-
-interface MetricCardProps {
-  title: string
-  value: string | number
-  colorClass: string
-  icon: React.ElementType
-}
-
-const MetricCard = ({ title, value, colorClass, icon: Icon }: MetricCardProps) => (
-  <Card
-    className={cn(
-      'relative overflow-hidden rounded-2xl border-0 text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md',
-      colorClass,
-    )}
-  >
-    <CardContent className="p-6">
-      <div className="relative z-10 flex flex-col gap-1">
-        <span
-          className={cn(
-            'font-bold tracking-tight',
-            typeof value === 'string' && value.length > 10 ? 'text-3xl mt-1' : 'text-5xl',
-          )}
-        >
-          {value}
-        </span>
-        <span className="text-sm font-medium opacity-90 mt-1">{title}</span>
-      </div>
-      <Icon
-        className="absolute -bottom-6 -right-4 h-32 w-32 opacity-20 transition-transform duration-500 hover:scale-110 select-none"
-        strokeWidth={1.5}
-        draggable={false}
-      />
-    </CardContent>
-  </Card>
-)
-
 export default function Dashboard() {
   const { user } = useAuth()
 
@@ -65,10 +23,6 @@ export default function Dashboard() {
   const [configs, setConfigs] = useState<Record<string, boolean>>({})
 
   const [metrics, setMetrics] = useState({
-    totalProposals: 0,
-    approvedProposals: 0,
-    approvalRate: 0,
-    consolidatedValue: 0,
     representativesRanking: [] as {
       name: string
       conversionRate: number
@@ -90,9 +44,6 @@ export default function Dashboard() {
         filter: `dt_cad >= "${startMonthStr}" && dt_cad <= "${endMonthStr}"`,
         expand: 'representante',
       })
-
-      const approvedMonth = propostasMesRes.filter((p) => p.status === 'Aprovada')
-      const consolidatedValueMonth = approvedMonth.reduce((acc, p) => acc + (p.valor_final || 0), 0)
 
       const repStats: Record<string, { name: string; approved: number; total: number }> = {}
 
@@ -121,12 +72,6 @@ export default function Dashboard() {
         .slice(0, 10)
 
       setMetrics({
-        totalProposals: propostasMesRes.length,
-        approvedProposals: approvedMonth.length,
-        approvalRate: propostasMesRes.length
-          ? (approvedMonth.length / propostasMesRes.length) * 100
-          : 0,
-        consolidatedValue: consolidatedValueMonth,
         representativesRanking: ranking,
       })
 
@@ -180,35 +125,6 @@ export default function Dashboard() {
           </p>
         </div>
       </div>
-
-      {isVisible('cards_resumo') && (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <MetricCard
-            title="Total de propostas (Mês)"
-            value={metrics.totalProposals}
-            colorClass="bg-[#3b82f6]"
-            icon={FileText}
-          />
-          <MetricCard
-            title="Propostas aprovadas (Mês)"
-            value={metrics.approvedProposals}
-            colorClass="bg-[#06b6d4]"
-            icon={CheckCircle2}
-          />
-          <MetricCard
-            title="Taxa de Aprovação (Mês)"
-            value={`${Math.round(metrics.approvalRate)}%`}
-            colorClass="bg-[#f59e0b]"
-            icon={Trophy}
-          />
-          <MetricCard
-            title="Volume de Negócios (Mês)"
-            value={formatCurrency(metrics.consolidatedValue)}
-            colorClass="bg-[#14532d]"
-            icon={DollarSign}
-          />
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800 lg:col-span-2">
