@@ -1090,7 +1090,21 @@ export default function EmitirProposta() {
                     !formData.tipo_proposta && 'border-amber-300 bg-amber-50/30',
                   )}
                   value={formData.tipo_proposta || ''}
-                  onChange={(e) => setFormData({ ...formData, tipo_proposta: e.target.value })}
+                  onChange={(e) => {
+                    const tipoId = e.target.value
+                    const tipo = tiposProposta.find((t) => t.id === tipoId)
+                    setFormData({
+                      ...formData,
+                      tipo_proposta: tipoId,
+                      ...(tipo
+                        ? {
+                            prazo_entrega: tipo.prazo_entrega || formData.prazo_entrega,
+                            condicoes_pagamento:
+                              tipo.condicoes_pagamento || formData.condicoes_pagamento,
+                          }
+                        : {}),
+                    })
+                  }}
                 >
                   <option value="">-- Selecione o Tipo de Proposta --</option>
                   {tiposProposta.map((t) => (
@@ -1102,23 +1116,7 @@ export default function EmitirProposta() {
               </div>
             </div>
 
-            <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Tipo de Proposta *</label>
-                <select
-                  className={inputClass}
-                  required
-                  value={formData.tipo_proposta || ''}
-                  onChange={(e) => setFormData({ ...formData, tipo_proposta: e.target.value })}
-                >
-                  <option value=""></option>
-                  {tiposProposta.map((tp) => (
-                    <option key={tp.id} value={tp.id}>
-                      {tp.nome}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Estoque</label>
                 <select

@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Edit, Copy, List } from 'lucide-react'
+import {
+  Edit,
+  Copy,
+  List,
+  Search,
+  ArrowUp,
+  ArrowDown,
+  ArrowDownUp,
+  ChevronRight,
+} from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -13,23 +22,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { RegistrationActionBar } from '@/components/RegistrationActionBar'
-import { PaginationBar } from '@/components/PaginationBar'
-import { SortableHead } from '@/components/SortableHead'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
+import { cn } from '@/lib/utils'
 
 import {
   TipoProposta,
@@ -43,11 +39,11 @@ import { extractFieldErrors } from '@/lib/pocketbase/errors'
 export default function TiposPropostas() {
   const { toast } = useToast()
 
-  const [activeTab, setActiveTab] = useState('registros')
+  const [activeTab, setActiveTab] = useState<'registros' | 'cadastro'>('registros')
   const [data, setData] = useState<TipoProposta[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [page, setPage] = useState(1)
-  const [perPage, setPerPage] = useState(40)
+  const [perPage, setPerPage] = useState(50)
   const [sortField, setSortField] = useState('nome')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [searchTerm, setSearchTerm] = useState('')
@@ -74,7 +70,6 @@ export default function TiposPropostas() {
   const [selectedItem, setSelectedItem] = useState<TipoProposta | null>(null)
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [itemToDelete, setItemToDelete] = useState<TipoProposta | null>(null)
 
   const loadData = async () => {
     setIsLoading(true)
@@ -107,6 +102,7 @@ export default function TiposPropostas() {
       setSortField(field)
       setSortDir('asc')
     }
+    setPage(1)
   }
 
   const handleSelectAll = (checked: boolean) => {
@@ -126,29 +122,19 @@ export default function TiposPropostas() {
 
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) return
-    if (!confirm('Deseja realmente excluir os itens selecionados?')) return
+    setIsDeleteModalOpen(true)
+  }
 
+  const confirmDelete = async () => {
     try {
       for (const id of selectedIds) {
         await deleteTipoProposta(id)
       }
       toast({ title: 'Itens excluídos com sucesso' })
+      setIsDeleteModalOpen(false)
       loadData()
     } catch (e) {
       toast({ title: 'Erro ao excluir itens', variant: 'destructive' })
-    }
-  }
-
-  const handleDeleteOne = async () => {
-    if (!itemToDelete) return
-    try {
-      await deleteTipoProposta(itemToDelete.id)
-      toast({ title: 'Item excluído com sucesso' })
-      setIsDeleteModalOpen(false)
-      setItemToDelete(null)
-      loadData()
-    } catch (e) {
-      toast({ title: 'Erro ao excluir item', variant: 'destructive' })
     }
   }
 
@@ -165,13 +151,20 @@ export default function TiposPropostas() {
     setFormData({
       ...item,
       id: undefined,
-      nome: `${item.nome} (Cópia)`,
+      nome: `${item.nome} - Cópia`,
+      created: undefined,
+      updated: undefined,
     })
     setActiveTab('cadastro')
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!formData.nome) {
+      toast({ title: 'Nome é obrigatório', variant: 'destructive' })
+      return
+    }
+
     try {
       if (selectedItem) {
         await updateTipoProposta(selectedItem.id, formData)
@@ -200,146 +193,227 @@ export default function TiposPropostas() {
     setActiveTab('cadastro')
   }
 
+  const handleSearchClick = () => {
+    if (activeTab === 'cadastro') {
+      setActiveTab('registros')
+    } else {
+      const p = prompt('Digite o termo para pesquisa:', searchTerm)
+      if (p !== null) {
+        setSearchTerm(p)
+        setPage(1)
+      }
+    }
+  }
+
+  const renderSortableHead = (label: string, field: string) => {
+    const isActive = sortField === field
+    return (
+      <TableHead className="text-[#337ab7] font-normal text-[11px] whitespace-nowrap bg-white border-b-2 border-slate-200 py-3 px-3 h-auto">
+        <div
+          className="flex items-center gap-1 cursor-pointer hover:underline"
+          onClick={() => handleSort(field)}
+        >
+          {label}
+          {isActive ? (
+            sortDir === 'asc' ? (
+              <ArrowUp className="w-3 h-3" />
+            ) : (
+              <ArrowDown className="w-3 h-3" />
+            )
+          ) : (
+            <ArrowDownUp className="w-3 h-3 opacity-50" />
+          )}
+        </div>
+      </TableHead>
+    )
+  }
+
+  const totalPages = Math.ceil(totalItems / perPage) || 1
+  const paginationRange = Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+    let start = Math.max(1, page - 2)
+    if (start + 4 > totalPages) start = Math.max(1, totalPages - 4)
+    return start + i
+  })
+
+  const startItem = totalItems === 0 ? 0 : (page - 1) * perPage + 1
+  const endItem = Math.min(page * perPage, totalItems)
+
+  const inputClass =
+    'w-full bg-white border border-slate-300 rounded-sm px-2 py-1.5 outline-none text-slate-700 text-xs focus:border-[#337ab7] min-h-[30px]'
+  const labelClass = 'text-[11px] font-bold text-slate-700 mb-1'
+
   return (
-    <div className="flex flex-col h-full flex-1">
-      <div className="flex items-center gap-2 p-4 md:p-6 pb-4 border-b bg-white">
-        <List className="h-6 w-6 text-muted-foreground" />
-        <h2 className="text-2xl font-bold tracking-tight">Tipos de Propostas</h2>
+    <div className="flex flex-col h-full bg-white font-sans rounded-md shadow-sm border border-slate-200">
+      <div className="flex items-center gap-2 p-4 border-b border-slate-200 bg-white shrink-0">
+        <List className="h-5 w-5 text-slate-500" />
+        <h2 className="text-xl font-normal text-slate-700">Tipos de Propostas</h2>
       </div>
 
-      <div className="flex-1 p-4 md:p-6 overflow-auto bg-slate-50/50">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="w-full bg-white rounded-md border shadow-sm flex flex-col min-h-[500px]"
-        >
-          <div className="border-b px-4">
-            <TabsList className="bg-transparent h-12 p-0 w-full justify-start">
-              <TabsTrigger
-                value="registros"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-4 h-12"
-              >
-                Registros
-              </TabsTrigger>
-              <TabsTrigger
-                value="cadastro"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-4 h-12"
-              >
-                Cadastro
-              </TabsTrigger>
-            </TabsList>
+      <div className="p-4 border-b border-slate-200 bg-white shrink-0">
+        <div className="flex gap-2">
+          <Button
+            onClick={handleSearchClick}
+            className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none"
+          >
+            Pesquisar
+          </Button>
+          <Button
+            onClick={handleNew}
+            className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none"
+          >
+            Novo
+          </Button>
+          <Button
+            onClick={handleDeleteSelected}
+            disabled={selectedIds.size === 0}
+            className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none disabled:opacity-50"
+          >
+            Excluir
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 pt-2 bg-white shrink-0">
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setActiveTab('registros')}
+              className={cn(
+                'px-2 py-2 text-sm transition-colors relative',
+                activeTab === 'registros'
+                  ? 'text-[#337ab7] font-normal after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-0.5 after:bg-[#337ab7]'
+                  : 'text-slate-500 hover:text-slate-700',
+              )}
+            >
+              Registros
+            </button>
+            <button
+              onClick={() => setActiveTab('cadastro')}
+              className={cn(
+                'px-2 py-2 text-sm transition-colors relative',
+                activeTab === 'cadastro'
+                  ? 'text-[#337ab7] font-normal after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-0.5 after:bg-[#337ab7]'
+                  : 'text-slate-500 hover:text-slate-700',
+              )}
+            >
+              Cadastro
+            </button>
           </div>
 
-          <TabsContent value="registros" className="p-4 space-y-4 outline-none m-0">
-            <RegistrationActionBar
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              onNew={handleNew}
-              onDelete={handleDeleteSelected}
-              disableDelete={selectedIds.size === 0}
-            />
+          {activeTab === 'registros' && (
+            <div className="flex items-center gap-4 text-xs text-[#337ab7] pb-1">
+              <div className="flex items-center gap-1">
+                {paginationRange.map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={cn(
+                      'px-2 py-1 rounded-[2px] min-w-[24px] text-center',
+                      p === page ? 'bg-[#337ab7] text-white' : 'hover:bg-slate-100',
+                    )}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+              <span className="text-slate-500">
+                {startItem}-{endItem} de {totalItems}
+              </span>
+              <select
+                value={perPage}
+                onChange={(e) => {
+                  setPerPage(Number(e.target.value))
+                  setPage(1)
+                }}
+                className="border border-slate-200 rounded-[2px] py-1 pl-2 pr-1 outline-none text-slate-500 bg-white"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={40}>40</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          )}
+        </div>
 
-            <div className="rounded-md border">
+        <div className="flex-1 overflow-y-auto bg-white p-4">
+          {activeTab === 'registros' ? (
+            <div className="w-full">
               <Table>
-                <TableHeader className="bg-slate-50">
-                  <TableRow>
-                    <TableHead className="w-[50px]">
+                <TableHeader>
+                  <TableRow className="border-b-2 border-slate-200 hover:bg-transparent">
+                    <TableHead className="w-[40px] px-3 py-3 h-auto">
                       <Checkbox
+                        className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
                         checked={data.length > 0 && selectedIds.size === data.length}
                         onCheckedChange={handleSelectAll}
                       />
                     </TableHead>
-                    <SortableHead
-                      field="nome"
-                      currentSort={sortField}
-                      sortDir={sortDir}
-                      onSort={handleSort}
-                    >
-                      Nome
-                    </SortableHead>
-                    <SortableHead
-                      field="tem_fator"
-                      currentSort={sortField}
-                      sortDir={sortDir}
-                      onSort={handleSort}
-                    >
-                      Fator
-                    </SortableHead>
-                    <SortableHead
-                      field="created"
-                      currentSort={sortField}
-                      sortDir={sortDir}
-                      onSort={handleSort}
-                    >
-                      DtCad
-                    </SortableHead>
-                    <SortableHead
-                      field="status"
-                      currentSort={sortField}
-                      sortDir={sortDir}
-                      onSort={handleSort}
-                    >
-                      Status
-                    </SortableHead>
+                    {renderSortableHead('Nome', 'nome')}
+                    {renderSortableHead('Fator', 'tem_fator')}
+                    {renderSortableHead('DtCad', 'created')}
+                    {renderSortableHead('Status', 'status')}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center py-8 text-slate-500 text-sm">
                         Carregando...
                       </TableCell>
                     </TableRow>
                   ) : data.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        Nenhum registro encontrado
+                      <TableCell colSpan={5} className="text-center py-8 text-slate-500 text-sm">
+                        Nenhum registro encontrado.
                       </TableCell>
                     </TableRow>
                   ) : (
                     data.map((item) => (
-                      <TableRow key={item.id} className="hover:bg-slate-50/50">
-                        <TableCell>
+                      <TableRow
+                        key={item.id}
+                        className="hover:bg-slate-50 border-b border-slate-100"
+                      >
+                        <TableCell className="align-top py-2.5 px-3">
                           <Checkbox
+                            className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
                             checked={selectedIds.has(item.id)}
-                            onCheckedChange={(c) => handleSelectOne(item.id, c as boolean)}
+                            onCheckedChange={(c) => handleSelectOne(item.id, !!c)}
                           />
                         </TableCell>
-                        <TableCell>
-                          <div className="text-sm font-medium text-slate-700">{item.nome}</div>
-                          <div className="flex gap-4 mt-1.5">
+                        <TableCell className="align-top py-2.5 px-3 border-r border-slate-100">
+                          <div className="text-slate-600 text-xs mb-1">{item.nome}</div>
+                          <div className="flex items-center gap-3 mt-1">
                             <button
                               onClick={() => handleEdit(item)}
-                              className="text-[11px] text-blue-600 flex items-center hover:underline opacity-80 hover:opacity-100"
+                              className="flex items-center text-[#337ab7] hover:underline text-[10px]"
                             >
-                              <Edit className="h-3 w-3 mr-1" /> Editar
+                              <Edit className="h-2.5 w-2.5 mr-1" /> Editar
                             </button>
                             <button
                               onClick={() => handleDuplicate(item)}
-                              className="text-[11px] text-blue-600 flex items-center hover:underline opacity-80 hover:opacity-100"
+                              className="flex items-center text-[#337ab7] hover:underline text-[10px]"
                             >
-                              <Copy className="h-3 w-3 mr-1" /> Duplicar
+                              <Copy className="h-2.5 w-2.5 mr-1" /> Duplicar
                             </button>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm text-slate-600">
+                        <TableCell className="align-top py-2.5 px-3 text-slate-600 text-[11px]">
                           {item.tem_fator ? 'Sim' : 'Não'}
                         </TableCell>
-                        <TableCell className="text-sm text-slate-600">
-                          {item.created
-                            ? format(new Date(item.created), 'dd/MM/yyyy', { locale: ptBR })
-                            : '-'}
+                        <TableCell className="align-top py-2.5 px-3 text-slate-600 text-[11px]">
+                          {item.created ? format(new Date(item.created), 'dd/MM/yyyy') : '-'}
                         </TableCell>
-                        <TableCell>
-                          <Badge
-                            className={
-                              item.status === 'Ativo'
-                                ? 'bg-emerald-500 hover:bg-emerald-600 border-transparent text-white shadow-none text-xs rounded uppercase px-2 py-0'
-                                : 'bg-slate-400 hover:bg-slate-500 border-transparent text-white shadow-none text-xs rounded uppercase px-2 py-0'
-                            }
+                        <TableCell className="align-top py-2.5 px-3">
+                          <span
+                            className={cn(
+                              'px-1.5 py-0.5 text-[10px] rounded-[3px] text-white',
+                              item.status === 'Ativo' ? 'bg-emerald-500' : 'bg-rose-500',
+                            )}
                           >
                             {item.status}
-                          </Badge>
+                          </span>
                         </TableCell>
                       </TableRow>
                     ))
@@ -347,269 +421,232 @@ export default function TiposPropostas() {
                 </TableBody>
               </Table>
             </div>
-
-            <PaginationBar
-              totalItems={totalItems}
-              page={page}
-              perPage={perPage}
-              onPageChange={setPage}
-              onPerPageChange={setPerPage}
-              perPageOptions={[10, 20, 40, 50, 100]}
-            />
-          </TabsContent>
-
-          <TabsContent value="cadastro" className="p-0 outline-none m-0 flex-1 flex flex-col">
-            <form onSubmit={handleSave} className="flex-1 flex flex-col">
-              <div className="p-4 border-b bg-white flex gap-2 shrink-0">
-                <Button
-                  type="button"
-                  variant="default"
-                  className="bg-[#337ab7] hover:bg-[#286090] uppercase text-xs h-8 px-4 font-normal shadow-none rounded-sm"
-                >
-                  Pesquisar
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleNew}
-                  className="bg-[#337ab7] hover:bg-[#286090] uppercase text-xs h-8 px-4 font-normal shadow-none rounded-sm"
-                >
-                  Novo
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-[#337ab7] hover:bg-[#286090] uppercase text-xs h-8 px-4 font-normal shadow-none rounded-sm"
-                >
-                  Salvar
-                </Button>
-              </div>
-
-              <div className="flex flex-1 p-4 md:p-6 gap-6 bg-slate-50 items-start">
-                <div className="flex-1 bg-white border border-slate-200 rounded-sm shadow-sm p-4">
-                  <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+          ) : (
+            <form onSubmit={handleSave} className="max-w-5xl mx-auto pb-10">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-6">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
                     <List className="w-4 h-4 text-slate-500" />
-                    <h3 className="font-semibold text-slate-700">Dados</h3>
+                    <h3 className="font-semibold text-slate-700 text-sm">Dados</h3>
                   </div>
 
-                  <div className="space-y-5">
-                    <div className="flex gap-4">
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Nome</Label>
-                        <Input
-                          required
-                          value={formData.nome || ''}
-                          onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                          className="h-8 text-sm bg-transparent border-0 border-b border-slate-300 rounded-none focus-visible:ring-0 focus-visible:border-[#337ab7] px-0"
-                          placeholder="FCS Nacionalizada: SEM % - <B>2026</B>"
-                        />
-                      </div>
-                      <div className="w-[180px] space-y-1.5">
-                        <Label className="text-xs text-slate-500">Status</Label>
-                        <Select
-                          value={formData.status || 'Ativo'}
-                          onValueChange={(val: 'Ativo' | 'Inativo') =>
-                            setFormData({ ...formData, status: val })
-                          }
-                        >
-                          <SelectTrigger className="h-8 text-sm border-0 border-b border-slate-300 rounded-none focus:ring-0 px-0 bg-transparent">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Ativo">Ativo</SelectItem>
-                            <SelectItem value="Inativo">Inativo</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                  <div className="grid grid-cols-[1fr_150px] gap-4">
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Nome *</label>
+                      <input
+                        required
+                        className={inputClass}
+                        value={formData.nome || ''}
+                        onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                        placeholder="Nome do tipo"
+                      />
                     </div>
-
-                    <div className="flex gap-4">
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">
-                          Aplicar Fator de Nacionalização
-                        </Label>
-                        <Select
-                          value={formData.tem_fator ? 'Sim' : 'Não'}
-                          onValueChange={(val) =>
-                            setFormData({ ...formData, tem_fator: val === 'Sim' })
-                          }
-                        >
-                          <SelectTrigger className="h-8 text-sm border-0 border-b border-slate-300 rounded-none focus:ring-0 px-0 bg-transparent">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Sim">Sim</SelectItem>
-                            <SelectItem value="Não">Não</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Comissão (%)</Label>
-                        <Input
-                          type="number"
-                          value={formData.comissao || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, comissao: parseFloat(e.target.value) || 0 })
-                          }
-                          className="h-8 text-sm border-0 border-b border-slate-300 rounded-none focus-visible:ring-0 focus-visible:border-[#337ab7] px-0 bg-transparent"
-                          placeholder="Comissão (%)"
-                        />
-                      </div>
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Status</label>
+                      <select
+                        className={inputClass}
+                        value={formData.status || 'Ativo'}
+                        onChange={(e) =>
+                          setFormData({ ...formData, status: e.target.value as any })
+                        }
+                      >
+                        <option value="Ativo">Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                      </select>
                     </div>
+                  </div>
 
-                    <div className="flex gap-4">
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Frase do Preço</Label>
-                        <Input
-                          value={formData.frase_preco || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, frase_preco: e.target.value })
-                          }
-                          className="h-8 text-sm border-0 border-b border-slate-300 rounded-none focus-visible:ring-0 focus-visible:border-[#337ab7] px-0 bg-transparent"
-                          placeholder="Pacote de Máquinas FOB CHINA"
-                        />
-                      </div>
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Frase Comissão</Label>
-                        <Input
-                          value={formData.frase_comissao || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, frase_comissao: e.target.value })
-                          }
-                          className="h-8 text-sm border-0 border-b border-slate-300 rounded-none focus-visible:ring-0 focus-visible:border-[#337ab7] px-0 bg-transparent"
-                          placeholder="Frase Comissão"
-                        />
-                      </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Aplicar Fator de Nacionalização</label>
+                      <select
+                        className={inputClass}
+                        value={formData.tem_fator ? 'Sim' : 'Não'}
+                        onChange={(e) =>
+                          setFormData({ ...formData, tem_fator: e.target.value === 'Sim' })
+                        }
+                      >
+                        <option value="Sim">Sim</option>
+                        <option value="Não">Não</option>
+                      </select>
                     </div>
-
-                    <div className="flex gap-4">
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Prazo de Entrega</Label>
-                        <textarea
-                          value={formData.prazo_entrega || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, prazo_entrega: e.target.value })
-                          }
-                          className="w-full min-h-[60px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
-                          placeholder="A combinar."
-                        />
-                      </div>
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Condições de Pagamento</Label>
-                        <textarea
-                          value={formData.condicoes_pagamento || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, condicoes_pagamento: e.target.value })
-                          }
-                          className="w-full min-h-[60px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
-                          placeholder="<B>Pedido 1:</B> USD Sendo: Entrada (%) USD..."
-                        />
-                      </div>
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Comissão (%)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className={inputClass}
+                        value={formData.comissao || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, comissao: parseFloat(e.target.value) || 0 })
+                        }
+                      />
                     </div>
+                  </div>
 
-                    <div className="flex gap-4">
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Garantia</Label>
-                        <textarea
-                          value={formData.garantia || ''}
-                          onChange={(e) => setFormData({ ...formData, garantia: e.target.value })}
-                          className="w-full min-h-[120px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
-                        />
-                      </div>
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Assistência Técnica</Label>
-                        <textarea
-                          value={formData.assistencia_tecnica || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, assistencia_tecnica: e.target.value })
-                          }
-                          className="w-full min-h-[120px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
-                        />
-                      </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Frase do Preço</label>
+                      <input
+                        className={inputClass}
+                        value={formData.frase_preco || ''}
+                        onChange={(e) => setFormData({ ...formData, frase_preco: e.target.value })}
+                      />
                     </div>
-
-                    <div className="flex gap-4">
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Treinamento Técnico</Label>
-                        <textarea
-                          value={formData.treinamento_tecnico || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, treinamento_tecnico: e.target.value })
-                          }
-                          className="w-full min-h-[100px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
-                        />
-                      </div>
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Transporte/Seguro</Label>
-                        <textarea
-                          value={formData.transporte_seguro || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, transporte_seguro: e.target.value })
-                          }
-                          className="w-full min-h-[100px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
-                        />
-                      </div>
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Frase Comissão</label>
+                      <input
+                        className={inputClass}
+                        value={formData.frase_comissao || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, frase_comissao: e.target.value })
+                        }
+                      />
                     </div>
+                  </div>
 
-                    <div className="flex gap-4">
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Validade desta Oferta</Label>
-                        <textarea
-                          value={formData.validade_oferta || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, validade_oferta: e.target.value })
-                          }
-                          className="w-full min-h-[80px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
-                        />
-                      </div>
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Imposto IPI</Label>
-                        <textarea
-                          value={formData.imposto_ipi || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, imposto_ipi: e.target.value })
-                          }
-                          className="w-full min-h-[80px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
-                        />
-                      </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Prazo de Entrega</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.prazo_entrega || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, prazo_entrega: e.target.value })
+                        }
+                      />
                     </div>
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Condições de Pagamento</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.condicoes_pagamento || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, condicoes_pagamento: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
 
-                    <div className="flex gap-4">
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Imposto ICMS</Label>
-                        <textarea
-                          value={formData.imposto_icms || ''}
-                          onChange={(e) =>
-                            setFormData({ ...formData, imposto_icms: e.target.value })
-                          }
-                          className="w-full min-h-[80px] text-sm p-2 border border-slate-200 rounded-sm focus:outline-none focus:border-[#337ab7] resize-y"
-                        />
-                      </div>
-                      <div className="flex-1 space-y-1.5">
-                        <Label className="text-xs text-slate-500">Dt. Cad</Label>
-                        <Input
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Garantia</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[120px] resize-y')}
+                        value={formData.garantia || ''}
+                        onChange={(e) => setFormData({ ...formData, garantia: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Assistência Técnica</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[120px] resize-y')}
+                        value={formData.assistencia_tecnica || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, assistencia_tecnica: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Treinamento Técnico</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[120px] resize-y')}
+                        value={formData.treinamento_tecnico || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, treinamento_tecnico: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Transporte/Seguro</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[120px] resize-y')}
+                        value={formData.transporte_seguro || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, transporte_seguro: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Validade desta Oferta</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.validade_oferta || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, validade_oferta: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Imposto IPI</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.imposto_ipi || ''}
+                        onChange={(e) => setFormData({ ...formData, imposto_ipi: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col">
+                      <label className={labelClass}>Imposto ICMS</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.imposto_icms || ''}
+                        onChange={(e) => setFormData({ ...formData, imposto_icms: e.target.value })}
+                      />
+                    </div>
+                    {selectedItem?.created && (
+                      <div className="flex flex-col">
+                        <label className={labelClass}>Dt. Cad</label>
+                        <input
                           readOnly
-                          value={
-                            selectedItem?.created
-                              ? format(new Date(selectedItem.created), 'dd/MM/yyyy HH:mm:ss')
-                              : ''
-                          }
-                          className="h-8 text-sm bg-slate-100 border-0 border-b border-slate-300 rounded-none px-2 text-slate-500 w-[200px]"
+                          className={cn(inputClass, 'bg-slate-50 text-slate-500')}
+                          value={format(new Date(selectedItem.created), 'dd/MM/yyyy HH:mm:ss')}
                         />
                       </div>
-                    </div>
+                    )}
+                  </div>
+
+                  <div className="pt-4 flex gap-2">
+                    <Button
+                      type="button"
+                      onClick={handleSearchClick}
+                      className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none"
+                    >
+                      Pesquisar
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleNew}
+                      className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none"
+                    >
+                      Novo
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none"
+                    >
+                      Salvar
+                    </Button>
                   </div>
                 </div>
 
-                <div className="w-[300px] shrink-0 bg-white border border-slate-200 rounded-sm shadow-sm p-4">
-                  <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
                     <List className="w-4 h-4 text-slate-500" />
-                    <h3 className="font-semibold text-slate-700 leading-tight">
-                      Formas de Pagamento
-                      <br />
-                      do Pedido
+                    <h3 className="font-semibold text-slate-700 text-sm">
+                      Formas de Pagamento do Pedido
                     </h3>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {[
                       'Faturamento a vista',
                       'Financiamento C.D.C.I. 1 a 9 parcelas',
@@ -617,7 +654,10 @@ export default function TiposPropostas() {
                     ].map((label) => {
                       const isChecked = formData.formas_pagamento_selecionadas?.includes(label)
                       return (
-                        <div key={label} className="flex items-start space-x-2">
+                        <div
+                          key={label}
+                          className="flex items-start space-x-2 bg-slate-50 p-2 rounded-sm border border-slate-100"
+                        >
                           <Checkbox
                             id={`pgto-${label}`}
                             checked={isChecked}
@@ -635,11 +675,11 @@ export default function TiposPropostas() {
                                 })
                               }
                             }}
-                            className="mt-0.5 border-slate-400 data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
+                            className="mt-0.5 border-slate-400 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
                           />
                           <Label
                             htmlFor={`pgto-${label}`}
-                            className="text-sm font-normal cursor-pointer leading-snug"
+                            className="text-[11px] font-normal cursor-pointer leading-snug text-slate-700"
                           >
                             {label}
                           </Label>
@@ -649,40 +689,17 @@ export default function TiposPropostas() {
                   </div>
                 </div>
               </div>
-
-              <div className="p-4 border-t bg-white flex gap-2 shrink-0">
-                <Button
-                  type="button"
-                  variant="default"
-                  className="bg-[#337ab7] hover:bg-[#286090] uppercase text-xs h-8 px-4 font-normal shadow-none rounded-sm"
-                >
-                  Pesquisar
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleNew}
-                  className="bg-[#337ab7] hover:bg-[#286090] uppercase text-xs h-8 px-4 font-normal shadow-none rounded-sm"
-                >
-                  Novo
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-[#337ab7] hover:bg-[#286090] uppercase text-xs h-8 px-4 font-normal shadow-none rounded-sm"
-                >
-                  Salvar
-                </Button>
-              </div>
             </form>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
 
       <DeleteConfirmModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleDeleteOne}
-        title="Excluir Tipo de Proposta"
-        description={`Tem certeza que deseja excluir o tipo de proposta "${itemToDelete?.nome}"? Esta ação não poderá ser desfeita.`}
+        onConfirm={confirmDelete}
+        title="Excluir Tipos de Propostas"
+        description="Tem certeza que deseja excluir os registros selecionados? Esta ação não poderá ser desfeita."
       />
     </div>
   )

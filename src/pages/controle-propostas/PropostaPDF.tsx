@@ -144,7 +144,7 @@ export default function PropostaPDF() {
       {tipoProposta && (
         <div className="mb-8 space-y-4">
           <h2 className="font-bold text-slate-600 border-b border-slate-200 mb-2">
-            Termos e Condições
+            Termos Comerciais e Condições Gerais
           </h2>
 
           {tipoProposta.garantia && (
@@ -177,6 +177,24 @@ export default function PropostaPDF() {
               <h3 className="font-semibold">Transporte/Seguro</h3>
               <p className="whitespace-pre-wrap text-sm text-slate-600">
                 {tipoProposta.transporte_seguro}
+              </p>
+            </div>
+          )}
+
+          {tipoProposta.validade_oferta && (
+            <div>
+              <h3 className="font-semibold">Validade da Oferta</h3>
+              <p className="whitespace-pre-wrap text-sm text-slate-600">
+                {tipoProposta.validade_oferta}
+              </p>
+            </div>
+          )}
+
+          {(proposta.condicoes_pagamento || tipoProposta.condicoes_pagamento) && (
+            <div>
+              <h3 className="font-semibold">Condições de Pagamento</h3>
+              <p className="whitespace-pre-wrap text-sm text-slate-600">
+                {proposta.condicoes_pagamento || tipoProposta.condicoes_pagamento}
               </p>
             </div>
           )}
