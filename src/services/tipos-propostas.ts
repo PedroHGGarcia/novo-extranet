@@ -1,0 +1,35 @@
+import pb from '@/lib/pocketbase/client'
+
+export interface TipoProposta {
+  id: string
+  nome: string
+  tem_fator: boolean
+  status: 'Ativo' | 'Inativo'
+  created: string
+  updated: string
+}
+
+export const getTiposPropostaPaginated = async (
+  page = 1,
+  perPage = 50,
+  sort = 'nome',
+  filter = '',
+) => {
+  return pb.collection('tipos_proposta').getList<TipoProposta>(page, perPage, { sort, filter })
+}
+
+export const getTiposProposta = async () => {
+  return pb.collection('tipos_proposta').getFullList<TipoProposta>({ sort: 'nome' })
+}
+
+export const createTipoProposta = async (data: Partial<TipoProposta>) => {
+  return pb.collection('tipos_proposta').create<TipoProposta>(data)
+}
+
+export const updateTipoProposta = async (id: string, data: Partial<TipoProposta>) => {
+  return pb.collection('tipos_proposta').update<TipoProposta>(id, data)
+}
+
+export const deleteTipoProposta = async (id: string) => {
+  return pb.collection('tipos_proposta').delete(id)
+}

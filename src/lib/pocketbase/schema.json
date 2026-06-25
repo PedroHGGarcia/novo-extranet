@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-24T13:18:58.836Z",
+  "generatedAt": "2026-06-25T14:04:47.107Z",
   "collections": [
     {
       "name": "users",
@@ -1472,6 +1472,53 @@
         "CREATE INDEX `idx_propostas_valor` ON `propostas` (valor_final)",
         "CREATE INDEX `idx_propostas_created` ON `propostas` (created)"
       ]
+    },
+    {
+      "name": "tipos_proposta",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "tem_fator",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Ativo", "Inativo"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE UNIQUE INDEX idx_tipos_proposta_nome ON tipos_proposta (nome)"]
     }
   ]
 }

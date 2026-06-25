@@ -11,6 +11,7 @@ import Gerentes from './pages/Gerentes'
 import Clientes from './pages/ClientesWrapper'
 import Eventos from './pages/Eventos'
 import EmitirProposta from './pages/controle-propostas/EmitirProposta'
+import TiposPropostas from './pages/controle-propostas/TiposPropostas'
 import Produtos from './pages/Produtos'
 import Categorias from './pages/produtos/Categorias'
 import Marcas from './pages/produtos/Marcas'
@@ -63,6 +64,7 @@ const App = () => (
                 element={<Navigate to="/controle-propostas/emitir-proposta" replace />}
               />
               <Route path="/controle-propostas/emitir-proposta" element={<EmitirProposta />} />
+              <Route path="/controle-propostas/tipos-propostas" element={<TiposPropostas />} />
               <Route path="/produtos" element={<Produtos />} />
               <Route path="/produtos/categorias" element={<Categorias />} />
               <Route path="/produtos/marcas" element={<Marcas />} />
