@@ -317,7 +317,8 @@ export default function EmitirProposta() {
           percentual_desconto: 0,
           nota_rep: 1,
           dt_cad: format(new Date(), 'yyyy-MM-dd'),
-        })        loadAcessorios('')
+        })
+        loadAcessorios('')
       }
     }
   }, [selectedProposta, activeTab])
@@ -1025,13 +1026,18 @@ export default function EmitirProposta() {
                       {item.expand?.representante?.fantasia || item.representante_original || '-'}
                     </TableCell>
                     <TableCell className="align-top py-2 px-3">
-                      <Badge variant="outline" className={cn(
-                        "text-[10px] font-normal border whitespace-nowrap px-1.5 py-0",
-                        item.status === 'Aprovada' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                        item.status === 'Recusada' && 'bg-rose-50 text-rose-700 border-rose-200',
-                        item.status === 'Em Análise' && 'bg-amber-50 text-amber-700 border-amber-200',
-                        !item.status && 'bg-amber-50 text-amber-700 border-amber-200'
-                      )}>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'text-[10px] font-normal border whitespace-nowrap px-1.5 py-0',
+                          item.status === 'Aprovada' &&
+                            'bg-emerald-50 text-emerald-700 border-emerald-200',
+                          item.status === 'Recusada' && 'bg-rose-50 text-rose-700 border-rose-200',
+                          item.status === 'Em Análise' &&
+                            'bg-amber-50 text-amber-700 border-amber-200',
+                          !item.status && 'bg-amber-50 text-amber-700 border-amber-200',
+                        )}
+                      >
                         {item.status || 'Em Análise'}
                       </Badge>
                     </TableCell>
