@@ -21,24 +21,44 @@ export default function PropostaPDF() {
   const [proposta, setProposta] = useState<Proposta | null>(null)
   const [tipoProposta, setTipoProposta] = useState<TipoProposta | null>(null)
 
+  const [error, setError] = useState<string | null>(null)
+
   useEffect(() => {
     if (id) {
-      getProposta(id).then(async (p) => {
-        setProposta(p)
-        if (p.tipo_proposta) {
-          try {
-            const tp = await getTipoProposta(p.tipo_proposta)
-            setTipoProposta(tp)
-          } catch {
-            /* intentionally ignored */
+      getProposta(id)
+        .then(async (p) => {
+          setProposta(p)
+          if (p.tipo_proposta) {
+            try {
+              const tp = await getTipoProposta(p.tipo_proposta)
+              setTipoProposta(tp)
+            } catch {
+              /* intentionally ignored */
+            }
           }
-        }
-        setTimeout(() => {
-          window.print()
-        }, 1000)
-      })
+          setTimeout(() => {
+            window.print()
+          }, 1000)
+        })
+        .catch((err) => {
+          console.error('Erro ao carregar proposta:', err)
+          setError(
+            'Não foi possível carregar o documento da proposta. Verifique se ela existe e tente novamente.',
+          )
+        })
     }
   }, [id])
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+        <div className="bg-white p-6 rounded-md shadow-md max-w-md w-full text-center border border-slate-200">
+          <h2 className="text-lg font-medium text-red-600 mb-2">Erro ao carregar documento</h2>
+          <p className="text-slate-600 text-sm mb-4">{error}</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!proposta) {
     return <div className="p-8 text-center text-slate-500">Carregando documento...</div>
@@ -66,9 +86,9 @@ export default function PropostaPDF() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-8 mb-8">
         <div>
-          <h2 className="font-bold text-slate-600 border-b border-slate-200 mb-2">
+          <h2 className="font-bold text-slate-600 border-b border-slate-200 mb-2 pb-1">
             Dados do Cliente
           </h2>
           <p>
@@ -82,7 +102,9 @@ export default function PropostaPDF() {
           </p>
         </div>
         <div>
-          <h2 className="font-bold text-slate-600 border-b border-slate-200 mb-2">Representante</h2>
+          <h2 className="font-bold text-slate-600 border-b border-slate-200 mb-2 pb-1">
+            Representante
+          </h2>
           <p>
             <strong>Nome:</strong> {representanteNome}
           </p>
@@ -94,17 +116,19 @@ export default function PropostaPDF() {
       </div>
 
       <div className="mb-8">
-        <h2 className="font-bold text-slate-600 border-b border-slate-200 mb-2">Equipamento</h2>
+        <h2 className="font-bold text-slate-600 border-b border-slate-200 mb-2 pb-1">
+          Equipamento
+        </h2>
         <p className="text-lg font-semibold text-slate-800 mb-2">{versaoNome}</p>
 
-        {proposta.acessorios_proposta && proposta.acessorios_proposta.length > 0 && (
+        {Array.isArray(proposta.acessorios_proposta) && proposta.acessorios_proposta.length > 0 && (
           <div className="mt-4">
             <h3 className="font-semibold text-sm mb-2">Acessórios Incluídos</h3>
-            <ul className="list-disc pl-5 text-sm space-y-1">
+            <ul className="list-disc pl-5 text-sm space-y-1 text-slate-700">
               {proposta.acessorios_proposta
-                .filter((a: any) => a.incluir || a.estado === 'incluir')
+                .filter((a: any) => a?.incluir || a?.estado === 'incluir')
                 .map((acc: any, i: number) => (
-                  <li key={i}>{acc.nome}</li>
+                  <li key={i}>{acc.nome || 'Acessório'}</li>
                 ))}
             </ul>
           </div>
@@ -112,7 +136,7 @@ export default function PropostaPDF() {
       </div>
 
       <div className="mb-8">
-        <h2 className="font-bold text-slate-600 border-b border-slate-200 mb-2">
+        <h2 className="font-bold text-slate-600 border-b border-slate-200 mb-2 pb-1">
           Condições Comerciais
         </h2>
         <div className="grid grid-cols-2 gap-4">
@@ -143,7 +167,7 @@ export default function PropostaPDF() {
 
       {tipoProposta && (
         <div className="mb-8 space-y-4">
-          <h2 className="font-bold text-slate-600 border-b border-slate-200 mb-2">
+          <h2 className="font-bold text-slate-600 border-b border-slate-200 mb-2 pb-1">
             Termos Comerciais e Condições Gerais
           </h2>
 

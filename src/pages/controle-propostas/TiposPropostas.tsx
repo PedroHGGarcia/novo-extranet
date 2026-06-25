@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
 import { cn } from '@/lib/utils'
@@ -38,6 +39,7 @@ export default function TiposPropostas() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingForm, setIsLoadingForm] = useState(false)
 
   const [formData, setFormData] = useState<Partial<TipoProposta>>({
     status: 'Ativo',
@@ -127,24 +129,46 @@ export default function TiposPropostas() {
     }
   }
 
-  const handleEdit = (item: TipoProposta) => {
-    setSelectedItem(item)
-    setFormData({
-      ...item,
-    })
+  const handleEdit = async (item: TipoProposta) => {
     setActiveTab('cadastro')
+    setIsLoadingForm(true)
+    setFormData({ status: 'Ativo', tem_fator: false, formas_pagamento_selecionadas: [] })
+    try {
+      const fullItem = await getTipoProposta(item.id)
+      setSelectedItem(fullItem)
+      setFormData({
+        ...fullItem,
+        formas_pagamento_selecionadas: fullItem.formas_pagamento_selecionadas || [],
+      })
+    } catch (err) {
+      toast({ title: 'Erro ao carregar dados do tipo de proposta', variant: 'destructive' })
+      setActiveTab('registros')
+    } finally {
+      setIsLoadingForm(false)
+    }
   }
 
-  const handleDuplicate = (item: TipoProposta) => {
-    setSelectedItem(null)
-    setFormData({
-      ...item,
-      id: undefined,
-      nome: `${item.nome} - Cópia`,
-      created: undefined,
-      updated: undefined,
-    })
+  const handleDuplicate = async (item: TipoProposta) => {
     setActiveTab('cadastro')
+    setIsLoadingForm(true)
+    setFormData({ status: 'Ativo', tem_fator: false, formas_pagamento_selecionadas: [] })
+    try {
+      const fullItem = await getTipoProposta(item.id)
+      setSelectedItem(null)
+      setFormData({
+        ...fullItem,
+        id: undefined,
+        nome: `${fullItem.nome} - Cópia`,
+        created: undefined,
+        updated: undefined,
+        formas_pagamento_selecionadas: fullItem.formas_pagamento_selecionadas || [],
+      })
+    } catch (err) {
+      toast({ title: 'Erro ao carregar dados do tipo de proposta', variant: 'destructive' })
+      setActiveTab('registros')
+    } finally {
+      setIsLoadingForm(false)
+    }
   }
 
   const handleSave = async (e?: React.FormEvent) => {
@@ -436,6 +460,11 @@ export default function TiposPropostas() {
                   </Table>
                 </div>
               </div>
+            ) : isLoadingForm ? (
+              <div className="flex justify-center items-center py-12 text-slate-500">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#337ab7]"></div>
+                <span className="ml-3 text-sm">Carregando dados...</span>
+              </div>
             ) : (
               <form onSubmit={handleSave} className="flex flex-col md:flex-row gap-4 items-start">
                 {/* DADOS SECTION */}
@@ -472,18 +501,20 @@ export default function TiposPropostas() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">
-                      <div className="flex flex-col">
+                      <div className="flex flex-col justify-center">
                         <label className={labelClass}>Aplicar Fator de Nacionalização</label>
-                        <select
-                          className={inputClass}
-                          value={formData.tem_fator ? 'Sim' : 'Não'}
-                          onChange={(e) =>
-                            setFormData({ ...formData, tem_fator: e.target.value === 'Sim' })
-                          }
-                        >
-                          <option value="Sim">Sim</option>
-                          <option value="Não">Não</option>
-                        </select>
+                        <div className="mt-1 flex items-center space-x-2">
+                          <Switch
+                            checked={formData.tem_fator || false}
+                            onCheckedChange={(checked) =>
+                              setFormData({ ...formData, tem_fator: checked })
+                            }
+                            className="data-[state=checked]:bg-[#337ab7]"
+                          />
+                          <span className="text-xs text-slate-600">
+                            {formData.tem_fator ? 'Sim' : 'Não'}
+                          </span>
+                        </div>
                       </div>
                       <div className="flex flex-col">
                         <label className={labelClass}>Comissão (%)</label>
@@ -491,9 +522,12 @@ export default function TiposPropostas() {
                           type="number"
                           step="0.01"
                           className={inputClass}
-                          value={formData.comissao || ''}
+                          value={formData.comissao ?? ''}
                           onChange={(e) =>
-                            setFormData({ ...formData, comissao: parseFloat(e.target.value) || 0 })
+                            setFormData({
+                              ...formData,
+                              comissao: e.target.value ? parseFloat(e.target.value) : 0,
+                            })
                           }
                           placeholder="Comissão (%)"
                         />

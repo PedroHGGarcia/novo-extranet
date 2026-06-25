@@ -36,57 +36,60 @@ import ForgotPassword from './pages/ForgotPassword'
 import { AuthProvider } from './hooks/use-auth'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { GlobalAutoFormatter } from './components/GlobalAutoFormatter'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 const App = () => (
-  <AuthProvider>
-    <BrowserRouter>
-      <TooltipProvider>
-        <GlobalAutoFormatter />
-        <Toaster />
-        <Sonner />
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route element={<ProtectedRoute />}>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/area-atuacao" element={<AreaAtuacao />} />
-              <Route path="/cadastros" element={<Cadastros />} />
-              <Route path="/cadastros/regioes" element={<Regioes />} />
-              <Route path="/cadastros/gerentes" element={<Gerentes />} />
-              <Route path="/cadastros/clientes" element={<Clientes />} />
-              <Route path="/cadastros/representantes" element={<Representantes />} />
-              <Route path="/cadastros/prepostos" element={<Prepostos />} />
-              <Route path="/eventos" element={<Eventos />} />
-              <Route
-                path="/controle-propostas"
-                element={<Navigate to="/controle-propostas/emitir-proposta" replace />}
-              />
-              <Route path="/controle-propostas/emitir-proposta" element={<EmitirProposta />} />
-              <Route path="/controle-propostas/tipos-propostas" element={<TiposPropostas />} />
-              <Route path="/controle-propostas/proposta-pdf/:id" element={<PropostaPDF />} />
-              <Route path="/produtos" element={<Produtos />} />
-              <Route path="/produtos/categorias" element={<Categorias />} />
-              <Route path="/produtos/marcas" element={<Marcas />} />
-              <Route path="/produtos/modelos" element={<Modelos />} />
-              <Route path="/produtos/versoes" element={<Versoes />} />
-              <Route path="/produtos/versao-imagens" element={<VersaoImagens />} />
-              <Route path="/produtos/acessorios" element={<Acessorios />} />
-              <Route path="/produtos/dashboard" element={<DashboardProdutos />} />
-              <Route path="/relatorios" element={<Relatorios />} />
-              <Route path="/perfil" element={<Perfil />} />
-              <Route path="/usuarios" element={<Usuarios />} />
-              <Route path="/auditoria" element={<AuditoriaPage />} />
-              <Route path="/configuracoes" element={<Configuracoes />} />
+  <ErrorBoundary>
+    <AuthProvider>
+      <BrowserRouter>
+        <TooltipProvider>
+          <GlobalAutoFormatter />
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<Layout />}>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/area-atuacao" element={<AreaAtuacao />} />
+                <Route path="/cadastros" element={<Cadastros />} />
+                <Route path="/cadastros/regioes" element={<Regioes />} />
+                <Route path="/cadastros/gerentes" element={<Gerentes />} />
+                <Route path="/cadastros/clientes" element={<Clientes />} />
+                <Route path="/cadastros/representantes" element={<Representantes />} />
+                <Route path="/cadastros/prepostos" element={<Prepostos />} />
+                <Route path="/eventos" element={<Eventos />} />
+                <Route
+                  path="/controle-propostas"
+                  element={<Navigate to="/controle-propostas/emitir-proposta" replace />}
+                />
+                <Route path="/controle-propostas/emitir-proposta" element={<EmitirProposta />} />
+                <Route path="/controle-propostas/tipos-propostas" element={<TiposPropostas />} />
+                <Route path="/controle-propostas/proposta-pdf/:id" element={<PropostaPDF />} />
+                <Route path="/produtos" element={<Produtos />} />
+                <Route path="/produtos/categorias" element={<Categorias />} />
+                <Route path="/produtos/marcas" element={<Marcas />} />
+                <Route path="/produtos/modelos" element={<Modelos />} />
+                <Route path="/produtos/versoes" element={<Versoes />} />
+                <Route path="/produtos/versao-imagens" element={<VersaoImagens />} />
+                <Route path="/produtos/acessorios" element={<Acessorios />} />
+                <Route path="/produtos/dashboard" element={<DashboardProdutos />} />
+                <Route path="/relatorios" element={<Relatorios />} />
+                <Route path="/perfil" element={<Perfil />} />
+                <Route path="/usuarios" element={<Usuarios />} />
+                <Route path="/auditoria" element={<AuditoriaPage />} />
+                <Route path="/configuracoes" element={<Configuracoes />} />
+              </Route>
             </Route>
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </TooltipProvider>
-    </BrowserRouter>
-  </AuthProvider>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </BrowserRouter>
+    </AuthProvider>
+  </ErrorBoundary>
 )
 
 export default App
