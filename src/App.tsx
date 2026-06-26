@@ -70,6 +70,10 @@ const App = () => (
                 />
                 <Route path="/controle-propostas/dashboard" element={<DashboardPropostas />} />
                 <Route
+                  path="/controle-propostas/propostas-excluidas"
+                  element={<Navigate to="/controle-propostas/dashboard" replace />}
+                />
+                <Route
                   path="/controle-propostas/assinaturas"
                   element={<Navigate to="/controle-propostas/dashboard" replace />}
                 />
