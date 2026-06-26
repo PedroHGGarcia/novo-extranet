@@ -3,7 +3,16 @@ import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import pb from '@/lib/pocketbase/client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Bell, Calendar, Trophy } from 'lucide-react'
+import {
+  Bell,
+  Calendar,
+  Trophy,
+  FileText,
+  PieChart as PieChartIcon,
+  CheckCircle,
+  DollarSign,
+  Percent,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   Table,
@@ -13,6 +22,68 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { CurrencyWidget } from '@/components/CurrencyWidget'
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+  Legend,
+} from 'recharts'
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+
+function StatusBadge({ status }: { status: string }) {
+  let color = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+  if (status === 'Aprovada')
+    color = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+  if (status === 'Em Análise')
+    color = 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400'
+  if (status === 'Recusada') color = 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400'
+  if (status === 'Excluída')
+    color = 'bg-slate-200 text-slate-500 dark:bg-slate-800/80 dark:text-slate-400'
+
+  return (
+    <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap', color)}>
+      {status}
+    </span>
+  )
+}
+
+function getDateRange(period: string) {
+  const now = new Date()
+  let start = new Date(now)
+  let end = new Date(now)
+
+  if (period === 'este_mes') {
+    start = new Date(now.getFullYear(), now.getMonth(), 1)
+  } else if (period === 'mes_passado') {
+    start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59)
+  } else if (period === 'ultimos_3_meses') {
+    start = new Date(now.getFullYear(), now.getMonth() - 3, 1)
+  } else if (period === 'este_ano') {
+    start = new Date(now.getFullYear(), 0, 1)
+  } else if (period === 'todos') {
+    start = new Date(2000, 0, 1)
+  }
+
+  return { start, end }
+}
+
+const chartConfig = {
+  aprovada: { label: 'Aprovada', color: '#10b981' },
+  em_analise: { label: 'Em Análise', color: '#f59e0b' },
+  recusada: { label: 'Recusada', color: '#ef4444' },
+  excluida: { label: 'Excluída', color: '#64748b' },
+}
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -20,6 +91,7 @@ export default function Dashboard() {
   const [notificacoes, setNotificacoes] = useState<any[]>([])
   const [eventos, setEventos] = useState<any[]>([])
   const [configs, setConfigs] = useState<Record<string, boolean>>({})
+  const [period, setPeriod] = useState('este_mes')
 
   const [metrics, setMetrics] = useState({
     representativesRanking: [] as {
@@ -27,6 +99,11 @@ export default function Dashboard() {
       totalSales: number
       totalProposals: number
     }[],
+    latestProposals: [] as any[],
+    totalCriadas: 0,
+    taxaAprovacao: 0,
+    valorAprovado: 0,
+    donutData: [] as any[],
   })
 
   const loadData = async () => {
@@ -35,26 +112,49 @@ export default function Dashboard() {
       todayStart.setHours(0, 0, 0, 0)
       const startTodayStr = todayStart.toISOString().replace('T', ' ')
 
+      let filterStr = ''
+      if (period !== 'todos') {
+        const { start, end } = getDateRange(period)
+        const startStr = start.toISOString().replace('T', ' ')
+        if (period === 'mes_passado') {
+          const endStr = end.toISOString().replace('T', ' ')
+          filterStr = `created >= "${startStr}" && created <= "${endStr}"`
+        } else {
+          filterStr = `created >= "${startStr}"`
+        }
+      }
+
       const todasPropostas = await pb.collection('propostas').getFullList({
-        expand: 'representante',
+        filter: filterStr,
+        expand: 'representante,cliente',
+        sort: '-created',
       })
 
       const repStats: Record<string, { name: string; totalSales: number; totalProposals: number }> =
         {}
+      let totalAprovada = 0
+      let valorAprovado = 0
+      const statusCount: Record<string, number> = {}
 
       todasPropostas.forEach((p) => {
         const repId = p.representante
         const repName = p.expand?.representante?.fantasia
-        if (!repId || !repName) return
 
-        if (!repStats[repId]) {
-          repStats[repId] = { name: repName, totalSales: 0, totalProposals: 0 }
-        }
-
-        repStats[repId].totalProposals += 1
+        statusCount[p.status] = (statusCount[p.status] || 0) + 1
 
         if (p.status === 'Aprovada') {
-          repStats[repId].totalSales += p.valor_final || 0
+          totalAprovada++
+          valorAprovado += p.valor_final || 0
+        }
+
+        if (repId && repName) {
+          if (!repStats[repId]) {
+            repStats[repId] = { name: repName, totalSales: 0, totalProposals: 0 }
+          }
+          repStats[repId].totalProposals += 1
+          if (p.status === 'Aprovada') {
+            repStats[repId].totalSales += p.valor_final || 0
+          }
         }
       })
 
@@ -62,8 +162,27 @@ export default function Dashboard() {
         .sort((a, b) => b.totalSales - a.totalSales || b.totalProposals - a.totalProposals)
         .slice(0, 10)
 
+      const taxaAprovacao =
+        todasPropostas.length > 0 ? (totalAprovada / todasPropostas.length) * 100 : 0
+
+      const donutDataRaw = [
+        { name: 'Aprovada', value: statusCount['Aprovada'] || 0, fill: chartConfig.aprovada.color },
+        {
+          name: 'Em Análise',
+          value: statusCount['Em Análise'] || 0,
+          fill: chartConfig.em_analise.color,
+        },
+        { name: 'Recusada', value: statusCount['Recusada'] || 0, fill: chartConfig.recusada.color },
+        { name: 'Excluída', value: statusCount['Excluída'] || 0, fill: chartConfig.excluida.color },
+      ].filter((d) => d.value > 0)
+
       setMetrics({
         representativesRanking: ranking,
+        latestProposals: todasPropostas.slice(0, 5),
+        totalCriadas: todasPropostas.length,
+        taxaAprovacao,
+        valorAprovado,
+        donutData: donutDataRaw,
       })
 
       if (user?.id) {
@@ -95,7 +214,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData()
-  }, [user])
+  }, [user, period])
 
   useRealtime('eventos', () => loadData())
   useRealtime('notificacoes', () => loadData())
@@ -115,17 +234,128 @@ export default function Dashboard() {
             Aqui está o resumo de performance de vendas.
           </p>
         </div>
+        <div className="w-full sm:w-64">
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-full bg-white dark:bg-slate-900">
+              <SelectValue placeholder="Selecione o período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="este_mes">Este Mês</SelectItem>
+              <SelectItem value="mes_passado">Mês Passado</SelectItem>
+              <SelectItem value="ultimos_3_meses">Últimos 3 Meses</SelectItem>
+              <SelectItem value="este_ano">Este Ano</SelectItem>
+              <SelectItem value="todos">Todo o Período</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800">
+          <CardContent className="p-6 flex items-center gap-4">
+            <div className="p-3 bg-brand-blue/10 dark:bg-brand-blue/20 rounded-full">
+              <FileText className="h-6 w-6 text-brand-blue" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Propostas Criadas
+              </p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {metrics.totalCriadas}
+              </h3>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800">
+          <CardContent className="p-6 flex items-center gap-4">
+            <div className="p-3 bg-brand-green/10 dark:bg-brand-green/20 rounded-full">
+              <Percent className="h-6 w-6 text-brand-green" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Taxa de Aprovação
+              </p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {metrics.taxaAprovacao.toFixed(1)}%
+              </h3>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800">
+          <CardContent className="p-6 flex items-center gap-4">
+            <div className="p-3 bg-brand-orange/10 dark:bg-brand-orange/20 rounded-full">
+              <DollarSign className="h-6 w-6 text-brand-orange" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Valor Aprovado
+              </p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                  metrics.valorAprovado,
+                )}
+              </h3>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-4">
+        <CurrencyWidget />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800 lg:col-span-1 flex flex-col">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PieChartIcon className="h-5 w-5 text-brand-blue" />
+              Status das Propostas
+            </CardTitle>
+            <CardDescription>Distribuição no período</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 flex items-center justify-center min-h-[250px]">
+            {metrics.donutData.length === 0 ? (
+              <p className="text-sm text-slate-500">Nenhum dado disponível.</p>
+            ) : (
+              <ChartContainer
+                config={chartConfig}
+                className="w-full h-full aspect-square max-h-[250px]"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={metrics.donutData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                    >
+                      {metrics.donutData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip content={<ChartTooltipContent />} />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800 lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-brand-orange" />
-              Ranking de Representantes (Vendas)
+              Ranking de Representantes
             </CardTitle>
             <CardDescription>
-              Top 10 representantes com maior volume de vendas em propostas aprovadas
+              Top 10 representantes com maior volume de vendas em propostas aprovadas no período
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-2">
@@ -265,6 +495,62 @@ export default function Dashboard() {
           </Card>
         )}
       </div>
+
+      <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-brand-blue" />
+            Últimas Propostas
+          </CardTitle>
+          <CardDescription>As 5 propostas mais recentes do período selecionado</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {metrics.latestProposals.length === 0 ? (
+            <p className="text-sm text-slate-500">Nenhuma proposta recente.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
+              <Table>
+                <TableHeader className="bg-slate-50 dark:bg-slate-900/50">
+                  <TableRow>
+                    <TableHead>Número</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Representante</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {metrics.latestProposals.map((p) => (
+                    <TableRow
+                      key={p.id}
+                      className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                    >
+                      <TableCell className="font-medium text-brand-blue">
+                        {p.numero_proposta}
+                      </TableCell>
+                      <TableCell className="text-slate-700 dark:text-slate-300">
+                        {p.expand?.cliente?.fantasia || 'N/A'}
+                      </TableCell>
+                      <TableCell className="text-slate-600 dark:text-slate-400">
+                        {p.expand?.representante?.fantasia || 'N/A'}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(p.valor_final || 0)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <StatusBadge status={p.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
