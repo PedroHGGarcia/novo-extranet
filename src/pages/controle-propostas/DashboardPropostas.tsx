@@ -11,11 +11,10 @@ import {
 } from '@/components/ui/select'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { FileText, CheckCircle2, DollarSign, ArrowRight } from 'lucide-react'
+import { FileText, CheckCircle2, DollarSign, ArrowRight, TrendingDown } from 'lucide-react'
 import pb from '@/lib/pocketbase/client'
 import { useRealtime } from '@/hooks/use-realtime'
 import { ProposalHistory } from '@/components/ProposalHistory'
-import { CurrencyWidget } from '@/components/CurrencyWidget'
 import {
   Sheet,
   SheetContent,
@@ -23,7 +22,6 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet'
-import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/use-auth'
 import { updateProposta } from '@/services/propostas'
 import {
@@ -62,6 +60,7 @@ export default function DashboardPropostas() {
       const records = await pb.collection('propostas').getFullList({
         filter: `created >= "${startStr}" && created <= "${endStr}"`,
         expand: 'cliente,versao,user,ultimo_usuario_status',
+        sort: '-created',
       })
       setPropostas(records)
     } catch (err) {
@@ -85,7 +84,7 @@ export default function DashboardPropostas() {
 
   const statusCount = propostas.reduce(
     (acc, p) => {
-      const status = p.status || 'Em Análise' // Defaulting to 'Em Análise' if empty
+      const status = p.status || 'Em Análise'
       acc[status] = (acc[status] || 0) + 1
       return acc
     },
@@ -122,13 +121,13 @@ export default function DashboardPropostas() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in p-6">
+    <div className="space-y-6 animate-fade-in pb-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Performance de Propostas
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Acompanhe as métricas de sucesso das propostas emitidas.
           </p>
         </div>
@@ -137,12 +136,16 @@ export default function DashboardPropostas() {
           value={selectedMonth.toISOString()}
           onValueChange={(val) => setSelectedMonth(new Date(val))}
         >
-          <SelectTrigger className="w-[200px] bg-white dark:bg-slate-950">
+          <SelectTrigger className="w-[180px] bg-white dark:bg-slate-950 text-sm">
             <SelectValue placeholder="Selecione o mês" />
           </SelectTrigger>
           <SelectContent>
             {months.map((m) => (
-              <SelectItem key={m.toISOString()} value={m.toISOString()} className="capitalize">
+              <SelectItem
+                key={m.toISOString()}
+                value={m.toISOString()}
+                className="capitalize text-sm"
+              >
                 {format(m, 'MMMM yyyy', { locale: ptBR })}
               </SelectItem>
             ))}
@@ -150,72 +153,113 @@ export default function DashboardPropostas() {
         </Select>
       </div>
 
-      <CurrencyWidget />
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
-              Total Criadas
-            </CardTitle>
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-full">
-              <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800 p-5 flex items-center gap-4">
+          <div className="flex items-center justify-center h-10 w-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 font-bold text-lg shrink-0">
+            $
+          </div>
+          <div className="flex flex-col flex-1">
+            <span className="text-[13px] text-slate-500 font-medium">Dólar Americano</span>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <span className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                R$ 5.1859
+              </span>
+              <span className="text-[11px] text-rose-500 font-medium flex items-center">
+                <TrendingDown className="h-3 w-3 mr-0.5" /> 0.16%
+              </span>
             </div>
-          </CardHeader>
-          <CardContent>
+            <span className="text-[11px] text-slate-400 mt-1">Fechamento anterior: R$ 5.1941</span>
+          </div>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800 p-5 flex items-center gap-4">
+          <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 font-bold text-lg shrink-0">
+            €
+          </div>
+          <div className="flex flex-col flex-1">
+            <span className="text-[13px] text-slate-500 font-medium">Euro</span>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <span className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                R$ 5.8997
+              </span>
+              <span className="text-[11px] text-rose-500 font-medium flex items-center">
+                <TrendingDown className="h-3 w-3 mr-0.5" /> 0.00%
+              </span>
+            </div>
+            <span className="text-[11px] text-slate-400 mt-1">Fechamento anterior: R$ 5.8997</span>
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800 relative overflow-hidden flex flex-col justify-between p-5">
+          <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-blue-500"></div>
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-[13px] font-medium text-slate-600 dark:text-slate-400">
+              Total Criadas
+            </span>
+            <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-500 p-1.5 rounded-md">
+              <FileText className="h-4 w-4" />
+            </div>
+          </div>
+          <div>
             <div className="text-3xl font-bold text-slate-900 dark:text-slate-100">
               {totalPropostas}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Neste mês</p>
-          </CardContent>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Neste mês</p>
+          </div>
         </Card>
 
-        <Card className="border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800 relative overflow-hidden flex flex-col justify-between p-5">
+          <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-emerald-500"></div>
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-[13px] font-medium text-slate-600 dark:text-slate-400">
               Taxa de Aprovação
-            </CardTitle>
-            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-full">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            </span>
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 p-1.5 rounded-md">
+              <CheckCircle2 className="h-4 w-4" />
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div>
             <div className="text-3xl font-bold text-slate-900 dark:text-slate-100">
               {taxaAprovacao.toFixed(1)}%
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
               {aprovadas.length} aprovadas
             </p>
-          </CardContent>
+          </div>
         </Card>
 
-        <Card className="border-l-4 border-l-violet-500 shadow-sm hover:shadow-md transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800 relative overflow-hidden flex flex-col justify-between p-5">
+          <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-violet-400"></div>
+          <div className="flex justify-between items-start mb-4">
+            <span className="text-[13px] font-medium text-slate-600 dark:text-slate-400">
               Valor Aprovado
-            </CardTitle>
-            <div className="bg-violet-50 dark:bg-violet-900/20 p-2 rounded-full">
-              <DollarSign className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+            </span>
+            <div className="bg-violet-50 dark:bg-violet-900/20 text-violet-500 p-1.5 rounded-md">
+              <DollarSign className="h-4 w-4" />
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div>
             <div className="text-3xl font-bold text-slate-900 dark:text-slate-100">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                 valorAprovado,
               )}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Acumulado do mês</p>
-          </CardContent>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Acumulado do mês</p>
+          </div>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Distribuição de Status</CardTitle>
-            <CardDescription>Proporção dos status atuais das propostas</CardDescription>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800">
+          <CardHeader className="px-5 pt-5 pb-2">
+            <CardTitle className="text-lg">Distribuição de Status</CardTitle>
+            <CardDescription className="text-xs">
+              Proporção dos status atuais das propostas
+            </CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[280px] pb-2 px-2">
             {chartData.length > 0 ? (
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -223,11 +267,12 @@ export default function DashboardPropostas() {
                     <Pie
                       data={chartData}
                       cx="50%"
-                      cy="50%"
-                      innerRadius={70}
-                      outerRadius={100}
-                      paddingAngle={4}
+                      cy="45%"
+                      innerRadius={65}
+                      outerRadius={95}
+                      paddingAngle={2}
                       dataKey="value"
+                      stroke="none"
                     >
                       {chartData.map((entry, index) => (
                         <Cell
@@ -237,7 +282,13 @@ export default function DashboardPropostas() {
                       ))}
                     </Pie>
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend verticalAlign="bottom" height={36} />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={36}
+                      iconType="square"
+                      iconSize={8}
+                      wrapperStyle={{ fontSize: '12px' }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -249,49 +300,44 @@ export default function DashboardPropostas() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm flex flex-col">
-          <CardHeader>
-            <CardTitle>Últimas Propostas do Mês</CardTitle>
-            <CardDescription>Clique para visualizar o histórico de status</CardDescription>
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800 flex flex-col h-full">
+          <CardHeader className="px-5 pt-5 pb-3">
+            <CardTitle className="text-lg">Últimas Propostas do Mês</CardTitle>
+            <CardDescription className="text-xs">
+              Clique para visualizar o histórico de status
+            </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 overflow-auto max-h-[300px] pr-2">
+          <CardContent className="px-5 pb-5 pt-0 flex-1 overflow-auto max-h-[280px]">
             <div className="space-y-3">
               {propostas.slice(0, 10).map((p) => (
                 <div
                   key={p.id}
-                  className="flex flex-col p-3 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors gap-2"
+                  className="flex flex-col p-4 border border-slate-100 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
                   onClick={() => setSelectedProposta(p)}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                      <div className="font-semibold text-sm text-slate-800 dark:text-slate-200">
                         {p.numero_proposta}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-[200px] truncate">
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5 truncate max-w-[200px]">
                         {p.expand?.cliente?.fantasia || 'Cliente não informado'}
-                      </p>
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <Badge
-                        variant="outline"
-                        style={{
-                          backgroundColor: (COLORS[p.status] || COLORS['Sem Status']) + '15',
-                          color: COLORS[p.status] || COLORS['Sem Status'],
-                          borderColor: (COLORS[p.status] || COLORS['Sem Status']) + '40',
-                        }}
-                      >
+                    <div className="text-right flex flex-col items-end">
+                      <span className="inline-flex items-center justify-center px-3 py-0.5 rounded-full text-[10px] font-medium bg-white border border-slate-200 text-slate-500 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-400 shadow-sm">
                         {p.status || 'Novo'}
-                      </Badge>
-                      <p className="text-[10px] text-slate-400">
+                      </span>
+                      <div className="text-[10px] text-slate-400 mt-1.5 font-medium">
                         {new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL',
                         }).format(p.valor_final || p.valor_atual || 0)}
-                      </p>
+                      </div>
                     </div>
                   </div>
                   {p.status !== 'Excluída' && (
-                    <div className="border-t border-slate-100 dark:border-slate-800 pt-2 mt-1">
+                    <div className="mt-2.5">
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -300,9 +346,9 @@ export default function DashboardPropostas() {
                             p.status === 'Em Análise' ? 'Aprovada' : p.status || 'Em Análise',
                           )
                         }}
-                        className="flex items-center text-amber-600 hover:text-amber-700 hover:underline text-[11px] w-fit font-medium"
+                        className="text-[11px] text-amber-500 font-medium flex items-center hover:text-amber-600 transition-colors"
                       >
-                        <ArrowRight className="h-3 w-3 mr-1" /> Avançar Proposta
+                        <ArrowRight className="w-3 h-3 mr-1" /> Avançar Proposta
                       </button>
                     </div>
                   )}
