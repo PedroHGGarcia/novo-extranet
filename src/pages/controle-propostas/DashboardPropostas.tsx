@@ -15,6 +15,7 @@ import { FileText, CheckCircle2, DollarSign } from 'lucide-react'
 import pb from '@/lib/pocketbase/client'
 import { useRealtime } from '@/hooks/use-realtime'
 import { ProposalHistory } from '@/components/ProposalHistory'
+import { CurrencyWidget } from '@/components/CurrencyWidget'
 import {
   Sheet,
   SheetContent,
@@ -115,6 +116,8 @@ export default function DashboardPropostas() {
           </SelectContent>
         </Select>
       </div>
+
+      <CurrencyWidget />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-all duration-300">
