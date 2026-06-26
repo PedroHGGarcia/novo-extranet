@@ -45,7 +45,6 @@ const menuItems = [
       { title: 'Clientes', url: '/cadastros/clientes', icon: Users },
       { title: 'Regiões', url: '/cadastros/regioes', icon: Globe },
       { title: 'Representantes', url: '/cadastros/representantes', icon: Briefcase },
-      { title: 'Prepostos', url: '/cadastros/prepostos', icon: Briefcase },
     ],
   },
   {

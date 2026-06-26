@@ -30,7 +30,6 @@ import AuditoriaPage from './pages/Auditoria'
 import Configuracoes from './pages/Configuracoes'
 import NotFound from './pages/NotFound'
 import Representantes from './pages/Representantes'
-import Prepostos from './pages/Prepostos'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
@@ -63,7 +62,7 @@ const App = () => (
                 <Route path="/cadastros/gerentes" element={<Gerentes />} />
                 <Route path="/cadastros/clientes" element={<Clientes />} />
                 <Route path="/cadastros/representantes" element={<Representantes />} />
-                <Route path="/cadastros/prepostos" element={<Prepostos />} />
+                <Route path="/cadastros/prepostos" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/eventos" element={<Eventos />} />
                 <Route
                   path="/controle-propostas"
