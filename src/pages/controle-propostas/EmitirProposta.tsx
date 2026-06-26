@@ -9,6 +9,7 @@ import {
   ArrowDown,
   ChevronRight,
   History,
+  ArrowRight,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -32,6 +33,8 @@ import { PropostaDocument } from '@/components/PropostaDocument'
 import { ProposalHistory } from '@/components/ProposalHistory'
 import pb from '@/lib/pocketbase/client'
 import { useToast } from '@/components/ui/use-toast'
+import { useAuth } from '@/hooks/use-auth'
+import { DialogFooter } from '@/components/ui/dialog'
 
 const formatCurrency = (value: number | undefined, currency: string = 'BRL') => {
   if (value === undefined) return '-'
@@ -94,6 +97,7 @@ const CurrencyInput = ({
 
 export default function EmitirProposta() {
   const { toast } = useToast()
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('registros')
   const [selectedProposta, setSelectedProposta] = useState<Proposta | null>(null)
 
@@ -138,6 +142,9 @@ export default function EmitirProposta() {
   const [viewProposta, setViewProposta] = useState<Proposta | null>(null)
 
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
+
+  const [avancarPropostaItem, setAvancarPropostaItem] = useState<Proposta | null>(null)
+  const [novoStatus, setNovoStatus] = useState<string>('')
 
   const importConfig: ImportConfig = {
     collection: 'propostas',
@@ -849,6 +856,22 @@ export default function EmitirProposta() {
     setIsPreviewModalOpen(true)
   }
 
+  const handleAvancarProposta = async () => {
+    if (!avancarPropostaItem) return
+    try {
+      await updateProposta(avancarPropostaItem.id, {
+        status: novoStatus,
+        ultimo_usuario_status: user?.id,
+        data_alteracao_status: format(new Date(), 'yyyy-MM-dd'),
+      })
+      toast({ title: 'Status da proposta atualizado com sucesso' })
+      setAvancarPropostaItem(null)
+      loadData()
+    } catch (e) {
+      toast({ title: 'Erro ao atualizar status', variant: 'destructive' })
+    }
+  }
+
   const renderCadastroActionBars = () => {
     const isOverDiscount = (formData.percentual_desconto || 0) > 28
 
@@ -965,6 +988,19 @@ export default function EmitirProposta() {
                   >
                     Gerar PDF
                   </button>
+                  {item.status !== 'Excluída' && (
+                    <button
+                      onClick={() => {
+                        setAvancarPropostaItem(item)
+                        setNovoStatus(
+                          item.status === 'Em Análise' ? 'Aprovada' : item.status || 'Em Análise',
+                        )
+                      }}
+                      className="flex items-center text-amber-600 hover:text-amber-700 hover:underline text-[11px] w-fit font-medium mt-1"
+                    >
+                      <ArrowRight className="h-3 w-3 mr-1" /> Avançar Proposta
+                    </button>
+                  )}
                 </div>
               </TableCell>
               <TableCell
@@ -1156,7 +1192,7 @@ export default function EmitirProposta() {
               </div>
             </div>
 
-            <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Data de Emissão</label>
                 <input
@@ -1165,42 +1201,6 @@ export default function EmitirProposta() {
                   value={formData.dt_cad ? formData.dt_cad.substring(0, 10) : ''}
                   onChange={(e) => setFormData({ ...formData, dt_cad: e.target.value })}
                 />
-              </div>
-              <div className="flex flex-col w-full relative">
-                <label className={labelClass}>Status da Proposta</label>
-                <div className="flex bg-slate-100 rounded-sm p-1 gap-1 border border-slate-200">
-                  {['Em Análise', 'Aprovada', 'Recusada', 'Excluída'].map((statusOption) => {
-                    const isSelected = (formData.status || 'Em Análise') === statusOption
-                    return (
-                      <button
-                        key={statusOption}
-                        onClick={() => setFormData({ ...formData, status: statusOption })}
-                        className={cn(
-                          'flex-1 text-[11px] font-medium py-1.5 rounded-sm transition-all',
-                          isSelected
-                            ? statusOption === 'Aprovada'
-                              ? 'bg-emerald-500 text-white shadow-sm'
-                              : statusOption === 'Recusada'
-                                ? 'bg-rose-500 text-white shadow-sm'
-                                : statusOption === 'Excluída'
-                                  ? 'bg-slate-500 text-white shadow-sm'
-                                  : 'bg-amber-500 text-white shadow-sm'
-                            : 'text-slate-500 hover:bg-slate-200',
-                        )}
-                      >
-                        {statusOption}
-                      </button>
-                    )
-                  })}
-                </div>
-                {(formData.status === 'Aprovada' ||
-                  formData.status === 'Recusada' ||
-                  formData.status === 'Excluída') && (
-                  <span className="text-[10px] text-slate-500 mt-1 leading-tight">
-                    O status finalizado possui validade de auditoria. Alterações serão registradas
-                    no histórico.
-                  </span>
-                )}
               </div>
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Versão</label>
@@ -1797,6 +1797,56 @@ export default function EmitirProposta() {
               Fechar
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!avancarPropostaItem}
+        onOpenChange={(open) => !open && setAvancarPropostaItem(null)}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Avançar Proposta</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-slate-600 mb-4">
+              Selecione o novo status para a proposta{' '}
+              <strong className="text-slate-900">{avancarPropostaItem?.numero_proposta}</strong>:
+            </p>
+            <div className="flex bg-slate-100 rounded-sm p-1 gap-1 border border-slate-200">
+              {['Em Análise', 'Aprovada', 'Recusada', 'Excluída'].map((statusOption) => {
+                const isSelected = novoStatus === statusOption
+                return (
+                  <button
+                    key={statusOption}
+                    onClick={() => setNovoStatus(statusOption)}
+                    className={cn(
+                      'flex-1 text-[11px] font-medium py-1.5 rounded-sm transition-all',
+                      isSelected
+                        ? statusOption === 'Aprovada'
+                          ? 'bg-emerald-500 text-white shadow-sm'
+                          : statusOption === 'Recusada'
+                            ? 'bg-rose-500 text-white shadow-sm'
+                            : statusOption === 'Excluída'
+                              ? 'bg-slate-500 text-white shadow-sm'
+                              : 'bg-amber-500 text-white shadow-sm'
+                        : 'text-slate-500 hover:bg-slate-200 hover:shadow-sm',
+                    )}
+                  >
+                    {statusOption}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAvancarPropostaItem(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAvancarProposta} className="bg-[#337ab7] hover:bg-[#286090]">
+              Confirmar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { FileText, CheckCircle2, DollarSign } from 'lucide-react'
+import { FileText, CheckCircle2, DollarSign, ArrowRight } from 'lucide-react'
 import pb from '@/lib/pocketbase/client'
 import { useRealtime } from '@/hooks/use-realtime'
 import { ProposalHistory } from '@/components/ProposalHistory'
@@ -24,11 +24,28 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet'
 import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/hooks/use-auth'
+import { updateProposta } from '@/services/propostas'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/use-toast'
+import { cn } from '@/lib/utils'
 
 export default function DashboardPropostas() {
+  const { user } = useAuth()
+  const { toast } = useToast()
   const [propostas, setPropostas] = useState<any[]>([])
   const [selectedMonth, setSelectedMonth] = useState<Date>(startOfMonth(new Date()))
   const [selectedProposta, setSelectedProposta] = useState<any>(null)
+
+  const [avancarPropostaItem, setAvancarPropostaItem] = useState<any>(null)
+  const [novoStatus, setNovoStatus] = useState<string>('')
 
   const months = useMemo(() => {
     return Array.from({ length: 12 }).map((_, i) => {
@@ -76,6 +93,22 @@ export default function DashboardPropostas() {
   )
 
   const chartData = Object.entries(statusCount).map(([name, value]) => ({ name, value }))
+
+  const handleAvancarProposta = async () => {
+    if (!avancarPropostaItem) return
+    try {
+      await updateProposta(avancarPropostaItem.id, {
+        status: novoStatus,
+        ultimo_usuario_status: user?.id,
+        data_alteracao_status: format(new Date(), 'yyyy-MM-dd'),
+      })
+      toast({ title: 'Status da proposta atualizado com sucesso' })
+      setAvancarPropostaItem(null)
+      loadData()
+    } catch (e) {
+      toast({ title: 'Erro ao atualizar status', variant: 'destructive' })
+    }
+  }
 
   const COLORS: Record<string, string> = {
     Aprovada: '#10b981',
@@ -226,35 +259,53 @@ export default function DashboardPropostas() {
               {propostas.slice(0, 10).map((p) => (
                 <div
                   key={p.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+                  className="flex flex-col p-3 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors gap-2"
                   onClick={() => setSelectedProposta(p)}
                 >
-                  <div>
-                    <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">
-                      {p.numero_proposta}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-[200px] truncate">
-                      {p.expand?.cliente?.fantasia || 'Cliente não informado'}
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                        {p.numero_proposta}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-[200px] truncate">
+                        {p.expand?.cliente?.fantasia || 'Cliente não informado'}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge
+                        variant="outline"
+                        style={{
+                          backgroundColor: (COLORS[p.status] || COLORS['Sem Status']) + '15',
+                          color: COLORS[p.status] || COLORS['Sem Status'],
+                          borderColor: (COLORS[p.status] || COLORS['Sem Status']) + '40',
+                        }}
+                      >
+                        {p.status || 'Novo'}
+                      </Badge>
+                      <p className="text-[10px] text-slate-400">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(p.valor_final || p.valor_atual || 0)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <Badge
-                      variant="outline"
-                      style={{
-                        backgroundColor: (COLORS[p.status] || COLORS['Sem Status']) + '15',
-                        color: COLORS[p.status] || COLORS['Sem Status'],
-                        borderColor: (COLORS[p.status] || COLORS['Sem Status']) + '40',
-                      }}
-                    >
-                      {p.status || 'Novo'}
-                    </Badge>
-                    <p className="text-[10px] text-slate-400">
-                      {new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      }).format(p.valor_final || p.valor_atual || 0)}
-                    </p>
-                  </div>
+                  {p.status !== 'Excluída' && (
+                    <div className="border-t border-slate-100 dark:border-slate-800 pt-2 mt-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setAvancarPropostaItem(p)
+                          setNovoStatus(
+                            p.status === 'Em Análise' ? 'Aprovada' : p.status || 'Em Análise',
+                          )
+                        }}
+                        className="flex items-center text-amber-600 hover:text-amber-700 hover:underline text-[11px] w-fit font-medium"
+                      >
+                        <ArrowRight className="h-3 w-3 mr-1" /> Avançar Proposta
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
               {propostas.length === 0 && (
@@ -294,6 +345,59 @@ export default function DashboardPropostas() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <Dialog
+        open={!!avancarPropostaItem}
+        onOpenChange={(open) => !open && setAvancarPropostaItem(null)}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Avançar Proposta</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-slate-600 mb-4">
+              Selecione o novo status para a proposta{' '}
+              <strong className="text-slate-900">{avancarPropostaItem?.numero_proposta}</strong>:
+            </p>
+            <div className="flex bg-slate-100 rounded-sm p-1 gap-1 border border-slate-200">
+              {['Em Análise', 'Aprovada', 'Recusada', 'Excluída'].map((statusOption) => {
+                const isSelected = novoStatus === statusOption
+                return (
+                  <button
+                    key={statusOption}
+                    onClick={() => setNovoStatus(statusOption)}
+                    className={cn(
+                      'flex-1 text-[11px] font-medium py-1.5 rounded-sm transition-all',
+                      isSelected
+                        ? statusOption === 'Aprovada'
+                          ? 'bg-emerald-500 text-white shadow-sm'
+                          : statusOption === 'Recusada'
+                            ? 'bg-rose-500 text-white shadow-sm'
+                            : statusOption === 'Excluída'
+                              ? 'bg-slate-500 text-white shadow-sm'
+                              : 'bg-amber-500 text-white shadow-sm'
+                        : 'text-slate-500 hover:bg-slate-200 hover:shadow-sm',
+                    )}
+                  >
+                    {statusOption}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAvancarPropostaItem(null)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAvancarProposta}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
