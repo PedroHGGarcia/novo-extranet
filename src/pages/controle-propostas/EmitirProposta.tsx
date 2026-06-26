@@ -251,7 +251,7 @@ export default function EmitirProposta() {
       setIsLoading(true)
       const sortParam = sortDirection === 'desc' ? `-${sortField}` : sortField
       const filterParam =
-        activeTab === 'excluidas' ? "status = 'Excluída'" : "(status != 'Excluída' || status = '')"
+        activeTab === 'excluidas' ? "status = 'Excluída'" : "(status = 'Em Análise' || status = '')"
       const res = await getPropostasPaginated(page, perPage, sortParam, filterParam)
       setData(res.items)
       setTotalItems(res.totalItems)
