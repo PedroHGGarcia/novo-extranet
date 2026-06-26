@@ -85,6 +85,18 @@ const App = () => (
                 />
                 <Route path="/controle-propostas/tipos-propostas" element={<TiposPropostas />} />
                 <Route path="/controle-propostas/proposta-pdf/:id" element={<PropostaPDF />} />
+                <Route
+                  path="/controle-propostas/cotacoes"
+                  element={<Navigate to="/controle-propostas/dashboard" replace />}
+                />
+                <Route
+                  path="/controle-propostas/tipo-documentos"
+                  element={<Navigate to="/controle-propostas/dashboard" replace />}
+                />
+                <Route
+                  path="/controle-propostas/formas-pagamento"
+                  element={<Navigate to="/controle-propostas/dashboard" replace />}
+                />
                 <Route path="/produtos" element={<Produtos />} />
                 <Route path="/produtos/categorias" element={<Categorias />} />
                 <Route path="/produtos/marcas" element={<Marcas />} />
