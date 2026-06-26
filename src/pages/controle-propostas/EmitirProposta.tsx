@@ -243,7 +243,9 @@ export default function EmitirProposta() {
     try {
       setIsLoading(true)
       const sortParam = sortDirection === 'desc' ? `-${sortField}` : sortField
-      const res = await getPropostasPaginated(page, perPage, sortParam)
+      const filterParam =
+        activeTab === 'excluidas' ? "status = 'Excluída'" : "(status != 'Excluída' || status = '')"
+      const res = await getPropostasPaginated(page, perPage, sortParam, filterParam)
       setData(res.items)
       setTotalItems(res.totalItems)
     } catch (error) {
@@ -254,8 +256,10 @@ export default function EmitirProposta() {
   }
 
   useEffect(() => {
-    loadData()
-  }, [page, perPage, sortField, sortDirection])
+    if (activeTab === 'registros' || activeTab === 'excluidas') {
+      loadData()
+    }
+  }, [page, perPage, sortField, sortDirection, activeTab])
 
   useEffect(() => {
     getTiposProposta()
@@ -888,6 +892,141 @@ export default function EmitirProposta() {
     'w-full bg-white border border-slate-300 rounded-sm px-2 py-1.5 outline-none text-slate-700 text-xs focus:border-[#337ab7] min-h-[30px]'
   const labelClass = 'text-[11px] font-bold text-slate-700 mb-1'
 
+  const renderTable = () => (
+    <Table>
+      <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
+        <TableRow className="border-b-2 border-slate-200 hover:bg-transparent">
+          <TableHead className="w-[40px] px-3 py-3 bg-white h-auto border-b-2 border-slate-200">
+            <Checkbox
+              className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
+              checked={data.length > 0 && selectedIds.size === data.length}
+              onCheckedChange={(checked) => toggleSelectAll(!!checked)}
+            />
+          </TableHead>
+          {renderSortableHead('Proposta', 'numero_proposta')}
+          {renderSortableHead('Razão Social', 'cliente_original')}
+          {renderSortableHead('Contato', 'contato')}
+          {renderSortableHead('Telefone', 'telefone')}
+          {renderSortableHead('Versão', 'versao_original')}
+          {renderSortableHead('Representante', 'representante_original')}
+          {renderSortableHead('Status', 'status')}
+          {renderSortableHead('Valor', 'valor_final')}
+          {renderSortableHead('Dt. Cad', 'dt_cad')}
+          {renderSortableHead('Por', 'created')}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {isLoading && data.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={11} className="text-center py-8 text-slate-500">
+              Carregando...
+            </TableCell>
+          </TableRow>
+        ) : data.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={11} className="text-center py-8 text-slate-500">
+              Nenhuma proposta encontrada.
+            </TableCell>
+          </TableRow>
+        ) : (
+          data.map((item) => (
+            <TableRow key={item.id} className="hover:bg-slate-50 border-b border-slate-200 group">
+              <TableCell className="align-top py-2.5 px-3">
+                <Checkbox
+                  className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
+                  checked={selectedIds.has(item.id)}
+                  onCheckedChange={(checked) => toggleSelect(item.id, !!checked)}
+                />
+              </TableCell>
+              <TableCell className="align-top py-2 px-3 min-w-[100px] border-r border-slate-100">
+                <div className="text-slate-600 text-xs mb-1">{item.numero_proposta}</div>
+                <div className="flex flex-col gap-1 mt-1">
+                  <button
+                    onClick={() => handleEdit(item)}
+                    className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit"
+                  >
+                    <Pencil className="h-3 w-3 mr-1" fill="currentColor" /> Editar
+                  </button>
+                  <button
+                    onClick={() => handleView(item)}
+                    className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit"
+                  >
+                    <Eye className="h-3 w-3 mr-1" /> Visualizar
+                  </button>
+                  <button
+                    onClick={() => handleHistory(item)}
+                    className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit"
+                  >
+                    <History className="h-3 w-3 mr-1" /> Histórico
+                  </button>
+                  <button
+                    onClick={() => printProposal(item)}
+                    className="flex items-center text-emerald-600 hover:text-emerald-700 hover:underline text-[11px] w-fit font-medium mt-1"
+                  >
+                    Gerar PDF
+                  </button>
+                </div>
+              </TableCell>
+              <TableCell
+                className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase max-w-[200px] truncate"
+                title={
+                  item.expand?.cliente?.razao_social ||
+                  item.expand?.cliente?.fantasia ||
+                  item.cliente_original
+                }
+              >
+                {item.expand?.cliente?.razao_social ||
+                  item.expand?.cliente?.fantasia ||
+                  item.cliente_original ||
+                  '-'}
+              </TableCell>
+              <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px]">
+                {item.contato || '-'}
+              </TableCell>
+              <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] whitespace-nowrap">
+                {item.telefone || '-'}
+              </TableCell>
+              <TableCell
+                className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase max-w-[300px] whitespace-normal leading-relaxed"
+                title={item.expand?.versao?.nome || item.versao_original}
+              >
+                {item.expand?.versao?.nome || item.versao_original || '-'}
+              </TableCell>
+              <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase">
+                {item.expand?.representante?.fantasia || item.representante_original || '-'}
+              </TableCell>
+              <TableCell className="align-top py-2 px-3">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    'text-[10px] font-normal border whitespace-nowrap px-1.5 py-0',
+                    item.status === 'Aprovada' &&
+                      'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    item.status === 'Recusada' && 'bg-rose-50 text-rose-700 border-rose-200',
+                    item.status === 'Excluída' && 'bg-slate-100 text-slate-500 border-slate-300',
+                    item.status === 'Em Análise' && 'bg-amber-50 text-amber-700 border-amber-200',
+                    !item.status && 'bg-amber-50 text-amber-700 border-amber-200',
+                  )}
+                >
+                  {item.status || 'Em Análise'}
+                </Badge>
+              </TableCell>
+              <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] whitespace-nowrap">
+                {formatCurrency(item.valor_final, item.moeda)}
+              </TableCell>
+              <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] whitespace-nowrap">
+                {item.dt_cad ? item.dt_cad.substring(0, 10).split('-').reverse().join('/') : '-'}
+              </TableCell>
+              <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase">
+                {item.expand?.user?.name || '-'}
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
+  )
+
   return (
     <div className="flex flex-col h-[calc(100vh-7rem)] bg-white text-slate-700 font-sans pt-2 rounded-md shadow-sm border border-slate-200 overflow-hidden">
       <Tabs
@@ -899,6 +1038,7 @@ export default function EmitirProposta() {
           <TabsList className="bg-transparent justify-start rounded-none h-auto p-0 space-x-2">
             <TabsTrigger
               value="registros"
+              onClick={() => setPage(1)}
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#337ab7] data-[state=active]:text-[#337ab7] text-[#337ab7] font-normal shadow-none px-4 py-2.5 text-sm bg-transparent transition-colors hover:text-[#286090]"
             >
               Registros
@@ -914,150 +1054,25 @@ export default function EmitirProposta() {
             >
               Cadastro
             </TabsTrigger>
+            <TabsTrigger
+              value="excluidas"
+              onClick={() => setPage(1)}
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#337ab7] data-[state=active]:text-[#337ab7] text-[#337ab7] font-normal shadow-none px-4 py-2.5 text-sm bg-transparent transition-colors hover:text-[#286090]"
+            >
+              Propostas Excluídas
+            </TabsTrigger>
           </TabsList>
           <div className="flex items-center gap-4">
-            {activeTab === 'registros' && renderTopPagination()}
+            {(activeTab === 'registros' || activeTab === 'excluidas') && renderTopPagination()}
           </div>
         </div>
 
         <TabsContent value="registros" className="flex-1 min-h-0 m-0 overflow-y-auto outline-none">
-          <Table>
-            <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
-              <TableRow className="border-b-2 border-slate-200 hover:bg-transparent">
-                <TableHead className="w-[40px] px-3 py-3 bg-white h-auto border-b-2 border-slate-200">
-                  <Checkbox
-                    className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
-                    checked={data.length > 0 && selectedIds.size === data.length}
-                    onCheckedChange={(checked) => toggleSelectAll(!!checked)}
-                  />
-                </TableHead>
-                {renderSortableHead('Proposta', 'numero_proposta')}
-                {renderSortableHead('Razão Social', 'cliente_original')}
-                {renderSortableHead('Contato', 'contato')}
-                {renderSortableHead('Telefone', 'telefone')}
-                {renderSortableHead('Versão', 'versao_original')}
-                {renderSortableHead('Representante', 'representante_original')}
-                {renderSortableHead('Status', 'status')}
-                {renderSortableHead('Valor', 'valor_final')}
-                {renderSortableHead('Dt. Cad', 'dt_cad')}
-                {renderSortableHead('Por', 'created')}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && data.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={11} className="text-center py-8 text-slate-500">
-                    Carregando...
-                  </TableCell>
-                </TableRow>
-              ) : data.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={11} className="text-center py-8 text-slate-500">
-                    Nenhuma proposta encontrada.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data.map((item) => (
-                  <TableRow
-                    key={item.id}
-                    className="hover:bg-slate-50 border-b border-slate-200 group"
-                  >
-                    <TableCell className="align-top py-2.5 px-3">
-                      <Checkbox
-                        className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
-                        checked={selectedIds.has(item.id)}
-                        onCheckedChange={(checked) => toggleSelect(item.id, !!checked)}
-                      />
-                    </TableCell>
-                    <TableCell className="align-top py-2 px-3 min-w-[100px] border-r border-slate-100">
-                      <div className="text-slate-600 text-xs mb-1">{item.numero_proposta}</div>
-                      <div className="flex flex-col gap-1 mt-1">
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit"
-                        >
-                          <Pencil className="h-3 w-3 mr-1" fill="currentColor" /> Editar
-                        </button>
-                        <button
-                          onClick={() => handleView(item)}
-                          className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit"
-                        >
-                          <Eye className="h-3 w-3 mr-1" /> Visualizar
-                        </button>
-                        <button
-                          onClick={() => handleHistory(item)}
-                          className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit"
-                        >
-                          <History className="h-3 w-3 mr-1" /> Histórico
-                        </button>
-                        <button
-                          onClick={() => printProposal(item)}
-                          className="flex items-center text-emerald-600 hover:text-emerald-700 hover:underline text-[11px] w-fit font-medium mt-1"
-                        >
-                          Gerar PDF
-                        </button>
-                      </div>
-                    </TableCell>
-                    <TableCell
-                      className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase max-w-[200px] truncate"
-                      title={
-                        item.expand?.cliente?.razao_social ||
-                        item.expand?.cliente?.fantasia ||
-                        item.cliente_original
-                      }
-                    >
-                      {item.expand?.cliente?.razao_social ||
-                        item.expand?.cliente?.fantasia ||
-                        item.cliente_original ||
-                        '-'}
-                    </TableCell>
-                    <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px]">
-                      {item.contato || '-'}
-                    </TableCell>
-                    <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] whitespace-nowrap">
-                      {item.telefone || '-'}
-                    </TableCell>
-                    <TableCell
-                      className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase max-w-[300px] whitespace-normal leading-relaxed"
-                      title={item.expand?.versao?.nome || item.versao_original}
-                    >
-                      {item.expand?.versao?.nome || item.versao_original || '-'}
-                    </TableCell>
-                    <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase">
-                      {item.expand?.representante?.fantasia || item.representante_original || '-'}
-                    </TableCell>
-                    <TableCell className="align-top py-2 px-3">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          'text-[10px] font-normal border whitespace-nowrap px-1.5 py-0',
-                          item.status === 'Aprovada' &&
-                            'bg-emerald-50 text-emerald-700 border-emerald-200',
-                          item.status === 'Recusada' && 'bg-rose-50 text-rose-700 border-rose-200',
-                          item.status === 'Em Análise' &&
-                            'bg-amber-50 text-amber-700 border-amber-200',
-                          !item.status && 'bg-amber-50 text-amber-700 border-amber-200',
-                        )}
-                      >
-                        {item.status || 'Em Análise'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] whitespace-nowrap">
-                      {formatCurrency(item.valor_final, item.moeda)}
-                    </TableCell>
-                    <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] whitespace-nowrap">
-                      {item.dt_cad
-                        ? item.dt_cad.substring(0, 10).split('-').reverse().join('/')
-                        : '-'}
-                    </TableCell>
-                    <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase">
-                      {item.expand?.user?.name || '-'}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          {renderTable()}
+        </TabsContent>
+
+        <TabsContent value="excluidas" className="flex-1 min-h-0 m-0 overflow-y-auto outline-none">
+          {renderTable()}
         </TabsContent>
 
         <TabsContent
@@ -1154,7 +1169,7 @@ export default function EmitirProposta() {
               <div className="flex flex-col w-full relative">
                 <label className={labelClass}>Status da Proposta</label>
                 <div className="flex bg-slate-100 rounded-sm p-1 gap-1 border border-slate-200">
-                  {['Em Análise', 'Aprovada', 'Recusada'].map((statusOption) => {
+                  {['Em Análise', 'Aprovada', 'Recusada', 'Excluída'].map((statusOption) => {
                     const isSelected = (formData.status || 'Em Análise') === statusOption
                     return (
                       <button
@@ -1167,7 +1182,9 @@ export default function EmitirProposta() {
                               ? 'bg-emerald-500 text-white shadow-sm'
                               : statusOption === 'Recusada'
                                 ? 'bg-rose-500 text-white shadow-sm'
-                                : 'bg-amber-500 text-white shadow-sm'
+                                : statusOption === 'Excluída'
+                                  ? 'bg-slate-500 text-white shadow-sm'
+                                  : 'bg-amber-500 text-white shadow-sm'
                             : 'text-slate-500 hover:bg-slate-200',
                         )}
                       >
@@ -1176,7 +1193,9 @@ export default function EmitirProposta() {
                     )
                   })}
                 </div>
-                {(formData.status === 'Aprovada' || formData.status === 'Recusada') && (
+                {(formData.status === 'Aprovada' ||
+                  formData.status === 'Recusada' ||
+                  formData.status === 'Excluída') && (
                   <span className="text-[10px] text-slate-500 mt-1 leading-tight">
                     O status finalizado possui validade de auditoria. Alterações serão registradas
                     no histórico.

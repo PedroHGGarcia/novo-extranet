@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-26T17:39:31.316Z",
+  "generatedAt": "2026-06-26T17:44:43.845Z",
   "collections": [
     {
       "name": "users",
@@ -1489,7 +1489,7 @@
           "type": "select",
           "required": false,
           "system": false,
-          "selectValues": ["Em Análise", "Aprovada", "Recusada"]
+          "selectValues": ["Em Análise", "Aprovada", "Recusada", "Excluída"]
         },
         {
           "name": "data_alteracao_status",
