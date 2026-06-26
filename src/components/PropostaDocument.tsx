@@ -221,14 +221,7 @@ export function PropostaDocument({
       {/* Footer info & Assinatura/QR Code */}
       <div className="mt-16 pt-6 border-t border-slate-300 grid grid-cols-3 gap-4 print-break-inside-avoid items-end">
         <div className="flex flex-col items-center justify-end text-center h-full">
-          {proposta.expand?.user?.assinatura && proposta.expand?.user?.id && (
-            <img
-              src={`${import.meta.env.VITE_POCKETBASE_URL}/api/files/users/${proposta.expand.user.id}/${proposta.expand.user.assinatura}`}
-              alt="Assinatura"
-              className="h-16 object-contain mb-2"
-            />
-          )}
-          <div className="w-48 border-t border-slate-400"></div>
+          <div className="w-48 border-t border-slate-400 mt-8"></div>
           <p className="font-semibold text-slate-700 mt-2 text-xs">
             {proposta.expand?.user?.name || gerenteNome}
           </p>

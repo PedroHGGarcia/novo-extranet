@@ -61,7 +61,6 @@ const menuItems = [
     sub: [
       { title: 'Emitir Proposta', url: '/controle-propostas/emitir-proposta' },
       { title: 'Tipos de Propostas', url: '/controle-propostas/tipos-propostas' },
-      { title: 'Assinaturas', url: '/controle-propostas/assinaturas' },
       { title: 'Cotações', url: '/controle-propostas/cotacoes' },
       { title: 'Propostas Excluídas', url: '/controle-propostas/propostas-excluidas' },
       { title: 'Tipo de Documentos', url: '/controle-propostas/tipo-documentos' },
