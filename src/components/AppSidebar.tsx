@@ -85,12 +85,6 @@ const menuItems = [
       { title: 'Versões Excluídas', url: '/produtos/versoes-excluidas' },
     ],
   },
-  {
-    title: 'Relatórios',
-    url: '/relatorios',
-    icon: LineChart,
-    sub: [{ title: 'Vendas', url: '/relatorios' }],
-  },
   { title: 'Perfil', url: '/perfil', icon: UserCircle, sub: [] },
   { title: 'Área de Atuação de Representantes', url: '/area-atuacao', icon: Map, sub: [] },
   { title: 'Usuários', url: '/usuarios', icon: Users, sub: [], adminOnly: true },
