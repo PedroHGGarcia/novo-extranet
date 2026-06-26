@@ -19,21 +19,28 @@ export function CurrencyWidget() {
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL')
-      .then((res) => {
-        if (!res.ok) throw new Error('Network response was not ok')
-        return res.json()
-      })
-      .then((data) => {
-        setCurrencies({
-          USD: data.USDBRL,
-          EUR: data.EURBRL,
+    const fetchCurrencies = () => {
+      fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL')
+        .then((res) => {
+          if (!res.ok) throw new Error('Network response was not ok')
+          return res.json()
         })
-      })
-      .catch((err) => {
-        console.error('Failed to fetch currencies:', err)
-        setError(true)
-      })
+        .then((data) => {
+          setCurrencies({
+            USD: data.USDBRL,
+            EUR: data.EURBRL,
+          })
+          setError(false)
+        })
+        .catch((err) => {
+          console.error('Failed to fetch currencies:', err)
+          setError(true)
+        })
+    }
+
+    fetchCurrencies()
+    const interval = setInterval(fetchCurrencies, 60000) // Update every minute
+    return () => clearInterval(interval)
   }, [])
 
   if (error) {
