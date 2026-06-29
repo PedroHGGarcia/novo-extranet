@@ -73,7 +73,6 @@ const menuItems = [
       { title: 'Marcas', url: '/produtos/marcas' },
       { title: 'Modelos', url: '/produtos/modelos' },
       { title: 'Versões', url: '/produtos/versoes' },
-      { title: 'Versão Imagens', url: '/produtos/versao-imagens' },
       { title: 'Acessórios', url: '/produtos/acessorios' },
       { title: 'Alterar Preços', url: '/produtos/alterar-precos' },
     ],

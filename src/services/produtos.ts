@@ -179,15 +179,3 @@ export const updateVersao = (id: string, data: Partial<Versao> | FormData) =>
 export const deleteVersao = (id: string) => pb.collection('versoes').delete(id)
 export const getVersaoImagemUrl = (record: Versao, filename: string) =>
   pb.files.getURL(record, filename)
-
-export const getVersaoImagens = () =>
-  pb
-    .collection('versao_imagens')
-    .getFullList<VersaoImagem>({ sort: 'ordem,-created', expand: 'versao' })
-export const createVersaoImagem = (data: Partial<VersaoImagem> | FormData) =>
-  pb.collection('versao_imagens').create(data)
-export const updateVersaoImagem = (id: string, data: Partial<VersaoImagem> | FormData) =>
-  pb.collection('versao_imagens').update(id, data)
-export const deleteVersaoImagem = (id: string) => pb.collection('versao_imagens').delete(id)
-export const getVersaoImagemArquivoUrl = (record: VersaoImagem, filename: string) =>
-  pb.files.getURL(record, filename)

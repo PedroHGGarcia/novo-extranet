@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-29T14:16:22.708Z",
+  "generatedAt": "2026-06-29T14:21:51.056Z",
   "collections": [
     {
       "name": "users",
@@ -1074,66 +1074,6 @@
         }
       ],
       "indexes": ["CREATE UNIQUE INDEX idx_versoes_coderp ON versoes (cod_erp) WHERE cod_erp != ''"]
-    },
-    {
-      "name": "versao_imagens",
-      "type": "base",
-      "apiRules": {
-        "list": "@request.auth.id != ''",
-        "view": "@request.auth.id != ''",
-        "create": "@request.auth.id != ''",
-        "update": "@request.auth.id != ''",
-        "delete": "@request.auth.id != ''"
-      },
-      "fields": [
-        {
-          "name": "titulo",
-          "type": "text",
-          "required": true,
-          "system": false
-        },
-        {
-          "name": "versao",
-          "type": "relation",
-          "required": true,
-          "system": false,
-          "collectionRef": "versoes"
-        },
-        {
-          "name": "ordem",
-          "type": "number",
-          "required": false,
-          "system": false
-        },
-        {
-          "name": "arquivo",
-          "type": "file",
-          "required": false,
-          "system": false
-        },
-        {
-          "name": "status",
-          "type": "select",
-          "required": true,
-          "system": false,
-          "selectValues": ["Ativo", "Inativo"]
-        },
-        {
-          "name": "created",
-          "type": "autodate",
-          "required": false,
-          "system": false,
-          "autodateTriggers": ["onCreate"]
-        },
-        {
-          "name": "updated",
-          "type": "autodate",
-          "required": false,
-          "system": false,
-          "autodateTriggers": ["onCreate", "onUpdate"]
-        }
-      ],
-      "indexes": []
     },
     {
       "name": "preferencias_tabela",

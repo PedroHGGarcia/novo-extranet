@@ -20,7 +20,6 @@ import Categorias from './pages/produtos/Categorias'
 import Marcas from './pages/produtos/Marcas'
 import Modelos from './pages/produtos/Modelos'
 import Versoes from './pages/produtos/Versoes'
-import VersaoImagens from './pages/produtos/VersaoImagens'
 import DashboardProdutos from './pages/produtos/Dashboard'
 import Acessorios from './pages/produtos/Acessorios'
 import AlterarPrecos from './pages/produtos/AlterarPrecos'
@@ -102,7 +101,10 @@ const App = () => (
                 <Route path="/produtos/marcas" element={<Marcas />} />
                 <Route path="/produtos/modelos" element={<Modelos />} />
                 <Route path="/produtos/versoes" element={<Versoes />} />
-                <Route path="/produtos/versao-imagens" element={<VersaoImagens />} />
+                <Route
+                  path="/produtos/versao-imagens"
+                  element={<Navigate to="/dashboard" replace />}
+                />
                 <Route path="/produtos/acessorios" element={<Acessorios />} />
                 <Route path="/produtos/alterar-precos" element={<AlterarPrecos />} />
                 <Route
