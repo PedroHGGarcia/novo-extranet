@@ -23,6 +23,7 @@ import Versoes from './pages/produtos/Versoes'
 import VersaoImagens from './pages/produtos/VersaoImagens'
 import DashboardProdutos from './pages/produtos/Dashboard'
 import Acessorios from './pages/produtos/Acessorios'
+import AlterarPrecos from './pages/produtos/AlterarPrecos'
 import Perfil from './pages/Perfil'
 import AreaAtuacao from './pages/AreaAtuacao'
 import Usuarios from './pages/Usuarios'
@@ -103,6 +104,7 @@ const App = () => (
                 <Route path="/produtos/versoes" element={<Versoes />} />
                 <Route path="/produtos/versao-imagens" element={<VersaoImagens />} />
                 <Route path="/produtos/acessorios" element={<Acessorios />} />
+                <Route path="/produtos/alterar-precos" element={<AlterarPrecos />} />
                 <Route
                   path="/produtos/hierarquia-versoes"
                   element={<Navigate to="/produtos" replace />}
