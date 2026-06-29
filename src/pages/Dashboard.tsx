@@ -12,6 +12,8 @@ import {
   CheckCircle,
   DollarSign,
   Percent,
+  BarChart3,
+  TrendingDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -30,6 +32,11 @@ import {
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
   Legend,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
 } from 'recharts'
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
 import {
@@ -83,6 +90,7 @@ const chartConfig = {
   em_analise: { label: 'Em Análise', color: '#f59e0b' },
   recusada: { label: 'Recusada', color: '#ef4444' },
   excluida: { label: 'Excluída', color: '#64748b' },
+  outros: { label: 'Outros Status', color: '#94a3b8' },
 }
 
 export default function Dashboard() {
@@ -104,6 +112,10 @@ export default function Dashboard() {
     taxaAprovacao: 0,
     valorAprovado: 0,
     donutData: [] as any[],
+    monthlyRevenueData: [] as { month: string; aprovada: number; outros: number }[],
+    avgDesconto: 0,
+    totalSemDesconto: 0,
+    totalFinal: 0,
   })
 
   const loadData = async () => {
@@ -176,6 +188,43 @@ export default function Dashboard() {
         { name: 'Excluída', value: statusCount['Excluída'] || 0, fill: chartConfig.excluida.color },
       ].filter((d) => d.value > 0)
 
+      const monthlyMap: Record<string, { aprovada: number; outros: number }> = {}
+      todasPropostas.forEach((p) => {
+        const date = new Date(p.created)
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        if (!monthlyMap[monthKey]) monthlyMap[monthKey] = { aprovada: 0, outros: 0 }
+        if (p.status === 'Aprovada') {
+          monthlyMap[monthKey].aprovada += p.valor_final || 0
+        } else {
+          monthlyMap[monthKey].outros += p.valor_final || 0
+        }
+      })
+      const monthlyRevenueData = Object.entries(monthlyMap)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .slice(-6)
+        .map(([month, values]) => ({
+          month: new Date(month + '-01').toLocaleDateString('pt-BR', {
+            month: 'short',
+            year: '2-digit',
+          }),
+          aprovada: values.aprovada,
+          outros: values.outros,
+        }))
+
+      const propostasComDesconto = todasPropostas.filter(
+        (p) => p.percentual_desconto != null && p.percentual_desconto !== 0,
+      )
+      const avgDesconto =
+        propostasComDesconto.length > 0
+          ? propostasComDesconto.reduce((acc, p) => acc + (p.percentual_desconto || 0), 0) /
+            propostasComDesconto.length
+          : 0
+      const totalSemDesconto = todasPropostas.reduce(
+        (acc, p) => acc + (p.valor_sem_desconto || 0),
+        0,
+      )
+      const totalFinal = todasPropostas.reduce((acc, p) => acc + (p.valor_final || 0), 0)
+
       setMetrics({
         representativesRanking: ranking,
         latestProposals: todasPropostas.slice(0, 5),
@@ -183,6 +232,10 @@ export default function Dashboard() {
         taxaAprovacao,
         valorAprovado,
         donutData: donutDataRaw,
+        monthlyRevenueData,
+        avgDesconto,
+        totalSemDesconto,
+        totalFinal,
       })
 
       if (user?.id) {
@@ -495,6 +548,136 @@ export default function Dashboard() {
           </Card>
         )}
       </div>
+
+      {isVisible('grafico_vendas_mensal') && (
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-brand-blue" />
+              Volume de Vendas por Mês
+            </CardTitle>
+            <CardDescription>
+              Valor total de propostas nos últimos 6 meses, segmentado por status
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {metrics.monthlyRevenueData.length === 0 ? (
+              <p className="text-sm text-slate-500">Nenhum dado disponível.</p>
+            ) : (
+              <ChartContainer config={chartConfig} className="w-full h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={metrics.monthlyRevenueData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      fontSize={12}
+                      tickFormatter={(v: number) =>
+                        v >= 1000 ? `R$ ${(v / 1000).toFixed(0)}k` : `R$ ${v.toFixed(0)}`
+                      }
+                    />
+                    <RechartsTooltip
+                      content={<ChartTooltipContent />}
+                      formatter={(value: number) =>
+                        new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(value)
+                      }
+                    />
+                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                    <Bar
+                      dataKey="aprovada"
+                      name="Aprovada"
+                      fill={chartConfig.aprovada.color}
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={50}
+                    />
+                    <Bar
+                      dataKey="outros"
+                      name="Outros Status"
+                      fill={chartConfig.outros.color}
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={50}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {isVisible('analise_margem') && (
+        <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingDown className="h-5 w-5 text-brand-orange" />
+              Análise de Margem
+            </CardTitle>
+            <CardDescription>
+              Monitoramento de descontos e impacto na margem de lucro
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <Percent className="h-4 w-4 text-brand-orange" />
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                    Desconto Médio
+                  </span>
+                </div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  {metrics.avgDesconto.toFixed(1)}%
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Média de desconto aplicado nas propostas
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="h-4 w-4 text-brand-blue" />
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                    Valor Sem Desconto
+                  </span>
+                </div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                  }).format(metrics.totalSemDesconto)}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">Soma total dos valores originais</p>
+              </div>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="h-4 w-4 text-brand-green" />
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                    Valor Final
+                  </span>
+                </div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                  }).format(metrics.totalFinal)}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Impacto total de desconto:{' '}
+                  <span className="font-semibold text-brand-orange">
+                    {new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL',
+                    }).format(metrics.totalSemDesconto - metrics.totalFinal)}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800">
         <CardHeader>
