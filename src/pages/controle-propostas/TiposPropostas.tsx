@@ -21,10 +21,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
-import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
 import { cn } from '@/lib/utils'
 
 import {
@@ -33,7 +31,6 @@ import {
   getTipoProposta,
   createTipoProposta,
   updateTipoProposta,
-  deleteTipoProposta,
 } from '@/services/tipos-propostas'
 import { extractFieldErrors } from '@/lib/pocketbase/errors'
 
@@ -140,8 +137,6 @@ export default function TiposPropostas() {
   const [perPage, setPerPage] = useState(50)
   const [sortField, setSortField] = useState('nome')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingForm, setIsLoadingForm] = useState(false)
   const [loadError, setLoadError] = useState<{ id: string; message: string } | null>(null)
@@ -165,21 +160,13 @@ export default function TiposPropostas() {
   })
   const [selectedItem, setSelectedItem] = useState<TipoProposta | null>(null)
 
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-
   const loadData = async () => {
     setIsLoading(true)
     try {
       const sortStr = sortDir === 'desc' ? `-${sortField}` : sortField
-      let filterStr = ''
-      if (searchTerm) {
-        filterStr = `nome ~ "${searchTerm}"`
-      }
-
-      const res = await getTiposPropostaPaginated(page, perPage, sortStr, filterStr)
+      const res = await getTiposPropostaPaginated(page, perPage, sortStr)
       setData(res.items)
       setTotalItems(res.totalItems)
-      setSelectedIds(new Set())
     } catch (e) {
       toast({ title: 'Erro ao carregar tipos de propostas', variant: 'destructive' })
     } finally {
@@ -189,7 +176,7 @@ export default function TiposPropostas() {
 
   useEffect(() => {
     loadData()
-  }, [page, perPage, sortField, sortDir, searchTerm])
+  }, [page, perPage, sortField, sortDir])
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -199,39 +186,6 @@ export default function TiposPropostas() {
       setSortDir('asc')
     }
     setPage(1)
-  }
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedIds(new Set(data.map((d) => d.id)))
-    } else {
-      setSelectedIds(new Set())
-    }
-  }
-
-  const handleSelectOne = (id: string, checked: boolean) => {
-    const next = new Set(selectedIds)
-    if (checked) next.add(id)
-    else next.delete(id)
-    setSelectedIds(next)
-  }
-
-  const handleDeleteSelected = async () => {
-    if (selectedIds.size === 0) return
-    setIsDeleteModalOpen(true)
-  }
-
-  const confirmDelete = async () => {
-    try {
-      for (const id of selectedIds) {
-        await deleteTipoProposta(id)
-      }
-      toast({ title: 'Sucesso: Dados salvos com sucesso!' })
-      setIsDeleteModalOpen(false)
-      loadData()
-    } catch (e) {
-      toast({ title: 'Erro ao excluir itens', variant: 'destructive' })
-    }
   }
 
   const loadFullItem = async (id: string) => {
@@ -342,25 +296,6 @@ export default function TiposPropostas() {
     }
   }
 
-  const handleNew = () => {
-    setSelectedItem(null)
-    setFormData({ status: 'Ativo', tem_fator: false, formas_pagamento_selecionadas: [] })
-    setLoadError(null)
-    setActiveTab('cadastro')
-  }
-
-  const handleSearchClick = () => {
-    if (activeTab === 'cadastro') {
-      setActiveTab('registros')
-    } else {
-      const p = prompt('Digite o termo para pesquisa:', searchTerm)
-      if (p !== null) {
-        setSearchTerm(p)
-        setPage(1)
-      }
-    }
-  }
-
   const renderSortableHead = (label: string, field: string) => {
     const isActive = sortField === field
     return (
@@ -399,45 +334,19 @@ export default function TiposPropostas() {
       <div className="flex items-center gap-2 p-4 bg-white border-b border-slate-200 shrink-0 shadow-sm">
         <List className="h-5 w-5 text-slate-600" />
         <h2 className="text-lg font-normal text-slate-700">Tipos de Propostas</h2>
+        {activeTab === 'cadastro' && !loadError && !isLoadingForm && (
+          <Button
+            type="button"
+            onClick={handleSave}
+            className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none ml-auto"
+          >
+            Salvar
+          </Button>
+        )}
       </div>
 
       <div className="flex-1 overflow-auto p-4">
         <div className="bg-white border border-slate-200 shadow-sm rounded-sm">
-          <div className="p-3 border-b border-slate-200 flex gap-2">
-            <Button
-              type="button"
-              onClick={handleSearchClick}
-              className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none"
-            >
-              Pesquisar
-            </Button>
-            <Button
-              type="button"
-              onClick={handleNew}
-              className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none"
-            >
-              Novo
-            </Button>
-            {activeTab === 'registros' ? (
-              <Button
-                type="button"
-                onClick={handleDeleteSelected}
-                disabled={selectedIds.size === 0}
-                className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none disabled:opacity-50"
-              >
-                Excluir
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                onClick={handleSave}
-                className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none"
-              >
-                Salvar
-              </Button>
-            )}
-          </div>
-
           <div className="px-3 pt-3 flex gap-1 border-b border-slate-200">
             <button
               type="button"
@@ -509,13 +418,6 @@ export default function TiposPropostas() {
                   <Table>
                     <TableHeader>
                       <TableRow className="border-b border-slate-200 hover:bg-transparent">
-                        <TableHead className="w-[40px] px-3 py-2">
-                          <Checkbox
-                            className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
-                            checked={data.length > 0 && selectedIds.size === data.length}
-                            onCheckedChange={handleSelectAll}
-                          />
-                        </TableHead>
                         {renderSortableHead('Nome', 'nome')}
                         {renderSortableHead('Fator', 'tem_fator')}
                         {renderSortableHead('DtCad', 'created')}
@@ -526,7 +428,7 @@ export default function TiposPropostas() {
                       {isLoading ? (
                         <TableRow>
                           <TableCell
-                            colSpan={5}
+                            colSpan={4}
                             className="text-center py-8 text-slate-500 text-sm"
                           >
                             <div className="flex justify-center items-center gap-2">
@@ -538,7 +440,7 @@ export default function TiposPropostas() {
                       ) : data.length === 0 ? (
                         <TableRow>
                           <TableCell
-                            colSpan={5}
+                            colSpan={4}
                             className="text-center py-8 text-slate-500 text-sm"
                           >
                             Nenhum registro encontrado.
@@ -550,13 +452,6 @@ export default function TiposPropostas() {
                             key={item.id}
                             className="hover:bg-slate-50 border-b border-slate-100"
                           >
-                            <TableCell className="align-top py-2.5 px-3">
-                              <Checkbox
-                                className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
-                                checked={selectedIds.has(item.id)}
-                                onCheckedChange={(c) => handleSelectOne(item.id, !!c)}
-                              />
-                            </TableCell>
                             <TableCell className="align-top py-2.5 px-3 border-r border-slate-100">
                               <div className="text-slate-600 text-xs mb-1 font-medium">
                                 {item.nome}
@@ -619,7 +514,6 @@ export default function TiposPropostas() {
               </div>
             ) : (
               <form onSubmit={handleSave} className="flex flex-col md:flex-row gap-4 items-start">
-                {/* DADOS SECTION */}
                 <div className="flex-1 w-full border border-slate-200 rounded-sm">
                   <div className="flex items-center gap-2 bg-slate-50 border-b border-slate-200 p-2.5">
                     <FileText className="w-4 h-4 text-slate-600" />
@@ -822,7 +716,6 @@ export default function TiposPropostas() {
                   </div>
                 </div>
 
-                {/* FORMAS DE PAGAMENTO SECTION */}
                 <div className="w-full md:w-[280px] shrink-0 border border-slate-200 rounded-sm">
                   <div className="flex items-center gap-2 bg-slate-50 border-b border-slate-200 p-2.5">
                     <Network className="w-4 h-4 text-slate-600" />
@@ -840,12 +733,13 @@ export default function TiposPropostas() {
                       const isChecked = formData.formas_pagamento_selecionadas?.includes(label)
                       return (
                         <div key={label} className="flex items-start space-x-2">
-                          <Checkbox
+                          <input
+                            type="checkbox"
                             id={`pgto-${label}`}
                             checked={isChecked}
-                            onCheckedChange={(c) => {
+                            onChange={(e) => {
                               const current = formData.formas_pagamento_selecionadas || []
-                              if (c) {
+                              if (e.target.checked) {
                                 setFormData({
                                   ...formData,
                                   formas_pagamento_selecionadas: [...current, label],
@@ -857,7 +751,7 @@ export default function TiposPropostas() {
                                 })
                               }
                             }}
-                            className="mt-[3px] h-3.5 w-3.5 border-slate-400 rounded-sm data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
+                            className="mt-[3px] h-3.5 w-3.5 border-slate-400 rounded-sm accent-[#337ab7]"
                           />
                           <label
                             htmlFor={`pgto-${label}`}
@@ -872,44 +766,9 @@ export default function TiposPropostas() {
                 </div>
               </form>
             )}
-
-            {/* Bottom Actions for Cadastro Tab */}
-            {activeTab === 'cadastro' && !loadError && !isLoadingForm && (
-              <div className="mt-4 pt-4 border-t border-slate-200 flex gap-2">
-                <Button
-                  type="button"
-                  onClick={handleSearchClick}
-                  className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none"
-                >
-                  Pesquisar
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleNew}
-                  className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none"
-                >
-                  Novo
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSave}
-                  className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-[3px] text-xs font-normal h-8 px-4 uppercase shadow-none"
-                >
-                  Salvar
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </div>
-
-      <DeleteConfirmModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={confirmDelete}
-        title="Excluir Tipos de Propostas"
-        description="Tem certeza que deseja excluir os registros selecionados? Esta ação não poderá ser desfeita."
-      />
     </div>
   )
 }
