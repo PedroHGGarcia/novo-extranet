@@ -39,6 +39,7 @@ export function AreaMap({ layers, centerCoords, zoomLevel, title, autoFit = true
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
   const [selected, setSelected] = useState<SelectedFeature | null>(null)
+  const [hovered, setHovered] = useState<{ name: string; x: number; y: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const prevKey = useRef<string | null>(null)
 
@@ -102,14 +103,19 @@ export function AreaMap({ layers, centerCoords, zoomLevel, title, autoFit = true
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
     setDragStart({ x: e.clientX, y: e.clientY })
+    setHovered(null)
   }
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return
-    const dx = e.clientX - dragStart.x
-    const dy = e.clientY - dragStart.y
-    setDragStart({ x: e.clientX, y: e.clientY })
-    const cp = project(center.lat, center.lon, zoom)
-    setCenter(unproject(cp.x - dx, cp.y - dy, zoom))
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (isDragging) {
+      const dx = e.clientX - dragStart.x
+      const dy = e.clientY - dragStart.y
+      setDragStart({ x: e.clientX, y: e.clientY })
+      const cp = project(center.lat, center.lon, zoom)
+      setCenter(unproject(cp.x - dx, cp.y - dy, zoom))
+    } else if (hovered && rect) {
+      setHovered({ ...hovered, x: e.clientX - rect.left, y: e.clientY - rect.top })
+    }
   }
 
   const Z = Math.round(zoom)
@@ -149,7 +155,10 @@ export function AreaMap({ layers, centerCoords, zoomLevel, title, autoFit = true
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={() => setIsDragging(false)}
-      onMouseLeave={() => setIsDragging(false)}
+      onMouseLeave={() => {
+        setIsDragging(false)
+        setHovered(null)
+      }}
       onClick={() => setSelected(null)}
       style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
@@ -188,6 +197,16 @@ export function AreaMap({ layers, centerCoords, zoomLevel, title, autoFit = true
                   strokeWidth={2 / scale}
                   className="cursor-pointer transition-opacity hover:opacity-80"
                   onClick={(e) => handleFeatureClick(e, f)}
+                  onMouseEnter={(e) => {
+                    const rect = containerRef.current?.getBoundingClientRect()
+                    if (rect)
+                      setHovered({
+                        name: f.name,
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                      })
+                  }}
+                  onMouseLeave={() => setHovered(null)}
                 />
               )
             }
@@ -203,6 +222,16 @@ export function AreaMap({ layers, centerCoords, zoomLevel, title, autoFit = true
                   strokeWidth={f.strokeWidth / scale}
                   className="cursor-pointer transition-opacity hover:opacity-80"
                   onClick={(e) => handleFeatureClick(e, f)}
+                  onMouseEnter={(e) => {
+                    const rect = containerRef.current?.getBoundingClientRect()
+                    if (rect)
+                      setHovered({
+                        name: f.name,
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                      })
+                  }}
+                  onMouseLeave={() => setHovered(null)}
                 />
               )
             }
@@ -218,6 +247,12 @@ export function AreaMap({ layers, centerCoords, zoomLevel, title, autoFit = true
                 strokeLinejoin="round"
                 className="cursor-pointer"
                 onClick={(e) => handleFeatureClick(e, f)}
+                onMouseEnter={(e) => {
+                  const rect = containerRef.current?.getBoundingClientRect()
+                  if (rect)
+                    setHovered({ name: f.name, x: e.clientX - rect.left, y: e.clientY - rect.top })
+                }}
+                onMouseLeave={() => setHovered(null)}
               />
             )
           })}
@@ -236,6 +271,14 @@ export function AreaMap({ layers, centerCoords, zoomLevel, title, autoFit = true
             <p className="text-xs text-gray-500 mt-0.5">{selected.description}</p>
           )}
           <div className="absolute w-3 h-3 bg-white rotate-45 left-1/2 -translate-x-1/2 -bottom-1 border-r border-b border-gray-200" />
+        </div>
+      )}
+      {hovered && !selected && (
+        <div
+          className="absolute z-50 px-2.5 py-1 bg-gray-900 text-white rounded text-xs font-medium pointer-events-none whitespace-nowrap shadow-lg"
+          style={{ left: hovered.x, top: hovered.y - 28, transform: 'translateX(-50%)' }}
+        >
+          <span dangerouslySetInnerHTML={{ __html: hovered.name }} />
         </div>
       )}
       <div className="absolute bottom-4 right-4 bg-white/90 px-3 py-2 rounded shadow text-xs text-gray-600 pointer-events-none">
