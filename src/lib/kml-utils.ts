@@ -38,11 +38,33 @@ export function parseKml(kmlText: string): KmlDocument {
   if (doc.querySelector('parsererror')) return { folders: [] }
 
   const styles = new Map<string, KmlStyle>()
+
+  // Extract individual styles
   Array.from(doc.getElementsByTagName('Style')).forEach((el) => {
     const id = el.getAttribute('id')
     if (!id) return
     const style = extractStyle(el)
     if (Object.keys(style).length > 0) styles.set(id, style)
+  })
+
+  // Extract StyleMaps and map them to their 'normal' style
+  Array.from(doc.getElementsByTagName('StyleMap')).forEach((el) => {
+    const id = el.getAttribute('id')
+    if (!id) return
+    let normalStyleUrl = ''
+    Array.from(el.getElementsByTagName('Pair')).forEach((pair) => {
+      const key = pair.getElementsByTagName('key')[0]?.textContent?.trim()
+      if (key === 'normal') {
+        normalStyleUrl = pair.getElementsByTagName('styleUrl')[0]?.textContent?.trim() || ''
+      }
+    })
+    if (normalStyleUrl) {
+      const targetId = normalStyleUrl.replace('#', '')
+      const targetStyle = styles.get(targetId)
+      if (targetStyle) {
+        styles.set(id, targetStyle)
+      }
+    }
   })
 
   const folders: KmlFolder[] = []

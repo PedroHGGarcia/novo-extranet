@@ -90,7 +90,7 @@ export default function AreaAtuacao() {
         <div className="flex items-center gap-3 bg-amber-50 border border-amber-300 rounded-lg px-4 py-3">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
           <p className="text-sm text-amber-800 flex-1">
-            <strong>Modo Placeholder:</strong> Não há coordenadas reais no banco de dados. Exibindo
+            <strong>MODO PLACEHOLDER:</strong> Não há coordenadas reais no banco de dados. Exibindo
             pontos simulados dos representantes. Faça upload de um arquivo KML para visualizar dados
             reais.
           </p>
@@ -116,7 +116,7 @@ export default function AreaAtuacao() {
                 title="REPS VEKER"
                 centerCoords={{ lat: -20.466799, lon: -45.086393 }}
                 zoomLevel={6}
-                autoFit={!isPlaceholder}
+                autoFit={false}
               />
               <MapLayerControl layers={layers} onToggle={handleToggleLayer} />
             </>

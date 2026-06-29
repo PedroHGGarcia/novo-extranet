@@ -164,8 +164,13 @@ export function AreaMap({ layers, centerCoords, zoomLevel, title, autoFit = true
     >
       {title && (
         <div
-          className="absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-white px-6 py-2 rounded-full shadow-lg text-gray-800 pointer-events-none"
-          style={{ fontSize: '18px', fontWeight: 'bold', fontFamily: 'Arial, sans-serif' }}
+          className="absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-white px-6 py-2 shadow-lg text-gray-800 pointer-events-none"
+          style={{
+            fontSize: '18px',
+            fontWeight: 'bold',
+            fontFamily: 'Arial, sans-serif',
+            borderRadius: '8px',
+          }}
         >
           {title}
         </div>
@@ -177,13 +182,13 @@ export function AreaMap({ layers, centerCoords, zoomLevel, title, autoFit = true
           {tiles.map((t) => (
             <image
               key={`${t.z}/${t.x}/${t.y}`}
-              href={`https://tile.openstreetmap.org/${t.z}/${t.x}/${t.y}.png`}
+              href={`https://mt1.google.com/vt/lyrs=m&hl=pt-BR&x=${t.x}&y=${t.y}&z=${t.z}`}
               x={t.x * TILE}
               y={t.y * TILE}
               width={TILE}
               height={TILE}
               preserveAspectRatio="none"
-              opacity={0.8}
+              opacity={1}
             />
           ))}
           {visibleFeatures.map((f) => {
@@ -196,9 +201,10 @@ export function AreaMap({ layers, centerCoords, zoomLevel, title, autoFit = true
                   cy={p.y}
                   r={10 / scale}
                   fill={f.color}
+                  fillOpacity={0.7}
                   stroke="white"
                   strokeWidth={2 / scale}
-                  className="cursor-pointer transition-opacity hover:opacity-80"
+                  className="cursor-pointer transition-opacity hover:opacity-100"
                   onClick={(e) => handleFeatureClick(e, f)}
                   onMouseEnter={(e) => {
                     const rect = containerRef.current?.getBoundingClientRect()
@@ -271,7 +277,10 @@ export function AreaMap({ layers, centerCoords, zoomLevel, title, autoFit = true
             dangerouslySetInnerHTML={{ __html: selected.name }}
           />
           {selected.description && (
-            <p className="text-xs text-gray-500 mt-0.5">{selected.description}</p>
+            <div
+              className="text-xs text-gray-500 mt-1 max-w-md break-words whitespace-pre-wrap overflow-x-auto"
+              dangerouslySetInnerHTML={{ __html: selected.description }}
+            />
           )}
           <div className="absolute w-3 h-3 bg-white rotate-45 left-1/2 -translate-x-1/2 -bottom-1 border-r border-b border-gray-200" />
         </div>
