@@ -98,10 +98,14 @@ export interface Acessorio {
   status: 'Ativo' | 'Inativo'
   versoes: string
   especificacoes_tecnicas?: string
+  valor_anterior?: number
+  data_ultimo_reajuste?: string
+  atualizado_por?: string
   created: string
   updated: string
   expand?: {
     versoes?: Versao
+    atualizado_por?: { name: string; email: string }
   }
 }
 
@@ -123,6 +127,8 @@ export interface Versao {
   valor?: number
   tem_fator?: boolean
   fator_nac?: number
+  valor_anterior?: number
+  data_ultimo_reajuste?: string
 
   nome_abreviado?: string
   tem_estoque?: boolean

@@ -35,6 +35,8 @@ import { updateVersao, Versao } from '@/services/produtos'
 import { updateAcessorio, Acessorio } from '@/services/acessorios'
 import pb from '@/lib/pocketbase/client'
 import { cn } from '@/lib/utils'
+import { format } from 'date-fns'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 interface PriceChange {
   moeda?: string
@@ -54,6 +56,20 @@ function getFieldValue(item: any, changes: Record<string, PriceChange>, field: k
   if (field === 'fator_nac') return item.fator_nac ?? 1
   if (field === 'status') return item.status || 'Ativo'
   return undefined
+}
+
+function formatCurrencyValue(value: number, moeda: string) {
+  const locale = moeda === 'BRL' ? 'pt-BR' : moeda === 'USD' ? 'en-US' : 'de-DE'
+  const currency = moeda === 'BRL' ? 'BRL' : moeda === 'USD' ? 'USD' : 'EUR'
+  return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value)
+}
+
+function formatAdjustDate(dateStr: string, withTime = false) {
+  try {
+    return format(new Date(dateStr), withTime ? 'dd/MM/yyyy HH:mm' : 'dd/MM/yyyy')
+  } catch {
+    return '-'
+  }
 }
 
 export default function AlterarPrecos() {
@@ -93,7 +109,7 @@ export default function AlterarPrecos() {
     setLoading(true)
     try {
       const collection = activeTab === 'versoes' ? 'versoes' : 'acessorios'
-      const expand = activeTab === 'versoes' ? 'modelo' : 'versoes'
+      const expand = activeTab === 'versoes' ? 'modelo,atualizado_por' : 'versoes,atualizado_por'
       const queryOptions: Record<string, unknown> = {
         sort: '-created',
         expand,
@@ -155,7 +171,7 @@ export default function AlterarPrecos() {
         if (activeTab === 'versoes') {
           await updateVersao(id, { ...changes[id], atualizado_por: user?.id })
         } else {
-          await updateAcessorio(id, changes[id])
+          await updateAcessorio(id, { ...changes[id], atualizado_por: user?.id })
         }
       }
       toast({ title: `${ids.length} registro(s) atualizado(s) com sucesso` })
@@ -241,7 +257,7 @@ export default function AlterarPrecos() {
         if (activeTab === 'versoes') {
           await updateVersao(id, { valor: newValor, atualizado_por: user?.id })
         } else {
-          await updateAcessorio(id, { valor: newValor })
+          await updateAcessorio(id, { valor: newValor, atualizado_por: user?.id })
         }
         successCount++
       }
@@ -546,6 +562,35 @@ export default function AlterarPrecos() {
                           className="h-8 text-xs text-right w-full border border-gray-300 rounded px-2"
                           maxDecimals={2}
                         />
+                        {item.data_ultimo_reajuste ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-[10px] text-gray-400 cursor-help block mt-0.5">
+                                Anterior:{' '}
+                                {formatCurrencyValue(
+                                  item.valor_anterior ?? 0,
+                                  getFieldValue(item, changes, 'moeda') as string,
+                                )}{' '}
+                                em {formatAdjustDate(item.data_ultimo_reajuste)}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs whitespace-nowrap">
+                                Alterado por: {item.expand?.atualizado_por?.name || 'N/A'} | Valor
+                                anterior:{' '}
+                                {formatCurrencyValue(
+                                  item.valor_anterior ?? 0,
+                                  getFieldValue(item, changes, 'moeda') as string,
+                                )}{' '}
+                                | Data: {formatAdjustDate(item.data_ultimo_reajuste, true)}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <span className="text-[10px] text-gray-300 block mt-0.5">
+                            Sem reajustes anteriores
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Input

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-29T14:34:09.306Z",
+  "generatedAt": "2026-06-29T15:04:26.357Z",
   "collections": [
     {
       "name": "users",
@@ -1071,6 +1071,18 @@
           "type": "json",
           "required": false,
           "system": false
+        },
+        {
+          "name": "valor_anterior",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_ultimo_reajuste",
+          "type": "date",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": ["CREATE UNIQUE INDEX idx_versoes_coderp ON versoes (cod_erp) WHERE cod_erp != ''"]
@@ -1198,6 +1210,25 @@
           "type": "text",
           "required": false,
           "system": false
+        },
+        {
+          "name": "valor_anterior",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_ultimo_reajuste",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "atualizado_por",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
         }
       ],
       "indexes": ["CREATE INDEX `idx_acessorios_versoes` ON `acessorios` (versoes)"]
