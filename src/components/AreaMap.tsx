@@ -163,7 +163,10 @@ export function AreaMap({ layers, centerCoords, zoomLevel, title, autoFit = true
       style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
       {title && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-white px-6 py-2 rounded-full shadow-lg text-sm font-bold text-gray-800 pointer-events-none">
+        <div
+          className="absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-white px-6 py-2 rounded-full shadow-lg text-gray-800 pointer-events-none"
+          style={{ fontSize: '18px', fontWeight: 'bold', fontFamily: 'Arial, sans-serif' }}
+        >
           {title}
         </div>
       )}

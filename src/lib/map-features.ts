@@ -58,6 +58,25 @@ export function sortClockwise(points: [number, number][]): [number, number][] {
   )
 }
 
+function normalizeCoordenadas(raw: any): [number, number][] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((item: any) => {
+      if (Array.isArray(item) && item.length >= 2) {
+        const lat = Number(item[0])
+        const lon = Number(item[1])
+        if (!isNaN(lat) && !isNaN(lon)) return [lat, lon] as [number, number]
+      }
+      if (item && typeof item === 'object') {
+        const lat = Number(item.lat ?? item.latitude)
+        const lon = Number(item.lng ?? item.lon ?? item.longitude)
+        if (!isNaN(lat) && !isNaN(lon)) return [lat, lon] as [number, number]
+      }
+      return null
+    })
+    .filter((p: [number, number] | null): p is [number, number] => p !== null)
+}
+
 function placemarkToFeature(pm: KmlPlacemark, id: string): MapFeature {
   const style = pm.style || {}
   if (pm.type === 'point') {
@@ -110,23 +129,25 @@ export function kmlToLayers(kmlDoc: KmlDocument): MapLayer[] {
 }
 
 export function repsToLayer(reps: any[]): MapLayer {
+  const validReps = reps
+    .map((r) => ({ rep: r, coords: normalizeCoordenadas(r.coordenadas) }))
+    .filter(({ coords }) => coords.length > 2)
+
   return {
     id: 'representantes',
     name: 'Representantes',
     visible: true,
-    features: reps
-      .filter((r) => r.coordenadas && Array.isArray(r.coordenadas) && r.coordenadas.length > 2)
-      .map((r, i) => ({
-        id: r.id,
-        type: 'polygon' as const,
-        coordinates: sortClockwise(r.coordenadas as [number, number][]),
-        name: r.fantasia || r.nome || 'Representante',
-        description: [r.cidade, r.uf].filter(Boolean).join(' - '),
-        fillColor: COLORS[i % COLORS.length],
-        fillOpacity: 0.3,
-        strokeColor: COLORS[i % COLORS.length],
-        strokeWidth: 2,
-      })),
+    features: validReps.map(({ rep, coords }, i) => ({
+      id: rep.id,
+      type: 'polygon' as const,
+      coordinates: sortClockwise(coords),
+      name: rep.fantasia || rep.nome || 'Representante',
+      description: [rep.cidade, rep.uf].filter(Boolean).join(' - '),
+      fillColor: COLORS[i % COLORS.length],
+      fillOpacity: 0.3,
+      strokeColor: COLORS[i % COLORS.length],
+      strokeWidth: 2,
+    })),
   }
 }
 
