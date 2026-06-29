@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { DollarSign, Save, ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
+import { DollarSign, Save, ChevronLeft, ChevronRight, Search, X, Percent } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CurrencyInput } from '@/components/CurrencyInput'
 import {
@@ -19,6 +19,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useAuth } from '@/hooks/use-auth'
@@ -62,6 +71,12 @@ export default function AlterarPrecos() {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showAdjustDialog, setShowAdjustDialog] = useState(false)
+  const [adjustPercent, setAdjustPercent] = useState('')
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [batchProcessing, setBatchProcessing] = useState(false)
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -119,6 +134,7 @@ export default function AlterarPrecos() {
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
     setPage(1)
+    setSelectedIds(new Set())
   }
 
   const handleChange = (id: string, field: keyof PriceChange, value: string | number) => {
@@ -162,6 +178,93 @@ export default function AlterarPrecos() {
   const statusOptions = activeTab === 'versoes' ? VERSOES_STATUS : ACESSORIOS_STATUS
   const changedCount = Object.keys(changes).length
 
+  const allVisibleSelected = items.length > 0 && items.every((item) => selectedIds.has(item.id))
+  const someVisibleSelected = items.some((item) => selectedIds.has(item.id))
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) {
+        items.forEach((item) => next.add(item.id))
+      } else {
+        items.forEach((item) => next.delete(item.id))
+      }
+      return next
+    })
+  }
+
+  const handleSelectItem = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
+
+  const handleClearSelection = () => {
+    setSelectedIds(new Set())
+  }
+
+  const handleOpenAdjust = () => {
+    setAdjustPercent('')
+    setShowAdjustDialog(true)
+  }
+
+  const handleConfirmAdjust = () => {
+    const parsed = parseFloat(adjustPercent.replace(',', '.'))
+    if (isNaN(parsed)) {
+      toast({ title: 'Percentual inválido', variant: 'destructive' })
+      return
+    }
+    setShowAdjustDialog(false)
+    setShowConfirmDialog(true)
+  }
+
+  const handleApplyAdjust = async () => {
+    const parsed = parseFloat(adjustPercent.replace(',', '.'))
+    if (isNaN(parsed)) return
+
+    const ids = Array.from(selectedIds)
+    const multiplier = 1 + parsed / 100
+
+    setShowConfirmDialog(false)
+    setBatchProcessing(true)
+    try {
+      let successCount = 0
+      for (const id of ids) {
+        const item = items.find((i) => i.id === id)
+        if (!item) continue
+        const currentValor = getFieldValue(item, changes, 'valor') as number
+        const newValor = Math.round(currentValor * multiplier * 100) / 100
+
+        if (activeTab === 'versoes') {
+          await updateVersao(id, { valor: newValor, atualizado_por: user?.id })
+        } else {
+          await updateAcessorio(id, { valor: newValor })
+        }
+        successCount++
+      }
+
+      toast({
+        title: `Reajuste aplicado com sucesso`,
+        description: `${parsed > 0 ? '+' : ''}${parsed}% aplicado em ${successCount} item(ns)`,
+      })
+      handleClearSelection()
+      if (activeTab === 'versoes') setVChanges({})
+      else setAChanges({})
+      loadData()
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao aplicar reajuste',
+        description: error.message,
+        variant: 'destructive',
+      })
+    } finally {
+      setBatchProcessing(false)
+    }
+  }
+
   const renderContextCell = (item: any) => {
     if (activeTab === 'versoes') {
       return <TableCell className="text-xs text-gray-600 py-2">{item.cod_erp || '-'}</TableCell>
@@ -176,8 +279,10 @@ export default function AlterarPrecos() {
     )
   }
 
+  const parsedPercent = parseFloat(adjustPercent.replace(',', '.'))
+
   return (
-    <div className="space-y-4 max-w-full overflow-hidden">
+    <div className="space-y-4 max-w-full overflow-hidden pb-24">
       <div className="flex items-center gap-2 mb-2 text-gray-800">
         <DollarSign className="h-6 w-6" />
         <h1 className="text-2xl font-normal">Alterar Preços</h1>
@@ -241,6 +346,123 @@ export default function AlterarPrecos() {
           {renderTable()}
         </TabsContent>
       </Tabs>
+
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#2A75D3] text-white shadow-lg animate-fade-in-up">
+          <div className="flex items-center justify-between px-6 py-3 max-w-7xl mx-auto">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium">
+                {selectedIds.size}{' '}
+                {selectedIds.size === 1 ? 'item selecionado' : 'itens selecionados'}
+              </span>
+              <button
+                onClick={handleClearSelection}
+                className="text-xs text-white/80 hover:text-white underline transition-colors"
+              >
+                Limpar seleção
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleOpenAdjust}
+                disabled={batchProcessing}
+                className="bg-white text-[#2A75D3] hover:bg-white/90 rounded-none h-8 text-xs font-semibold px-4 uppercase"
+              >
+                <Percent className="w-3.5 h-3.5 mr-1.5" />
+                {batchProcessing ? 'PROCESSANDO...' : 'APLICAR REAJUSTE'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Dialog open={showAdjustDialog} onOpenChange={setShowAdjustDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Aplicar Reajuste de Preço</DialogTitle>
+            <DialogDescription>
+              Informe o percentual de reajuste a ser aplicado em {selectedIds.size}{' '}
+              {selectedIds.size === 1 ? 'item selecionado' : 'itens selecionados'}. Use valores
+              positivos para aumento (ex: 5 para +5%) ou negativos para desconto (ex: -10 para
+              -10%).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Percentual de Reajuste (%)
+            </label>
+            <div className="relative">
+              <Input
+                type="text"
+                value={adjustPercent}
+                onChange={(e) => setAdjustPercent(e.target.value.replace(/[^0-9.,-]/g, ''))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleConfirmAdjust()
+                }}
+                placeholder="ex: 5 ou -10"
+                className="pr-8 text-lg font-medium"
+                autoFocus
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-medium">
+                %
+              </span>
+            </div>
+            {!isNaN(parsedPercent) && adjustPercent !== '' && (
+              <p className="text-xs text-gray-500 mt-2">
+                {parsedPercent > 0 ? 'Aumento' : parsedPercent < 0 ? 'Desconto' : 'Sem alteração'}{' '}
+                de {Math.abs(parsedPercent)}% será aplicado sobre o valor atual de cada item.
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowAdjustDialog(false)}
+              className="rounded-none"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmAdjust}
+              disabled={adjustPercent === '' || isNaN(parsedPercent)}
+              className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none"
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Reajuste</DialogTitle>
+            <DialogDescription>
+              Deseja aplicar um reajuste de{' '}
+              <strong className="text-gray-800">
+                {parsedPercent > 0 ? '+' : ''}
+                {parsedPercent}%
+              </strong>{' '}
+              em {selectedIds.size} {selectedIds.size === 1 ? 'item' : 'itens'}?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+              className="rounded-none"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleApplyAdjust}
+              className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none"
+            >
+              Aplicar Reajuste
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 
@@ -251,6 +473,12 @@ export default function AlterarPrecos() {
           <Table>
             <TableHeader className="bg-white">
               <TableRow className="border-b border-gray-200 hover:bg-transparent">
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={allVisibleSelected || (someVisibleSelected && 'indeterminate')}
+                    onCheckedChange={(c) => handleSelectAll(c === true)}
+                  />
+                </TableHead>
                 <TableHead className="font-semibold text-gray-600 text-xs">Nome</TableHead>
                 <TableHead className="font-semibold text-gray-600 text-xs">
                   {activeTab === 'versoes' ? 'CodErp' : 'Versões'}
@@ -268,18 +496,29 @@ export default function AlterarPrecos() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : (
                 items.map((item) => {
                   const hasChange = !!changes[item.id]
+                  const isSelected = selectedIds.has(item.id)
                   return (
                     <TableRow
                       key={item.id}
-                      className={cn('hover:bg-gray-50/50', hasChange && 'bg-orange-50/40')}
+                      className={cn(
+                        'hover:bg-gray-50/50',
+                        hasChange && 'bg-orange-50/40',
+                        isSelected && 'bg-blue-50/50',
+                      )}
                     >
+                      <TableCell className="py-2">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={(c) => handleSelectItem(item.id, c === true)}
+                        />
+                      </TableCell>
                       <TableCell className="text-xs text-gray-800 font-medium py-2">
                         {item.nome}
                       </TableCell>
@@ -303,7 +542,7 @@ export default function AlterarPrecos() {
                         <CurrencyInput
                           value={getFieldValue(item, changes, 'valor') as number}
                           currency={getFieldValue(item, changes, 'moeda') as string}
-                          onChange={(v) => handleChange(item.id, 'valor', v)}
+                          onChange={(v: number) => handleChange(item.id, 'valor', v)}
                           className="h-8 text-xs text-right w-full border border-gray-300 rounded px-2"
                           maxDecimals={2}
                         />
@@ -342,7 +581,7 @@ export default function AlterarPrecos() {
               )}
               {!loading && items.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                     {debouncedSearch.trim()
                       ? 'Nenhum item encontrado para esta busca'
                       : 'Nenhum registro encontrado.'}
