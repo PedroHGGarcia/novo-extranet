@@ -1,58 +1,37 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { AreaMap, sortClockwise, type PolygonData } from '@/components/AreaMap'
+import { AreaMap } from '@/components/AreaMap'
+import { MapLayerControl } from '@/components/MapLayerControl'
 import { getRepresentantes } from '@/services/cadastros'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { parseKml } from '@/lib/kml-utils'
+import { repsToLayer, kmlToLayers, getPlaceholderLayer, type MapLayer } from '@/lib/map-features'
 import { Button } from '@/components/ui/button'
-
-const COLORS = [
-  'red',
-  'blue',
-  'green',
-  'purple',
-  'orange',
-  'darkred',
-  'lightred',
-  'beige',
-  'darkblue',
-]
-
-interface RepData extends PolygonData {
-  uf: string
-}
+import { Upload, AlertTriangle, X } from 'lucide-react'
 
 export default function AreaAtuacao() {
-  const [allReps, setAllReps] = useState<RepData[]>([])
+  const [layers, setLayers] = useState<MapLayer[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedUf, setSelectedUf] = useState('all')
-  const [selectedRep, setSelectedRep] = useState('all')
+  const [isPlaceholder, setIsPlaceholder] = useState(false)
+  const [showWarning, setShowWarning] = useState(true)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     async function loadData() {
       try {
         const reps = await getRepresentantes()
-        const parsed: RepData[] = reps
-          .filter((r) => r.coordenadas && Array.isArray(r.coordenadas) && r.coordenadas.length > 2)
-          .map((r, i) => {
-            const rawPoints = r.coordenadas as [number, number][]
-            const sortedPoints = sortClockwise(rawPoints)
-            return {
-              id: r.id,
-              name: r.fantasia || r.nome || 'Representante',
-              uf: r.uf || '',
-              color: COLORS[i % COLORS.length],
-              points: sortedPoints,
-            }
-          })
-        setAllReps(parsed)
-      } catch (err) {
-        console.error(err)
+        const hasCoords = reps.some(
+          (r: any) => r.coordenadas && Array.isArray(r.coordenadas) && r.coordenadas.length > 2,
+        )
+        if (hasCoords) {
+          setLayers([repsToLayer(reps)])
+          setIsPlaceholder(false)
+        } else {
+          setLayers([getPlaceholderLayer()])
+          setIsPlaceholder(true)
+        }
+      } catch {
+        setLayers([getPlaceholderLayer()])
+        setIsPlaceholder(true)
       } finally {
         setLoading(false)
       }
@@ -60,84 +39,87 @@ export default function AreaAtuacao() {
     loadData()
   }, [])
 
-  const ufs = Array.from(new Set(allReps.map((r) => r.uf).filter(Boolean))).sort()
-  const repOptions = allReps
-    .filter((r) => selectedUf === 'all' || r.uf === selectedUf)
-    .sort((a, b) => a.name.localeCompare(b.name))
-
-  const filteredPolygons = allReps.filter((r) => {
-    if (selectedUf !== 'all' && r.uf !== selectedUf) return false
-    if (selectedRep !== 'all' && r.id !== selectedRep) return false
-    return true
-  })
-
-  const handleUfChange = (uf: string) => {
-    setSelectedUf(uf)
-    setSelectedRep('all')
+  const handleToggleLayer = (layerId: string) => {
+    setLayers((prev) => prev.map((l) => (l.id === layerId ? { ...l, visible: !l.visible } : l)))
   }
 
-  const clearFilters = () => {
-    setSelectedUf('all')
-    setSelectedRep('all')
+  const handleKmlUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const text = await file.text()
+    const kmlDoc = parseKml(text)
+    const kmlLayers = kmlToLayers(kmlDoc)
+    if (kmlLayers.length > 0) {
+      setLayers((prev) => {
+        const base = prev.filter((l) => !l.id.startsWith('kml-') && l.id !== 'placeholder')
+        return [...base, ...kmlLayers]
+      })
+      setIsPlaceholder(false)
+      setShowWarning(false)
+    }
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
+
+  const handleUpdateMap = () => fileInputRef.current?.click()
 
   return (
-    <div className="flex h-full w-full flex-col p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Área de Atuação</h1>
-        <p className="text-gray-500">
-          Visualize a cobertura geográfica dos representantes no mapa interactivo.
-        </p>
+    <div className="flex h-full w-full flex-col p-6 space-y-4">
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Área de Atuação</h1>
+          <p className="text-gray-500">
+            Visualize a cobertura geográfica dos representantes no mapa interativo.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".kml"
+            onChange={handleKmlUpload}
+            className="hidden"
+          />
+          <Button variant="outline" onClick={handleUpdateMap} className="gap-2">
+            <Upload className="w-4 h-4" />
+            Atualizar Mapa (KML)
+          </Button>
+        </div>
       </div>
 
-      <Card className="p-4 flex flex-col sm:flex-row gap-4 items-end sm:items-center">
-        <div className="flex-1 space-y-1 w-full sm:max-w-xs">
-          <label className="text-sm font-medium">Estado (UF)</label>
-          <Select value={selectedUf} onValueChange={handleUfChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todos os Estados" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os Estados</SelectItem>
-              {ufs.map((uf) => (
-                <SelectItem key={uf} value={uf}>
-                  {uf}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {isPlaceholder && showWarning && (
+        <div className="flex items-center gap-3 bg-amber-50 border border-amber-300 rounded-lg px-4 py-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+          <p className="text-sm text-amber-800 flex-1">
+            <strong>Modo Placeholder:</strong> Não há coordenadas reais no banco de dados. Exibindo
+            pontos simulados dos representantes. Faça upload de um arquivo KML para visualizar dados
+            reais.
+          </p>
+          <button
+            onClick={() => setShowWarning(false)}
+            className="text-amber-600 hover:text-amber-800 shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
+      )}
 
-        <div className="flex-1 space-y-1 w-full sm:max-w-xs">
-          <label className="text-sm font-medium">Representante</label>
-          <Select value={selectedRep} onValueChange={setSelectedRep}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todos os Representantes" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os Representantes</SelectItem>
-              {repOptions.map((r) => (
-                <SelectItem key={r.id} value={r.id}>
-                  {r.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Button variant="outline" onClick={clearFilters} className="w-full sm:w-auto">
-          Limpar Filtros
-        </Button>
-      </Card>
-
-      <Card className="flex-1 overflow-hidden shadow-sm border rounded-xl min-h-[500px]">
+      <Card className="flex-1 overflow-hidden shadow-sm border rounded-xl min-h-[500px] relative">
         <CardContent className="h-full p-0 relative">
           {loading ? (
             <div className="flex h-full items-center justify-center bg-gray-50">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-green border-t-transparent" />
             </div>
           ) : (
-            <AreaMap polygons={filteredPolygons} />
+            <>
+              <AreaMap
+                layers={layers}
+                title="REPS VEKER"
+                centerCoords={{ lat: -20.466799, lon: -45.086393 }}
+                zoomLevel={6}
+                autoFit={!isPlaceholder}
+              />
+              <MapLayerControl layers={layers} onToggle={handleToggleLayer} />
+            </>
           )}
         </CardContent>
       </Card>
