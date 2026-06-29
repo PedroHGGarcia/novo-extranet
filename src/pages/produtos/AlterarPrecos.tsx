@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
-import { DollarSign, Save, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { DollarSign, Save, ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CurrencyInput } from '@/components/CurrencyInput'
 import {
@@ -59,16 +59,41 @@ export default function AlterarPrecos() {
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setPage(1)
+    }, 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [searchTerm])
 
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
       const collection = activeTab === 'versoes' ? 'versoes' : 'acessorios'
       const expand = activeTab === 'versoes' ? 'modelo' : 'versoes'
-      const result = await pb.collection(collection).getList(page, PER_PAGE, {
+      const queryOptions: Record<string, unknown> = {
         sort: '-created',
         expand,
-      })
+      }
+      const trimmed = debouncedSearch.trim()
+      if (trimmed) {
+        if (activeTab === 'versoes') {
+          queryOptions.filter = pb.filter('nome ~ {:search} || cod_erp ~ {:search}', {
+            search: trimmed,
+          })
+        } else {
+          queryOptions.filter = pb.filter('nome ~ {:search}', { search: trimmed })
+        }
+      }
+      const result = await pb.collection(collection).getList(page, PER_PAGE, queryOptions)
       if (activeTab === 'versoes') setVersoes(result.items as Versao[])
       else setAcessorios(result.items as Acessorio[])
       setTotalItems(result.totalItems)
@@ -78,7 +103,7 @@ export default function AlterarPrecos() {
     } finally {
       setLoading(false)
     }
-  }, [activeTab, page])
+  }, [activeTab, page, debouncedSearch])
 
   useEffect(() => {
     loadData()
@@ -172,6 +197,25 @@ export default function AlterarPrecos() {
             {changedCount} alteração(ões) pendente(s)
           </span>
         )}
+        <div className="relative ml-auto">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Pesquisar por nome ou código ERP..."
+            className="h-8 w-64 pl-8 pr-8 text-xs border border-gray-300 rounded-sm focus:outline-none focus:ring-1 focus:ring-[#2A75D3] focus:border-[#2A75D3] bg-white"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              type="button"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -299,7 +343,9 @@ export default function AlterarPrecos() {
               {!loading && items.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                    Nenhum registro encontrado.
+                    {debouncedSearch.trim()
+                      ? 'Nenhum item encontrado para esta busca'
+                      : 'Nenhum registro encontrado.'}
                   </TableCell>
                 </TableRow>
               )}
