@@ -103,6 +103,10 @@ const App = () => (
                 <Route path="/produtos/versoes" element={<Versoes />} />
                 <Route path="/produtos/versao-imagens" element={<VersaoImagens />} />
                 <Route path="/produtos/acessorios" element={<Acessorios />} />
+                <Route
+                  path="/produtos/hierarquia-versoes"
+                  element={<Navigate to="/produtos" replace />}
+                />
                 <Route path="/produtos/dashboard" element={<DashboardProdutos />} />
                 <Route path="/relatorios" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/vendas" element={<Navigate to="/dashboard" replace />} />

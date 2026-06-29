@@ -76,7 +76,6 @@ const menuItems = [
       { title: 'Versão Imagens', url: '/produtos/versao-imagens' },
       { title: 'Acessórios', url: '/produtos/acessorios' },
       { title: 'Alterar Preços', url: '/produtos/alterar-precos' },
-      { title: 'Hierarquia de Versões', url: '/produtos/hierarquia-versoes' },
     ],
   },
   { title: 'Perfil', url: '/perfil', icon: UserCircle, sub: [] },
