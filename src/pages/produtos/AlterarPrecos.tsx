@@ -11,7 +11,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
 import {
   Select,
   SelectContent,
@@ -19,89 +18,108 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useAuth } from '@/hooks/use-auth'
 import { updateVersao, Versao } from '@/services/produtos'
+import { updateAcessorio, Acessorio } from '@/services/acessorios'
 import pb from '@/lib/pocketbase/client'
 import { cn } from '@/lib/utils'
 
 interface PriceChange {
   moeda?: string
   valor?: number
-  tem_fator?: boolean
   fator_nac?: number
+  status?: string
+}
+
+const PER_PAGE = 50
+const VERSOES_STATUS = ['Ativo', 'Inativo', 'Em Revisão', 'Aprovado']
+const ACESSORIOS_STATUS = ['Ativo', 'Inativo']
+
+function getFieldValue(item: any, changes: Record<string, PriceChange>, field: keyof PriceChange) {
+  if (changes[item.id]?.[field] !== undefined) return changes[item.id]![field]
+  if (field === 'moeda') return item.moeda || 'BRL'
+  if (field === 'valor') return item.valor || 0
+  if (field === 'fator_nac') return item.fator_nac ?? 1
+  if (field === 'status') return item.status || 'Ativo'
+  return undefined
 }
 
 export default function AlterarPrecos() {
   const { user } = useAuth()
-  const [items, setItems] = useState<Versao[]>([])
+  const [activeTab, setActiveTab] = useState('versoes')
+  const [versoes, setVersoes] = useState<Versao[]>([])
+  const [acessorios, setAcessorios] = useState<Acessorio[]>([])
+  const [vChanges, setVChanges] = useState<Record<string, PriceChange>>({})
+  const [aChanges, setAChanges] = useState<Record<string, PriceChange>>({})
   const [page, setPage] = useState(1)
-  const perPage = 50
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState('registros')
-  const [changes, setChanges] = useState<Record<string, PriceChange>>({})
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const result = await pb.collection('versoes').getList<Versao>(page, perPage, {
+      const collection = activeTab === 'versoes' ? 'versoes' : 'acessorios'
+      const expand = activeTab === 'versoes' ? 'modelo' : 'versoes'
+      const result = await pb.collection(collection).getList(page, PER_PAGE, {
         sort: '-created',
-        expand: 'modelo',
+        expand,
       })
-      setItems(result.items)
+      if (activeTab === 'versoes') setVersoes(result.items as Versao[])
+      else setAcessorios(result.items as Acessorio[])
       setTotalItems(result.totalItems)
       setTotalPages(result.totalPages)
     } catch {
-      toast({ title: 'Erro ao carregar versões', variant: 'destructive' })
+      toast({ title: 'Erro ao carregar dados', variant: 'destructive' })
     } finally {
       setLoading(false)
     }
-  }, [page])
+  }, [activeTab, page])
 
   useEffect(() => {
     loadData()
   }, [loadData])
 
-  useRealtime('versoes', () => loadData())
+  useRealtime('versoes', () => {
+    if (activeTab === 'versoes') loadData()
+  })
+  useRealtime('acessorios', () => {
+    if (activeTab === 'acessorios') loadData()
+  })
 
-  const handleChange = (id: string, field: keyof PriceChange, value: string | number | boolean) => {
-    setChanges((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], [field]: value },
-    }))
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    setPage(1)
   }
 
-  const getFieldValue = (item: Versao, field: keyof PriceChange) => {
-    if (changes[item.id]?.[field] !== undefined) {
-      return changes[item.id]![field]
-    }
-    if (field === 'moeda') return (item.moeda || 'BRL') as string
-    if (field === 'valor') return (item.valor || 0) as number
-    if (field === 'tem_fator') return (item.tem_fator || false) as boolean
-    if (field === 'fator_nac') return (item.fator_nac || 1) as number
-    return undefined
+  const handleChange = (id: string, field: keyof PriceChange, value: string | number) => {
+    const setter = activeTab === 'versoes' ? setVChanges : setAChanges
+    setter((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }))
   }
 
   const handleSave = async () => {
-    const changedIds = Object.keys(changes)
-    if (changedIds.length === 0) {
+    const changes = activeTab === 'versoes' ? vChanges : aChanges
+    const ids = Object.keys(changes)
+    if (!ids.length) {
       toast({ title: 'Nenhuma alteração para salvar' })
       return
     }
     setSaving(true)
     try {
-      for (const id of changedIds) {
-        await updateVersao(id, { ...changes[id], atualizado_por: user?.id })
+      for (const id of ids) {
+        if (activeTab === 'versoes') {
+          await updateVersao(id, { ...changes[id], atualizado_por: user?.id })
+        } else {
+          await updateAcessorio(id, changes[id])
+        }
       }
-      toast({ title: `${changedIds.length} versão(ões) atualizada(s) com sucesso` })
-      setChanges({})
-      setSelectedIds([])
+      toast({ title: `${ids.length} registro(s) atualizado(s) com sucesso` })
+      if (activeTab === 'versoes') setVChanges({})
+      else setAChanges({})
       loadData()
     } catch (error: any) {
       toast({
@@ -114,17 +132,24 @@ export default function AlterarPrecos() {
     }
   }
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) setSelectedIds(items.map((i) => i.id))
-    else setSelectedIds([])
-  }
-
-  const handleSelect = (id: string, checked: boolean) => {
-    if (checked) setSelectedIds((prev) => [...prev, id])
-    else setSelectedIds((prev) => prev.filter((i) => i !== id))
-  }
-
+  const changes = activeTab === 'versoes' ? vChanges : aChanges
+  const items: any[] = activeTab === 'versoes' ? versoes : acessorios
+  const statusOptions = activeTab === 'versoes' ? VERSOES_STATUS : ACESSORIOS_STATUS
   const changedCount = Object.keys(changes).length
+
+  const renderContextCell = (item: any) => {
+    if (activeTab === 'versoes') {
+      return <TableCell className="text-xs text-gray-600 py-2">{item.cod_erp || '-'}</TableCell>
+    }
+    const versoesNomes = Array.isArray(item.expand?.versoes)
+      ? item.expand.versoes.map((v: any) => v.nome).join(', ') || '-'
+      : item.expand?.versoes?.nome || '-'
+    return (
+      <TableCell className="text-xs text-gray-600 py-2 max-w-[200px] truncate" title={versoesNomes}>
+        {versoesNomes}
+      </TableCell>
+    )
+  }
 
   return (
     <div className="space-y-4 max-w-full overflow-hidden">
@@ -149,209 +174,170 @@ export default function AlterarPrecos() {
         )}
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="bg-transparent border-b rounded-none w-full justify-start h-auto p-0 mb-4">
           <TabsTrigger
-            value="registros"
+            value="versoes"
             className="rounded-none border border-transparent data-[state=active]:border-gray-300 data-[state=active]:border-b-white data-[state=active]:bg-white data-[state=active]:text-gray-800 px-6 py-2 -mb-[1px] bg-gray-50 text-gray-500"
           >
-            Registros
+            Versões
           </TabsTrigger>
           <TabsTrigger
-            value="cadastro"
+            value="acessorios"
             className="rounded-none border border-transparent data-[state=active]:border-gray-300 data-[state=active]:border-b-white data-[state=active]:bg-white data-[state=active]:text-gray-800 px-6 py-2 -mb-[1px] bg-gray-50 text-gray-500"
           >
-            Cadastro
+            Acessórios
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="registros" className="mt-0">
-          <div className="border bg-white rounded-sm shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-white">
-                  <TableRow className="border-b border-gray-200 hover:bg-transparent">
-                    <TableHead className="w-12 text-center">
-                      <Checkbox
-                        checked={selectedIds.length === items.length && items.length > 0}
-                        onCheckedChange={(c) => handleSelectAll(c as boolean)}
-                      />
-                    </TableHead>
-                    <TableHead className="font-semibold text-gray-600 text-xs w-32">
-                      Moeda
-                    </TableHead>
-                    <TableHead className="font-semibold text-gray-600 text-xs text-right w-32">
-                      Valor
-                    </TableHead>
-                    <TableHead className="font-semibold text-gray-600 text-xs w-28">
-                      Tem Fator
-                    </TableHead>
-                    <TableHead className="font-semibold text-gray-600 text-xs text-right w-32">
-                      Fator Nac.
-                    </TableHead>
-                    <TableHead className="font-semibold text-gray-600 text-xs">Nome</TableHead>
-                    <TableHead className="font-semibold text-gray-600 text-xs w-24">
-                      Status
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        Carregando...
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    items.map((item) => {
-                      const hasChange = !!changes[item.id]
-                      return (
-                        <TableRow
-                          key={item.id}
-                          className={cn(
-                            'hover:bg-gray-50/50',
-                            hasChange && 'bg-orange-50/40',
-                            selectedIds.includes(item.id) && 'bg-blue-50/30',
-                          )}
-                        >
-                          <TableCell className="text-center">
-                            <Checkbox
-                              checked={selectedIds.includes(item.id)}
-                              onCheckedChange={(c) => handleSelect(item.id, c as boolean)}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Select
-                              value={getFieldValue(item, 'moeda') as string}
-                              onValueChange={(v) => handleChange(item.id, 'moeda', v)}
-                            >
-                              <SelectTrigger className="h-8 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="BRL">BRL</SelectItem>
-                                <SelectItem value="USD">USD</SelectItem>
-                                <SelectItem value="EUR">EUR</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <CurrencyInput
-                              value={getFieldValue(item, 'valor') as number}
-                              currency={getFieldValue(item, 'moeda') as string}
-                              onChange={(v) => handleChange(item.id, 'valor', v)}
-                              className="h-8 text-xs text-right w-full border border-gray-300 rounded px-2"
-                              maxDecimals={2}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Select
-                              value={getFieldValue(item, 'tem_fator') ? 'Sim' : 'Não'}
-                              onValueChange={(v) => handleChange(item.id, 'tem_fator', v === 'Sim')}
-                            >
-                              <SelectTrigger className="h-8 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Sim">Sim</SelectItem>
-                                <SelectItem value="Não">Não</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <CurrencyInput
-                              value={getFieldValue(item, 'fator_nac') as number}
-                              currency={getFieldValue(item, 'moeda') as string}
-                              onChange={(v) => handleChange(item.id, 'fator_nac', v)}
-                              className="h-8 text-xs text-right w-full border border-gray-300 rounded px-2"
-                              maxDecimals={6}
-                            />
-                          </TableCell>
-                          <TableCell className="text-xs text-gray-800 font-medium py-2">
-                            {item.nome}
-                            {item.expand?.modelo && (
-                              <span className="text-gray-400 ml-1">
-                                ({item.expand.modelo.nome})
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={cn(
-                                'text-[10px] px-2 py-0.5',
-                                item.status === 'Ativo'
-                                  ? 'bg-green-500 hover:bg-green-500'
-                                  : item.status === 'Em Revisão'
-                                    ? 'bg-yellow-500 hover:bg-yellow-500'
-                                    : item.status === 'Aprovado'
-                                      ? 'bg-blue-500 hover:bg-blue-500'
-                                      : 'bg-gray-400 hover:bg-gray-400',
-                              )}
-                            >
-                              {item.status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })
-                  )}
-                  {!loading && items.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        Nenhum registro encontrado.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            <div className="flex items-center justify-between p-3 border-t bg-gray-50 text-sm">
-              <span className="text-gray-600">
-                {totalItems > 0
-                  ? `${(page - 1) * perPage + 1}-${Math.min(page * perPage, totalItems)} de ${totalItems.toLocaleString('pt-BR')}`
-                  : '0 registros'}
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2"
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-gray-600 text-xs">
-                  Página {page} de {totalPages || 1}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(page + 1)}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
+        <TabsContent value="versoes" className="mt-0">
+          {renderTable()}
         </TabsContent>
-
-        <TabsContent value="cadastro" className="mt-0">
-          <div className="border bg-white rounded-sm shadow-sm p-8 text-center">
-            <DollarSign className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">
-              Utilize a aba <strong>Registros</strong> para editar os preços em lote.
-            </p>
-            <p className="text-gray-400 text-xs mt-2">
-              Selecione as versões, altere os campos de moeda, valor, fator e fator nacional, e
-              clique em <strong>SALVAR</strong> para persistir as alterações.
-            </p>
-          </div>
+        <TabsContent value="acessorios" className="mt-0">
+          {renderTable()}
         </TabsContent>
       </Tabs>
     </div>
   )
+
+  function renderTable() {
+    return (
+      <div className="border bg-white rounded-sm shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="bg-white">
+              <TableRow className="border-b border-gray-200 hover:bg-transparent">
+                <TableHead className="font-semibold text-gray-600 text-xs">Nome</TableHead>
+                <TableHead className="font-semibold text-gray-600 text-xs">
+                  {activeTab === 'versoes' ? 'CodErp' : 'Versões'}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-600 text-xs w-32">Moeda</TableHead>
+                <TableHead className="font-semibold text-gray-600 text-xs text-right w-36">
+                  Valor
+                </TableHead>
+                <TableHead className="font-semibold text-gray-600 text-xs text-right w-32">
+                  Fator Nac.
+                </TableHead>
+                <TableHead className="font-semibold text-gray-600 text-xs w-32">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    Carregando...
+                  </TableCell>
+                </TableRow>
+              ) : (
+                items.map((item) => {
+                  const hasChange = !!changes[item.id]
+                  return (
+                    <TableRow
+                      key={item.id}
+                      className={cn('hover:bg-gray-50/50', hasChange && 'bg-orange-50/40')}
+                    >
+                      <TableCell className="text-xs text-gray-800 font-medium py-2">
+                        {item.nome}
+                      </TableCell>
+                      {renderContextCell(item)}
+                      <TableCell>
+                        <Select
+                          value={getFieldValue(item, changes, 'moeda') as string}
+                          onValueChange={(v) => handleChange(item.id, 'moeda', v)}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="BRL">BRL</SelectItem>
+                            <SelectItem value="USD">USD</SelectItem>
+                            <SelectItem value="EUR">EUR</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <CurrencyInput
+                          value={getFieldValue(item, changes, 'valor') as number}
+                          currency={getFieldValue(item, changes, 'moeda') as string}
+                          onChange={(v) => handleChange(item.id, 'valor', v)}
+                          className="h-8 text-xs text-right w-full border border-gray-300 rounded px-2"
+                          maxDecimals={2}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Input
+                          type="number"
+                          step="0.000001"
+                          value={getFieldValue(item, changes, 'fator_nac') as number}
+                          onChange={(e) =>
+                            handleChange(item.id, 'fator_nac', parseFloat(e.target.value) || 0)
+                          }
+                          className="h-8 text-xs text-right w-full"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={getFieldValue(item, changes, 'status') as string}
+                          onValueChange={(v) => handleChange(item.id, 'status', v)}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {statusOptions.map((s) => (
+                              <SelectItem key={s} value={s}>
+                                {s}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
+              )}
+              {!loading && items.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    Nenhum registro encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="flex items-center justify-between p-3 border-t bg-gray-50 text-sm">
+          <span className="text-gray-600">
+            {totalItems > 0
+              ? `${(page - 1) * PER_PAGE + 1}-${Math.min(page * PER_PAGE, totalItems)} de ${totalItems.toLocaleString('pt-BR')}`
+              : '0 registros'}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2"
+              disabled={page <= 1}
+              onClick={() => setPage(page - 1)}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-gray-600 text-xs">
+              Página {page} de {totalPages || 1}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2"
+              disabled={page >= totalPages}
+              onClick={() => setPage(page + 1)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 }
