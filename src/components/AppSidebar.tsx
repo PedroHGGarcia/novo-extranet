@@ -77,7 +77,6 @@ const menuItems = [
       { title: 'Acessórios', url: '/produtos/acessorios' },
       { title: 'Alterar Preços', url: '/produtos/alterar-precos' },
       { title: 'Hierarquia de Versões', url: '/produtos/hierarquia-versoes' },
-      { title: 'Versões Excluídas', url: '/produtos/versoes-excluidas' },
     ],
   },
   { title: 'Perfil', url: '/perfil', icon: UserCircle, sub: [] },
