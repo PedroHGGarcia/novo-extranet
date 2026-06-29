@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { DollarSign, Save, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { DollarSign, Save, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/CurrencyInput'
 import {
   Table,
   TableBody,
@@ -43,8 +43,6 @@ export default function AlterarPrecos() {
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [showSearch, setShowSearch] = useState(false)
   const [activeTab, setActiveTab] = useState('registros')
   const [changes, setChanges] = useState<Record<string, PriceChange>>({})
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -52,11 +50,9 @@ export default function AlterarPrecos() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const filter = searchTerm ? pb.filter('nome ~ {:nome}', { nome: searchTerm }) : undefined
       const result = await pb.collection('versoes').getList<Versao>(page, perPage, {
         sort: '-created',
         expand: 'modelo',
-        ...(filter ? { filter } : {}),
       })
       setItems(result.items)
       setTotalItems(result.totalItems)
@@ -66,7 +62,7 @@ export default function AlterarPrecos() {
     } finally {
       setLoading(false)
     }
-  }, [page, searchTerm])
+  }, [page])
 
   useEffect(() => {
     loadData()
@@ -118,11 +114,6 @@ export default function AlterarPrecos() {
     }
   }
 
-  const handleSearchSubmit = () => {
-    setPage(1)
-    loadData()
-  }
-
   const handleSelectAll = (checked: boolean) => {
     if (checked) setSelectedIds(items.map((i) => i.id))
     else setSelectedIds([])
@@ -144,13 +135,6 @@ export default function AlterarPrecos() {
 
       <div className="flex items-center gap-2 mb-4 bg-gray-100 p-2 rounded-sm border border-gray-200">
         <Button
-          onClick={() => setShowSearch(!showSearch)}
-          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4 uppercase"
-        >
-          <Search className="w-3.5 h-3.5 mr-1.5" />
-          PESQUISAR
-        </Button>
-        <Button
           onClick={handleSave}
           disabled={saving || changedCount === 0}
           className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4 uppercase"
@@ -162,24 +146,6 @@ export default function AlterarPrecos() {
           <span className="text-xs text-orange-600 font-medium ml-2">
             {changedCount} alteração(ões) pendente(s)
           </span>
-        )}
-        {showSearch && (
-          <div className="flex items-center gap-2 ml-4">
-            <Input
-              placeholder="Buscar por nome..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
-              className="max-w-xs h-8 text-sm bg-white"
-            />
-            <Button
-              onClick={handleSearchSubmit}
-              size="sm"
-              className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 h-8"
-            >
-              Ir
-            </Button>
-          </div>
         )}
       </div>
 
@@ -270,14 +236,12 @@ export default function AlterarPrecos() {
                             </Select>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Input
-                              type="number"
-                              step="0.01"
+                            <CurrencyInput
                               value={getFieldValue(item, 'valor') as number}
-                              onChange={(e) =>
-                                handleChange(item.id, 'valor', parseFloat(e.target.value) || 0)
-                              }
-                              className="h-8 text-xs text-right w-full"
+                              currency={getFieldValue(item, 'moeda') as string}
+                              onChange={(v) => handleChange(item.id, 'valor', v)}
+                              className="h-8 text-xs text-right w-full border border-gray-300 rounded px-2"
+                              maxDecimals={2}
                             />
                           </TableCell>
                           <TableCell>
@@ -295,14 +259,12 @@ export default function AlterarPrecos() {
                             </Select>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Input
-                              type="number"
-                              step="0.000001"
+                            <CurrencyInput
                               value={getFieldValue(item, 'fator_nac') as number}
-                              onChange={(e) =>
-                                handleChange(item.id, 'fator_nac', parseFloat(e.target.value) || 0)
-                              }
-                              className="h-8 text-xs text-right w-full"
+                              currency={getFieldValue(item, 'moeda') as string}
+                              onChange={(v) => handleChange(item.id, 'fator_nac', v)}
+                              className="h-8 text-xs text-right w-full border border-gray-300 rounded px-2"
+                              maxDecimals={6}
                             />
                           </TableCell>
                           <TableCell className="text-xs text-gray-800 font-medium py-2">
