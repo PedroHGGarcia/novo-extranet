@@ -367,21 +367,6 @@ export default function Versoes() {
 
       <div className="flex items-center gap-1 mb-4 bg-gray-100 p-2 rounded-sm border border-gray-200">
         <Button
-          onClick={() => setActiveTab('registros')}
-          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4"
-        >
-          PESQUISAR
-        </Button>
-        <Button
-          onClick={() => {
-            resetForm()
-            setActiveTab('cadastro')
-          }}
-          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4"
-        >
-          NOVO
-        </Button>
-        <Button
           onClick={handleSave}
           className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4"
           disabled={activeTab !== 'cadastro'}

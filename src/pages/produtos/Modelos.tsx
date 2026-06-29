@@ -165,30 +165,6 @@ export default function Modelos() {
         <h1 className="text-2xl font-normal">Modelos</h1>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <Button
-          onClick={() => setActiveTab('registros')}
-          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm"
-        >
-          PESQUISAR
-        </Button>
-        <Button
-          onClick={() => {
-            resetForm()
-            setActiveTab('cadastro')
-          }}
-          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-sm"
-        >
-          NOVO
-        </Button>
-        <Button
-          variant="outline"
-          className="bg-[#2A75D3] text-white hover:bg-[#2A75D3]/90 hover:text-white rounded-sm border-0"
-        >
-          EXCLUIR
-        </Button>
-      </div>
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-transparent border-b rounded-none w-full justify-start h-auto p-0">
           <TabsTrigger

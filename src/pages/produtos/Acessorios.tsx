@@ -282,31 +282,6 @@ export default function Acessorios() {
       </div>
 
       <div className="flex items-center gap-2 mb-6 bg-[#f8f9fa] p-2 rounded-md border border-gray-200/60 shadow-sm">
-        <Button
-          onClick={() => setActiveTab('registros')}
-          className="bg-[#00704a] hover:bg-[#005a3b] rounded-sm h-8 text-[11px] tracking-wide font-bold px-5 uppercase"
-        >
-          PESQUISAR
-        </Button>
-        <Button
-          onClick={() => {
-            resetForm()
-            setActiveTab('cadastro')
-            setActiveSubTab('dados')
-          }}
-          className="bg-[#00704a] hover:bg-[#005a3b] rounded-sm h-8 text-[11px] tracking-wide font-bold px-5 uppercase"
-        >
-          NOVO
-        </Button>
-        {activeTab === 'registros' && (
-          <Button
-            onClick={handleDeleteSelected}
-            disabled={selectedIds.length === 0}
-            className="bg-[#8ab7a8] hover:bg-[#73a393] text-white rounded-sm h-8 text-[11px] tracking-wide font-bold px-5 uppercase disabled:opacity-60"
-          >
-            EXCLUIR
-          </Button>
-        )}
         {activeTab === 'cadastro' && (
           <Button
             onClick={handleSave}
