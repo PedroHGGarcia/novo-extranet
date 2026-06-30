@@ -32,7 +32,7 @@ import { getUsuarios, Usuario } from '@/services/usuarios'
 import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useToast } from '@/hooks/use-toast'
-import { extractFieldErrors } from '@/lib/pocketbase/errors'
+import { extractFieldErrors, getErrorMessage } from '@/lib/pocketbase/errors'
 
 export default function Gerentes() {
   const [data, setData] = useState<any[]>([])
@@ -173,7 +173,22 @@ export default function Gerentes() {
       resetForm()
       setActiveTab('registros')
     } catch (err) {
-      setErrors(extractFieldErrors(err))
+      const fieldErrs = extractFieldErrors(err)
+      const errMsg = getErrorMessage(err)
+      if (errMsg.includes('RD Station ID inválido')) {
+        setErrors({
+          ...fieldErrs,
+          rd_station_id:
+            'RD Station ID inválido ou não encontrado. Por favor, verifique o identificador no RD Station.',
+        })
+        toast({
+          title: 'RD Station ID inválido ou não encontrado',
+          description: 'Por favor, verifique o identificador no RD Station.',
+          variant: 'destructive',
+        })
+      } else {
+        setErrors(fieldErrs)
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -198,7 +213,20 @@ export default function Gerentes() {
       setActiveTab('registros')
       toast({ title: 'Registro substituído com sucesso' })
     } catch (err) {
-      toast({ title: 'Erro ao substituir', variant: 'destructive' })
+      const errMsg = getErrorMessage(err)
+      if (errMsg.includes('RD Station ID inválido')) {
+        setErrors({
+          rd_station_id:
+            'RD Station ID inválido ou não encontrado. Por favor, verifique o identificador no RD Station.',
+        })
+        toast({
+          title: 'RD Station ID inválido ou não encontrado',
+          description: 'Por favor, verifique o identificador no RD Station.',
+          variant: 'destructive',
+        })
+      } else {
+        toast({ title: 'Erro ao substituir', variant: 'destructive' })
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -230,7 +258,20 @@ export default function Gerentes() {
       setActiveTab('registros')
       toast({ title: 'Registros mesclados com sucesso' })
     } catch (err) {
-      toast({ title: 'Erro ao mesclar', variant: 'destructive' })
+      const errMsg = getErrorMessage(err)
+      if (errMsg.includes('RD Station ID inválido')) {
+        setErrors({
+          rd_station_id:
+            'RD Station ID inválido ou não encontrado. Por favor, verifique o identificador no RD Station.',
+        })
+        toast({
+          title: 'RD Station ID inválido ou não encontrado',
+          description: 'Por favor, verifique o identificador no RD Station.',
+          variant: 'destructive',
+        })
+      } else {
+        toast({ title: 'Erro ao mesclar', variant: 'destructive' })
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -427,14 +468,29 @@ export default function Gerentes() {
                 />
               </div>
               <div className="flex-1 space-y-1">
-                <Label className="text-[11px] uppercase tracking-wide text-gray-500">
+                <Label
+                  className={`text-[11px] uppercase tracking-wide ${
+                    errors.rd_station_id ? 'text-red-500' : 'text-gray-500'
+                  }`}
+                >
                   RD Station ID
                 </Label>
                 <Input
-                  className="border-0 border-b border-gray-300 rounded-none px-0 shadow-none focus-visible:ring-0 focus-visible:border-[#3b82f6] bg-transparent"
+                  className={`border-0 border-b rounded-none px-0 shadow-none focus-visible:ring-0 bg-transparent ${
+                    errors.rd_station_id
+                      ? 'border-red-500'
+                      : 'border-gray-300 focus-visible:border-[#3b82f6]'
+                  }`}
                   value={formData.rd_station_id}
                   onChange={(e) => setFormData({ ...formData, rd_station_id: e.target.value })}
                 />
+                {errors.rd_station_id ? (
+                  <span className="text-[10px] text-red-500">{errors.rd_station_id}</span>
+                ) : (
+                  <span className="text-[10px] text-gray-400">
+                    O ID será validado no RD Station ao salvar.
+                  </span>
+                )}
               </div>
             </div>
 
@@ -507,7 +563,12 @@ export default function Gerentes() {
               </div>
             </div>
 
-            <div className="pt-4 flex justify-end gap-3">
+            <div className="pt-4 flex justify-end items-center gap-3">
+              {isSubmitting && (
+                <span className="text-sm text-gray-500 animate-pulse">
+                  Validando RD Station ID...
+                </span>
+              )}
               <Button
                 variant="outline"
                 onClick={() => {
