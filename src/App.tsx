@@ -38,94 +38,100 @@ import { AuthProvider } from './hooks/use-auth'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { GlobalAutoFormatter } from './components/GlobalAutoFormatter'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { ThemeProvider } from './components/theme-provider'
 
 const App = () => (
   <ErrorBoundary>
-    <AuthProvider>
-      <BrowserRouter>
-        <TooltipProvider>
-          <GlobalAutoFormatter />
-          <Toaster />
-          <Sonner />
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/validar-proposta/:id" element={<ValidarProposta />} />
-            <Route element={<ProtectedRoute />}>
-              <Route element={<Layout />}>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/area-atuacao" element={<AreaAtuacao />} />
-                <Route path="/cadastros" element={<Cadastros />} />
-                <Route path="/cadastros/regioes" element={<Regioes />} />
-                <Route path="/cadastros/gerentes" element={<Gerentes />} />
-                <Route path="/cadastros/clientes" element={<Clientes />} />
-                <Route path="/cadastros/representantes" element={<Representantes />} />
-                <Route path="/cadastros/prepostos" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/eventos" element={<Eventos />} />
-                <Route
-                  path="/controle-propostas"
-                  element={<Navigate to="/controle-propostas/dashboard" replace />}
-                />
-                <Route path="/controle-propostas/dashboard" element={<DashboardPropostas />} />
-                <Route
-                  path="/controle-propostas/propostas-excluidas"
-                  element={<Navigate to="/controle-propostas/dashboard" replace />}
-                />
-                <Route
-                  path="/controle-propostas/assinaturas"
-                  element={<Navigate to="/controle-propostas/dashboard" replace />}
-                />
-                <Route path="/controle-propostas/emitir-proposta" element={<EmitirProposta />} />
-                <Route
-                  path="/controle-propostas/propostas-avancadas"
-                  element={<PropostasAvancadas />}
-                />
-                <Route path="/controle-propostas/tipos-propostas" element={<TiposPropostas />} />
-                <Route path="/controle-propostas/proposta-pdf/:id" element={<PropostaPDF />} />
-                <Route
-                  path="/controle-propostas/cotacoes"
-                  element={<Navigate to="/controle-propostas/dashboard" replace />}
-                />
-                <Route
-                  path="/controle-propostas/tipo-documentos"
-                  element={<Navigate to="/controle-propostas/dashboard" replace />}
-                />
-                <Route
-                  path="/controle-propostas/formas-pagamento"
-                  element={<Navigate to="/controle-propostas/dashboard" replace />}
-                />
-                <Route path="/produtos" element={<Produtos />} />
-                <Route path="/produtos/categorias" element={<Categorias />} />
-                <Route path="/produtos/marcas" element={<Marcas />} />
-                <Route path="/produtos/modelos" element={<Modelos />} />
-                <Route path="/produtos/versoes" element={<Versoes />} />
-                <Route
-                  path="/produtos/versao-imagens"
-                  element={<Navigate to="/dashboard" replace />}
-                />
-                <Route path="/produtos/acessorios" element={<Acessorios />} />
-                <Route path="/produtos/alterar-precos" element={<AlterarPrecos />} />
-                <Route
-                  path="/produtos/hierarquia-versoes"
-                  element={<Navigate to="/produtos" replace />}
-                />
-                <Route path="/produtos/dashboard" element={<DashboardProdutos />} />
-                <Route path="/relatorios" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/vendas" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/assinaturas" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/perfil" element={<Perfil />} />
-                <Route path="/usuarios" element={<Usuarios />} />
-                <Route path="/auditoria" element={<AuditoriaPage />} />
-                <Route path="/configuracoes" element={<Configuracoes />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <TooltipProvider>
+            <GlobalAutoFormatter />
+            <Toaster />
+            <Sonner />
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/validar-proposta/:id" element={<ValidarProposta />} />
+              <Route element={<ProtectedRoute />}>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/area-atuacao" element={<AreaAtuacao />} />
+                  <Route path="/cadastros" element={<Cadastros />} />
+                  <Route path="/cadastros/regioes" element={<Regioes />} />
+                  <Route path="/cadastros/gerentes" element={<Gerentes />} />
+                  <Route path="/cadastros/clientes" element={<Clientes />} />
+                  <Route path="/cadastros/representantes" element={<Representantes />} />
+                  <Route
+                    path="/cadastros/prepostos"
+                    element={<Navigate to="/dashboard" replace />}
+                  />
+                  <Route path="/eventos" element={<Eventos />} />
+                  <Route
+                    path="/controle-propostas"
+                    element={<Navigate to="/controle-propostas/dashboard" replace />}
+                  />
+                  <Route path="/controle-propostas/dashboard" element={<DashboardPropostas />} />
+                  <Route
+                    path="/controle-propostas/propostas-excluidas"
+                    element={<Navigate to="/controle-propostas/dashboard" replace />}
+                  />
+                  <Route
+                    path="/controle-propostas/assinaturas"
+                    element={<Navigate to="/controle-propostas/dashboard" replace />}
+                  />
+                  <Route path="/controle-propostas/emitir-proposta" element={<EmitirProposta />} />
+                  <Route
+                    path="/controle-propostas/propostas-avancadas"
+                    element={<PropostasAvancadas />}
+                  />
+                  <Route path="/controle-propostas/tipos-propostas" element={<TiposPropostas />} />
+                  <Route path="/controle-propostas/proposta-pdf/:id" element={<PropostaPDF />} />
+                  <Route
+                    path="/controle-propostas/cotacoes"
+                    element={<Navigate to="/controle-propostas/dashboard" replace />}
+                  />
+                  <Route
+                    path="/controle-propostas/tipo-documentos"
+                    element={<Navigate to="/controle-propostas/dashboard" replace />}
+                  />
+                  <Route
+                    path="/controle-propostas/formas-pagamento"
+                    element={<Navigate to="/controle-propostas/dashboard" replace />}
+                  />
+                  <Route path="/produtos" element={<Produtos />} />
+                  <Route path="/produtos/categorias" element={<Categorias />} />
+                  <Route path="/produtos/marcas" element={<Marcas />} />
+                  <Route path="/produtos/modelos" element={<Modelos />} />
+                  <Route path="/produtos/versoes" element={<Versoes />} />
+                  <Route
+                    path="/produtos/versao-imagens"
+                    element={<Navigate to="/dashboard" replace />}
+                  />
+                  <Route path="/produtos/acessorios" element={<Acessorios />} />
+                  <Route path="/produtos/alterar-precos" element={<AlterarPrecos />} />
+                  <Route
+                    path="/produtos/hierarquia-versoes"
+                    element={<Navigate to="/produtos" replace />}
+                  />
+                  <Route path="/produtos/dashboard" element={<DashboardProdutos />} />
+                  <Route path="/relatorios" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/vendas" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/assinaturas" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/perfil" element={<Perfil />} />
+                  <Route path="/usuarios" element={<Usuarios />} />
+                  <Route path="/auditoria" element={<AuditoriaPage />} />
+                  <Route path="/configuracoes" element={<Configuracoes />} />
+                </Route>
               </Route>
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </TooltipProvider>
-      </BrowserRouter>
-    </AuthProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </TooltipProvider>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   </ErrorBoundary>
 )
 

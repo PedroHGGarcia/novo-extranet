@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { List, Pencil, Copy } from 'lucide-react'
+import { Tag, Pencil, Copy } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -132,10 +132,10 @@ export default function Marcas() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center gap-2 mb-6 text-slate-800">
-        <List className="w-6 h-6" />
-        <h1 className="text-2xl font-semibold">Marcas</h1>
+    <div className="p-4 md:p-6">
+      <div className="flex items-center gap-3 mb-6 text-slate-900 dark:text-slate-50">
+        <Tag className="w-6 h-6 text-brand-green" strokeWidth={1.75} />
+        <h1 className="text-page-title">Marcas</h1>
       </div>
 
       <RegistrationActionBar
@@ -151,31 +151,34 @@ export default function Marcas() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-transparent border-b border-[#337ab7] rounded-none w-full justify-start h-auto p-0 gap-1">
+        <TabsList className="bg-transparent border-b border-[#337ab7] dark:border-primary rounded-none w-full justify-start h-auto p-0 gap-1">
           <TabsTrigger
             value="registros"
-            className="rounded-t-sm rounded-b-none border border-b-0 border-transparent data-[state=active]:border-[#337ab7] data-[state=active]:bg-white data-[state=active]:text-[#337ab7] px-6 py-2 -mb-[1px] text-slate-500 font-normal hover:text-slate-700"
+            className="rounded-t-md rounded-b-none border border-b-0 border-transparent data-[state=active]:border-[#337ab7] dark:data-[state=active]:border-primary data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-[#337ab7] dark:data-[state=active]:text-primary px-6 py-2 -mb-[1px] text-slate-500 dark:text-slate-400 text-sm font-normal hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           >
             Registros
           </TabsTrigger>
           <TabsTrigger
             value="cadastro"
-            className="rounded-t-sm rounded-b-none border border-b-0 border-transparent data-[state=active]:border-[#337ab7] data-[state=active]:bg-white data-[state=active]:text-[#337ab7] px-6 py-2 -mb-[1px] text-slate-500 font-normal hover:text-slate-700"
+            className="rounded-t-md rounded-b-none border border-b-0 border-transparent data-[state=active]:border-[#337ab7] dark:data-[state=active]:border-primary data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-[#337ab7] dark:data-[state=active]:text-primary px-6 py-2 -mb-[1px] text-slate-500 dark:text-slate-400 text-sm font-normal hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           >
             Cadastro
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="registros" className="mt-0 border border-[#337ab7] bg-white">
+        <TabsContent
+          value="registros"
+          className="mt-0 border border-[#337ab7] dark:border-border bg-white dark:bg-card rounded-b-md"
+        >
           <PaginationBar total={filteredItems.length} />
 
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent border-b border-slate-200">
+              <TableRow className="hover:bg-transparent border-b border-border">
                 <TableHead className="w-[50px] text-center px-4">
                   <input
                     type="checkbox"
-                    className="rounded-sm border-slate-300 w-3.5 h-3.5 accent-[#337ab7]"
+                    className="rounded-sm border-slate-300 dark:border-border w-3.5 h-3.5 accent-[#337ab7] dark:accent-primary"
                     checked={selectedIds.size === filteredItems.length && filteredItems.length > 0}
                     onChange={handleToggleSelectAll}
                   />
@@ -185,49 +188,54 @@ export default function Marcas() {
                   sortKey="nome"
                   currentSort=""
                   onSort={() => {}}
-                  className="font-semibold text-[#337ab7]"
+                  className="text-table-header text-[#337ab7] dark:text-primary"
                 />
                 <SortableHead
                   label="Status"
                   sortKey="status"
                   currentSort=""
                   onSort={() => {}}
-                  className="font-semibold text-[#337ab7]"
+                  className="text-table-header text-[#337ab7] dark:text-primary"
                 />
                 <SortableHead
                   label="Dt Cad."
                   sortKey="created"
                   currentSort=""
                   onSort={() => {}}
-                  className="font-semibold text-[#337ab7]"
+                  className="text-table-header text-[#337ab7] dark:text-primary"
                 />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredItems.map((item) => (
-                <TableRow key={item.id} className="hover:bg-slate-50 border-b border-slate-100">
+                <TableRow
+                  key={item.id}
+                  className="hover:bg-slate-50 dark:hover:bg-muted/50 border-b border-border transition-colors"
+                >
                   <TableCell className="text-center py-3 px-4">
                     <input
                       type="checkbox"
-                      className="rounded-sm border-slate-300 w-3.5 h-3.5 accent-[#337ab7]"
+                      className="rounded-sm border-slate-300 dark:border-border w-3.5 h-3.5 accent-[#337ab7] dark:accent-primary"
                       checked={selectedIds.has(item.id)}
                       onChange={() => handleToggleSelect(item.id)}
                     />
                   </TableCell>
                   <TableCell className="py-3">
-                    <div className="text-sm text-slate-700 uppercase">{item.nome}</div>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="text-sm text-slate-700 dark:text-slate-200 uppercase font-medium">
+                      {item.nome}
+                    </div>
+                    <div className="flex items-center gap-3 mt-1">
                       <button
                         onClick={() => handleEdit(item)}
-                        className="text-[#337ab7] text-xs hover:underline inline-flex items-center gap-1 italic"
+                        className="text-[#337ab7] dark:text-primary text-xs hover:underline inline-flex items-center gap-1 transition-colors"
                       >
-                        <Pencil className="w-3 h-3" /> Editar
+                        <Pencil className="w-3.5 h-3.5" strokeWidth={1.75} /> Editar
                       </button>
                       <button
                         onClick={() => handleDuplicate(item)}
-                        className="text-[#337ab7] text-xs hover:underline inline-flex items-center gap-1 italic"
+                        className="text-[#337ab7] dark:text-primary text-xs hover:underline inline-flex items-center gap-1 transition-colors"
                       >
-                        <Copy className="w-3 h-3" /> Duplicar
+                        <Copy className="w-3.5 h-3.5" strokeWidth={1.75} /> Duplicar
                       </button>
                     </div>
                   </TableCell>
@@ -235,21 +243,24 @@ export default function Marcas() {
                     <Badge
                       className={
                         item.status === 'Ativo'
-                          ? 'bg-[#5cb85c] hover:bg-[#4cae4c] font-normal text-white px-2 py-0'
-                          : 'bg-[#d9534f] hover:bg-[#c9302c] font-normal text-white px-2 py-0'
+                          ? 'bg-[#5cb85c] hover:bg-[#4cae4c] dark:bg-green-900/40 dark:hover:bg-green-900/60 dark:text-green-400 font-normal text-white px-2 py-0.5'
+                          : 'bg-[#d9534f] hover:bg-[#c9302c] dark:bg-red-900/40 dark:hover:bg-red-900/60 dark:text-red-400 font-normal text-white px-2 py-0.5'
                       }
                     >
                       {item.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-slate-600 py-3">
+                  <TableCell className="text-sm text-slate-600 dark:text-slate-400 py-3">
                     {new Date(item.created).toLocaleDateString('pt-BR')}
                   </TableCell>
                 </TableRow>
               ))}
               {filteredItems.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-8 text-muted-foreground text-body"
+                  >
                     Nenhum registro encontrado.
                   </TableCell>
                 </TableRow>
@@ -260,25 +271,30 @@ export default function Marcas() {
           <PaginationBar total={filteredItems.length} />
         </TabsContent>
 
-        <TabsContent value="cadastro" className="mt-0 border border-[#337ab7] bg-white p-6">
+        <TabsContent
+          value="cadastro"
+          className="mt-0 border border-[#337ab7] dark:border-border bg-white dark:bg-card p-6 rounded-b-md"
+        >
           <form onSubmit={handleSave} className="max-w-xl space-y-6">
             <div className="grid gap-2">
-              <Label htmlFor="nome">
-                Nome da Marca <span className="text-red-500">*</span>
+              <Label htmlFor="nome" className="text-label">
+                Nome da Marca <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="nome"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                className="h-9 border-slate-300"
+                className="h-9 border-slate-300 dark:border-border bg-white dark:bg-input text-sm"
                 required
               />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status" className="text-label">
+                Status
+              </Label>
               <Select value={status} onValueChange={(v: 'Ativo' | 'Inativo') => setStatus(v)}>
-                <SelectTrigger className="h-9 border-slate-300">
+                <SelectTrigger className="h-9 border-slate-300 dark:border-border bg-white dark:bg-input text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -291,7 +307,7 @@ export default function Marcas() {
             <div className="pt-2">
               <Button
                 type="submit"
-                className="bg-[#337ab7] hover:bg-[#286090] text-white h-9 px-6 rounded-sm font-normal"
+                className="bg-[#337ab7] hover:bg-[#286090] dark:bg-primary dark:hover:bg-primary/80 text-white h-9 px-6 rounded-md text-sm font-medium transition-colors duration-200"
               >
                 Salvar
               </Button>

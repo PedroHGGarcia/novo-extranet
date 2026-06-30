@@ -9,12 +9,15 @@ export default function Layout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="flex min-h-screen flex-col bg-[#f8f9fa] overflow-x-hidden">
+      <SidebarInset className="flex min-h-screen flex-col bg-slate-50 dark:bg-[hsl(222,47%,7%)] overflow-x-hidden">
         <AppHeader />
-        <main key={location.pathname} className="flex-1 p-6 animate-in fade-in duration-500">
+        <main
+          key={location.pathname}
+          className="flex-1 p-4 md:p-6 lg:p-8 animate-in fade-in duration-500"
+        >
           <Outlet />
         </main>
-        <footer className="border-t bg-white py-4 text-center text-xs text-gray-500 select-none">
+        <footer className="border-t border-border bg-white dark:bg-card py-4 text-center text-xs text-muted-foreground select-none">
           <p>
             Desenvolvido por <span className="text-brand-green font-medium">Skip</span> e{' '}
             <span className="text-brand-green font-medium">Pedro Garcia</span>

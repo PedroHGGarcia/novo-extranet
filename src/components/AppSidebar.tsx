@@ -28,12 +28,23 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
-  SidebarMenuAction,
 } from '@/components/ui/sidebar'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
+
+const iconProps = {
+  strokeWidth: 1.75,
+  className: 'h-5 w-5 shrink-0',
+  'aria-hidden': true,
+} as const
+
+const subIconProps = {
+  strokeWidth: 1.75,
+  className: 'h-4 w-4 shrink-0',
+  'aria-hidden': true,
+} as const
 
 const menuItems = [
   { title: 'Painel Principal', url: '/dashboard', icon: Monitor, sub: [] },
@@ -90,14 +101,14 @@ export function AppSidebar() {
   const { user, signOut } = useAuth()
 
   return (
-    <Sidebar className="border-r-0 bg-brand-sidebar text-white">
-      <SidebarHeader className="flex h-24 items-center justify-center bg-brand-sidebar p-0 rounded-none mb-2">
+    <Sidebar className="border-r-0 bg-brand-sidebar dark:bg-sidebar text-white">
+      <SidebarHeader className="flex h-20 items-center justify-center bg-brand-sidebar dark:bg-sidebar p-0 rounded-none mb-2">
         <Link
           to="/"
           className="flex flex-col items-center justify-center p-4 select-none"
           draggable={false}
         >
-          <img src={logoUrl} alt="Bener" className="h-10 object-contain brightness-0 invert" />
+          <img src={logoUrl} alt="Bener" className="h-10 object-contain bener-logo-invert" />
         </Link>
       </SidebarHeader>
       <SidebarContent className="bg-brand-sidebar py-2 text-left">
@@ -123,19 +134,20 @@ export function AppSidebar() {
                         asChild
                         isActive={isActive}
                         className={cn(
-                          'h-11 rounded-none text-white/80 hover:bg-white/5 hover:text-white active:bg-white/10 data-[active=true]:bg-white/5 data-[active=true]:text-white data-[active=true]:font-semibold',
+                          'h-11 rounded-none text-white/80 hover:bg-white/5 hover:text-white active:bg-white/10 data-[active=true]:bg-white/5 data-[active=true]:text-white data-[active=true]:font-semibold transition-colors duration-200',
                           isActive && 'border-l-4 border-brand-green',
                         )}
                       >
                         <Link
                           to={item.url}
                           draggable={false}
-                          className="select-none flex items-center gap-3 w-full"
+                          className="select-none flex items-center gap-3 w-full text-sm"
                         >
-                          <item.icon className="h-5 w-5 select-none shrink-0" draggable={false} />
+                          <item.icon {...iconProps} draggable={false} />
                           <span className="flex-1">{item.title}</span>
                           <ChevronLeft
-                            className="h-4 w-4 select-none transition-transform duration-200 group-data-[state=open]/collapsible:-rotate-90 ml-auto"
+                            className="h-4 w-4 shrink-0 select-none transition-transform duration-200 group-data-[state=open]/collapsible:-rotate-90 ml-auto"
+                            strokeWidth={1.75}
                             draggable={false}
                           />
                         </Link>
@@ -146,16 +158,16 @@ export function AppSidebar() {
                       asChild
                       isActive={isActive}
                       className={cn(
-                        'h-11 rounded-none text-white/80 hover:bg-white/5 hover:text-white active:bg-white/10 data-[active=true]:bg-white/5 data-[active=true]:text-white data-[active=true]:font-semibold',
+                        'h-11 rounded-none text-white/80 hover:bg-white/5 hover:text-white active:bg-white/10 data-[active=true]:bg-white/5 data-[active=true]:text-white data-[active=true]:font-semibold transition-colors duration-200',
                         isActive && 'border-l-4 border-brand-green',
                       )}
                     >
                       <Link
                         to={item.url}
                         draggable={false}
-                        className="select-none flex items-center gap-3 w-full"
+                        className="select-none flex items-center gap-3 w-full text-sm"
                       >
-                        <item.icon className="h-5 w-5 select-none shrink-0" draggable={false} />
+                        <item.icon {...iconProps} draggable={false} />
                         <span className="flex-1">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -176,12 +188,13 @@ export function AppSidebar() {
                                     'text-white font-semibold border-l-4 border-brand-green',
                                 )}
                               >
-                                <Link to={subItem.url} draggable={false} className="select-none">
+                                <Link
+                                  to={subItem.url}
+                                  draggable={false}
+                                  className="select-none flex items-center gap-3 text-sm"
+                                >
                                   {subItem.icon && (
-                                    <subItem.icon
-                                      className="h-4 w-4 shrink-0 select-none"
-                                      draggable={false}
-                                    />
+                                    <subItem.icon {...subIconProps} draggable={false} />
                                   )}
                                   <span>{subItem.title}</span>
                                 </Link>
@@ -201,10 +214,14 @@ export function AppSidebar() {
       <div className="p-4 mt-auto">
         <Button
           variant="ghost"
-          className="w-full justify-start text-white/80 hover:bg-white/10 hover:text-white rounded-md h-11 transition-colors"
+          className="w-full justify-start text-white/80 hover:bg-white/10 hover:text-white rounded-md h-11 transition-colors duration-200 text-sm"
           onClick={() => signOut()}
         >
-          <LogOut className="mr-3 h-5 w-5 select-none" draggable={false} />
+          <LogOut
+            className="mr-3 h-5 w-5 shrink-0 select-none"
+            strokeWidth={1.75}
+            draggable={false}
+          />
           Sair
         </Button>
       </div>
