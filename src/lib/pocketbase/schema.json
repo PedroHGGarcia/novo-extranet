@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-30T19:40:04.412Z",
+  "generatedAt": "2026-06-30T19:54:19.845Z",
   "collections": [
     {
       "name": "users",
@@ -394,12 +394,6 @@
           "system": false
         },
         {
-          "name": "status",
-          "type": "text",
-          "required": true,
-          "system": false
-        },
-        {
           "name": "created",
           "type": "autodate",
           "required": false,
@@ -419,6 +413,25 @@
           "required": false,
           "system": false,
           "collectionRef": "users"
+        },
+        {
+          "name": "estados_selecionados",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "cidades_selecionadas",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Ativo", "Inativo"]
         }
       ],
       "indexes": []
