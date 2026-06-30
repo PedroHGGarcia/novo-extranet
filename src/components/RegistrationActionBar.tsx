@@ -27,19 +27,19 @@ export function RegistrationActionBar({
       <div className="flex gap-2">
         <Button
           onClick={onSearchToggle}
-          className="bg-[#3b82f6] hover:bg-blue-600 text-white rounded-sm h-9 px-4 font-normal tracking-wide"
+          className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm h-9 px-4 font-normal tracking-wide"
         >
           PESQUISAR
         </Button>
         <Button
           onClick={onNewClick}
-          className="bg-[#3b82f6] hover:bg-blue-600 text-white rounded-sm h-9 px-4 font-normal tracking-wide"
+          className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm h-9 px-4 font-normal tracking-wide"
         >
           NOVO
         </Button>
         <Button
           onClick={onDeleteClick}
-          className="bg-[#3b82f6] hover:bg-blue-600 text-white rounded-sm h-9 px-4 font-normal tracking-wide"
+          className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm h-9 px-4 font-normal tracking-wide"
         >
           EXCLUIR
         </Button>
