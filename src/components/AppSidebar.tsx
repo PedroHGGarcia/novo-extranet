@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import logoUrl from '@/assets/systemlogoin-large-52274.png'
 import {
   Monitor,
   Map,
@@ -96,10 +97,7 @@ export function AppSidebar() {
           className="flex flex-col items-center justify-center p-4 select-none"
           draggable={false}
         >
-          <h1 className="text-3xl font-black tracking-widest text-white">BENER</h1>
-          <p className="text-[0.55rem] font-bold tracking-[0.2em] text-white uppercase mt-1">
-            Máquinas que transformam
-          </p>
+          <img src={logoUrl} alt="Bener" className="h-10 object-contain brightness-0 invert" />
         </Link>
       </SidebarHeader>
       <SidebarContent className="bg-brand-sidebar py-2 text-left">
