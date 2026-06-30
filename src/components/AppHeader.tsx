@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import logoUrl from '@/assets/systemlogoin-large-52274.png'
 export function AppHeader() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
@@ -81,10 +82,12 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 bg-brand-green px-4 text-white shadow-sm">
       <SidebarTrigger className="text-white hover:bg-white/10 hover:text-white focus-visible:ring-white/20" />
-      <div className="flex-1 md:hidden flex justify-center select-none flex-col items-center">
-        <span className="text-lg font-black tracking-widest text-white leading-none">BENER</span>
+      <div className="flex-1 md:hidden flex justify-center select-none items-center">
+        <img src={logoUrl} alt="Bener" className="h-6 object-contain brightness-0 invert" />
       </div>
-      <div className="hidden md:flex flex-1" />
+      <div className="hidden md:flex flex-1 items-center px-4">
+        <img src={logoUrl} alt="Bener" className="h-8 object-contain brightness-0 invert" />
+      </div>
       <div className="flex items-center gap-2">
         <Popover>
           <PopoverTrigger asChild>

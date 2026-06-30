@@ -5,6 +5,7 @@ import { getTipoProposta, type TipoProposta } from '@/services/tipos-propostas'
 import { Button } from '@/components/ui/button'
 import { Printer, AlertCircle } from 'lucide-react'
 import { PropostaDocument } from '@/components/PropostaDocument'
+import pb from '@/lib/pocketbase/client'
 
 export default function PropostaPDF() {
   const { id } = useParams<{ id: string }>()
@@ -65,18 +66,37 @@ export default function PropostaPDF() {
     )
   }
 
-  const clienteNome =
-    proposta.expand?.cliente?.razao_social ||
-    proposta.expand?.cliente?.fantasia ||
-    proposta.cliente_original ||
-    '-'
-  const representanteNome =
-    proposta.expand?.representante?.fantasia || proposta.representante_original || '-'
-  const versaoNome = proposta.expand?.versao?.nome || proposta.versao_original || '-'
+  const cliente = proposta.expand?.cliente
+  const clienteNome = cliente?.razao_social || cliente?.fantasia || proposta.cliente_original || '-'
+  const clienteEndereco = cliente
+    ? `${cliente.logradouro || ''}, ${cliente.numero || ''} - ${cliente.bairro || ''} - ${cliente.cidade || ''}`.replace(
+        /^[,\s-]+|[,\s-]+$/g,
+        '',
+      )
+    : ''
+  const clienteEmail = cliente?.email || ''
+
+  const representante = proposta.expand?.representante
+  const representanteNome = representante?.fantasia || proposta.representante_original || '-'
+  const representanteSigla =
+    representante?.sigla || representante?.fantasia?.substring(0, 3).toUpperCase() || '-'
+
+  const versao = proposta.expand?.versao
+  const versaoNome = versao?.nome || proposta.versao_original || '-'
+  const versaoImagemUrl = versao?.imagem_preview
+    ? pb.files.getURL(versao as any, versao.imagem_preview)
+    : null
+
+  const modelo = versao?.expand?.modelo
+  const marcaNome = modelo?.expand?.marca?.nome || '-'
+  const categoriaNome = modelo?.expand?.produto?.expand?.categoria?.nome || 'EQUIPAMENTO'
+
   const gerenteNome = proposta.expand?.gerente?.nome || proposta.gerente_original || '-'
 
   const acessorios = Array.isArray(proposta.acessorios_proposta)
-    ? proposta.acessorios_proposta.filter((a: any) => a?.incluir || a?.estado === 'incluir')
+    ? proposta.acessorios_proposta.filter(
+        (a: any) => a?.exibir || a?.estado === 'exibir' || a?.incluir || a?.estado === 'incluir',
+      )
     : []
 
   return (
@@ -104,8 +124,14 @@ export default function PropostaPDF() {
         proposta={proposta}
         tipoProposta={tipoProposta}
         clienteNome={clienteNome}
+        clienteEndereco={clienteEndereco}
+        clienteEmail={clienteEmail}
         representanteNome={representanteNome}
+        representanteSigla={representanteSigla}
         versaoNome={versaoNome}
+        versaoImagemUrl={versaoImagemUrl}
+        categoriaNome={categoriaNome}
+        marcaNome={marcaNome}
         gerenteNome={gerenteNome}
         acessorios={acessorios}
       />

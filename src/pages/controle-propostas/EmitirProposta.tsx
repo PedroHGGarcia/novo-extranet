@@ -285,7 +285,7 @@ export default function EmitirProposta() {
       .then(setRepresentantes)
       .catch(() => {})
     pb.collection('versoes')
-      .getFullList({ sort: 'nome' })
+      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
       .then(setVersoes)
       .catch(() => {})
   }, [])
@@ -731,6 +731,11 @@ export default function EmitirProposta() {
     const newAcc = [...acessoriosProposta]
     const oldIncluir = newAcc[index].incluir
     newAcc[index][field] = value
+
+    if (field === 'incluir' && value === true) {
+      newAcc[index].exibir = true
+    }
+
     setAcessoriosProposta(newAcc)
 
     if (field === 'incluir' && oldIncluir !== value) {
@@ -1479,8 +1484,9 @@ export default function EmitirProposta() {
                           <td className="py-2.5 px-4 text-center">
                             <Checkbox
                               checked={acc.exibir}
+                              disabled={acc.incluir}
                               onCheckedChange={(checked) => updateAcc(idx, 'exibir', !!checked)}
-                              className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
+                              className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7] disabled:opacity-50"
                             />
                           </td>
                         </tr>
@@ -1859,32 +1865,60 @@ export default function EmitirProposta() {
           </DialogHeader>
           <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center w-full">
             <div className="shadow-lg transform scale-100 md:scale-95 origin-top w-fit">
-              <PropostaDocument
-                proposta={formData as Partial<Proposta>}
-                tipoProposta={tiposProposta.find((t) => t.id === formData.tipo_proposta) || null}
-                clienteNome={
-                  clientes.find((c) => c.id === formData.cliente)?.fantasia ||
-                  clientes.find((c) => c.id === formData.cliente)?.razao_social ||
-                  formData.cliente_original ||
-                  '-'
-                }
-                representanteNome={
-                  representantes.find((r) => r.id === formData.representante)?.fantasia ||
-                  formData.representante_original ||
-                  '-'
-                }
-                versaoNome={
-                  versoes.find((v) => v.id === formData.versao)?.nome ||
-                  formData.versao_original ||
-                  '-'
-                }
-                gerenteNome={
-                  gerentes.find((g) => g.id === formData.gerente)?.nome ||
-                  formData.gerente_original ||
-                  '-'
-                }
-                acessorios={acessoriosProposta.filter((a) => a.incluir)}
-              />
+              {(() => {
+                const selectedCliente = clientes.find((c) => c.id === formData.cliente)
+                const selectedRep = representantes.find((r) => r.id === formData.representante)
+                const selectedVersao = versoes.find((v) => v.id === formData.versao)
+                const modelo = selectedVersao?.expand?.modelo
+
+                return (
+                  <PropostaDocument
+                    proposta={formData as Partial<Proposta>}
+                    tipoProposta={
+                      tiposProposta.find((t) => t.id === formData.tipo_proposta) || null
+                    }
+                    clienteNome={
+                      selectedCliente?.fantasia ||
+                      selectedCliente?.razao_social ||
+                      formData.cliente_original ||
+                      '-'
+                    }
+                    clienteEndereco={
+                      selectedCliente
+                        ? `${selectedCliente.logradouro || ''}, ${selectedCliente.numero || ''} - ${selectedCliente.bairro || ''} - ${selectedCliente.cidade || ''}`.replace(
+                            /^[,\s-]+|[,\s-]+$/g,
+                            '',
+                          )
+                        : ''
+                    }
+                    clienteEmail={selectedCliente?.email || ''}
+                    representanteNome={
+                      selectedRep?.fantasia || formData.representante_original || '-'
+                    }
+                    representanteSigla={
+                      selectedRep?.sigla ||
+                      selectedRep?.fantasia?.substring(0, 3).toUpperCase() ||
+                      '-'
+                    }
+                    versaoNome={selectedVersao?.nome || formData.versao_original || '-'}
+                    versaoImagemUrl={
+                      selectedVersao?.imagem_preview
+                        ? pb.files.getURL(selectedVersao as any, selectedVersao.imagem_preview)
+                        : null
+                    }
+                    categoriaNome={
+                      modelo?.expand?.produto?.expand?.categoria?.nome || 'EQUIPAMENTO'
+                    }
+                    marcaNome={modelo?.expand?.marca?.nome || '-'}
+                    gerenteNome={
+                      gerentes.find((g) => g.id === formData.gerente)?.nome ||
+                      formData.gerente_original ||
+                      '-'
+                    }
+                    acessorios={acessoriosProposta.filter((a) => a.exibir)}
+                  />
+                )
+              })()}
             </div>
           </div>
           <div className="p-4 border-t border-slate-200 bg-white flex justify-end shrink-0 gap-2">
