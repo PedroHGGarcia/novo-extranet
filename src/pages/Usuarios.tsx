@@ -77,6 +77,7 @@ export default function Usuarios() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    confirmEmail: '',
     password: '',
     role: 'user' as 'admin' | 'user',
   })
@@ -124,10 +125,16 @@ export default function Usuarios() {
   const handleOpenSheet = (u?: Usuario) => {
     if (u) {
       setEditingUser(u)
-      setFormData({ name: u.name || '', email: u.email, password: '', role: u.role || 'user' })
+      setFormData({
+        name: u.name || '',
+        email: u.email,
+        confirmEmail: u.email,
+        password: '',
+        role: u.role || 'user',
+      })
     } else {
       setEditingUser(null)
-      setFormData({ name: '', email: '', password: '', role: 'user' })
+      setFormData({ name: '', email: '', confirmEmail: '', password: '', role: 'user' })
     }
     setErrors({})
     setSheetOpen(true)
@@ -136,6 +143,33 @@ export default function Usuarios() {
   const handleSave = async () => {
     setSaving(true)
     setErrors({})
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Nome é obrigatório'
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = 'E-mail é obrigatório'
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Formato de e-mail inválido'
+    }
+    if (formData.email !== formData.confirmEmail) {
+      newErrors.confirmEmail = 'Os e-mails não coincidem'
+    }
+    if (!editingUser && !formData.password) {
+      newErrors.password = 'Senha é obrigatória'
+    } else if (formData.password && formData.password.length < 8) {
+      newErrors.password = 'A senha deve ter no mínimo 8 caracteres'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      setSaving(false)
+      return
+    }
+
     try {
       if (editingUser) {
         const payload: any = { name: formData.name, email: formData.email, role: formData.role }
@@ -143,7 +177,12 @@ export default function Usuarios() {
         await updateUsuario(editingUser.id, payload)
         toast({ title: 'Usuário atualizado com sucesso' })
       } else {
-        await createUsuario(formData)
+        await createUsuario({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        })
         toast({ title: 'Usuário criado com sucesso' })
       }
       setSheetOpen(false)
@@ -309,9 +348,30 @@ export default function Usuarios() {
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value })
+                  if (errors.email) setErrors({ ...errors, email: '' })
+                }}
+                className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
               />
               {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="confirmEmail">Confirmar E-mail</Label>
+              <Input
+                id="confirmEmail"
+                type="email"
+                value={formData.confirmEmail}
+                onChange={(e) => {
+                  setFormData({ ...formData, confirmEmail: e.target.value })
+                  if (errors.confirmEmail) setErrors({ ...errors, confirmEmail: '' })
+                }}
+                className={errors.confirmEmail ? 'border-red-500 focus-visible:ring-red-500' : ''}
+              />
+              {errors.confirmEmail && (
+                <span className="text-xs text-red-500">{errors.confirmEmail}</span>
+              )}
             </div>
 
             <div className="grid gap-2">
