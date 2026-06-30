@@ -13,7 +13,7 @@ import {
   deleteUsuario,
   type Usuario,
 } from '@/services/usuarios'
-import { extractFieldErrors } from '@/lib/pocketbase/errors'
+import { extractFieldErrors, getErrorMessage } from '@/lib/pocketbase/errors'
 import { useRealtime } from '@/hooks/use-realtime'
 import {
   Sheet,
@@ -153,7 +153,11 @@ export default function Usuarios() {
       if (Object.keys(fieldErrors).length > 0) {
         setErrors(fieldErrors)
       } else {
-        toast({ title: 'Erro ao salvar usuário', description: e.message, variant: 'destructive' })
+        toast({
+          title: 'Erro ao salvar usuário',
+          description: getErrorMessage(e),
+          variant: 'destructive',
+        })
       }
     } finally {
       setSaving(false)
@@ -172,7 +176,11 @@ export default function Usuarios() {
       toast({ title: 'Usuário removido com sucesso' })
       loadData()
     } catch (e) {
-      toast({ title: 'Erro ao remover usuário', variant: 'destructive' })
+      toast({
+        title: 'Erro ao remover usuário',
+        description: getErrorMessage(e),
+        variant: 'destructive',
+      })
     } finally {
       setDeleteDialogOpen(false)
       setUserToDelete(null)
@@ -408,7 +416,7 @@ export default function Usuarios() {
                 } catch (e: any) {
                   toast({
                     title: 'Erro ao enviar convite',
-                    description: e.message,
+                    description: getErrorMessage(e),
                     variant: 'destructive',
                   })
                 } finally {

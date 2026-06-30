@@ -8,6 +8,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => void
   loading: boolean
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -66,8 +67,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     pb.authStore.clear()
   }
 
+  const refreshUser = async () => {
+    if (!pb.authStore.isValid) return
+    try {
+      await pb.collection('users').authRefresh()
+    } catch {
+      // If refresh fails, keep the existing session intact
+      // The update already succeeded server-side
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, signUp, signIn, signOut, loading }}>
+    <AuthContext.Provider
+      value={{ user, isAuthenticated, signUp, signIn, signOut, loading, refreshUser }}
+    >
       {children}
     </AuthContext.Provider>
   )

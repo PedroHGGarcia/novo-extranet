@@ -8,9 +8,10 @@ import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/components/ui/use-toast'
 import pb from '@/lib/pocketbase/client'
+import { getErrorMessage } from '@/lib/pocketbase/errors'
 
 export default function Perfil() {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const { toast } = useToast()
 
   const [nome, setNome] = useState(user?.name || '')
@@ -26,14 +27,15 @@ export default function Perfil() {
     if (!user) return
     setIsUpdating(true)
     try {
-      const formData = new FormData()
-      formData.append('name', nome)
-
-      await pb.collection('users').update(user.id, formData)
-      toast({ title: 'Perfil atualizado com sucesso!' })
-      await pb.collection('users').authRefresh()
+      await pb.collection('users').update(user.id, { name: nome })
+      toast({ title: 'Usuário atualizado com sucesso' })
+      await refreshUser()
     } catch (e) {
-      toast({ title: 'Erro ao atualizar perfil', variant: 'destructive' })
+      toast({
+        title: 'Erro ao atualizar perfil',
+        description: getErrorMessage(e),
+        variant: 'destructive',
+      })
     } finally {
       setIsUpdating(false)
     }
