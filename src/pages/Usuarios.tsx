@@ -171,19 +171,23 @@ export default function Usuarios() {
     }
 
     try {
+      const payload: Record<string, any> = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        role: formData.role,
+      }
+
+      if (formData.password) {
+        payload.password = formData.password
+        payload.passwordConfirm = formData.password
+      }
+
       if (editingUser) {
-        const payload: any = { name: formData.name, email: formData.email, role: formData.role }
-        if (formData.password) payload.password = formData.password
         await updateUsuario(editingUser.id, payload)
-        toast({ title: 'Usuário atualizado com sucesso' })
+        toast({ title: 'Usuário atualizado com sucesso!' })
       } else {
-        await createUsuario({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: formData.role,
-        })
-        toast({ title: 'Usuário criado com sucesso' })
+        await createUsuario(payload)
+        toast({ title: 'Usuário criado com sucesso!' })
       }
       setSheetOpen(false)
       loadData()

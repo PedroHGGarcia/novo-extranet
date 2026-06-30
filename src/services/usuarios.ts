@@ -12,10 +12,10 @@ export interface Usuario {
 export const getUsuarios = () => pb.collection('users').getFullList<Usuario>({ sort: 'name' })
 
 export const createUsuario = (
-  data: Partial<Usuario> & { password?: string; confirmEmail?: string },
+  data: Partial<Usuario> & { password?: string; passwordConfirm?: string },
 ) => {
-  const { confirmEmail: _ce, ...payload } = data as any
-  if (payload.password) {
+  const payload = { ...data }
+  if (payload.password && !payload.passwordConfirm) {
     payload.passwordConfirm = payload.password
   }
   return pb.collection('users').create<Usuario>(payload)
@@ -23,10 +23,10 @@ export const createUsuario = (
 
 export const updateUsuario = (
   id: string,
-  data: Partial<Usuario> & { password?: string; confirmEmail?: string },
+  data: Partial<Usuario> & { password?: string; passwordConfirm?: string },
 ) => {
-  const { confirmEmail: _ce, ...payload } = data as any
-  if (payload.password) {
+  const payload = { ...data }
+  if (payload.password && !payload.passwordConfirm) {
     payload.passwordConfirm = payload.password
   }
   return pb.collection('users').update<Usuario>(id, payload)
