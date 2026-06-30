@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { User, Loader2 } from 'lucide-react'
+import { User, Loader2, Edit2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -10,14 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-  SheetDescription,
-} from '@/components/ui/sheet'
 import {
   Select,
   SelectContent,
@@ -36,6 +28,7 @@ import {
   deleteGerente,
   getByDocumento,
 } from '@/services/cadastros'
+import { getUsuarios, Usuario } from '@/services/usuarios'
 import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useToast } from '@/hooks/use-toast'
@@ -43,34 +36,37 @@ import { extractFieldErrors } from '@/lib/pocketbase/errors'
 
 export default function Gerentes() {
   const [data, setData] = useState<any[]>([])
+  const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [search, setSearch] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [conflictRecord, setConflictRecord] = useState<any>(null)
   const [isConflictOpen, setIsConflictOpen] = useState(false)
-
-  const resetForm = () => {
-    setIsCreateOpen(false)
-    setFormData({ nome: '', documento: '', email: '', telefone: '', status: 'Ativo' })
-    setConflictRecord(null)
-  }
+  const [activeTab, setActiveTab] = useState<'registros' | 'cadastro'>('registros')
 
   const [formData, setFormData] = useState({
+    id: '',
     nome: '',
     documento: '',
     email: '',
     telefone: '',
     status: 'Ativo',
+    cargo: '',
+    rd_station_id: '',
+    usuario: '',
+    created: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { toast } = useToast()
 
   const loadData = async () => setData(await getGerentes().catch(() => []))
+  const loadUsuarios = async () => setUsuarios(await getUsuarios().catch(() => []))
+
   useEffect(() => {
     loadData()
+    loadUsuarios()
   }, [])
   useRealtime('gerentes', loadData)
 
@@ -92,14 +88,63 @@ export default function Gerentes() {
     }
   }
 
-  const handleCreate = async () => {
+  const resetForm = () => {
+    setFormData({
+      id: '',
+      nome: '',
+      documento: '',
+      email: '',
+      telefone: '',
+      status: 'Ativo',
+      cargo: '',
+      rd_station_id: '',
+      usuario: '',
+      created: '',
+    })
+    setConflictRecord(null)
+    setErrors({})
+  }
+
+  const handleNewClick = () => {
+    resetForm()
+    setActiveTab('cadastro')
+  }
+
+  const handleEdit = (item: any) => {
+    setFormData({
+      id: item.id,
+      nome: item.nome || '',
+      documento: item.documento || '',
+      email: item.email || '',
+      telefone: item.telefone || '',
+      status: item.status || 'Ativo',
+      cargo: item.cargo || '',
+      rd_station_id: item.rd_station_id || '',
+      usuario: item.usuario || '',
+      created: item.created || '',
+    })
+    setErrors({})
+    setActiveTab('cadastro')
+  }
+
+  const handleSave = async () => {
     try {
       setIsSubmitting(true)
       setErrors({})
 
+      const newErrors: Record<string, string> = {}
+      if (!formData.nome) newErrors.nome = 'Obrigatório'
+      if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email inválido'
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors)
+        setIsSubmitting(false)
+        return toast({ title: 'Verifique os campos destacados', variant: 'destructive' })
+      }
+
       if (formData.documento) {
         const existing = await getByDocumento('gerentes', formData.documento)
-        if (existing) {
+        if (existing && existing.id !== formData.id) {
           setConflictRecord(existing)
           setIsConflictOpen(true)
           setIsSubmitting(false)
@@ -107,9 +152,26 @@ export default function Gerentes() {
         }
       }
 
-      await createGerente(formData)
+      const payload = {
+        nome: formData.nome,
+        documento: formData.documento,
+        email: formData.email,
+        telefone: formData.telefone,
+        status: formData.status,
+        cargo: formData.cargo,
+        rd_station_id: formData.rd_station_id,
+        usuario: formData.usuario || null,
+      }
+
+      if (formData.id) {
+        await updateGerente(formData.id, payload)
+        toast({ title: 'Registro atualizado' })
+      } else {
+        await createGerente(payload)
+        toast({ title: 'Registro criado' })
+      }
       resetForm()
-      toast({ title: 'Registro criado' })
+      setActiveTab('registros')
     } catch (err) {
       setErrors(extractFieldErrors(err))
     } finally {
@@ -120,9 +182,20 @@ export default function Gerentes() {
   const handleReplace = async () => {
     try {
       setIsSubmitting(true)
-      await updateGerente(conflictRecord.id, formData)
+      const payload = {
+        nome: formData.nome,
+        documento: formData.documento,
+        email: formData.email,
+        telefone: formData.telefone,
+        status: formData.status,
+        cargo: formData.cargo,
+        rd_station_id: formData.rd_station_id,
+        usuario: formData.usuario || null,
+      }
+      await updateGerente(conflictRecord.id, payload)
       setIsConflictOpen(false)
       resetForm()
+      setActiveTab('registros')
       toast({ title: 'Registro substituído com sucesso' })
     } catch (err) {
       toast({ title: 'Erro ao substituir', variant: 'destructive' })
@@ -135,7 +208,17 @@ export default function Gerentes() {
     try {
       setIsSubmitting(true)
       const mergedData = { ...conflictRecord }
-      for (const [key, value] of Object.entries(formData)) {
+      const payload: any = {
+        nome: formData.nome,
+        documento: formData.documento,
+        email: formData.email,
+        telefone: formData.telefone,
+        status: formData.status,
+        cargo: formData.cargo,
+        rd_station_id: formData.rd_station_id,
+        usuario: formData.usuario || null,
+      }
+      for (const [key, value] of Object.entries(payload)) {
         if (value !== undefined && value !== null && String(value).trim() !== '') {
           mergedData[key] = value
         }
@@ -144,6 +227,7 @@ export default function Gerentes() {
       await updateGerente(conflictRecord.id, mergedData)
       setIsConflictOpen(false)
       resetForm()
+      setActiveTab('registros')
       toast({ title: 'Registros mesclados com sucesso' })
     } catch (err) {
       toast({ title: 'Erro ao mesclar', variant: 'destructive' })
@@ -151,6 +235,10 @@ export default function Gerentes() {
       setIsSubmitting(false)
     }
   }
+
+  const formattedDate = formData.created
+    ? new Date(formData.created).toLocaleDateString('pt-BR')
+    : new Date().toLocaleDateString('pt-BR')
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -162,7 +250,7 @@ export default function Gerentes() {
 
       <RegistrationActionBar
         onSearchToggle={() => setShowSearch(!showSearch)}
-        onNewClick={() => setIsCreateOpen(true)}
+        onNewClick={handleNewClick}
         onDeleteClick={() =>
           selected.length > 0 ? setIsDeleteOpen(true) : toast({ title: 'Selecione registros' })
         }
@@ -173,131 +261,275 @@ export default function Gerentes() {
 
       <div className="flex justify-between items-end border-b border-gray-200 mb-0">
         <div className="flex">
-          <button className="px-6 py-2.5 bg-white border border-b-0 border-gray-200 border-t-2 border-t-[#3b82f6] text-sm font-medium text-gray-700">
+          <button
+            onClick={() => setActiveTab('registros')}
+            className={`px-6 py-2.5 text-sm font-medium ${
+              activeTab === 'registros'
+                ? 'bg-white border border-b-0 border-gray-200 border-t-2 border-t-[#3b82f6] text-gray-700'
+                : 'text-[#3b82f6] hover:bg-gray-50/50'
+            }`}
+          >
             Registros
           </button>
-          <button className="px-6 py-2.5 text-[#3b82f6] text-sm font-medium hover:bg-gray-50/50">
+          <button
+            onClick={() => setActiveTab('cadastro')}
+            className={`px-6 py-2.5 text-sm font-medium ${
+              activeTab === 'cadastro'
+                ? 'bg-white border border-b-0 border-gray-200 border-t-2 border-t-[#3b82f6] text-gray-700'
+                : 'text-[#3b82f6] hover:bg-gray-50/50'
+            }`}
+          >
             Cadastro
           </button>
         </div>
-        <div className="pb-2 text-sm text-gray-600">Total: {filtered.length}</div>
+        {activeTab === 'registros' && (
+          <div className="pb-2 text-sm text-gray-600">Total: {filtered.length}</div>
+        )}
       </div>
 
-      <div className="bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12 text-center">
-                <Checkbox
-                  checked={selected.length === filtered.length && filtered.length > 0}
-                  onCheckedChange={toggleAll}
-                />
-              </TableHead>
-              <TableHead className="text-[#3b82f6] font-semibold">Nome</TableHead>
-              <TableHead className="text-[#3b82f6] font-semibold">CPF/CNPJ</TableHead>
-              <TableHead className="text-[#3b82f6] font-semibold">Email</TableHead>
-              <TableHead className="text-[#3b82f6] font-semibold">Telefone</TableHead>
-              <TableHead className="text-[#3b82f6] font-semibold">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((item) => (
-              <TableRow key={item.id} className="hover:bg-slate-50 border-b-gray-100">
-                <TableCell className="text-center">
+      {activeTab === 'registros' ? (
+        <div className="bg-white border border-t-0 border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12 text-center">
                   <Checkbox
-                    checked={selected.includes(item.id)}
-                    onCheckedChange={() => toggleOne(item.id)}
+                    checked={selected.length === filtered.length && filtered.length > 0}
+                    onCheckedChange={toggleAll}
                   />
-                </TableCell>
-                <TableCell className="py-3 font-medium text-gray-700">{item.nome}</TableCell>
-                <TableCell className="text-gray-600">{item.documento}</TableCell>
-                <TableCell className="text-gray-600">{item.email}</TableCell>
-                <TableCell className="text-gray-600">{item.telefone}</TableCell>
-                <TableCell>
-                  <span className="bg-[#16a34a] text-white text-[11px] px-2 py-0.5 rounded-sm font-medium tracking-wide">
-                    {item.status}
-                  </span>
-                </TableCell>
+                </TableHead>
+                <TableHead className="text-[#3b82f6] font-semibold">Nome</TableHead>
+                <TableHead className="text-[#3b82f6] font-semibold">Cargo</TableHead>
+                <TableHead className="text-[#3b82f6] font-semibold">CPF/CNPJ</TableHead>
+                <TableHead className="text-[#3b82f6] font-semibold">Email</TableHead>
+                <TableHead className="text-[#3b82f6] font-semibold">Celular</TableHead>
+                <TableHead className="text-[#3b82f6] font-semibold">Status</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((item) => (
+                <TableRow key={item.id} className="hover:bg-slate-50 border-b-gray-100">
+                  <TableCell className="text-center">
+                    <Checkbox
+                      checked={selected.includes(item.id)}
+                      onCheckedChange={() => toggleOne(item.id)}
+                    />
+                  </TableCell>
+                  <TableCell className="py-3 font-medium text-gray-700">{item.nome}</TableCell>
+                  <TableCell className="text-gray-600">{item.cargo}</TableCell>
+                  <TableCell className="text-gray-600">{item.documento}</TableCell>
+                  <TableCell className="text-gray-600">{item.email}</TableCell>
+                  <TableCell className="text-gray-600">{item.telefone}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`text-white text-[11px] px-2 py-0.5 rounded-sm font-medium tracking-wide ${
+                        item.status === 'Ativo' ? 'bg-[#16a34a]' : 'bg-gray-400'
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
+                      <Edit2 className="h-4 w-4 text-gray-500" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="bg-white p-6 border border-t-0 border-gray-200">
+          <div className="space-y-8">
+            <div className="flex flex-col sm:flex-row gap-6">
+              <div className="flex-1 space-y-1">
+                <Label
+                  className={`text-[11px] uppercase tracking-wide ${
+                    errors.nome ? 'text-red-500' : 'text-[#3b82f6]'
+                  }`}
+                >
+                  Nome
+                </Label>
+                <Input
+                  className={`border-0 border-b-2 rounded-none px-0 shadow-none focus-visible:ring-0 bg-transparent ${
+                    errors.nome ? 'border-red-500' : 'border-[#3b82f6]'
+                  }`}
+                  value={formData.nome}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                />
+                {errors.nome && <span className="text-[10px] text-red-500">{errors.nome}</span>}
+              </div>
+              <div className="w-full sm:w-1/4 space-y-1">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(val) => setFormData({ ...formData, status: val })}
+                >
+                  <SelectTrigger className="border-0 border-b border-gray-300 rounded-none px-0 shadow-none focus:ring-0 focus:border-[#3b82f6] bg-transparent">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Inativo">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-      <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <SheetContent className="sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Novo Gerente</SheetTitle>
-            <SheetDescription>
-              Adicione um novo gerente preenchendo as informações abaixo.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="space-y-4 py-6">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome</Label>
-              <Input
-                id="nome"
-                placeholder="Nome completo"
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-              />
-              {errors.nome && <span className="text-red-500 text-xs">{errors.nome}</span>}
+            <div className="flex flex-col sm:flex-row gap-6">
+              <div className="flex-1 space-y-1">
+                <Label
+                  className={`text-[11px] uppercase tracking-wide ${
+                    errors.cargo ? 'text-red-500' : 'text-gray-500'
+                  }`}
+                >
+                  Cargo
+                </Label>
+                <Input
+                  className={`border-0 border-b rounded-none px-0 shadow-none focus-visible:ring-0 bg-transparent ${
+                    errors.cargo
+                      ? 'border-red-500'
+                      : 'border-gray-300 focus-visible:border-[#3b82f6]'
+                  }`}
+                  value={formData.cargo}
+                  onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
+                />
+                {errors.cargo && <span className="text-[10px] text-red-500">{errors.cargo}</span>}
+              </div>
+              <div className="flex-1 space-y-1">
+                <Label
+                  className={`text-[11px] uppercase tracking-wide ${
+                    errors.email ? 'text-red-500' : 'text-gray-500'
+                  }`}
+                >
+                  Email
+                </Label>
+                <Input
+                  type="email"
+                  className={`border-0 border-b rounded-none px-0 shadow-none focus-visible:ring-0 bg-transparent ${
+                    errors.email
+                      ? 'border-red-500'
+                      : 'border-gray-300 focus-visible:border-[#3b82f6]'
+                  }`}
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+                {errors.email && <span className="text-[10px] text-red-500">{errors.email}</span>}
+              </div>
+              <div className="flex-1 space-y-1">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500">Celular</Label>
+                <Input
+                  className="border-0 border-b border-gray-300 rounded-none px-0 shadow-none focus-visible:ring-0 focus-visible:border-[#3b82f6] bg-transparent"
+                  value={formData.telefone}
+                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                />
+              </div>
+              <div className="flex-1 space-y-1">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500">
+                  RD Station ID
+                </Label>
+                <Input
+                  className="border-0 border-b border-gray-300 rounded-none px-0 shadow-none focus-visible:ring-0 focus-visible:border-[#3b82f6] bg-transparent"
+                  value={formData.rd_station_id}
+                  onChange={(e) => setFormData({ ...formData, rd_station_id: e.target.value })}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="documento">CPF/CNPJ</Label>
-              <Input
-                id="documento"
-                placeholder="000.000.000-00 ou 00.000.000/0000-00"
-                value={formData.documento}
-                onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
-              />
-              {errors.documento && <span className="text-red-500 text-xs">{errors.documento}</span>}
+
+            <div className="flex flex-col sm:flex-row gap-6">
+              <div className="flex-[3] space-y-1">
+                <Label
+                  className={`text-[11px] uppercase tracking-wide ${
+                    errors.usuario ? 'text-red-500' : 'text-gray-500'
+                  }`}
+                >
+                  Usuário
+                </Label>
+                <Select
+                  value={formData.usuario || 'none'}
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, usuario: val === 'none' ? '' : val })
+                  }
+                >
+                  <SelectTrigger
+                    className={`border-0 border-b rounded-none px-0 shadow-none focus:ring-0 bg-transparent ${
+                      errors.usuario ? 'border-red-500' : 'border-gray-300 focus:border-[#3b82f6]'
+                    }`}
+                  >
+                    <SelectValue placeholder="Selecione um usuário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {usuarios.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.name} ({u.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.usuario && (
+                  <span className="text-[10px] text-red-500">{errors.usuario}</span>
+                )}
+              </div>
+              <div className="flex-1 space-y-1">
+                <Label
+                  className={`text-[11px] uppercase tracking-wide ${
+                    errors.documento ? 'text-red-500' : 'text-gray-500'
+                  }`}
+                >
+                  CPF/CNPJ
+                </Label>
+                <Input
+                  className={`border-0 border-b rounded-none px-0 shadow-none focus-visible:ring-0 bg-transparent ${
+                    errors.documento
+                      ? 'border-red-500'
+                      : 'border-gray-300 focus-visible:border-[#3b82f6]'
+                  }`}
+                  value={formData.documento}
+                  onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
+                />
+                {errors.documento && (
+                  <span className="text-[10px] text-red-500">{errors.documento}</span>
+                )}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="email@exemplo.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-              {errors.email && <span className="text-red-500 text-xs">{errors.email}</span>}
+
+            <div className="flex gap-6">
+              <div className="w-full sm:w-1/4 space-y-1">
+                <Label className="text-[11px] uppercase tracking-wide text-gray-500">Dt. Cad</Label>
+                <Input
+                  disabled
+                  className="bg-gray-100 border-0 rounded-none text-gray-600 h-9"
+                  value={formattedDate}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="telefone">Telefone</Label>
-              <Input
-                id="telefone"
-                placeholder="(00) 00000-0000"
-                value={formData.telefone}
-                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-              />
-              {errors.telefone && <span className="text-red-500 text-xs">{errors.telefone}</span>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(val) => setFormData({ ...formData, status: val })}
+
+            <div className="pt-4 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  resetForm()
+                  setActiveTab('registros')
+                }}
               >
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Ativo">Ativo</SelectItem>
-                  <SelectItem value="Inativo">Inativo</SelectItem>
-                </SelectContent>
-              </Select>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={isSubmitting}
+                className="bg-[#3b82f6] hover:bg-blue-600 text-white"
+              >
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting ? 'Salvando...' : 'Salvar'}
+              </Button>
             </div>
           </div>
-          <SheetFooter className="mt-4">
-            <Button onClick={handleCreate} disabled={isSubmitting} className="w-full sm:w-auto">
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSubmitting ? 'Salvando...' : 'Salvar'}
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+        </div>
+      )}
+
       <DeleteConfirmModal
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
