@@ -266,7 +266,7 @@ export default function Representantes() {
                 <TableCell className="text-slate-600">{item.uf}</TableCell>
                 <TableCell>
                   <span
-                    className={`text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase ${item.status === 'Ativo' ? 'bg-[#5cb85c]' : 'bg-slate-400'}`}
+                    className={`text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase transition-colors ${item.status === 'Ativo' ? 'bg-[#5cb85c] hover:bg-[#4cae4c] dark:bg-green-900/40 dark:hover:bg-green-900/60 dark:text-green-400' : 'bg-[#d9534f] hover:bg-[#c9302c] dark:bg-red-900/40 dark:hover:bg-red-900/60 dark:text-red-400'}`}
                   >
                     {item.status}
                   </span>
