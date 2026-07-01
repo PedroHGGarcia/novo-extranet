@@ -48,7 +48,11 @@ export interface Proposta {
       }
     }
     representante?: { fantasia: string; sigla?: string }
-    gerente?: { nome: string }
+    gerente?: {
+      nome: string
+      usuario?: string
+      expand?: { usuario?: { id: string; name: string; assinatura?: string } }
+    }
     user?: { name: string; assinatura?: string; id: string }
     tipo_proposta?: TipoProposta
     ultimo_usuario_status?: { name: string; email: string; id: string }
@@ -65,14 +69,14 @@ export const getPropostasPaginated = async (
     sort,
     filter,
     expand:
-      'cliente,versao.modelo.marca,versao.modelo.produto.categoria,representante,gerente,user,tipo_proposta,ultimo_usuario_status',
+      'cliente,versao.modelo.marca,versao.modelo.produto.categoria,representante,gerente.usuario,user,tipo_proposta,ultimo_usuario_status',
   })
 }
 
 export const getProposta = async (id: string) => {
   return pb.collection('propostas').getOne<Proposta>(id, {
     expand:
-      'cliente,versao.modelo.marca,versao.modelo.produto.categoria,representante,gerente,user,tipo_proposta,ultimo_usuario_status',
+      'cliente,versao.modelo.marca,versao.modelo.produto.categoria,representante,gerente.usuario,user,tipo_proposta,ultimo_usuario_status',
   })
 }
 

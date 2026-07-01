@@ -5,7 +5,6 @@ import { getTipoProposta, type TipoProposta } from '@/services/tipos-propostas'
 import { Button } from '@/components/ui/button'
 import { Printer, AlertCircle } from 'lucide-react'
 import { PropostaDocument } from '@/components/PropostaDocument'
-import { ClientSignatureSection } from '@/components/ClientSignatureSection'
 import pb from '@/lib/pocketbase/client'
 
 export default function PropostaPDF() {
@@ -97,20 +96,10 @@ export default function PropostaPDF() {
   const representanteAssinaturaUrl = proposta.expand?.user?.assinatura
     ? pb.files.getURL(proposta.expand.user as any, proposta.expand.user.assinatura as string)
     : null
-  const clienteAssinaturaUrl = proposta.assinatura_cliente
-    ? pb.files.getURL(proposta as any, proposta.assinatura_cliente as string)
+  const gerenteUser = proposta.expand?.gerente?.expand?.usuario
+  const gerenteAssinaturaUrl = gerenteUser?.assinatura
+    ? pb.files.getURL(gerenteUser as any, gerenteUser.assinatura as string)
     : null
-
-  const handleSigned = async () => {
-    if (id) {
-      try {
-        const updated = await getProposta(id)
-        setProposta(updated)
-      } catch {
-        // ignore
-      }
-    }
-  }
 
   const acessorios = Array.isArray(proposta.acessorios_proposta)
     ? proposta.acessorios_proposta.filter((a: any) => {
@@ -158,10 +147,8 @@ export default function PropostaPDF() {
         caracteristicasConstrutivas={versao?.caracteristicas_construtivas || ''}
         especificacoesTecnicas={versao?.especificacoes_tecnicas || ''}
         representanteAssinaturaUrl={representanteAssinaturaUrl}
-        clienteAssinaturaUrl={clienteAssinaturaUrl}
+        gerenteAssinaturaUrl={gerenteAssinaturaUrl}
       />
-
-      <ClientSignatureSection proposta={proposta} onSigned={handleSigned} />
     </div>
   )
 }

@@ -44,6 +44,8 @@ interface PropostaDocumentProps {
   acessoriosStandards?: string
   caracteristicasConstrutivas?: string
   especificacoesTecnicas?: string
+  representanteAssinaturaUrl?: string | null
+  gerenteAssinaturaUrl?: string | null
 }
 
 export function PropostaDocument({
@@ -62,8 +64,9 @@ export function PropostaDocument({
   acessoriosStandards,
   caracteristicasConstrutivas,
   especificacoesTecnicas,
+  representanteNome,
   representanteAssinaturaUrl,
-  clienteAssinaturaUrl,
+  gerenteAssinaturaUrl,
 }: PropostaDocumentProps) {
   const dataEmissao = proposta.dt_cad ? new Date(`${proposta.dt_cad}T00:00:00`) : new Date()
   const dataFormatada = format(dataEmissao, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
@@ -247,7 +250,7 @@ export function PropostaDocument({
           </div>
           <div>
             <p className="font-bold uppercase tracking-wider mb-1">Validade da Oferta</p>
-            <p className="leading-relaxed">A validade da proposta é de 20 dias</p>
+            <p className="leading-relaxed">Validade da proposta: 20 dias</p>
           </div>
         </div>
 
@@ -338,7 +341,7 @@ export function PropostaDocument({
               ) : null}
             </div>
             <p className="font-bold text-[12px] uppercase mb-1 h-4">
-              {proposta.expand?.user?.name || gerenteNome || '-'}
+              {proposta.expand?.user?.name || representanteNome || '-'}
             </p>
             <div className="w-[250px] border-t-2 border-black mb-2"></div>
             <p className="text-[11px] font-bold text-slate-600">Assinatura do Representante</p>
@@ -346,17 +349,17 @@ export function PropostaDocument({
 
           <div className="flex flex-col items-center text-center">
             <div className="h-24 flex items-end justify-center w-full mb-1">
-              {clienteAssinaturaUrl ? (
+              {gerenteAssinaturaUrl ? (
                 <img
-                  src={clienteAssinaturaUrl}
-                  alt="Assinatura do Cliente"
+                  src={gerenteAssinaturaUrl}
+                  alt="Assinatura do Gerente"
                   className="max-h-24 max-w-[200px] object-contain"
                 />
               ) : null}
             </div>
-            <p className="font-bold text-[12px] uppercase mb-1 h-4">Assine Aqui</p>
+            <p className="font-bold text-[12px] uppercase mb-1 h-4">{gerenteNome || '-'}</p>
             <div className="w-[250px] border-t-2 border-black mb-2"></div>
-            <p className="text-[11px] font-bold text-slate-600">Assinatura do Cliente</p>
+            <p className="text-[11px] font-bold text-slate-600">Assinatura do Gerente</p>
           </div>
         </div>
 
