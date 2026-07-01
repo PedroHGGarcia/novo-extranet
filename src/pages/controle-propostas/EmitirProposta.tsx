@@ -1138,7 +1138,7 @@ export default function EmitirProposta() {
     const isOwner = !selectedProposta || user?.id === selectedProposta.user
     const hasClient = !!formData.cliente
     const canSave =
-      !isOverDiscount && isOwner && requiredFieldsValid && (!!selectedProposta ? isDirty : true)
+      !isOverDiscount && isOwner && requiredFieldsValid && (selectedProposta ? isDirty : true)
 
     return (
       <div className="flex gap-2 flex-wrap">
