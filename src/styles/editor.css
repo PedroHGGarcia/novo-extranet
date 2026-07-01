@@ -57,6 +57,33 @@
   color: #2563eb;
   text-decoration: underline;
 }
+.rich-text-content img[data-align='left'] {
+  float: left;
+}
+.rich-text-content img[data-align='center'] {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.rich-text-content img[data-align='right'] {
+  float: right;
+}
+.rich-text-content img[data-wrap='block'] {
+  display: block;
+  float: none;
+  clear: both;
+}
+.rich-text-content img[data-wrap='inline'] {
+  display: inline-block;
+}
+.rich-text-content img[draggable='true'] {
+  -webkit-user-drag: element;
+}
+.rich-text-content::after {
+  content: '';
+  display: table;
+  clear: both;
+}
 .rich-text-content blockquote {
   border-left: 4px solid #e5e7eb;
   padding-left: 1em;

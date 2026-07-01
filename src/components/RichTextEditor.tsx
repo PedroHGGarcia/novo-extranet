@@ -12,6 +12,8 @@ import {
   AlignJustify,
   Image as ImageIcon,
   Loader2,
+  WrapText,
+  Square,
 } from 'lucide-react'
 import pb from '@/lib/pocketbase/client'
 import { toast } from '@/hooks/use-toast'
@@ -52,6 +54,14 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
     width: number
     height: number
   } | null>(null)
+  const [draggedImg, setDraggedImg] = useState<HTMLImageElement | null>(null)
+  const [dragCaretPos, setDragCaretPos] = useState<{
+    x: number
+    y: number
+    height: number
+  } | null>(null)
+  const [imgAlign, setImgAlign] = useState<string>('')
+  const [imgWrap, setImgWrap] = useState<string>('inline')
   const overlayRef = useRef<HTMLDivElement>(null)
   const shiftPressedRef = useRef(false)
 
@@ -125,9 +135,127 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
     handleInput()
   }
 
+  const alignImage = (alignment: 'left' | 'center' | 'right') => {
+    if (!selectedImg) return
+    selectedImg.style.float = ''
+    selectedImg.style.display = ''
+    selectedImg.style.margin = ''
+    selectedImg.style.verticalAlign = ''
+    if (alignment === 'left') {
+      selectedImg.style.float = 'left'
+      selectedImg.style.margin = '0.5em 10px 0.5em 0'
+      selectedImg.setAttribute('data-align', 'left')
+    } else if (alignment === 'center') {
+      selectedImg.style.display = 'block'
+      selectedImg.style.margin = '0.5em auto'
+      selectedImg.setAttribute('data-align', 'center')
+    } else {
+      selectedImg.style.float = 'right'
+      selectedImg.style.margin = '0.5em 0 0.5em 10px'
+      selectedImg.setAttribute('data-align', 'right')
+    }
+    selectedImg.setAttribute('data-wrap', 'inline')
+    setImgAlign(alignment)
+    setImgWrap('inline')
+    updateOverlay()
+    handleInput()
+  }
+
+  const toggleWrapping = (mode: 'inline' | 'block') => {
+    if (!selectedImg) return
+    if (mode === 'block') {
+      selectedImg.style.display = 'block'
+      selectedImg.style.float = ''
+      selectedImg.style.margin = '0.5em auto'
+      selectedImg.style.verticalAlign = ''
+      selectedImg.setAttribute('data-wrap', 'block')
+      selectedImg.removeAttribute('data-align')
+      setImgWrap('block')
+      setImgAlign('')
+    } else {
+      selectedImg.style.display = 'inline-block'
+      selectedImg.style.float = ''
+      selectedImg.style.margin = '0 5px'
+      selectedImg.style.verticalAlign = 'middle'
+      selectedImg.setAttribute('data-wrap', 'inline')
+      setImgWrap('inline')
+    }
+    updateOverlay()
+    handleInput()
+  }
+
+  const getCaretRangeFromPoint = (x: number, y: number): Range | null => {
+    const doc = editorRef.current?.ownerDocument
+    if (!doc) return null
+    if ('caretRangeFromPoint' in doc) {
+      return (doc as any).caretRangeFromPoint(x, y)
+    }
+    if ('caretPositionFromPoint' in doc) {
+      const pos = (doc as any).caretPositionFromPoint(x, y)
+      if (pos) {
+        const range = doc.createRange()
+        range.setStart(pos.offsetNode, pos.offset)
+        range.collapse(true)
+        return range
+      }
+    }
+    return null
+  }
+
+  const handleImgDragStart = (e: React.DragEvent) => {
+    const target = e.target as HTMLElement
+    if (target.tagName === 'IMG') {
+      setDraggedImg(target as HTMLImageElement)
+      clearSelection()
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('text/plain', target.id || 'img')
+    }
+  }
+
+  const handleImgDragOver = (e: React.DragEvent) => {
+    if (!draggedImg) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    const range = getCaretRangeFromPoint(e.clientX, e.clientY)
+    if (range && editorRef.current) {
+      const rect = range.getBoundingClientRect()
+      const editorRect = editorRef.current.getBoundingClientRect()
+      setDragCaretPos({
+        x: rect.left - editorRect.left + editorRef.current.scrollLeft,
+        y: rect.top - editorRect.top + editorRef.current.scrollTop,
+        height: rect.height || 20,
+      })
+    }
+  }
+
+  const handleImgDrop = (e: React.DragEvent) => {
+    if (!draggedImg) return
+    e.preventDefault()
+    const range = getCaretRangeFromPoint(e.clientX, e.clientY)
+    if (range) {
+      range.deleteContents()
+      if (draggedImg.parentNode) draggedImg.remove()
+      range.insertNode(draggedImg)
+      clearSelection()
+      setSelectedImg(draggedImg)
+      setImgAlign(draggedImg.getAttribute('data-align') || '')
+      setImgWrap(draggedImg.getAttribute('data-wrap') || 'inline')
+    }
+    setDraggedImg(null)
+    setDragCaretPos(null)
+    handleInput()
+  }
+
+  const handleImgDragEnd = () => {
+    setDraggedImg(null)
+    setDragCaretPos(null)
+  }
+
   const clearSelection = useCallback(() => {
     setSelectedImg(null)
     setOverlayPos(null)
+    setImgAlign('')
+    setImgWrap('inline')
   }, [])
 
   const handleEditorClick = (e: React.MouseEvent) => {
@@ -139,15 +267,15 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
         clearSelection()
       }
       setSelectedImg(target as HTMLImageElement)
+      setImgAlign(target.getAttribute('data-align') || '')
+      setImgWrap(target.getAttribute('data-wrap') || 'inline')
     } else {
       clearSelection()
     }
   }
 
   const handleEditorKeydown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Shift') {
-      shiftPressedRef.current = true
-    }
+    if (e.key === 'Shift') shiftPressedRef.current = true
     if (selectedImg && (e.key === 'Delete' || e.key === 'Backspace')) {
       e.preventDefault()
       const img = selectedImg
@@ -155,22 +283,17 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
       img.remove()
       handleInput()
     }
-    if (selectedImg && e.key === 'Escape') {
-      clearSelection()
-    }
+    if (selectedImg && e.key === 'Escape') clearSelection()
   }
 
   const handleEditorKeyup = (e: React.KeyboardEvent) => {
-    if (e.key === 'Shift') {
-      shiftPressedRef.current = false
-    }
+    if (e.key === 'Shift') shiftPressedRef.current = false
   }
 
   const startResize = (e: React.MouseEvent, handle: string) => {
     e.preventDefault()
     e.stopPropagation()
     if (!selectedImg) return
-
     setResizeState({
       img: selectedImg,
       startX: e.clientX,
@@ -183,60 +306,37 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
 
   useEffect(() => {
     if (!resizeState) return
-
     const handleMouseMove = (e: MouseEvent) => {
       if (!resizeState) return
       const { img, startX, startY, startWidth, startHeight, handle } = resizeState
       const deltaX = e.clientX - startX
       const deltaY = e.clientY - startY
-
       let newWidth = startWidth
       let newHeight = startHeight
-
       const aspectRatio = startWidth / startHeight
       const keepProportional = !shiftPressedRef.current
-
       if (handle.includes('e') || handle.includes('w')) {
-        if (handle.includes('w')) {
-          newWidth = startWidth - deltaX
-        } else {
-          newWidth = startWidth + deltaX
-        }
-        if (keepProportional) {
-          newHeight = newWidth / aspectRatio
-        }
+        newWidth = handle.includes('w') ? startWidth - deltaX : startWidth + deltaX
+        if (keepProportional) newHeight = newWidth / aspectRatio
       }
-
       if (handle.includes('n') || handle.includes('s')) {
-        if (handle.includes('n')) {
-          newHeight = startHeight - deltaY
-        } else {
-          newHeight = startHeight + deltaY
-        }
-        if (keepProportional) {
-          newWidth = newHeight * aspectRatio
-        }
+        newHeight = handle.includes('n') ? startHeight - deltaY : startHeight + deltaY
+        if (keepProportional) newWidth = newHeight * aspectRatio
       }
-
       newWidth = Math.max(30, Math.round(newWidth))
       newHeight = Math.max(30, Math.round(newHeight))
-
       img.style.width = `${newWidth}px`
       img.style.height = `${newHeight}px`
       img.setAttribute('width', String(newWidth))
       img.setAttribute('height', String(newHeight))
-
       updateOverlay()
     }
-
     const handleMouseUp = () => {
       handleInput()
       setResizeState(null)
     }
-
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
-
     return () => {
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
@@ -246,25 +346,24 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
     try {
       setIsUploading(true)
       const formData = new FormData()
       formData.append('arquivo', file)
-
       const record = await pb.collection('imagens_editor').create(formData)
       const imageUrl = pb.files.getURL(record, record.arquivo)
-
       if (editorRef.current) editorRef.current.focus()
       document.execCommand('insertImage', false, imageUrl)
-
       setTimeout(() => {
         const imgs = editorRef.current?.querySelectorAll('img')
         if (imgs && imgs.length > 0) {
-          const lastImg = imgs[imgs.length - 1]
+          const lastImg = imgs[imgs.length - 1] as HTMLImageElement
           lastImg.style.maxWidth = '100%'
           lastImg.style.height = 'auto'
-          setSelectedImg(lastImg as HTMLImageElement)
+          lastImg.setAttribute('draggable', 'true')
+          setSelectedImg(lastImg)
+          setImgAlign('')
+          setImgWrap('inline')
         }
         handleInput()
       }, 100)
@@ -280,9 +379,7 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
     }
   }
 
-  const handleHeadingChange = (val: string) => {
-    execCommand('formatBlock', val)
-  }
+  const handleHeadingChange = (val: string) => execCommand('formatBlock', val)
 
   const ToolbarButton = ({
     command,
@@ -319,6 +416,12 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
     zIndex: 10,
   }
 
+  const toolbarTop = overlayPos
+    ? overlayPos.top > 40
+      ? overlayPos.top - 38
+      : overlayPos.top + overlayPos.height + 4
+    : 0
+
   return (
     <div className="flex flex-col">
       {label && <label className="text-xs text-gray-500 mb-1">{label}</label>}
@@ -336,28 +439,20 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
               <SelectItem value="H4">Título 4</SelectItem>
             </SelectContent>
           </Select>
-
           <div className="w-px h-5 bg-slate-300 mx-1"></div>
-
           <ToolbarButton command="bold" icon={Bold} title="Negrito" />
           <ToolbarButton command="italic" icon={Italic} title="Itálico" />
           <ToolbarButton command="underline" icon={Underline} title="Sublinhado" />
           <ToolbarButton command="strikeThrough" icon={Strikethrough} title="Tachado" />
-
           <div className="w-px h-5 bg-slate-300 mx-1"></div>
-
           <ToolbarButton command="justifyLeft" icon={AlignLeft} title="Alinhar à Esquerda" />
           <ToolbarButton command="justifyCenter" icon={AlignCenter} title="Centralizar" />
           <ToolbarButton command="justifyRight" icon={AlignRight} title="Alinhar à Direita" />
           <ToolbarButton command="justifyFull" icon={AlignJustify} title="Justificar" />
-
           <div className="w-px h-5 bg-slate-300 mx-1"></div>
-
           <ToolbarButton command="insertUnorderedList" icon={List} title="Lista de Marcadores" />
           <ToolbarButton command="insertOrderedList" icon={ListOrdered} title="Lista Numerada" />
-
           <div className="w-px h-5 bg-slate-300 mx-1"></div>
-
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -398,9 +493,98 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
             onMouseUp={updateActiveFormats}
             onClick={handleEditorClick}
             onKeyDown={handleEditorKeydown}
+            onDragStart={handleImgDragStart}
+            onDragOver={handleImgDragOver}
+            onDrop={handleImgDrop}
+            onDragEnd={handleImgDragEnd}
             className="p-4 min-h-[150px] max-h-[400px] overflow-y-auto focus:outline-none text-sm text-slate-800 rich-text-content"
             style={{ outline: 'none' }}
           />
+          {draggedImg && dragCaretPos && (
+            <div
+              className="pointer-events-none absolute z-30"
+              style={{
+                top: dragCaretPos.y,
+                left: dragCaretPos.x,
+                height: dragCaretPos.height,
+                width: '2px',
+                background: '#2A75D3',
+              }}
+            />
+          )}
+          {selectedImg && overlayPos && (
+            <div
+              className="absolute z-20 flex items-center gap-0.5 bg-white border border-slate-200 rounded shadow-lg p-1"
+              style={{ top: toolbarTop, left: overlayPos.left }}
+            >
+              <button
+                type="button"
+                onClick={() => alignImage('left')}
+                className={cn(
+                  'p-1.5 rounded transition-colors',
+                  imgAlign === 'left'
+                    ? 'bg-blue-100 text-[#2A75D3]'
+                    : 'hover:bg-slate-100 text-slate-600',
+                )}
+                title="Alinhar à Esquerda"
+              >
+                <AlignLeft size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => alignImage('center')}
+                className={cn(
+                  'p-1.5 rounded transition-colors',
+                  imgAlign === 'center'
+                    ? 'bg-blue-100 text-[#2A75D3]'
+                    : 'hover:bg-slate-100 text-slate-600',
+                )}
+                title="Centralizar"
+              >
+                <AlignCenter size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => alignImage('right')}
+                className={cn(
+                  'p-1.5 rounded transition-colors',
+                  imgAlign === 'right'
+                    ? 'bg-blue-100 text-[#2A75D3]'
+                    : 'hover:bg-slate-100 text-slate-600',
+                )}
+                title="Alinhar à Direita"
+              >
+                <AlignRight size={14} />
+              </button>
+              <div className="w-px h-5 bg-slate-200 mx-0.5" />
+              <button
+                type="button"
+                onClick={() => toggleWrapping('inline')}
+                className={cn(
+                  'p-1.5 rounded transition-colors',
+                  imgWrap !== 'block'
+                    ? 'bg-blue-100 text-[#2A75D3]'
+                    : 'hover:bg-slate-100 text-slate-600',
+                )}
+                title="Texto ao Redor (Inline)"
+              >
+                <WrapText size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleWrapping('block')}
+                className={cn(
+                  'p-1.5 rounded transition-colors',
+                  imgWrap === 'block'
+                    ? 'bg-blue-100 text-[#2A75D3]'
+                    : 'hover:bg-slate-100 text-slate-600',
+                )}
+                title="Bloco (Texto Abaixo)"
+              >
+                <Square size={14} />
+              </button>
+            </div>
+          )}
           {selectedImg && overlayPos && (
             <div
               ref={overlayRef}
