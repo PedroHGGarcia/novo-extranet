@@ -144,18 +144,20 @@ export function PropostaDocument({
             Itens Adicionais e Opcionais
           </h3>
           <ul className="list-disc pl-5 text-[13px] font-mono space-y-2">
-            {acessorios.map((acc, i) => (
-              <li key={i}>
-                {acc.nome}{' '}
-                {acc.incluir ? (
-                  ''
-                ) : (
-                  <span className="italic text-slate-500 ml-2">
-                    (Item Opcional - não incluso no valor final)
-                  </span>
-                )}
-              </li>
-            ))}
+            {acessorios.map((acc, i) => {
+              const isOpcional =
+                acc.estado === 'exibir' || (!acc.estado && acc.exibir && !acc.incluir)
+              return (
+                <li key={i}>
+                  {acc.nome}{' '}
+                  {isOpcional ? (
+                    <span className="italic text-slate-500 ml-2">
+                      (Item Opcional - não incluso no valor final)
+                    </span>
+                  ) : null}
+                </li>
+              )
+            })}
           </ul>
         </div>
       )}

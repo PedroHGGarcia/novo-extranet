@@ -310,11 +310,15 @@ export default function EmitirProposta() {
           selectedProposta.acessorios_proposta.length > 0
         ) {
           setAcessoriosProposta(
-            selectedProposta.acessorios_proposta.map((a: any) => ({
-              ...a,
-              incluir: a.incluir ?? a.estado === 'incluir',
-              exibir: a.exibir ?? (a.estado === 'exibir' || a.estado === 'incluir'),
-            })),
+            selectedProposta.acessorios_proposta.map((a: any) => {
+              let estado = a.estado
+              if (!estado) {
+                if (a.incluir) estado = 'incluir'
+                else if (a.exibir) estado = 'exibir'
+                else estado = 'nao_exibir'
+              }
+              return { ...a, estado }
+            }),
           )
         } else {
           loadAcessorios(selectedProposta.versao)
@@ -350,8 +354,7 @@ export default function EmitirProposta() {
         tipo: a.tipo,
         valor: a.valor,
         moeda: a.moeda,
-        incluir: false,
-        exibir: true,
+        estado: 'nao_exibir',
       }))
       setAcessoriosProposta(initial)
     } catch (e) {
@@ -513,14 +516,23 @@ export default function EmitirProposta() {
         changes.push({ type: 'removed', name, oldVal: oldAcc })
       } else if (oldAcc && newAcc) {
         const accDiffs = []
-        if (oldAcc.incluir !== newAcc.incluir)
+
+        const oldEstado =
+          oldAcc.estado || (oldAcc.incluir ? 'incluir' : oldAcc.exibir ? 'exibir' : 'nao_exibir')
+        const newEstado =
+          newAcc.estado || (newAcc.incluir ? 'incluir' : newAcc.exibir ? 'exibir' : 'nao_exibir')
+
+        if (oldEstado !== newEstado) {
+          const nomes: Record<string, string> = {
+            incluir: 'Incluir',
+            nao_exibir: 'Não exibir',
+            exibir: 'Exibir',
+          }
           accDiffs.push(
-            `Incluir: ${oldAcc.incluir ? 'Sim' : 'Não'} ➔ ${newAcc.incluir ? 'Sim' : 'Não'}`,
+            `Status: ${nomes[oldEstado] || 'Não exibir'} ➔ ${nomes[newEstado] || 'Não exibir'}`,
           )
-        if (oldAcc.exibir !== newAcc.exibir)
-          accDiffs.push(
-            `Exibir: ${oldAcc.exibir ? 'Sim' : 'Não'} ➔ ${newAcc.exibir ? 'Sim' : 'Não'}`,
-          )
+        }
+
         if (oldAcc.valor !== newAcc.valor)
           accDiffs.push(
             `Valor: ${formatCurrency(oldAcc.valor, oldAcc.moeda)} ➔ ${formatCurrency(newAcc.valor, newAcc.moeda)}`,
@@ -728,18 +740,14 @@ export default function EmitirProposta() {
     return inBrl
   }
 
-  const updateAcc = (index: number, field: 'incluir' | 'exibir', value: boolean) => {
+  const updateAccEstado = (index: number, novoEstado: 'incluir' | 'nao_exibir' | 'exibir') => {
     const newAcc = [...acessoriosProposta]
-    const oldIncluir = newAcc[index].incluir
-    newAcc[index][field] = value
-
-    if (field === 'incluir' && value === true) {
-      newAcc[index].exibir = true
-    }
+    const oldEstado = newAcc[index].estado || 'nao_exibir'
+    newAcc[index].estado = novoEstado
 
     setAcessoriosProposta(newAcc)
 
-    if (field === 'incluir' && oldIncluir !== value) {
+    if ((oldEstado === 'incluir') !== (novoEstado === 'incluir')) {
       const acc = newAcc[index]
       const accMoeda = acc.moeda || 'BRL'
       const propMoeda = formData.moeda || 'US$'
@@ -747,7 +755,8 @@ export default function EmitirProposta() {
 
       setFormData((prev) => {
         const currentBase = prev.valor_sem_desconto || 0
-        const nextBase = value ? currentBase + convertedValue : currentBase - convertedValue
+        const nextBase =
+          novoEstado === 'incluir' ? currentBase + convertedValue : currentBase - convertedValue
         const roundedBase = Math.round(nextBase * 100) / 100
 
         const desc = prev.percentual_desconto || 0
@@ -1455,6 +1464,9 @@ export default function EmitirProposta() {
                         Incluir na Proposta
                       </th>
                       <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
+                        Não exibir na Proposta
+                      </th>
+                      <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
                         Exibir na Proposta
                       </th>
                     </tr>
@@ -1462,7 +1474,7 @@ export default function EmitirProposta() {
                   <tbody>
                     {acessoriosProposta.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="py-6 text-center text-slate-400">
+                        <td colSpan={7} className="py-6 text-center text-slate-400">
                           Nenhum acessório encontrado para esta versão.
                         </td>
                       </tr>
@@ -1476,18 +1488,30 @@ export default function EmitirProposta() {
                             {formatCurrency(acc.valor, acc.moeda)}
                           </td>
                           <td className="py-2.5 px-4 text-center">
-                            <Checkbox
-                              checked={acc.incluir}
-                              onCheckedChange={(checked) => updateAcc(idx, 'incluir', !!checked)}
-                              className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
+                            <input
+                              type="radio"
+                              name={`acc_${idx}`}
+                              checked={acc.estado === 'incluir'}
+                              onChange={() => updateAccEstado(idx, 'incluir')}
+                              className="w-3.5 h-3.5 accent-[#337ab7] cursor-pointer"
                             />
                           </td>
                           <td className="py-2.5 px-4 text-center">
-                            <Checkbox
-                              checked={acc.exibir}
-                              disabled={acc.incluir}
-                              onCheckedChange={(checked) => updateAcc(idx, 'exibir', !!checked)}
-                              className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7] disabled:opacity-50"
+                            <input
+                              type="radio"
+                              name={`acc_${idx}`}
+                              checked={acc.estado === 'nao_exibir'}
+                              onChange={() => updateAccEstado(idx, 'nao_exibir')}
+                              className="w-3.5 h-3.5 accent-[#337ab7] cursor-pointer"
+                            />
+                          </td>
+                          <td className="py-2.5 px-4 text-center">
+                            <input
+                              type="radio"
+                              name={`acc_${idx}`}
+                              checked={acc.estado === 'exibir'}
+                              onChange={() => updateAccEstado(idx, 'exibir')}
+                              className="w-3.5 h-3.5 accent-[#337ab7] cursor-pointer"
                             />
                           </td>
                         </tr>
@@ -1788,63 +1812,53 @@ export default function EmitirProposta() {
                               <th className="py-2 px-3 font-semibold text-slate-600">Moeda</th>
                               <th className="py-2 px-3 font-semibold text-slate-600">Valor</th>
                               <th className="py-2 px-3 font-semibold text-slate-600 text-center">
-                                Incluído
-                              </th>
-                              <th className="py-2 px-3 font-semibold text-slate-600 text-center">
-                                Exibido
+                                Status
                               </th>
                             </tr>
                           </thead>
                           <tbody>
-                            {viewProposta.acessorios_proposta.map((acc: any, i: number) => (
-                              <tr
-                                key={i}
-                                className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"
-                              >
-                                <td className="py-2.5 px-3 text-slate-700">{acc.nome}</td>
-                                <td className="py-2.5 px-3 text-slate-700">{acc.tipo || '-'}</td>
-                                <td className="py-2.5 px-3 text-slate-700">{acc.moeda || '-'}</td>
-                                <td className="py-2.5 px-3 text-slate-700">
-                                  {formatCurrency(acc.valor, acc.moeda)}
-                                </td>
-                                <td className="py-2.5 px-3 text-center">
-                                  {acc.incluir || acc.estado === 'incluir' ? (
-                                    <Badge
-                                      variant="outline"
-                                      className="bg-emerald-50 text-emerald-700 border-emerald-200 px-1 py-0 text-[10px]"
-                                    >
-                                      Sim
-                                    </Badge>
-                                  ) : (
-                                    <Badge
-                                      variant="outline"
-                                      className="bg-slate-50 text-slate-500 border-slate-200 px-1 py-0 text-[10px]"
-                                    >
-                                      Não
-                                    </Badge>
-                                  )}
-                                </td>
-                                <td className="py-2.5 px-3 text-center">
-                                  {acc.exibir ||
-                                  acc.estado === 'exibir' ||
-                                  acc.estado === 'incluir' ? (
-                                    <Badge
-                                      variant="outline"
-                                      className="bg-emerald-50 text-emerald-700 border-emerald-200 px-1 py-0 text-[10px]"
-                                    >
-                                      Sim
-                                    </Badge>
-                                  ) : (
-                                    <Badge
-                                      variant="outline"
-                                      className="bg-slate-50 text-slate-500 border-slate-200 px-1 py-0 text-[10px]"
-                                    >
-                                      Não
-                                    </Badge>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
+                            {viewProposta.acessorios_proposta.map((acc: any, i: number) => {
+                              const estado =
+                                acc.estado ||
+                                (acc.incluir ? 'incluir' : acc.exibir ? 'exibir' : 'nao_exibir')
+                              return (
+                                <tr
+                                  key={i}
+                                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"
+                                >
+                                  <td className="py-2.5 px-3 text-slate-700">{acc.nome}</td>
+                                  <td className="py-2.5 px-3 text-slate-700">{acc.tipo || '-'}</td>
+                                  <td className="py-2.5 px-3 text-slate-700">{acc.moeda || '-'}</td>
+                                  <td className="py-2.5 px-3 text-slate-700">
+                                    {formatCurrency(acc.valor, acc.moeda)}
+                                  </td>
+                                  <td className="py-2.5 px-3 text-center">
+                                    {estado === 'incluir' ? (
+                                      <Badge
+                                        variant="outline"
+                                        className="bg-emerald-50 text-emerald-700 border-emerald-200 px-1 py-0 text-[10px]"
+                                      >
+                                        Incluir
+                                      </Badge>
+                                    ) : estado === 'exibir' ? (
+                                      <Badge
+                                        variant="outline"
+                                        className="bg-blue-50 text-blue-700 border-blue-200 px-1 py-0 text-[10px]"
+                                      >
+                                        Exibir
+                                      </Badge>
+                                    ) : (
+                                      <Badge
+                                        variant="outline"
+                                        className="bg-slate-50 text-slate-500 border-slate-200 px-1 py-0 text-[10px]"
+                                      >
+                                        Não exibir
+                                      </Badge>
+                                    )}
+                                  </td>
+                                </tr>
+                              )
+                            })}
                           </tbody>
                         </table>
                       </div>
@@ -1970,7 +1984,9 @@ export default function EmitirProposta() {
                       formData.gerente_original ||
                       '-'
                     }
-                    acessorios={acessoriosProposta.filter((a) => a.exibir)}
+                    acessorios={acessoriosProposta.filter(
+                      (a) => a.estado === 'incluir' || a.estado === 'exibir',
+                    )}
                     acessoriosStandards={selectedVersao?.acessorios_standards || ''}
                     caracteristicasConstrutivas={selectedVersao?.caracteristicas_construtivas || ''}
                     especificacoesTecnicas={selectedVersao?.especificacoes_tecnicas || ''}

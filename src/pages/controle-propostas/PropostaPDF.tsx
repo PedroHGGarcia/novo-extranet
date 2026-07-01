@@ -94,9 +94,10 @@ export default function PropostaPDF() {
   const gerenteNome = proposta.expand?.gerente?.nome || proposta.gerente_original || '-'
 
   const acessorios = Array.isArray(proposta.acessorios_proposta)
-    ? proposta.acessorios_proposta.filter(
-        (a: any) => a?.exibir || a?.estado === 'exibir' || a?.incluir || a?.estado === 'incluir',
-      )
+    ? proposta.acessorios_proposta.filter((a: any) => {
+        const estado = a?.estado || (a?.incluir ? 'incluir' : a?.exibir ? 'exibir' : 'nao_exibir')
+        return estado === 'incluir' || estado === 'exibir'
+      })
     : []
 
   return (
