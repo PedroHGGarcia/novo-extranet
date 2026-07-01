@@ -34,6 +34,7 @@ import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown'
 import { useTablePreferences } from '@/hooks/use-table-preferences'
+import { RichTextEditor } from '@/components/RichTextEditor'
 import { cn } from '@/lib/utils'
 import {
   getAcessorios,
@@ -741,11 +742,9 @@ export default function Acessorios() {
                   Sugestões Inteligentes
                 </Button>
               </div>
-              <Textarea
+              <RichTextEditor
                 value={especificacoesTecnicas}
-                onChange={(e) => setEspecificacoesTecnicas(e.target.value)}
-                className="min-h-[200px] text-sm focus-visible:ring-[#00704a] focus-visible:border-[#00704a]"
-                placeholder="Descreva as especificações técnicas do acessório..."
+                onChange={(val) => setEspecificacoesTecnicas(val)}
               />
             </TabsContent>
 

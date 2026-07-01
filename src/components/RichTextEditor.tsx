@@ -192,6 +192,7 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
         <div
           ref={editorRef}
           contentEditable
+          spellCheck={false}
           onInput={handleInput}
           onBlur={handleInput}
           onKeyUp={updateActiveFormats}
