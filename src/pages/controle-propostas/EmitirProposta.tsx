@@ -40,6 +40,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/hooks/use-auth'
 import { DialogFooter } from '@/components/ui/dialog'
 import { SignaturePad } from '@/components/SignaturePad'
+import { SearchableCombobox } from '@/components/SearchableCombobox'
 import { getErrorMessage } from '@/lib/pocketbase/errors'
 
 const formatCurrency = (value: number | undefined, currency: string = 'BRL') => {
@@ -284,7 +285,7 @@ export default function EmitirProposta() {
       .then(setTiposProposta)
       .catch(() => {})
     pb.collection('gerentes')
-      .getFullList({ sort: 'nome' })
+      .getFullList({ sort: 'nome', expand: 'usuario' })
       .then(setGerentes)
       .catch(() => {})
     pb.collection('clientes')
@@ -725,17 +726,20 @@ export default function EmitirProposta() {
           acessorios_proposta: acessoriosProposta,
         })
         toast({ title: 'Proposta atualizada com sucesso' })
+        loadData()
+        setActiveTab('registros')
       } else {
-        await pb.collection('propostas').create({
+        const created = await pb.collection('propostas').create({
           ...formData,
           user: user?.id,
           numero_proposta: formData.numero_proposta || 'NOVA-0',
           acessorios_proposta: acessoriosProposta,
         })
+        setSelectedProposta(created)
         toast({ title: 'Proposta criada com sucesso' })
+        loadData()
       }
-      loadData()
-      setActiveTab('registros')
+      setIsPreviewModalOpen(false)
     } catch (e) {
       toast({ title: 'Erro ao salvar proposta', variant: 'destructive' })
     }
@@ -1194,18 +1198,16 @@ export default function EmitirProposta() {
               </div>
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Representante</label>
-                <select
-                  className={inputClass}
+                <SearchableCombobox
+                  items={representantes}
                   value={formData.representante || ''}
-                  onChange={(e) => setFormData({ ...formData, representante: e.target.value })}
-                >
-                  <option value=""></option>
-                  {representantes.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.fantasia}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(id) => setFormData({ ...formData, representante: id })}
+                  getLabel={(r) => r.fantasia}
+                  getSearchText={(r) => `${r.fantasia || ''} ${r.sigla || ''}`}
+                  placeholder="Buscar representante..."
+                  emptyMessage="Nenhum representante encontrado."
+                  className={inputClass}
+                />
                 {formData.representante_original && !formData.representante && (
                   <span className="text-[10px] text-amber-600 mt-0.5">
                     Original: {formData.representante_original}
@@ -1214,18 +1216,16 @@ export default function EmitirProposta() {
               </div>
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Cliente</label>
-                <select
-                  className={inputClass}
+                <SearchableCombobox
+                  items={clientes}
                   value={formData.cliente || ''}
-                  onChange={(e) => setFormData({ ...formData, cliente: e.target.value })}
-                >
-                  <option value=""></option>
-                  {clientes.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.fantasia || c.razao_social}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(id) => setFormData({ ...formData, cliente: id })}
+                  getLabel={(c) => c.fantasia || c.razao_social}
+                  getSearchText={(c) => `${c.fantasia || ''} ${c.razao_social || ''}`}
+                  placeholder="Buscar cliente..."
+                  emptyMessage="Nenhum cliente encontrado."
+                  className={inputClass}
+                />
                 {formData.cliente_original && !formData.cliente && (
                   <span className="text-[10px] text-amber-600 mt-0.5">
                     Original: {formData.cliente_original}
@@ -2178,6 +2178,18 @@ export default function EmitirProposta() {
                     acessoriosStandards={selectedVersao?.acessorios_standards || ''}
                     caracteristicasConstrutivas={selectedVersao?.caracteristicas_construtivas || ''}
                     especificacoesTecnicas={selectedVersao?.especificacoes_tecnicas || ''}
+                    representanteAssinaturaUrl={
+                      user?.assinatura
+                        ? pb.files.getURL(user as any, user.assinatura as string)
+                        : null
+                    }
+                    gerenteAssinaturaUrl={(() => {
+                      const gerente = gerentes.find((gt) => gt.id === formData.gerente)
+                      const gUser = gerente?.expand?.usuario
+                      return gUser?.assinatura
+                        ? pb.files.getURL(gUser as any, gUser.assinatura as string)
+                        : null
+                    })()}
                   />
                 )
               })()}
