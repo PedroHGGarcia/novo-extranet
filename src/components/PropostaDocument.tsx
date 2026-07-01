@@ -247,119 +247,125 @@ export function PropostaDocument({
           </div>
           <div>
             <p className="font-bold uppercase tracking-wider mb-1">Validade da Oferta</p>
-            <p className="leading-relaxed">{tipoProposta?.validade_oferta || '-'}</p>
+            <p className="leading-relaxed">A validade da proposta é de 20 dias</p>
           </div>
+        </div>
 
-          {tipoProposta?.frase_preco && (
-            <div className="col-span-2 mt-4 pt-4 border-t border-slate-300">
-              <p className="font-bold uppercase tracking-wider mb-2">Observações de Preço</p>
-              <p className="leading-relaxed font-medium">{tipoProposta.frase_preco}</p>
+        <div className="mb-10 font-mono text-[13px] print-break-inside-avoid">
+          <h2 className="font-bold text-[15px] uppercase tracking-wide border-b-2 border-black pb-2 mb-4">
+            Observações de Preço
+          </h2>
+          <p className="leading-relaxed font-medium">
+            {tipoProposta?.frase_preco || 'Proposta sem valor comercial'}
+          </p>
+        </div>
+
+        <div className="mb-12 font-mono text-[13px] text-justify leading-relaxed">
+          <h2 className="font-bold text-[15px] uppercase tracking-wide border-b-2 border-black pb-2 mb-6">
+            Cláusulas Contratuais e Condições Gerais
+          </h2>
+
+          {tipoProposta ? (
+            <div className="space-y-6">
+              {tipoProposta.garantia && (
+                <div className="print-break-inside-avoid">
+                  <h3 className="font-bold mb-1.5 uppercase">1. Garantia</h3>
+                  <p className="whitespace-pre-wrap">{tipoProposta.garantia}</p>
+                </div>
+              )}
+
+              {tipoProposta.assistencia_tecnica && (
+                <div className="print-break-inside-avoid">
+                  <h3 className="font-bold mb-1.5 uppercase">2. Assistência Técnica</h3>
+                  <p className="whitespace-pre-wrap">{tipoProposta.assistencia_tecnica}</p>
+                </div>
+              )}
+
+              {tipoProposta.treinamento_tecnico && (
+                <div className="print-break-inside-avoid">
+                  <h3 className="font-bold mb-1.5 uppercase">3. Treinamento Técnico</h3>
+                  <p className="whitespace-pre-wrap">{tipoProposta.treinamento_tecnico}</p>
+                </div>
+              )}
+
+              {tipoProposta.transporte_seguro && (
+                <div className="print-break-inside-avoid">
+                  <h3 className="font-bold mb-1.5 uppercase">4. Transporte e Seguro</h3>
+                  <p className="whitespace-pre-wrap">{tipoProposta.transporte_seguro}</p>
+                </div>
+              )}
+
+              {(tipoProposta.imposto_ipi || tipoProposta.imposto_icms) && (
+                <div className="print-break-inside-avoid">
+                  <h3 className="font-bold mb-1.5 uppercase">5. Impostos</h3>
+                  <div className="p-4 border border-black">
+                    <ul className="list-disc pl-5 space-y-2">
+                      {tipoProposta.imposto_ipi && (
+                        <li>
+                          <strong>IPI:</strong> {tipoProposta.imposto_ipi}
+                        </li>
+                      )}
+                      {tipoProposta.imposto_icms && (
+                        <li>
+                          <strong>ICMS:</strong> {tipoProposta.imposto_icms}
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-12">
+              <div className="border-b border-black w-full"></div>
+              <div className="border-b border-black w-full"></div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Cláusulas Contratuais */}
-      {tipoProposta && (
-        <div className="mt-12 space-y-8 font-mono text-[13px] text-justify leading-relaxed">
-          <h2 className="font-bold text-[15px] uppercase tracking-wide border-b-2 border-black pb-2 mb-6">
-            Cláusulas Contratuais e Condições Gerais
-          </h2>
-
-          {tipoProposta.garantia && (
-            <div className="print-break-inside-avoid">
-              <h3 className="font-bold mb-1.5 uppercase">1. Garantia</h3>
-              <p className="whitespace-pre-wrap">{tipoProposta.garantia}</p>
-            </div>
-          )}
-
-          {tipoProposta.assistencia_tecnica && (
-            <div className="print-break-inside-avoid">
-              <h3 className="font-bold mb-1.5 uppercase">2. Assistência Técnica</h3>
-              <p className="whitespace-pre-wrap">{tipoProposta.assistencia_tecnica}</p>
-            </div>
-          )}
-
-          {tipoProposta.treinamento_tecnico && (
-            <div className="print-break-inside-avoid">
-              <h3 className="font-bold mb-1.5 uppercase">3. Treinamento Técnico</h3>
-              <p className="whitespace-pre-wrap">{tipoProposta.treinamento_tecnico}</p>
-            </div>
-          )}
-
-          {tipoProposta.transporte_seguro && (
-            <div className="print-break-inside-avoid">
-              <h3 className="font-bold mb-1.5 uppercase">4. Transporte e Seguro</h3>
-              <p className="whitespace-pre-wrap">{tipoProposta.transporte_seguro}</p>
-            </div>
-          )}
-
-          {(tipoProposta.imposto_ipi || tipoProposta.imposto_icms) && (
-            <div className="print-break-inside-avoid">
-              <h3 className="font-bold mb-1.5 uppercase">5. Impostos</h3>
-              <div className="p-4 border border-black">
-                <ul className="list-disc pl-5 space-y-2">
-                  {tipoProposta.imposto_ipi && (
-                    <li>
-                      <strong>IPI:</strong> {tipoProposta.imposto_ipi}
-                    </li>
-                  )}
-                  {tipoProposta.imposto_icms && (
-                    <li>
-                      <strong>ICMS:</strong> {tipoProposta.imposto_icms}
-                    </li>
-                  )}
-                </ul>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Footer info & Assinaturas */}
-      <div className="mt-20 pt-8 border-t border-black font-mono print-break-inside-avoid">
-        <div className="grid grid-cols-2 gap-12 mb-8">
+      <div className="mt-12 font-mono print-break-inside-avoid pt-12">
+        <div className="grid grid-cols-2 gap-12 mb-12">
           <div className="flex flex-col items-center text-center">
-            <div className="h-20 flex items-end justify-center w-full">
+            <div className="h-24 flex items-end justify-center w-full mb-1">
               {representanteAssinaturaUrl ? (
                 <img
                   src={representanteAssinaturaUrl}
                   alt="Assinatura do Representante"
-                  className="max-h-20 max-w-full object-contain"
+                  className="max-h-24 max-w-[200px] object-contain"
                 />
-              ) : (
-                <div className="w-full border-t border-black mt-12"></div>
-              )}
+              ) : null}
             </div>
-            <div className="w-full border-t border-black mt-2"></div>
-            <p className="font-bold mt-3 text-[12px] uppercase">
-              {proposta.expand?.user?.name || gerenteNome}
+            <p className="font-bold text-[12px] uppercase mb-1 h-4">
+              {proposta.expand?.user?.name || gerenteNome || '-'}
             </p>
-            <p className="text-[11px] mt-1">Assinatura do Representante</p>
+            <div className="w-[250px] border-t-2 border-black mb-2"></div>
+            <p className="text-[11px] font-bold text-slate-600">Assinatura do Representante</p>
           </div>
 
           <div className="flex flex-col items-center text-center">
-            <div className="h-20 flex items-end justify-center w-full">
+            <div className="h-24 flex items-end justify-center w-full mb-1">
               {clienteAssinaturaUrl ? (
                 <img
                   src={clienteAssinaturaUrl}
                   alt="Assinatura do Cliente"
-                  className="max-h-20 max-w-full object-contain"
+                  className="max-h-24 max-w-[200px] object-contain"
                 />
-              ) : (
-                <div className="w-full border-t border-black mt-12"></div>
-              )}
+              ) : null}
             </div>
-            <div className="w-full border-t border-black mt-2"></div>
-            <p className="font-bold mt-3 text-[12px] uppercase">Assine Aqui</p>
-            <p className="text-[11px] mt-1">Assinatura do Cliente</p>
+            <p className="font-bold text-[12px] uppercase mb-1 h-4">Assine Aqui</p>
+            <div className="w-[250px] border-t-2 border-black mb-2"></div>
+            <p className="text-[11px] font-bold text-slate-600">Assinatura do Cliente</p>
           </div>
         </div>
 
-        <div className="flex justify-between items-center text-[10px] gap-4">
-          <div className="max-w-xs">
-            <p className="font-bold mb-1 uppercase">Bener - Soluções em Máquinas e Equipamentos</p>
-            <p>
+        <div className="flex justify-between items-end text-[10px] gap-4">
+          <div className="max-w-sm">
+            <p className="font-bold mb-1 uppercase text-[11px]">
+              Bener - Soluções em Máquinas e Equipamentos
+            </p>
+            <p className="text-slate-600">
               Este é um documento gerado eletronicamente e tem validade como proposta comercial.
             </p>
           </div>
@@ -368,9 +374,9 @@ export function PropostaDocument({
               <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://extranetgourmet.goskip.app/validar-proposta/${proposta.id}`)}`}
                 alt="QR Code de Validação"
-                className="w-[80px] h-[80px] mb-3"
+                className="w-[70px] h-[70px] mb-2"
               />
-              <p className="text-[10px] uppercase leading-tight font-bold">
+              <p className="text-[9px] uppercase leading-tight font-bold">
                 Escaneie para validar
                 <br />a autenticidade
               </p>
