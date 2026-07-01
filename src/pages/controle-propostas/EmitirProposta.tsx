@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { format } from 'date-fns'
 import {
   Pencil,
@@ -862,6 +862,22 @@ export default function EmitirProposta() {
     return inBrl
   }
 
+  const searchClientes = useCallback(async (query: string) => {
+    const res = await pb.collection('clientes').getList(1, 20, {
+      filter: `documento ~ "${query}" || razao_social ~ "${query}" || fantasia ~ "${query}"`,
+      sort: 'fantasia',
+    })
+    return res.items
+  }, [])
+
+  const searchRepresentantes = useCallback(async (query: string) => {
+    const res = await pb.collection('representantes').getList(1, 20, {
+      filter: `documento ~ "${query}" || fantasia ~ "${query}"`,
+      sort: 'fantasia',
+    })
+    return res.items
+  }, [])
+
   const updateAccEstado = (index: number, novoEstado: 'incluir' | 'nao_exibir' | 'exibir') => {
     const newAcc = [...acessoriosProposta]
     const oldEstado = newAcc[index].estado || 'nao_exibir'
@@ -1030,7 +1046,7 @@ export default function EmitirProposta() {
           disabled={isOverDiscount || !isOwner}
           className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Gerar proposta
+          {selectedProposta ? 'Atualizar proposta' : 'Gerar proposta'}
         </Button>{' '}
         <Button
           onClick={() => {
@@ -1288,6 +1304,7 @@ export default function EmitirProposta() {
                   placeholder="Buscar representante..."
                   emptyMessage="Nenhum representante encontrado."
                   className={inputClass}
+                  onSearch={searchRepresentantes}
                 />
                 {formData.representante_original && !formData.representante && (
                   <span className="text-[10px] text-amber-600 mt-0.5">
@@ -1306,6 +1323,7 @@ export default function EmitirProposta() {
                   placeholder="Buscar cliente..."
                   emptyMessage="Nenhum cliente encontrado."
                   className={inputClass}
+                  onSearch={searchClientes}
                 />
                 {formData.cliente_original && !formData.cliente && (
                   <span className="text-[10px] text-amber-600 mt-0.5">

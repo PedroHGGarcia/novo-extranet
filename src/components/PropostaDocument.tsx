@@ -46,6 +46,7 @@ interface PropostaDocumentProps {
   especificacoesTecnicas?: string
   representanteAssinaturaUrl?: string | null
   gerenteAssinaturaUrl?: string | null
+  assinaturaClienteUrl?: string | null
 }
 
 export function PropostaDocument({
@@ -67,6 +68,7 @@ export function PropostaDocument({
   representanteNome,
   representanteAssinaturaUrl,
   gerenteAssinaturaUrl,
+  assinaturaClienteUrl,
 }: PropostaDocumentProps) {
   const dataEmissao = proposta.dt_cad ? new Date(`${proposta.dt_cad}T00:00:00`) : new Date()
   const dataFormatada = format(dataEmissao, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
@@ -362,6 +364,21 @@ export function PropostaDocument({
             <p className="text-[11px] font-bold text-slate-600">Assinatura do Gerente</p>
           </div>
         </div>
+
+        {assinaturaClienteUrl && (
+          <div className="flex flex-col items-center text-center mb-12">
+            <div className="h-24 flex items-end justify-center w-full mb-1">
+              <img
+                src={assinaturaClienteUrl}
+                alt="Assinatura do Cliente"
+                className="max-h-24 max-w-[200px] object-contain"
+              />
+            </div>
+            <p className="font-bold text-[12px] uppercase mb-1 h-4">{clienteNome || '-'}</p>
+            <div className="w-[250px] border-t-2 border-black mb-2"></div>
+            <p className="text-[11px] font-bold text-slate-600">Assinatura do Cliente</p>
+          </div>
+        )}
 
         <div className="flex justify-between items-end text-[10px] gap-4">
           <div className="max-w-sm">

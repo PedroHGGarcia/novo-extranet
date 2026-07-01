@@ -101,6 +101,10 @@ export default function PropostaPDF() {
     ? pb.files.getURL(gerenteUser as any, gerenteUser.assinatura as string)
     : null
 
+  const assinaturaClienteUrl = proposta.assinatura_cliente
+    ? pb.files.getURL(proposta as any, proposta.assinatura_cliente as string)
+    : null
+
   const acessorios = Array.isArray(proposta.acessorios_proposta)
     ? proposta.acessorios_proposta.filter((a: any) => {
         const estado = a?.estado || (a?.incluir ? 'incluir' : a?.exibir ? 'exibir' : 'nao_exibir')
@@ -148,6 +152,7 @@ export default function PropostaPDF() {
         especificacoesTecnicas={versao?.especificacoes_tecnicas || ''}
         representanteAssinaturaUrl={representanteAssinaturaUrl}
         gerenteAssinaturaUrl={gerenteAssinaturaUrl}
+        assinaturaClienteUrl={assinaturaClienteUrl}
       />
     </div>
   )
