@@ -3,6 +3,19 @@ onRecordUpdateRequest((e) => {
   const newStatus = e.record.getString('status')
 
   if (newStatus && oldStatus !== newStatus) {
+    let isClientSignature = false
+    try {
+      isClientSignature = e.findUploadedFiles('assinatura_cliente').length > 0
+    } catch (_) {}
+
+    if (!isClientSignature && !e.hasSuperuserAuth()) {
+      const proposalOwner = e.record.getString('user')
+      if (e.auth && e.auth.id !== proposalOwner) {
+        e.badRequestError('Apenas o criador da proposta pode alterar seu status')
+        return
+      }
+    }
+
     e.record.set('data_alteracao_status', new Date().toISOString())
     if (e.auth?.id) {
       e.record.set('ultimo_usuario_status', e.auth.id)

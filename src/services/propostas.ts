@@ -32,6 +32,7 @@ export interface Proposta {
   created: string
   updated: string
   ultimo_usuario_status?: string
+  assinatura_cliente?: string
   expand?: {
     cliente?: { fantasia: string; razao_social?: string }
     versao?: {

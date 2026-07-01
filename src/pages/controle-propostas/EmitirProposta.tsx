@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { format } from 'date-fns'
 import {
   Pencil,
@@ -11,6 +11,9 @@ import {
   History,
   ArrowRight,
   FileText,
+  Upload,
+  PenTool,
+  CheckCircle,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -36,6 +39,8 @@ import pb from '@/lib/pocketbase/client'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/hooks/use-auth'
 import { DialogFooter } from '@/components/ui/dialog'
+import { SignaturePad } from '@/components/SignaturePad'
+import { getErrorMessage } from '@/lib/pocketbase/errors'
 
 const formatCurrency = (value: number | undefined, currency: string = 'BRL') => {
   if (value === undefined) return '-'
@@ -100,7 +105,7 @@ const CurrencyInput = ({
 
 export default function EmitirProposta() {
   const { toast } = useToast()
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const [activeTab, setActiveTab] = useState('registros')
   const [selectedProposta, setSelectedProposta] = useState<Proposta | null>(null)
 
@@ -145,6 +150,9 @@ export default function EmitirProposta() {
   const [viewProposta, setViewProposta] = useState<Proposta | null>(null)
 
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
+  const [showSignaturePad, setShowSignaturePad] = useState(false)
+  const [isSavingSignature, setIsSavingSignature] = useState(false)
+  const signatureFileInputRef = useRef<HTMLInputElement>(null)
 
   const [avancarPropostaItem, setAvancarPropostaItem] = useState<Proposta | null>(null)
   const [novoStatus, setNovoStatus] = useState<string>('')
@@ -336,6 +344,7 @@ export default function EmitirProposta() {
           revisao: 'A',
           moeda: 'USD',
           status: 'Em Análise',
+          user: user?.id,
           valor_sem_desconto: 0,
           valor_atual: 0,
           valor_final: 0,
@@ -719,6 +728,7 @@ export default function EmitirProposta() {
       } else {
         await pb.collection('propostas').create({
           ...formData,
+          user: user?.id,
           numero_proposta: formData.numero_proposta || 'NOVA-0',
           acessorios_proposta: acessoriosProposta,
         })
@@ -1040,7 +1050,7 @@ export default function EmitirProposta() {
                   >
                     Gerar PDF
                   </button>
-                  {item.status !== 'Excluída' && (
+                  {item.status !== 'Excluída' && user?.id === item.user && (
                     <button
                       onClick={() => {
                         setAvancarPropostaItem(item)
@@ -1650,6 +1660,109 @@ export default function EmitirProposta() {
                   </div>
                 )
               })()}
+
+            {user && (!selectedProposta || user.id === selectedProposta.user) && (
+              <div className="w-full mt-8">
+                <div className="border-b border-slate-200 w-full mb-4 pb-2">
+                  <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <PenTool className="w-4 h-4" /> Assinatura do Representante
+                  </h3>
+                </div>
+                {user.assinatura ? (
+                  <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
+                    <img
+                      src={pb.files.getURL(user as any, user.assinatura as string)}
+                      alt="Assinatura"
+                      className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
+                    />
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-emerald-600" />
+                      <span className="text-xs text-slate-600">
+                        Sua assinatura será incluída no PDF da proposta.
+                      </span>
+                    </div>
+                  </div>
+                ) : showSignaturePad ? (
+                  <div className="p-4 border border-slate-200 rounded-sm">
+                    <SignaturePad
+                      onConfirm={async (blob) => {
+                        setIsSavingSignature(true)
+                        try {
+                          const fd = new FormData()
+                          fd.append('assinatura', blob, 'assinatura.png')
+                          await pb.collection('users').update(user.id, fd)
+                          await refreshUser()
+                          toast({ title: 'Assinatura salva com sucesso!' })
+                          setShowSignaturePad(false)
+                        } catch (err) {
+                          toast({
+                            title: 'Erro ao salvar assinatura',
+                            description: getErrorMessage(err),
+                            variant: 'destructive',
+                          })
+                        } finally {
+                          setIsSavingSignature(false)
+                        }
+                      }}
+                      disabled={isSavingSignature}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3 p-4 border-2 border-dashed border-slate-300 rounded-sm">
+                    <p className="text-xs text-slate-500 text-center">
+                      Você ainda não possui uma assinatura cadastrada. Adicione uma para que ela
+                      seja incluída no PDF da proposta.
+                    </p>
+                    <div className="flex gap-2 justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSignaturePad(true)}
+                        className="gap-2 text-xs"
+                      >
+                        <PenTool className="h-4 w-4" /> Desenhar Assinatura
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => signatureFileInputRef.current?.click()}
+                        className="gap-2 text-xs"
+                      >
+                        <Upload className="h-4 w-4" /> Upload de Imagem
+                      </Button>
+                    </div>
+                    <input
+                      ref={signatureFileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        setIsSavingSignature(true)
+                        try {
+                          const fd = new FormData()
+                          fd.append('assinatura', file)
+                          await pb.collection('users').update(user.id, fd)
+                          await refreshUser()
+                          toast({ title: 'Assinatura salva com sucesso!' })
+                        } catch (err) {
+                          toast({
+                            title: 'Erro ao salvar assinatura',
+                            description: getErrorMessage(err),
+                            variant: 'destructive',
+                          })
+                        } finally {
+                          setIsSavingSignature(false)
+                          if (signatureFileInputRef.current)
+                            signatureFileInputRef.current.value = ''
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {selectedProposta && (
               <div className="w-full mt-8">
