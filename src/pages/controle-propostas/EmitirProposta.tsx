@@ -332,17 +332,18 @@ export default function EmitirProposta() {
           selectedProposta.acessorios_proposta &&
           selectedProposta.acessorios_proposta.length > 0
         ) {
-          const mappedAcc = selectedProposta.acessorios_proposta.map((a: any) => {
-            let estado = a.estado
-            if (!estado) {
-              if (a.incluir) estado = 'incluir'
-              else if (a.exibir) estado = 'exibir'
-              else estado = 'nao_exibir'
-            }
-            return { ...a, estado }
-          })
-          setAcessoriosProposta(mappedAcc)
-          setInitialAcessorios(mappedAcc)
+          const buildMappedAcc = () =>
+            selectedProposta.acessorios_proposta.map((a: any) => {
+              let estado = a.estado
+              if (!estado) {
+                if (a.incluir) estado = 'incluir'
+                else if (a.exibir) estado = 'exibir'
+                else estado = 'nao_exibir'
+              }
+              return { ...a, estado }
+            })
+          setAcessoriosProposta(buildMappedAcc())
+          setInitialAcessorios(buildMappedAcc())
         } else {
           loadAcessorios(selectedProposta.versao)
         }
@@ -375,22 +376,23 @@ export default function EmitirProposta() {
     try {
       const filter = `versoes ~ "${versaoId}"`
       const list = await pb.collection('acessorios').getFullList({ filter })
-      const initial = list.map((a) => ({
-        id: a.id,
-        nome: a.nome,
-        tipo: a.tipo,
-        valor: a.valor,
-        moeda: a.moeda,
-        estado: 'nao_exibir',
-      }))
-      setAcessoriosProposta(initial)
+      const buildAcc = () =>
+        list.map((a) => ({
+          id: a.id,
+          nome: a.nome,
+          tipo: a.tipo,
+          valor: a.valor,
+          moeda: a.moeda,
+          estado: 'nao_exibir' as const,
+        }))
+      setAcessoriosProposta(buildAcc())
       if (!selectedProposta) {
-        setInitialAcessorios(initial)
+        setInitialAcessorios(buildAcc())
       } else if (
         !selectedProposta.acessorios_proposta ||
         selectedProposta.acessorios_proposta.length === 0
       ) {
-        setInitialAcessorios(initial)
+        setInitialAcessorios(buildAcc())
       }
     } catch (e) {
       console.error('Failed to load accessories', e)
@@ -830,11 +832,9 @@ export default function EmitirProposta() {
           acessorios_proposta: acessoriosProposta,
         })
         toast({ title: 'Proposta atualizada com sucesso' })
-        setInitialFormData(formData)
-        setInitialAcessorios(acessoriosProposta)
+        setInitialFormData({ ...formData })
+        setInitialAcessorios(acessoriosProposta.map((a) => ({ ...a })))
         loadData()
-        setSelectedProposta(null)
-        setActiveTab('registros')
       } else {
         const created = await pb.collection('propostas').create({
           ...sanitizedData,
@@ -984,7 +984,7 @@ export default function EmitirProposta() {
   const updateAccEstado = (index: number, novoEstado: 'incluir' | 'nao_exibir' | 'exibir') => {
     const newAcc = [...acessoriosProposta]
     const oldEstado = newAcc[index].estado || 'nao_exibir'
-    newAcc[index].estado = novoEstado
+    newAcc[index] = { ...newAcc[index], estado: novoEstado }
 
     setAcessoriosProposta(newAcc)
 
@@ -1140,46 +1140,86 @@ export default function EmitirProposta() {
     const canSave =
       !isOverDiscount && isOwner && requiredFieldsValid && (selectedProposta ? isDirty : true)
 
+    const getDisabledReason = (): string | null => {
+      if (isOverDiscount) return 'Desconto acima do máximo permitido (28%)'
+      if (!isOwner) return 'Você não é o proprietário desta proposta'
+      if (!requiredFieldsValid) {
+        const missing: string[] = []
+        if (!formData.cliente) missing.push('Cliente')
+        if (!formData.versao) missing.push('Versão')
+        if (!formData.representante) missing.push('Representante')
+        if (!formData.tipo_proposta) missing.push('Tipo de Proposta')
+        return `Campos obrigatórios pendentes: ${missing.join(', ')}`
+      }
+      if (selectedProposta && !isDirty) return 'Nenhuma alteração detectada'
+      return null
+    }
+    const disabledReason = getDisabledReason()
+
     return (
-      <div className="flex gap-2 flex-wrap">
-        <Button className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal">
-          PESQUISAR
-        </Button>
-        <Button
-          onClick={handlePreviewPDF}
-          disabled={isOverDiscount || !hasClient}
-          className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Visualizar proposta
-        </Button>{' '}
-        <Button
-          onClick={handleSave}
-          disabled={!canSave}
-          className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {selectedProposta ? 'ATUALIZAR PROPOSTA' : 'GERAR PROPOSTA'}
-        </Button>{' '}
-        <Button
-          onClick={() => {
-            if (selectedProposta) {
-              printProposal(selectedProposta)
-            } else {
-              toast({ title: 'Salve a proposta antes de gerar o PDF', variant: 'default' })
-            }
-          }}
-          disabled={!selectedProposta || isOverDiscount}
-          className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          GERAR PDF
-        </Button>
-        {selectedProposta && (
-          <Button
-            onClick={() => setIsCancelDialogOpen(true)}
-            disabled={!isOwner}
-            className="bg-rose-600 hover:bg-rose-700 text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Cancelar
+      <div className="flex flex-col gap-2 w-full">
+        <div className="flex gap-2 flex-wrap items-center">
+          <Button className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal">
+            PESQUISAR
           </Button>
+          <Button
+            onClick={handlePreviewPDF}
+            disabled={isOverDiscount || !hasClient}
+            className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Visualizar proposta
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={!canSave}
+            title={disabledReason || undefined}
+            className={cn(
+              'text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal transition-all duration-200',
+              canSave
+                ? 'bg-[#337ab7] hover:bg-[#286090] ring-2 ring-[#337ab7]/30 ring-offset-1'
+                : 'bg-[#337ab7] hover:bg-[#286090] disabled:opacity-50 disabled:cursor-not-allowed',
+            )}
+          >
+            {selectedProposta ? 'ATUALIZAR PROPOSTA' : 'GERAR PROPOSTA'}
+          </Button>
+          <Button
+            onClick={() => {
+              if (selectedProposta) {
+                printProposal(selectedProposta)
+              } else {
+                toast({ title: 'Salve a proposta antes de gerar o PDF', variant: 'default' })
+              }
+            }}
+            disabled={!selectedProposta || isOverDiscount}
+            className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            GERAR PDF
+          </Button>
+          {selectedProposta && (
+            <Button
+              onClick={() => setIsCancelDialogOpen(true)}
+              disabled={!isOwner}
+              className="bg-rose-600 hover:bg-rose-700 text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancelar
+            </Button>
+          )}
+          {selectedProposta && (
+            <span
+              className={cn(
+                'text-[10px] font-medium ml-auto flex items-center gap-1 transition-colors duration-200',
+                isDirty ? 'text-amber-600' : 'text-slate-400',
+              )}
+            >
+              {isDirty ? '● Alterações não salvas' : '✓ Sem alterações'}
+            </span>
+          )}
+        </div>
+        {disabledReason && (
+          <div className="text-[10px] text-slate-500 flex items-center gap-1.5 animate-fade-in">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+            {disabledReason}
+          </div>
         )}
       </div>
     )
