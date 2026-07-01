@@ -201,6 +201,13 @@ export default function Versoes() {
     }
   }, [activeTab, editingItem])
 
+  const mapCurrency = (m?: string) => {
+    if (m === 'Dolar' || m === 'US$') return 'USD'
+    if (m === 'Real') return 'BRL'
+    if (m === 'Euro') return 'EUR'
+    return m || 'BRL'
+  }
+
   const handleEdit = (item: Versao) => {
     setEditingItem(item)
     setNome(item.nome)
@@ -208,7 +215,7 @@ export default function Versoes() {
     setNomeAbreviado(item.nome_abreviado || '')
     setModeloId(item.modelo)
     setCodErp(item.cod_erp || '')
-    setMoeda(item.moeda || 'BRL')
+    setMoeda(mapCurrency(item.moeda))
     setValor(item.valor || 0)
     setTemFator(item.tem_fator || false)
     setFatorNac(item.fator_nac || 1)
@@ -518,7 +525,25 @@ export default function Versoes() {
                       )}
                       {visibleColumns.includes('valor') && (
                         <TableCell className="text-gray-600 text-right py-2">
-                          {Number(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {(() => {
+                            const map: Record<string, string> = {
+                              Dolar: 'USD',
+                              Real: 'BRL',
+                              Euro: 'EUR',
+                              US$: 'USD',
+                            }
+                            const code = map[item.moeda || ''] || item.moeda || 'BRL'
+                            const locale =
+                              code === 'BRL' ? 'pt-BR' : code === 'USD' ? 'en-US' : 'de-DE'
+                            try {
+                              return new Intl.NumberFormat(locale, {
+                                style: 'currency',
+                                currency: code,
+                              }).format(item.valor || 0)
+                            } catch {
+                              return `${code} ${Number(item.valor || 0).toFixed(2)}`
+                            }
+                          })()}
                         </TableCell>
                       )}
                       {visibleColumns.includes('status') && (
@@ -688,9 +713,9 @@ export default function Versoes() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="BRL">Real</SelectItem>
-                        <SelectItem value="USD">Dolar</SelectItem>
-                        <SelectItem value="EUR">Euro</SelectItem>
+                        <SelectItem value="BRL">Real (BRL)</SelectItem>
+                        <SelectItem value="USD">Dólar (USD)</SelectItem>
+                        <SelectItem value="EUR">Euro (EUR)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

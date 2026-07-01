@@ -48,19 +48,27 @@ import {
 import pb from '@/lib/pocketbase/client'
 
 export function formatCurrency(val: number, moeda: string) {
+  const map: Record<string, string> = { Dolar: 'USD', Real: 'BRL', Euro: 'EUR', US$: 'USD' }
+  const code = map[moeda] || moeda || 'BRL'
   const locales: Record<string, string> = { BRL: 'pt-BR', USD: 'en-US', EUR: 'de-DE' }
-  const locale = locales[moeda] || 'pt-BR'
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: moeda || 'BRL',
-  }).format(val)
+  const locale = locales[code] || 'pt-BR'
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: code,
+    }).format(val)
+  } catch (e) {
+    return `${code} ${Number(val).toFixed(2)}`
+  }
 }
 
 const CurrencyInput = forwardRef<
   HTMLInputElement,
   { value: number; onChange: (v: number) => void; currency: string; className?: string }
 >(({ value, onChange, currency, className }, ref) => {
-  const formatted = formatCurrency(value, currency)
+  const map: Record<string, string> = { Dolar: 'USD', Real: 'BRL', Euro: 'EUR', US$: 'USD' }
+  const code = map[currency] || currency || 'BRL'
+  const formatted = formatCurrency(value, code)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/[^\d]/g, '')
@@ -158,11 +166,18 @@ export default function Acessorios() {
     }
   }, [activeTab, activeSubTab, editingId])
 
+  const mapCurrency = (m?: string) => {
+    if (m === 'Dolar' || m === 'US$') return 'USD'
+    if (m === 'Real') return 'BRL'
+    if (m === 'Euro') return 'EUR'
+    return m || 'BRL'
+  }
+
   const handleEdit = (item: Acessorio) => {
     setEditingId(item.id)
     setNome(item.nome)
     setTipo(item.tipo)
-    setMoeda(item.moeda || 'BRL')
+    setMoeda(mapCurrency(item.moeda))
     setValor(item.valor || 0)
     setFatorNac(String(item.fator_nac || 1))
     setStatus(item.status)
@@ -186,7 +201,7 @@ export default function Acessorios() {
     setEditingId(null)
     setNome(item.nome + ' (Cópia)')
     setTipo(item.tipo)
-    setMoeda(item.moeda || 'BRL')
+    setMoeda(mapCurrency(item.moeda))
     setValor(item.valor || 0)
     setFatorNac(String(item.fator_nac || 1))
     setStatus(item.status)

@@ -6,13 +6,15 @@ import { ptBR } from 'date-fns/locale'
 
 export const formatCurrency = (value: number | undefined, currency: string = 'BRL') => {
   if (value === undefined) return '-'
+  const map: Record<string, string> = { Dolar: 'USD', Real: 'BRL', Euro: 'EUR', US$: 'USD' }
+  const code = map[currency] || currency || 'BRL'
   try {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: currency === 'US$' ? 'USD' : currency || 'BRL',
+      currency: code,
     }).format(value)
   } catch (e) {
-    return `${currency} ${value}`
+    return `${code} ${value}`
   }
 }
 

@@ -1,7 +1,9 @@
 import { useRef, useEffect, useState } from 'react'
 
 function getSeparators(currency: string) {
-  return currency === 'BRL' ? { decimal: ',', thousands: '.' } : { decimal: '.', thousands: ',' }
+  const map: Record<string, string> = { Dolar: 'USD', Real: 'BRL', Euro: 'EUR', US$: 'USD' }
+  const code = map[currency] || currency || 'BRL'
+  return code === 'BRL' ? { decimal: ',', thousands: '.' } : { decimal: '.', thousands: ',' }
 }
 
 function formatDisplay(value: number, currency: string, maxDecimals: number) {

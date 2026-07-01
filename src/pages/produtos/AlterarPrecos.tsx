@@ -51,7 +51,10 @@ const ACESSORIOS_STATUS = ['Ativo', 'Inativo']
 
 function getFieldValue(item: any, changes: Record<string, PriceChange>, field: keyof PriceChange) {
   if (changes[item.id]?.[field] !== undefined) return changes[item.id]![field]
-  if (field === 'moeda') return item.moeda || 'BRL'
+  if (field === 'moeda') {
+    const m = item.moeda || 'BRL'
+    return m === 'Dolar' || m === 'US$' ? 'USD' : m === 'Real' ? 'BRL' : m === 'Euro' ? 'EUR' : m
+  }
   if (field === 'valor') return item.valor || 0
   if (field === 'fator_nac') return item.fator_nac ?? 1
   if (field === 'status') return item.status || 'Ativo'
@@ -59,9 +62,14 @@ function getFieldValue(item: any, changes: Record<string, PriceChange>, field: k
 }
 
 function formatCurrencyValue(value: number, moeda: string) {
-  const locale = moeda === 'BRL' ? 'pt-BR' : moeda === 'USD' ? 'en-US' : 'de-DE'
-  const currency = moeda === 'BRL' ? 'BRL' : moeda === 'USD' ? 'USD' : 'EUR'
-  return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value)
+  const map: Record<string, string> = { Dolar: 'USD', Real: 'BRL', Euro: 'EUR', US$: 'USD' }
+  const code = map[moeda] || moeda || 'BRL'
+  const locale = code === 'BRL' ? 'pt-BR' : code === 'USD' ? 'en-US' : 'de-DE'
+  try {
+    return new Intl.NumberFormat(locale, { style: 'currency', currency: code }).format(value)
+  } catch {
+    return `${code} ${value}`
+  }
 }
 
 function formatAdjustDate(dateStr: string, withTime = false) {
@@ -548,9 +556,9 @@ export default function AlterarPrecos() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="BRL">BRL</SelectItem>
-                            <SelectItem value="USD">USD</SelectItem>
-                            <SelectItem value="EUR">EUR</SelectItem>
+                            <SelectItem value="BRL">Real (BRL)</SelectItem>
+                            <SelectItem value="USD">Dólar (USD)</SelectItem>
+                            <SelectItem value="EUR">Euro (EUR)</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>

@@ -39,13 +39,15 @@ import { DialogFooter } from '@/components/ui/dialog'
 
 const formatCurrency = (value: number | undefined, currency: string = 'BRL') => {
   if (value === undefined) return '-'
+  const map: Record<string, string> = { Dolar: 'USD', Real: 'BRL', Euro: 'EUR', US$: 'USD' }
+  const code = map[currency] || currency || 'BRL'
   try {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: currency === 'US$' ? 'USD' : currency || 'BRL',
+      currency: code,
     }).format(value)
   } catch (e) {
-    return `${currency} ${value}`
+    return `${code} ${value}`
   }
 }
 
@@ -294,10 +296,16 @@ export default function EmitirProposta() {
   useEffect(() => {
     if (activeTab === 'cadastro') {
       if (selectedProposta) {
+        const mapCurrency = (m?: string) => {
+          if (m === 'Dolar' || m === 'US$') return 'USD'
+          if (m === 'Real') return 'BRL'
+          if (m === 'Euro') return 'EUR'
+          return m || 'USD'
+        }
         setFormData({
           ...selectedProposta,
           revisao: selectedProposta.revisao || 'A',
-          moeda: selectedProposta.moeda || 'US$',
+          moeda: mapCurrency(selectedProposta.moeda),
           valor_sem_desconto: selectedProposta.valor_sem_desconto || 0,
           valor_atual: selectedProposta.valor_atual || 0,
           valor_final: selectedProposta.valor_final || 0,
@@ -326,7 +334,7 @@ export default function EmitirProposta() {
       } else {
         setFormData({
           revisao: 'A',
-          moeda: 'US$',
+          moeda: 'USD',
           status: 'Em Análise',
           valor_sem_desconto: 0,
           valor_atual: 0,
@@ -380,7 +388,14 @@ export default function EmitirProposta() {
           valor_sem_desconto: base,
           valor_atual: final,
           valor_final: final,
-          moeda: versao.moeda === 'USD' ? 'US$' : versao.moeda || 'US$',
+          moeda:
+            versao.moeda === 'Dolar' || versao.moeda === 'US$'
+              ? 'USD'
+              : versao.moeda === 'Real'
+                ? 'BRL'
+                : versao.moeda === 'Euro'
+                  ? 'EUR'
+                  : versao.moeda || 'USD',
         }
       })
     } else {
@@ -391,7 +406,7 @@ export default function EmitirProposta() {
         valor_sem_desconto: 0,
         valor_atual: 0,
         valor_final: 0,
-        moeda: 'US$',
+        moeda: 'USD',
       }))
     }
     loadAcessorios(versaoId)
@@ -400,21 +415,29 @@ export default function EmitirProposta() {
   const renderConvertedValue = () => {
     if (!formData.valor_final || !exchangeRates) return null
 
-    if (formData.moeda === 'US$' || formData.moeda === 'USD') {
+    const mapMoeda =
+      formData.moeda === 'Dolar' || formData.moeda === 'US$'
+        ? 'USD'
+        : formData.moeda === 'Real'
+          ? 'BRL'
+          : formData.moeda === 'Euro'
+            ? 'EUR'
+            : formData.moeda || 'USD'
+    if (mapMoeda === 'USD') {
       return (
         <div className="text-[10px] text-slate-500 mt-1">
           Aprox. {formatCurrency(formData.valor_final * exchangeRates.USD, 'BRL')}
         </div>
       )
     }
-    if (formData.moeda === 'EUR') {
+    if (mapMoeda === 'EUR') {
       return (
         <div className="text-[10px] text-slate-500 mt-1">
           Aprox. {formatCurrency(formData.valor_final * exchangeRates.EUR, 'BRL')}
         </div>
       )
     }
-    if (formData.moeda === 'BRL') {
+    if (mapMoeda === 'BRL') {
       return (
         <div className="text-[10px] text-slate-500 mt-1">
           Aprox. {formatCurrency(formData.valor_final / exchangeRates.USD, 'USD')}
@@ -733,8 +756,16 @@ export default function EmitirProposta() {
 
   const convertCurrency = (value: number, from: string, to: string) => {
     if (!exchangeRates || value === 0) return value
-    const normFrom = from === 'US$' ? 'USD' : from
-    const normTo = to === 'US$' ? 'USD' : to
+    const mapCurrencyCode = (c: string) =>
+      c === 'Dolar' || c === 'US$'
+        ? 'USD'
+        : c === 'Real'
+          ? 'BRL'
+          : c === 'Euro'
+            ? 'EUR'
+            : c || 'USD'
+    const normFrom = mapCurrencyCode(from)
+    const normTo = mapCurrencyCode(to)
     if (normFrom === normTo) return value
 
     let inBrl = value
@@ -756,7 +787,7 @@ export default function EmitirProposta() {
     if ((oldEstado === 'incluir') !== (novoEstado === 'incluir')) {
       const acc = newAcc[index]
       const accMoeda = acc.moeda || 'BRL'
-      const propMoeda = formData.moeda || 'US$'
+      const propMoeda = formData.moeda || 'USD'
       const convertedValue = convertCurrency(acc.valor || 0, accMoeda, propMoeda)
 
       setFormData((prev) => {
@@ -1315,10 +1346,20 @@ export default function EmitirProposta() {
                 <label className={labelClass}>Moeda</label>
                 <select
                   className={inputClass}
-                  value={formData.moeda || ''}
+                  value={
+                    formData.moeda === 'Dolar'
+                      ? 'USD'
+                      : formData.moeda === 'Real'
+                        ? 'BRL'
+                        : formData.moeda === 'Euro'
+                          ? 'EUR'
+                          : formData.moeda === 'US$'
+                            ? 'USD'
+                            : formData.moeda || ''
+                  }
                   onChange={(e) => {
                     const newMoeda = e.target.value
-                    const oldMoeda = formData.moeda || 'US$'
+                    const oldMoeda = formData.moeda || 'USD'
                     const currentBase = formData.valor_sem_desconto || 0
                     const convertedBase =
                       Math.round(convertCurrency(currentBase, oldMoeda, newMoeda) * 100) / 100
@@ -1335,7 +1376,7 @@ export default function EmitirProposta() {
                   }}
                 >
                   <option value="BRL">BRL</option>
-                  <option value="US$">US$</option>
+                  <option value="USD">USD</option>
                   <option value="EUR">EUR</option>
                 </select>
               </div>
