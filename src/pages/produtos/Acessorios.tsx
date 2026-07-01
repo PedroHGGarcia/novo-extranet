@@ -71,6 +71,7 @@ const CurrencyInput = forwardRef<
 CurrencyInput.displayName = 'CurrencyInput'
 
 export default function Acessorios() {
+  const [isLoading, setIsLoading] = useState(true)
   const [items, setItems] = useState<Acessorio[]>([])
   const [versoes, setVersoes] = useState<Versao[]>([])
   const [filtered, setFiltered] = useState<Acessorio[]>([])
@@ -110,11 +111,15 @@ export default function Acessorios() {
 
   const loadData = async () => {
     try {
+      setIsLoading(true)
       const [ac, vs] = await Promise.all([getAcessorios(), getVersoes()])
       setItems(ac)
       setVersoes(vs)
-    } catch {
-      toast({ title: 'Erro ao carregar dados', variant: 'destructive' })
+    } catch (error: any) {
+      console.error('Error loading acessorios data:', error)
+      toast({ title: 'Erro ao carregar dados', description: error.message, variant: 'destructive' })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -160,9 +165,17 @@ export default function Acessorios() {
     setValor(item.valor || 0)
     setFatorNac(String(item.fator_nac || 1))
     setStatus(item.status)
-    setSelectedVersoes(
-      Array.isArray(item.versoes) ? item.versoes : item.versoes ? [item.versoes] : [],
-    )
+
+    let versArr = item.versoes || item.versoes_new
+    if (typeof versArr === 'string' && versArr.startsWith('[')) {
+      try {
+        versArr = JSON.parse(versArr)
+      } catch {
+        /* intentionally ignored */
+      }
+    }
+    setSelectedVersoes(Array.isArray(versArr) ? versArr : versArr ? [versArr as string] : [])
+
     setEspecificacoesTecnicas(item.especificacoes_tecnicas || '')
     setActiveTab('cadastro')
     setActiveSubTab('dados')
@@ -176,9 +189,17 @@ export default function Acessorios() {
     setValor(item.valor || 0)
     setFatorNac(String(item.fator_nac || 1))
     setStatus(item.status)
-    setSelectedVersoes(
-      Array.isArray(item.versoes) ? item.versoes : item.versoes ? [item.versoes] : [],
-    )
+
+    let versArr = item.versoes || item.versoes_new
+    if (typeof versArr === 'string' && versArr.startsWith('[')) {
+      try {
+        versArr = JSON.parse(versArr)
+      } catch {
+        /* intentionally ignored */
+      }
+    }
+    setSelectedVersoes(Array.isArray(versArr) ? versArr : versArr ? [versArr as string] : [])
+
     setEspecificacoesTecnicas(item.especificacoes_tecnicas || '')
     setActiveTab('cadastro')
     setActiveSubTab('dados')
@@ -467,7 +488,14 @@ export default function Acessorios() {
                       )}
                     </TableRow>
                   ))}
-                  {filtered.length === 0 && (
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-12 text-gray-500">
+                        <RefreshCw className="h-6 w-6 animate-spin mx-auto text-[#00704a]" />
+                        <p className="mt-2 text-sm">Carregando...</p>
+                      </TableCell>
+                    </TableRow>
+                  ) : filtered.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center py-12 text-gray-500">
                         <div className="flex flex-col items-center justify-center">
@@ -482,7 +510,7 @@ export default function Acessorios() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  )}
+                  ) : null}
                 </TableBody>
               </Table>
             </div>

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-01T11:48:08.778Z",
+  "generatedAt": "2026-07-01T11:55:29.176Z",
   "collections": [
     {
       "name": "users",
@@ -1120,6 +1120,13 @@
           "type": "text",
           "required": false,
           "system": false
+        },
+        {
+          "name": "modelo",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "modelos"
         }
       ],
       "indexes": ["CREATE UNIQUE INDEX idx_versoes_coderp ON versoes (cod_erp) WHERE cod_erp != ''"]

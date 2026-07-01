@@ -96,7 +96,8 @@ export interface Acessorio {
   valor: number
   fator_nac: number
   status: 'Ativo' | 'Inativo'
-  versoes: string
+  versoes: string | string[]
+  versoes_new?: string | string[]
   especificacoes_tecnicas?: string
   valor_anterior?: number
   data_ultimo_reajuste?: string
@@ -104,7 +105,7 @@ export interface Acessorio {
   created: string
   updated: string
   expand?: {
-    versoes?: Versao
+    versoes?: Versao | Versao[]
     atualizado_por?: { name: string; email: string }
   }
 }

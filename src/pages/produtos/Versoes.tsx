@@ -49,6 +49,7 @@ import {
   Versao,
   Modelo,
 } from '@/services/produtos'
+import { getTiposProposta, TipoProposta } from '@/services/tipos-propostas'
 
 const PROPOSTAS_OPTIONS = [
   'AT - Importação Direta com 12% - 2022',
@@ -93,6 +94,7 @@ const PROPOSTAS_OPTIONS = [
 export default function Versoes() {
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
+  const [isLoading, setIsLoading] = useState(true)
   const [items, setItems] = useState<Versao[]>([])
   const [modelos, setModelos] = useState<Modelo[]>([])
   const [tiposPropostaDisponiveis, setTiposPropostaDisponiveis] = useState<TipoProposta[]>([])
@@ -154,12 +156,16 @@ export default function Versoes() {
 
   const loadData = async () => {
     try {
+      setIsLoading(true)
       const [vs, ms, tp] = await Promise.all([getVersoes(), getModelos(), getTiposProposta()])
       setItems(vs)
       setModelos(ms)
       setTiposPropostaDisponiveis(tp.filter((t) => t.status === 'Ativo'))
-    } catch (error) {
-      toast({ title: 'Erro ao carregar dados', variant: 'destructive' })
+    } catch (error: any) {
+      console.error('Error loading versions data:', error)
+      toast({ title: 'Erro ao carregar dados', description: error.message, variant: 'destructive' })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -216,7 +222,16 @@ export default function Versoes() {
     setAcessorios(item.acessorios_standards || '')
     setCaracteristicas(item.caracteristicas_construtivas || '')
     setEspecificacoes(item.especificacoes_tecnicas || '')
-    setTiposProposta(item.tipos_proposta || [])
+
+    let parsedTipos = item.tipos_proposta || []
+    if (typeof parsedTipos === 'string') {
+      try {
+        parsedTipos = JSON.parse(parsedTipos)
+      } catch {
+        parsedTipos = []
+      }
+    }
+    setTiposProposta(Array.isArray(parsedTipos) ? parsedTipos : [])
 
     setNewFoto(null)
     setDeleteFoto(false)
@@ -516,13 +531,22 @@ export default function Versoes() {
                       <TableCell className="py-2"></TableCell>
                     </TableRow>
                   ))}
-                  {filtered.length === 0 && (
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                        <div className="flex items-center justify-center">
+                          <div className="w-5 h-5 border-2 border-gray-300 border-t-[#2A75D3] rounded-full animate-spin"></div>
+                          <span className="ml-2">Carregando...</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filtered.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                         Nenhum registro encontrado.
                       </TableCell>
                     </TableRow>
-                  )}
+                  ) : null}
                 </TableBody>
               </Table>
             </div>
