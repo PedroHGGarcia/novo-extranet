@@ -77,7 +77,7 @@ export function PropostaDocument({
     : proposta.numero_proposta
 
   return (
-    <div className="bg-white text-black w-[210mm] max-w-full min-h-[297mm] p-12 shadow-lg print:shadow-none print:w-full print:m-0 relative mx-auto box-border">
+    <div className="bg-white text-black w-[210mm] max-w-full min-h-[297mm] p-12 shadow-lg print:shadow-none print:w-full print:m-0 print:pb-16 relative mx-auto box-border">
       {/* Header */}
       <div className="flex justify-between items-start mb-12">
         <img src={benerLogoUrl} alt="Bener" className="h-20 object-contain" />
@@ -386,6 +386,41 @@ export function PropostaDocument({
             </div>
           )}
         </div>
+      </div>
+
+      <style>{`
+        .print-only-footer { display: none; }
+        @media print {
+          .print-only-footer {
+            display: block;
+            position: fixed;
+            bottom: 4mm;
+            left: 15mm;
+            right: 15mm;
+            padding-top: 6px;
+            border-top: 1px solid #000;
+            background: white;
+            font-family: monospace;
+            font-size: 9px;
+            line-height: 1.5;
+            text-align: center;
+            z-index: 100;
+          }
+          .print-only-footer .page-num::after {
+            content: "Página " counter(page) " de " counter(pages);
+          }
+          .print-only-footer .page-num {
+            text-align: right;
+            font-weight: bold;
+            margin-top: 2px;
+          }
+        }
+      `}</style>
+      <div className="print-only-footer">
+        <p>Rua Iracema Lucas, 450 (Antiga Rua Parsch) – Distrito Industrial</p>
+        <p>Vinhedo - SP - Brasil - CEP: 13280-172 - Fone: (19) 3826-7373</p>
+        <p>E-mail: vendas@bener.com.br - Site: www.bener.com.br</p>
+        <p className="page-num"></p>
       </div>
     </div>
   )
