@@ -10,6 +10,7 @@ import {
   ChevronRight,
   History,
   ArrowRight,
+  FileText,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -1497,6 +1498,60 @@ export default function EmitirProposta() {
               )}
             </div>
 
+            {formData.versao &&
+              (() => {
+                const versao = versoes.find((v) => v.id === formData.versao)
+                if (!versao) return null
+                const hasStandards =
+                  versao.acessorios_standards && versao.acessorios_standards.trim()
+                const hasConstrutivas =
+                  versao.caracteristicas_construtivas && versao.caracteristicas_construtivas.trim()
+                const hasEspecificacoes =
+                  versao.especificacoes_tecnicas && versao.especificacoes_tecnicas.trim()
+                if (!hasStandards && !hasConstrutivas && !hasEspecificacoes) return null
+                return (
+                  <div className="w-full mb-8">
+                    <div className="border-b border-slate-200 w-full mb-4 pb-2">
+                      <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                        <FileText className="w-4 h-4" /> Detalhes Técnicos da Versão
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                      {hasStandards && (
+                        <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50 dark:bg-slate-900/20 dark:border-slate-700">
+                          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
+                            Acessórios Standards
+                          </p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">
+                            {versao.acessorios_standards}
+                          </p>
+                        </div>
+                      )}
+                      {hasConstrutivas && (
+                        <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50 dark:bg-slate-900/20 dark:border-slate-700">
+                          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
+                            Características Construtivas Principais
+                          </p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">
+                            {versao.caracteristicas_construtivas}
+                          </p>
+                        </div>
+                      )}
+                      {hasEspecificacoes && (
+                        <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50 dark:bg-slate-900/20 dark:border-slate-700">
+                          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
+                            Especificações Técnicas Principais
+                          </p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">
+                            {versao.especificacoes_tecnicas}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })()}
+
             {selectedProposta && (
               <div className="w-full mt-8">
                 <ProposalHistory proposalId={selectedProposta.id} />
@@ -1916,6 +1971,9 @@ export default function EmitirProposta() {
                       '-'
                     }
                     acessorios={acessoriosProposta.filter((a) => a.exibir)}
+                    acessoriosStandards={selectedVersao?.acessorios_standards || ''}
+                    caracteristicasConstrutivas={selectedVersao?.caracteristicas_construtivas || ''}
+                    especificacoesTecnicas={selectedVersao?.especificacoes_tecnicas || ''}
                   />
                 )
               })()}

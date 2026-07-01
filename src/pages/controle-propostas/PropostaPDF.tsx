@@ -134,6 +134,9 @@ export default function PropostaPDF() {
         marcaNome={marcaNome}
         gerenteNome={gerenteNome}
         acessorios={acessorios}
+        acessoriosStandards={versao?.acessorios_standards || ''}
+        caracteristicasConstrutivas={versao?.caracteristicas_construtivas || ''}
+        especificacoesTecnicas={versao?.especificacoes_tecnicas || ''}
       />
     </div>
   )

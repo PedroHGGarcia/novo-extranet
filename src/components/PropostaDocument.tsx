@@ -30,6 +30,9 @@ interface PropostaDocumentProps {
   marcaNome?: string
   gerenteNome: string
   acessorios: any[]
+  acessoriosStandards?: string
+  caracteristicasConstrutivas?: string
+  especificacoesTecnicas?: string
 }
 
 export function PropostaDocument({
@@ -45,6 +48,9 @@ export function PropostaDocument({
   marcaNome,
   gerenteNome,
   acessorios,
+  acessoriosStandards,
+  caracteristicasConstrutivas,
+  especificacoesTecnicas,
 }: PropostaDocumentProps) {
   const dataEmissao = proposta.dt_cad ? new Date(`${proposta.dt_cad}T00:00:00`) : new Date()
   const dataFormatada = format(dataEmissao, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
@@ -151,6 +157,48 @@ export function PropostaDocument({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {(acessoriosStandards?.trim() ||
+        caracteristicasConstrutivas?.trim() ||
+        especificacoesTecnicas?.trim()) && (
+        <div className="mb-10 print-break-inside-avoid">
+          <h2 className="font-bold font-mono text-[14px] uppercase mb-4 border-b border-black pb-1">
+            Detalhes Técnicos
+          </h2>
+          <div className="space-y-4">
+            {acessoriosStandards?.trim() && (
+              <div>
+                <p className="font-bold font-mono text-[13px] uppercase mb-1">
+                  Acessórios Standards
+                </p>
+                <p className="font-mono text-[12px] whitespace-pre-wrap leading-relaxed text-justify">
+                  {acessoriosStandards}
+                </p>
+              </div>
+            )}
+            {caracteristicasConstrutivas?.trim() && (
+              <div>
+                <p className="font-bold font-mono text-[13px] uppercase mb-1">
+                  Características Construtivas Principais
+                </p>
+                <p className="font-mono text-[12px] whitespace-pre-wrap leading-relaxed text-justify">
+                  {caracteristicasConstrutivas}
+                </p>
+              </div>
+            )}
+            {especificacoesTecnicas?.trim() && (
+              <div>
+                <p className="font-bold font-mono text-[13px] uppercase mb-1">
+                  Especificações Técnicas Principais
+                </p>
+                <p className="font-mono text-[12px] whitespace-pre-wrap leading-relaxed text-justify">
+                  {especificacoesTecnicas}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
