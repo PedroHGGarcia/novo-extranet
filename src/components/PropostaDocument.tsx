@@ -175,9 +175,10 @@ export function PropostaDocument({
                 <p className="font-bold font-mono text-[13px] uppercase mb-1">
                   Acessórios Standards
                 </p>
-                <p className="font-mono text-[12px] whitespace-pre-wrap leading-relaxed text-justify">
-                  {acessoriosStandards}
-                </p>
+                <div
+                  className="font-mono text-[12px] leading-relaxed text-justify rich-text-content"
+                  dangerouslySetInnerHTML={{ __html: acessoriosStandards }}
+                />
               </div>
             )}
             {caracteristicasConstrutivas?.trim() && (
@@ -185,9 +186,10 @@ export function PropostaDocument({
                 <p className="font-bold font-mono text-[13px] uppercase mb-1">
                   Características Construtivas Principais
                 </p>
-                <p className="font-mono text-[12px] whitespace-pre-wrap leading-relaxed text-justify">
-                  {caracteristicasConstrutivas}
-                </p>
+                <div
+                  className="font-mono text-[12px] leading-relaxed text-justify rich-text-content"
+                  dangerouslySetInnerHTML={{ __html: caracteristicasConstrutivas }}
+                />
               </div>
             )}
             {especificacoesTecnicas?.trim() && (
@@ -195,9 +197,10 @@ export function PropostaDocument({
                 <p className="font-bold font-mono text-[13px] uppercase mb-1">
                   Especificações Técnicas Principais
                 </p>
-                <p className="font-mono text-[12px] whitespace-pre-wrap leading-relaxed text-justify">
-                  {especificacoesTecnicas}
-                </p>
+                <div
+                  className="font-mono text-[12px] leading-relaxed text-justify rich-text-content"
+                  dangerouslySetInnerHTML={{ __html: especificacoesTecnicas }}
+                />
               </div>
             )}
           </div>

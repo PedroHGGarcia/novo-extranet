@@ -1573,9 +1573,10 @@ export default function EmitirProposta() {
                           <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
                             Acessórios Standards
                           </p>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">
-                            {versao.acessorios_standards}
-                          </p>
+                          <div
+                            className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed rich-text-content"
+                            dangerouslySetInnerHTML={{ __html: versao.acessorios_standards || '' }}
+                          />
                         </div>
                       )}
                       {hasConstrutivas && (
@@ -1583,9 +1584,12 @@ export default function EmitirProposta() {
                           <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
                             Características Construtivas Principais
                           </p>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">
-                            {versao.caracteristicas_construtivas}
-                          </p>
+                          <div
+                            className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed rich-text-content"
+                            dangerouslySetInnerHTML={{
+                              __html: versao.caracteristicas_construtivas || '',
+                            }}
+                          />
                         </div>
                       )}
                       {hasEspecificacoes && (
@@ -1593,9 +1597,12 @@ export default function EmitirProposta() {
                           <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
                             Especificações Técnicas Principais
                           </p>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">
-                            {versao.especificacoes_tecnicas}
-                          </p>
+                          <div
+                            className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed rich-text-content"
+                            dangerouslySetInnerHTML={{
+                              __html: versao.especificacoes_tecnicas || '',
+                            }}
+                          />
                         </div>
                       )}
                     </div>

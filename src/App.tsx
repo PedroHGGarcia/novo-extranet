@@ -39,6 +39,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { GlobalAutoFormatter } from './components/GlobalAutoFormatter'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './components/theme-provider'
+import './styles/editor.css'
 
 const App = () => (
   <ErrorBoundary>
