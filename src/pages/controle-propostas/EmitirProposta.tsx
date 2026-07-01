@@ -708,6 +708,11 @@ export default function EmitirProposta() {
     setActiveTab('cadastro')
   }
 
+  const stripSystemFields = (data: Partial<Proposta>) => {
+    const { id, created, updated, collectionId, collectionName, expand, ...rest } = data as any
+    return rest as Partial<Proposta>
+  }
+
   const handleSave = async () => {
     if ((formData.percentual_desconto || 0) > 28) {
       toast({ title: 'O desconto máximo permitido é 28%', variant: 'destructive' })
@@ -719,10 +724,12 @@ export default function EmitirProposta() {
       return
     }
 
+    const cleanData = stripSystemFields(formData)
+
     try {
       if (selectedProposta) {
         await updateProposta(selectedProposta.id, {
-          ...formData,
+          ...cleanData,
           acessorios_proposta: acessoriosProposta,
         })
         toast({ title: 'Proposta atualizada com sucesso' })
@@ -730,9 +737,9 @@ export default function EmitirProposta() {
         setActiveTab('registros')
       } else {
         const created = await pb.collection('propostas').create({
-          ...formData,
+          ...cleanData,
           user: user?.id,
-          numero_proposta: formData.numero_proposta || 'NOVA-0',
+          numero_proposta: cleanData.numero_proposta || 'NOVA-0',
           acessorios_proposta: acessoriosProposta,
         })
         setSelectedProposta(created)
@@ -951,15 +958,15 @@ export default function EmitirProposta() {
           disabled={isOverDiscount}
           className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          VISUALIZAR PDF
-        </Button>
+          VISUALIZAR PROPOSTA
+        </Button>{' '}
         <Button
           onClick={handleSave}
           disabled={isOverDiscount}
           className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          SALVAR PROPOSTA
-        </Button>
+          GERAR PROPOSTA
+        </Button>{' '}
         <Button
           onClick={() => {
             if (selectedProposta) {

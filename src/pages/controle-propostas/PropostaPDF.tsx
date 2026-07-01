@@ -112,7 +112,7 @@ export default function PropostaPDF() {
     <div className="min-h-screen bg-slate-100 print:bg-white flex justify-center py-8 print:py-0">
       <style>{`
         @media print {
-          @page { size: A4; margin: 12mm 15mm 24mm 15mm; }
+          @page { size: A4; margin: 12mm 15mm 28mm 15mm; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
           .print-break-inside-avoid { break-inside: avoid; }
           .print-break-before { page-break-before: always; }

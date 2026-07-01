@@ -391,6 +391,11 @@ export function PropostaDocument({
       <style>{`
         .print-only-footer { display: none; }
         @media print {
+          @page { size: A4; margin: 12mm 15mm 28mm 15mm; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
+          .print-break-inside-avoid { break-inside: avoid; }
+          .print-break-before { page-break-before: always; }
+          .no-print { display: none !important; }
           .print-only-footer {
             display: block;
             position: fixed;
@@ -407,7 +412,7 @@ export function PropostaDocument({
             z-index: 100;
           }
           .print-only-footer .page-num::after {
-            content: "Página " counter(page) " de " counter(pages);
+            content: "Página " counter(page) "/" counter(pages);
           }
           .print-only-footer .page-num {
             text-align: right;
