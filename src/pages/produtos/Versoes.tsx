@@ -10,6 +10,7 @@ import {
   ListChecks,
   Undo2,
   BrainCircuit,
+  RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -95,6 +96,7 @@ export default function Versoes() {
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<Versao[]>([])
   const [modelos, setModelos] = useState<Modelo[]>([])
   const [tiposPropostaDisponiveis, setTiposPropostaDisponiveis] = useState<TipoProposta[]>([])
@@ -157,12 +159,14 @@ export default function Versoes() {
   const loadData = async () => {
     try {
       setIsLoading(true)
+      setError(null)
       const [vs, ms, tp] = await Promise.all([getVersoes(), getModelos(), getTiposProposta()])
       setItems(vs)
       setModelos(ms)
       setTiposPropostaDisponiveis(tp.filter((t) => t.status === 'Ativo'))
     } catch (error: any) {
       console.error('Error loading versions data:', error)
+      setError(error.message || 'Erro ao carregar os dados.')
       toast({ title: 'Erro ao carregar dados', description: error.message, variant: 'destructive' })
     } finally {
       setIsLoading(false)
@@ -526,15 +530,22 @@ export default function Versoes() {
                       {visibleColumns.includes('valor') && (
                         <TableCell className="text-gray-600 text-right py-2">
                           {(() => {
+                            const m = item.moeda || 'BRL'
                             const map: Record<string, string> = {
                               Dolar: 'USD',
+                              Dólar: 'USD',
                               Real: 'BRL',
                               Euro: 'EUR',
                               US$: 'USD',
                             }
-                            const code = map[item.moeda || ''] || item.moeda || 'BRL'
-                            const locale =
-                              code === 'BRL' ? 'pt-BR' : code === 'USD' ? 'en-US' : 'de-DE'
+                            let code = map[m] || m
+                            if (!/^[A-Z]{3}$/.test(code)) code = 'BRL'
+                            const locales: Record<string, string> = {
+                              BRL: 'pt-BR',
+                              USD: 'en-US',
+                              EUR: 'de-DE',
+                            }
+                            const locale = locales[code] || 'pt-BR'
                             try {
                               return new Intl.NumberFormat(locale, {
                                 style: 'currency',
@@ -562,6 +573,25 @@ export default function Versoes() {
                         <div className="flex items-center justify-center">
                           <div className="w-5 h-5 border-2 border-gray-300 border-t-[#2A75D3] rounded-full animate-spin"></div>
                           <span className="ml-2">Carregando...</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : error ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-12 text-gray-500">
+                        <div className="flex flex-col items-center justify-center">
+                          <p className="text-sm font-medium text-red-500 mb-2">
+                            Erro ao carregar dados
+                          </p>
+                          <p className="text-xs text-gray-400 mb-4">{error}</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={loadData}
+                            className="flex items-center gap-2"
+                          >
+                            <RefreshCw className="w-4 h-4" /> Tentar Novamente
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -713,10 +743,10 @@ export default function Versoes() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="BRL">Real (BRL)</SelectItem>
-                        <SelectItem value="USD">Dólar (USD)</SelectItem>
-                        <SelectItem value="EUR">Euro (EUR)</SelectItem>
-                      </SelectContent>
+                        <SelectItem value="BRL">Real - R$</SelectItem>
+                        <SelectItem value="USD">Dólar - $</SelectItem>
+                        <SelectItem value="EUR">Euro - €</SelectItem>
+                      </SelectContent>{' '}
                     </Select>
                   </div>
                   <div className="col-span-3 flex flex-col">

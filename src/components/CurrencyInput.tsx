@@ -1,8 +1,15 @@
 import { useRef, useEffect, useState } from 'react'
 
 function getSeparators(currency: string) {
-  const map: Record<string, string> = { Dolar: 'USD', Real: 'BRL', Euro: 'EUR', US$: 'USD' }
-  const code = map[currency] || currency || 'BRL'
+  const map: Record<string, string> = {
+    Dolar: 'USD',
+    Dólar: 'USD',
+    Real: 'BRL',
+    Euro: 'EUR',
+    US$: 'USD',
+  }
+  let code = map[currency] || currency || 'BRL'
+  if (!/^[A-Z]{3}$/.test(code)) code = 'BRL'
   return code === 'BRL' ? { decimal: ',', thousands: '.' } : { decimal: '.', thousands: ',' }
 }
 

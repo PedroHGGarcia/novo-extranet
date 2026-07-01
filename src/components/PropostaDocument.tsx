@@ -6,10 +6,19 @@ import { ptBR } from 'date-fns/locale'
 
 export const formatCurrency = (value: number | undefined, currency: string = 'BRL') => {
   if (value === undefined) return '-'
-  const map: Record<string, string> = { Dolar: 'USD', Real: 'BRL', Euro: 'EUR', US$: 'USD' }
-  const code = map[currency] || currency || 'BRL'
+  const map: Record<string, string> = {
+    Dolar: 'USD',
+    Dólar: 'USD',
+    Real: 'BRL',
+    Euro: 'EUR',
+    US$: 'USD',
+  }
+  let code = map[currency] || currency || 'BRL'
+  if (!/^[A-Z]{3}$/.test(code)) code = 'BRL'
+  const locales: Record<string, string> = { BRL: 'pt-BR', USD: 'en-US', EUR: 'de-DE' }
+  const locale = locales[code] || 'pt-BR'
   try {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: code,
     }).format(value)

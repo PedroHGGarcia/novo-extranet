@@ -47,18 +47,29 @@ import {
 } from '@/services/produtos'
 import pb from '@/lib/pocketbase/client'
 
-export function formatCurrency(val: number, moeda: string) {
-  const map: Record<string, string> = { Dolar: 'USD', Real: 'BRL', Euro: 'EUR', US$: 'USD' }
-  const code = map[moeda] || moeda || 'BRL'
+export function formatCurrency(val: number | undefined, moeda?: string) {
+  const value = val || 0
+  const m = moeda || 'BRL'
+  const map: Record<string, string> = {
+    Dolar: 'USD',
+    Dólar: 'USD',
+    Real: 'BRL',
+    Euro: 'EUR',
+    US$: 'USD',
+  }
+  let code = map[m] || m
+  if (!/^[A-Z]{3}$/.test(code)) {
+    code = 'BRL'
+  }
   const locales: Record<string, string> = { BRL: 'pt-BR', USD: 'en-US', EUR: 'de-DE' }
   const locale = locales[code] || 'pt-BR'
   try {
     return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: code,
-    }).format(val)
+    }).format(value)
   } catch (e) {
-    return `${code} ${Number(val).toFixed(2)}`
+    return `${code} ${value.toFixed(2)}`
   }
 }
 
@@ -81,6 +92,7 @@ CurrencyInput.displayName = 'CurrencyInput'
 
 export default function Acessorios() {
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<Acessorio[]>([])
   const [versoes, setVersoes] = useState<Versao[]>([])
   const [filtered, setFiltered] = useState<Acessorio[]>([])
@@ -121,11 +133,13 @@ export default function Acessorios() {
   const loadData = async () => {
     try {
       setIsLoading(true)
+      setError(null)
       const [ac, vs] = await Promise.all([getAcessorios(), getVersoes()])
       setItems(ac)
       setVersoes(vs)
     } catch (error: any) {
       console.error('Error loading acessorios data:', error)
+      setError(error.message || 'Erro ao carregar os dados.')
       toast({ title: 'Erro ao carregar dados', description: error.message, variant: 'destructive' })
     } finally {
       setIsLoading(false)
@@ -511,6 +525,25 @@ export default function Acessorios() {
                         <p className="mt-2 text-sm">Carregando...</p>
                       </TableCell>
                     </TableRow>
+                  ) : error ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-12 text-gray-500">
+                        <div className="flex flex-col items-center justify-center">
+                          <p className="text-sm font-medium text-red-500 mb-2">
+                            Erro ao carregar dados
+                          </p>
+                          <p className="text-xs text-gray-400 mb-4">{error}</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={loadData}
+                            className="flex items-center gap-2"
+                          >
+                            <RefreshCw className="w-4 h-4" /> Tentar Novamente
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   ) : filtered.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center py-12 text-gray-500">
@@ -608,9 +641,9 @@ export default function Acessorios() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="BRL">Real (BRL)</SelectItem>
-                      <SelectItem value="USD">Dólar (USD)</SelectItem>
-                      <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                      <SelectItem value="BRL">Real - R$</SelectItem>
+                      <SelectItem value="USD">Dólar - $</SelectItem>
+                      <SelectItem value="EUR">Euro - €</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
