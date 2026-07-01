@@ -70,7 +70,20 @@ export function PropostaDocument({
   gerenteAssinaturaUrl,
   assinaturaClienteUrl,
 }: PropostaDocumentProps) {
-  const dataEmissao = proposta.dt_cad ? new Date(`${proposta.dt_cad}T00:00:00`) : new Date()
+  let dataEmissao = new Date()
+  if (typeof proposta.dt_cad === 'string' && proposta.dt_cad.length >= 10) {
+    const parts = proposta.dt_cad.substring(0, 10).split('-')
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10)
+      const month = parseInt(parts[1], 10) - 1
+      const day = parseInt(parts[2], 10)
+      const parsedDate = new Date(year, month, day)
+      if (!isNaN(parsedDate.getTime())) {
+        dataEmissao = parsedDate
+      }
+    }
+  }
+
   const dataFormatada = format(dataEmissao, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
   const mesOferta = format(dataEmissao, 'MM')
   const anoOferta = format(dataEmissao, 'yyyy')

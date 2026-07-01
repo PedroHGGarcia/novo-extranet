@@ -2080,7 +2080,9 @@ export default function EmitirProposta() {
                               Proposta Criada
                             </span>
                             <span className="text-slate-500 text-sm">
-                              {format(new Date(log.created), 'dd/MM/yyyy HH:mm')}
+                              {log.created && !isNaN(new Date(log.created).getTime())
+                                ? format(new Date(log.created), 'dd/MM/yyyy HH:mm')
+                                : '-'}
                             </span>
                           </div>
                           <Badge
@@ -2103,6 +2105,9 @@ export default function EmitirProposta() {
                       ? `Versão ${log.versionOld} ➔ ${log.versionNew}`
                       : `Alteração`
 
+                  const logDate = log.created ? new Date(log.created) : new Date()
+                  const isValidDate = !isNaN(logDate.getTime())
+
                   return (
                     <div
                       key={log.id}
@@ -2114,7 +2119,7 @@ export default function EmitirProposta() {
                             {versionName}
                           </span>
                           <span className="text-slate-500 text-sm">
-                            {format(new Date(log.created), 'dd/MM/yyyy HH:mm')}
+                            {isValidDate ? format(logDate, 'dd/MM/yyyy HH:mm') : '-'}
                           </span>
                         </div>
                         <Badge
