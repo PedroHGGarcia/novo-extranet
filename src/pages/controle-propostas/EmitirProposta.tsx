@@ -158,6 +158,8 @@ export default function EmitirProposta() {
   const [avancarPropostaItem, setAvancarPropostaItem] = useState<Proposta | null>(null)
   const [novoStatus, setNovoStatus] = useState<string>('')
 
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false)
+
   const importConfig: ImportConfig = {
     collection: 'propostas',
     title: 'Importar Propostas',
@@ -709,7 +711,18 @@ export default function EmitirProposta() {
   }
 
   const stripSystemFields = (data: Partial<Proposta>) => {
-    const { id, created, updated, collectionId, collectionName, expand, ...rest } = data as any
+    const {
+      id,
+      created,
+      updated,
+      collectionId,
+      collectionName,
+      expand,
+      assinatura_cliente,
+      ultimo_usuario_status,
+      data_alteracao_status,
+      ...rest
+    } = data as any
     return rest as Partial<Proposta>
   }
 
@@ -724,12 +737,30 @@ export default function EmitirProposta() {
       return
     }
 
+    if (selectedProposta && user?.id !== selectedProposta.user) {
+      toast({
+        title: 'Você não tem permissão para modificar esta proposta',
+        variant: 'destructive',
+      })
+      return
+    }
+
     const cleanData = stripSystemFields(formData)
+
+    const sanitizedData: Record<string, any> = {}
+    for (const [key, value] of Object.entries(cleanData)) {
+      if (value !== undefined) {
+        sanitizedData[key] = value
+      }
+    }
+    ;['cliente', 'versao', 'representante', 'gerente', 'tipo_proposta'].forEach((field) => {
+      if (sanitizedData[field] === '') sanitizedData[field] = null
+    })
 
     try {
       if (selectedProposta) {
         await updateProposta(selectedProposta.id, {
-          ...cleanData,
+          ...sanitizedData,
           acessorios_proposta: acessoriosProposta,
         })
         toast({ title: 'Proposta atualizada com sucesso' })
@@ -737,9 +768,9 @@ export default function EmitirProposta() {
         setActiveTab('registros')
       } else {
         const created = await pb.collection('propostas').create({
-          ...cleanData,
+          ...sanitizedData,
           user: user?.id,
-          numero_proposta: cleanData.numero_proposta || 'NOVA-0',
+          numero_proposta: sanitizedData.numero_proposta || 'NOVA-0',
           acessorios_proposta: acessoriosProposta,
         })
         setSelectedProposta(created)
@@ -748,7 +779,11 @@ export default function EmitirProposta() {
       }
       setIsPreviewModalOpen(false)
     } catch (e) {
-      toast({ title: 'Erro ao salvar proposta', variant: 'destructive' })
+      toast({
+        title: 'Erro ao salvar proposta',
+        description: getErrorMessage(e),
+        variant: 'destructive',
+      })
     }
   }
 
@@ -758,6 +793,35 @@ export default function EmitirProposta() {
       return
     }
     window.open(`/controle-propostas/proposta-pdf/${item.id}`, '_blank')
+  }
+
+  const handleCancelProposta = async () => {
+    if (!selectedProposta) return
+    if (user?.id !== selectedProposta.user) {
+      toast({
+        title: 'Você não tem permissão para cancelar esta proposta',
+        variant: 'destructive',
+      })
+      return
+    }
+    try {
+      await updateProposta(selectedProposta.id, {
+        status: 'Excluída',
+        ultimo_usuario_status: user?.id,
+        data_alteracao_status: format(new Date(), 'yyyy-MM-dd'),
+      })
+      toast({ title: 'Proposta cancelada com sucesso' })
+      setIsCancelDialogOpen(false)
+      setSelectedProposta(null)
+      setActiveTab('registros')
+      loadData()
+    } catch (e) {
+      toast({
+        title: 'Erro ao cancelar proposta',
+        description: getErrorMessage(e),
+        variant: 'destructive',
+      })
+    }
   }
 
   const toggleSelectAll = (checked: boolean) => {
@@ -947,9 +1011,10 @@ export default function EmitirProposta() {
 
   const renderCadastroActionBars = () => {
     const isOverDiscount = (formData.percentual_desconto || 0) > 28
+    const isOwner = !selectedProposta || user?.id === selectedProposta.user
 
     return (
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Button className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal">
           PESQUISAR
         </Button>
@@ -958,14 +1023,14 @@ export default function EmitirProposta() {
           disabled={isOverDiscount}
           className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          VISUALIZAR PROPOSTA
+          Visualizar proposta
         </Button>{' '}
         <Button
           onClick={handleSave}
-          disabled={isOverDiscount}
+          disabled={isOverDiscount || !isOwner}
           className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          GERAR PROPOSTA
+          Gerar proposta
         </Button>{' '}
         <Button
           onClick={() => {
@@ -980,6 +1045,15 @@ export default function EmitirProposta() {
         >
           GERAR PDF
         </Button>
+        {selectedProposta && (
+          <Button
+            onClick={() => setIsCancelDialogOpen(true)}
+            disabled={!isOwner}
+            className="bg-rose-600 hover:bg-rose-700 text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cancelar
+          </Button>
+        )}
       </div>
     )
   }
@@ -2210,6 +2284,29 @@ export default function EmitirProposta() {
               Salvar e Fechar
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Cancelar Proposta</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-slate-600">
+              Tem certeza que deseja cancelar a proposta{' '}
+              <strong className="text-slate-900">{selectedProposta?.numero_proposta}</strong>? Esta
+              ação moverá a proposta para &quot;Propostas Excluídas&quot;.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCancelDialogOpen(false)}>
+              Fechar
+            </Button>
+            <Button onClick={handleCancelProposta} className="bg-rose-600 hover:bg-rose-700">
+              Confirmar Cancelamento
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
