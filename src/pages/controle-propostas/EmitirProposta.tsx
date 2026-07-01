@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { format } from 'date-fns'
 import {
   Pencil,
@@ -125,7 +125,9 @@ export default function EmitirProposta() {
   const [tiposProposta, setTiposProposta] = useState<TipoProposta[]>([])
 
   const [formData, setFormData] = useState<Partial<Proposta>>({})
+  const [initialFormData, setInitialFormData] = useState<Partial<Proposta>>({})
   const [acessoriosProposta, setAcessoriosProposta] = useState<any[]>([])
+  const [initialAcessorios, setInitialAcessorios] = useState<any[]>([])
 
   // Local UI states for fields not directly in the Proposta schema
   const [estoqueUI, setEstoqueUI] = useState('')
@@ -313,7 +315,7 @@ export default function EmitirProposta() {
           if (m === 'Euro') return 'EUR'
           return m || 'USD'
         }
-        setFormData({
+        const mappedData = {
           ...selectedProposta,
           revisao: selectedProposta.revisao || 'A',
           moeda: mapCurrency(selectedProposta.moeda),
@@ -322,28 +324,30 @@ export default function EmitirProposta() {
           valor_final: selectedProposta.valor_final || 0,
           percentual_desconto: selectedProposta.percentual_desconto || 0,
           nota_rep: selectedProposta.nota_rep || 1,
-        })
+        }
+        setFormData(mappedData)
+        setInitialFormData(mappedData)
 
         if (
           selectedProposta.acessorios_proposta &&
           selectedProposta.acessorios_proposta.length > 0
         ) {
-          setAcessoriosProposta(
-            selectedProposta.acessorios_proposta.map((a: any) => {
-              let estado = a.estado
-              if (!estado) {
-                if (a.incluir) estado = 'incluir'
-                else if (a.exibir) estado = 'exibir'
-                else estado = 'nao_exibir'
-              }
-              return { ...a, estado }
-            }),
-          )
+          const mappedAcc = selectedProposta.acessorios_proposta.map((a: any) => {
+            let estado = a.estado
+            if (!estado) {
+              if (a.incluir) estado = 'incluir'
+              else if (a.exibir) estado = 'exibir'
+              else estado = 'nao_exibir'
+            }
+            return { ...a, estado }
+          })
+          setAcessoriosProposta(mappedAcc)
+          setInitialAcessorios(mappedAcc)
         } else {
           loadAcessorios(selectedProposta.versao)
         }
       } else {
-        setFormData({
+        const mappedData = {
           revisao: 'A',
           moeda: 'USD',
           status: 'Em Análise',
@@ -354,7 +358,9 @@ export default function EmitirProposta() {
           percentual_desconto: 0,
           nota_rep: 1,
           dt_cad: format(new Date(), 'yyyy-MM-dd'),
-        })
+        }
+        setFormData(mappedData)
+        setInitialFormData(mappedData)
         loadAcessorios('')
       }
     }
@@ -363,6 +369,7 @@ export default function EmitirProposta() {
   const loadAcessorios = async (versaoId?: string) => {
     if (!versaoId) {
       setAcessoriosProposta([])
+      setInitialAcessorios([])
       return
     }
     try {
@@ -377,6 +384,14 @@ export default function EmitirProposta() {
         estado: 'nao_exibir',
       }))
       setAcessoriosProposta(initial)
+      if (!selectedProposta) {
+        setInitialAcessorios(initial)
+      } else if (
+        !selectedProposta.acessorios_proposta ||
+        selectedProposta.acessorios_proposta.length === 0
+      ) {
+        setInitialAcessorios(initial)
+      }
     } catch (e) {
       console.error('Failed to load accessories', e)
     }
@@ -726,6 +741,31 @@ export default function EmitirProposta() {
     return rest as Partial<Proposta>
   }
 
+  const isDirty = useMemo(() => {
+    if (!selectedProposta) return true
+
+    const cleanForm = stripSystemFields(formData)
+    const cleanInit = stripSystemFields(initialFormData)
+
+    const formKeys = Array.from(new Set([...Object.keys(cleanForm), ...Object.keys(cleanInit)]))
+    for (const key of formKeys) {
+      const val1 = cleanForm[key as keyof Proposta]
+      const val2 = cleanInit[key as keyof Proposta]
+      const norm1 = val1 === null || val1 === undefined ? '' : val1
+      const norm2 = val2 === null || val2 === undefined ? '' : val2
+
+      if (norm1 !== norm2) {
+        return true
+      }
+    }
+
+    if (JSON.stringify(acessoriosProposta) !== JSON.stringify(initialAcessorios)) {
+      return true
+    }
+
+    return false
+  }, [formData, initialFormData, acessoriosProposta, initialAcessorios, selectedProposta])
+
   const handleSave = async () => {
     if ((formData.percentual_desconto || 0) > 28) {
       toast({ title: 'O desconto máximo permitido é 28%', variant: 'destructive' })
@@ -770,6 +810,7 @@ export default function EmitirProposta() {
         })
         toast({ title: 'Proposta atualizada com sucesso' })
         loadData()
+        setSelectedProposta(null)
         setActiveTab('registros')
       } else {
         const created = await pb.collection('propostas').create({
@@ -1088,10 +1129,10 @@ export default function EmitirProposta() {
         </Button>{' '}
         <Button
           onClick={handleSave}
-          disabled={isOverDiscount || !isOwner || !hasClient}
+          disabled={isOverDiscount || !isOwner || !hasClient || (!!selectedProposta && !isDirty)}
           className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {selectedProposta ? 'Atualizar proposta' : 'Gerar proposta'}
+          {selectedProposta ? 'ATUALIZAR PROPOSTA' : 'GERAR PROPOSTA'}
         </Button>{' '}
         <Button
           onClick={() => {
@@ -2343,7 +2384,11 @@ export default function EmitirProposta() {
             <Button variant="outline" onClick={() => setIsPreviewModalOpen(false)}>
               Fechar
             </Button>
-            <Button onClick={handleSave} className="bg-[#337ab7] hover:bg-[#286090]">
+            <Button
+              onClick={handleSave}
+              disabled={!!selectedProposta && !isDirty}
+              className="bg-[#337ab7] hover:bg-[#286090]"
+            >
               Salvar e Fechar
             </Button>
           </div>
