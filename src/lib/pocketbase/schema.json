@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-01T15:02:39.203Z",
+  "generatedAt": "2026-07-01T15:30:29.416Z",
   "collections": [
     {
       "name": "users",
@@ -1524,6 +1524,12 @@
         },
         {
           "name": "assinatura_cliente",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "assinatura_representante",
           "type": "file",
           "required": false,
           "system": false

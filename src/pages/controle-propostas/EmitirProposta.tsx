@@ -131,6 +131,8 @@ export default function EmitirProposta() {
 
   // Local UI states for fields not directly in the Proposta schema
   const [estoqueUI, setEstoqueUI] = useState('')
+  const [propostaSignatureBlob, setPropostaSignatureBlob] = useState<Blob | null>(null)
+  const [signatureConfirmed, setSignatureConfirmed] = useState(false)
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
@@ -363,6 +365,8 @@ export default function EmitirProposta() {
         setFormData(mappedData)
         setInitialFormData(mappedData)
         loadAcessorios('')
+        setPropostaSignatureBlob(null)
+        setSignatureConfirmed(false)
       }
     }
   }, [selectedProposta, activeTab])
@@ -736,6 +740,7 @@ export default function EmitirProposta() {
       collectionName,
       expand,
       assinatura_cliente,
+      assinatura_representante,
       ultimo_usuario_status,
       data_alteracao_status,
       ...rest
@@ -774,8 +779,16 @@ export default function EmitirProposta() {
     if (!formData.versao) missing.push('versao')
     if (!formData.representante) missing.push('representante')
     if (!formData.tipo_proposta) missing.push('tipo_proposta')
+    if (!selectedProposta && !signatureConfirmed) missing.push('assinatura')
     return missing
-  }, [formData.cliente, formData.versao, formData.representante, formData.tipo_proposta])
+  }, [
+    formData.cliente,
+    formData.versao,
+    formData.representante,
+    formData.tipo_proposta,
+    selectedProposta,
+    signatureConfirmed,
+  ])
 
   const requiredFieldsValid = missingFields.length === 0
 
@@ -802,6 +815,14 @@ export default function EmitirProposta() {
 
     if (!formData.tipo_proposta) {
       toast({ title: 'Selecione um Tipo de Proposta obrigatório', variant: 'destructive' })
+      return
+    }
+
+    if (!selectedProposta && !signatureConfirmed) {
+      toast({
+        title: 'É obrigatório fornecer a assinatura do representante',
+        variant: 'destructive',
+      })
       return
     }
 
@@ -836,13 +857,25 @@ export default function EmitirProposta() {
         setInitialAcessorios(acessoriosProposta.map((a) => ({ ...a })))
         loadData()
       } else {
-        const created = await pb.collection('propostas').create({
-          ...sanitizedData,
-          user: user?.id,
-          numero_proposta: sanitizedData.numero_proposta || 'NOVA-0',
-          acessorios_proposta: acessoriosProposta,
-        })
+        const fd = new FormData()
+        for (const [key, value] of Object.entries(sanitizedData)) {
+          if (value !== undefined && value !== null) {
+            fd.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value))
+          }
+        }
+        fd.append('user', user?.id || '')
+        fd.append('numero_proposta', sanitizedData.numero_proposta || 'NOVA-0')
+        fd.append('acessorios_proposta', JSON.stringify(acessoriosProposta))
+        if (propostaSignatureBlob) {
+          fd.append(
+            'assinatura_representante',
+            propostaSignatureBlob,
+            'assinatura-representante.png',
+          )
+        }
+        const created = await pb.collection('propostas').create(fd)
         setSelectedProposta(created)
+        setSignatureConfirmed(true)
         toast({ title: 'Proposta criada com sucesso' })
         loadData()
       }
@@ -1149,6 +1182,7 @@ export default function EmitirProposta() {
         if (!formData.versao) missing.push('Versão')
         if (!formData.representante) missing.push('Representante')
         if (!formData.tipo_proposta) missing.push('Tipo de Proposta')
+        if (!selectedProposta && !signatureConfirmed) missing.push('Assinatura do Representante')
         return `Campos obrigatórios pendentes: ${missing.join(', ')}`
       }
       if (selectedProposta && !isDirty) return 'Nenhuma alteração detectada'
@@ -1935,9 +1969,68 @@ export default function EmitirProposta() {
                 <div className="border-b border-slate-200 w-full mb-4 pb-2">
                   <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
                     <PenTool className="w-4 h-4" /> Assinatura do Representante
+                    {!selectedProposta && (
+                      <span className="text-[10px] text-amber-600 font-normal ml-1">
+                        (Obrigatória para nova proposta)
+                      </span>
+                    )}
                   </h3>
                 </div>
-                {user.assinatura ? (
+                {selectedProposta?.assinatura_representante ? (
+                  <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
+                    <img
+                      src={pb.files.getURL(
+                        selectedProposta as any,
+                        selectedProposta.assinatura_representante as string,
+                      )}
+                      alt="Assinatura do Representante"
+                      className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
+                    />
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-emerald-600" />
+                      <span className="text-xs text-slate-600">
+                        Assinatura registrada para esta proposta.
+                      </span>
+                    </div>
+                  </div>
+                ) : !selectedProposta ? (
+                  signatureConfirmed && propostaSignatureBlob ? (
+                    <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
+                      <img
+                        src={URL.createObjectURL(propostaSignatureBlob)}
+                        alt="Assinatura confirmada"
+                        className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
+                      />
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-emerald-600" />
+                        <span className="text-xs text-slate-600">Assinatura confirmada</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setPropostaSignatureBlob(null)
+                          setSignatureConfirmed(false)
+                        }}
+                        className="gap-2 text-xs ml-auto"
+                      >
+                        <PenTool className="h-4 w-4" /> Refazer Assinatura
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="p-4 border-2 border-dashed border-amber-300 rounded-sm">
+                      <p className="text-xs text-amber-600 text-center mb-3">
+                        A assinatura do representante é obrigatória para cadastrar a proposta.
+                      </p>
+                      <SignaturePad
+                        onConfirm={(blob) => {
+                          setPropostaSignatureBlob(blob)
+                          setSignatureConfirmed(true)
+                        }}
+                      />
+                    </div>
+                  )
+                ) : user.assinatura ? (
                   <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
                     <img
                       src={pb.files.getURL(user as any, user.assinatura as string)}
@@ -1947,87 +2040,15 @@ export default function EmitirProposta() {
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-5 w-5 text-emerald-600" />
                       <span className="text-xs text-slate-600">
-                        Sua assinatura será incluída no PDF da proposta.
+                        Usando assinatura padrão do usuário.
                       </span>
                     </div>
                   </div>
-                ) : showSignaturePad ? (
-                  <div className="p-4 border border-slate-200 rounded-sm">
-                    <SignaturePad
-                      onConfirm={async (blob) => {
-                        setIsSavingSignature(true)
-                        try {
-                          const fd = new FormData()
-                          fd.append('assinatura', blob, 'assinatura.png')
-                          await pb.collection('users').update(user.id, fd)
-                          await refreshUser()
-                          toast({ title: 'Assinatura salva com sucesso!' })
-                          setShowSignaturePad(false)
-                        } catch (err) {
-                          toast({
-                            title: 'Erro ao salvar assinatura',
-                            description: getErrorMessage(err),
-                            variant: 'destructive',
-                          })
-                        } finally {
-                          setIsSavingSignature(false)
-                        }
-                      }}
-                      disabled={isSavingSignature}
-                    />
-                  </div>
                 ) : (
-                  <div className="flex flex-col gap-3 p-4 border-2 border-dashed border-slate-300 rounded-sm">
+                  <div className="p-4 border-2 border-dashed border-slate-300 rounded-sm">
                     <p className="text-xs text-slate-500 text-center">
-                      Você ainda não possui uma assinatura cadastrada. Adicione uma para que ela
-                      seja incluída no PDF da proposta.
+                      Esta proposta não possui assinatura registrada.
                     </p>
-                    <div className="flex gap-2 justify-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowSignaturePad(true)}
-                        className="gap-2 text-xs"
-                      >
-                        <PenTool className="h-4 w-4" /> Desenhar Assinatura
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => signatureFileInputRef.current?.click()}
-                        className="gap-2 text-xs"
-                      >
-                        <Upload className="h-4 w-4" /> Upload de Imagem
-                      </Button>
-                    </div>
-                    <input
-                      ref={signatureFileInputRef}
-                      type="file"
-                      accept="image/png,image/jpeg"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0]
-                        if (!file) return
-                        setIsSavingSignature(true)
-                        try {
-                          const fd = new FormData()
-                          fd.append('assinatura', file)
-                          await pb.collection('users').update(user.id, fd)
-                          await refreshUser()
-                          toast({ title: 'Assinatura salva com sucesso!' })
-                        } catch (err) {
-                          toast({
-                            title: 'Erro ao salvar assinatura',
-                            description: getErrorMessage(err),
-                            variant: 'destructive',
-                          })
-                        } finally {
-                          setIsSavingSignature(false)
-                          if (signatureFileInputRef.current)
-                            signatureFileInputRef.current.value = ''
-                        }
-                      }}
-                      className="hidden"
-                    />
                   </div>
                 )}
               </div>
@@ -2452,6 +2473,16 @@ export default function EmitirProposta() {
                     acessoriosStandards={selectedVersao?.acessorios_standards || ''}
                     caracteristicasConstrutivas={selectedVersao?.caracteristicas_construtivas || ''}
                     especificacoesTecnicas={selectedVersao?.especificacoes_tecnicas || ''}
+                    assinaturaRepresentanteUrl={
+                      selectedProposta?.assinatura_representante
+                        ? pb.files.getURL(
+                            selectedProposta as any,
+                            selectedProposta.assinatura_representante as string,
+                          )
+                        : propostaSignatureBlob
+                          ? URL.createObjectURL(propostaSignatureBlob)
+                          : null
+                    }
                     representanteAssinaturaUrl={
                       user?.assinatura
                         ? pb.files.getURL(user as any, user.assinatura as string)

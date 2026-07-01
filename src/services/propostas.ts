@@ -33,6 +33,7 @@ export interface Proposta {
   updated: string
   ultimo_usuario_status?: string
   assinatura_cliente?: string
+  assinatura_representante?: string
   expand?: {
     cliente?: { fantasia: string; razao_social?: string }
     versao?: {

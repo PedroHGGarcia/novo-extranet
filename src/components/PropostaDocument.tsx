@@ -44,6 +44,7 @@ interface PropostaDocumentProps {
   acessoriosStandards?: string
   caracteristicasConstrutivas?: string
   especificacoesTecnicas?: string
+  assinaturaRepresentanteUrl?: string | null
   representanteAssinaturaUrl?: string | null
   gerenteAssinaturaUrl?: string | null
   assinaturaClienteUrl?: string | null
@@ -66,6 +67,7 @@ export function PropostaDocument({
   caracteristicasConstrutivas,
   especificacoesTecnicas,
   representanteNome,
+  assinaturaRepresentanteUrl,
   representanteAssinaturaUrl,
   gerenteAssinaturaUrl,
   assinaturaClienteUrl,
@@ -347,7 +349,13 @@ export function PropostaDocument({
         <div className="grid grid-cols-2 gap-12 mb-12">
           <div className="flex flex-col items-center text-center">
             <div className="h-24 flex items-end justify-center w-full mb-1">
-              {representanteAssinaturaUrl ? (
+              {assinaturaRepresentanteUrl ? (
+                <img
+                  src={assinaturaRepresentanteUrl}
+                  alt="Assinatura do Representante"
+                  className="max-h-24 max-w-[200px] object-contain"
+                />
+              ) : representanteAssinaturaUrl ? (
                 <img
                   src={representanteAssinaturaUrl}
                   alt="Assinatura do Representante"
