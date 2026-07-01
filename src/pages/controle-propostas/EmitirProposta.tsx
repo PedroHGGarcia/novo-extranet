@@ -766,6 +766,17 @@ export default function EmitirProposta() {
     return false
   }, [formData, initialFormData, acessoriosProposta, initialAcessorios, selectedProposta])
 
+  const missingFields = useMemo(() => {
+    const missing: string[] = []
+    if (!formData.cliente) missing.push('cliente')
+    if (!formData.versao) missing.push('versao')
+    if (!formData.representante) missing.push('representante')
+    if (!formData.tipo_proposta) missing.push('tipo_proposta')
+    return missing
+  }, [formData.cliente, formData.versao, formData.representante, formData.tipo_proposta])
+
+  const requiredFieldsValid = missingFields.length === 0
+
   const handleSave = async () => {
     if ((formData.percentual_desconto || 0) > 28) {
       toast({ title: 'O desconto máximo permitido é 28%', variant: 'destructive' })
@@ -774,6 +785,16 @@ export default function EmitirProposta() {
 
     if (!formData.cliente) {
       toast({ title: 'Selecione um cliente para a proposta', variant: 'destructive' })
+      return
+    }
+
+    if (!formData.versao) {
+      toast({ title: 'Selecione uma versão para a proposta', variant: 'destructive' })
+      return
+    }
+
+    if (!formData.representante) {
+      toast({ title: 'Selecione um representante para a proposta', variant: 'destructive' })
       return
     }
 
@@ -809,6 +830,8 @@ export default function EmitirProposta() {
           acessorios_proposta: acessoriosProposta,
         })
         toast({ title: 'Proposta atualizada com sucesso' })
+        setInitialFormData(formData)
+        setInitialAcessorios(acessoriosProposta)
         loadData()
         setSelectedProposta(null)
         setActiveTab('registros')
@@ -1114,6 +1137,8 @@ export default function EmitirProposta() {
     const isOverDiscount = (formData.percentual_desconto || 0) > 28
     const isOwner = !selectedProposta || user?.id === selectedProposta.user
     const hasClient = !!formData.cliente
+    const canSave =
+      !isOverDiscount && isOwner && requiredFieldsValid && (!!selectedProposta ? isDirty : true)
 
     return (
       <div className="flex gap-2 flex-wrap">
@@ -1129,7 +1154,7 @@ export default function EmitirProposta() {
         </Button>{' '}
         <Button
           onClick={handleSave}
-          disabled={isOverDiscount || !isOwner || !hasClient || (!!selectedProposta && !isDirty)}
+          disabled={!canSave}
           className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {selectedProposta ? 'ATUALIZAR PROPOSTA' : 'GERAR PROPOSTA'}
@@ -1389,9 +1414,17 @@ export default function EmitirProposta() {
                   getSearchText={(r) => `${r.fantasia || ''} ${r.sigla || ''}`}
                   placeholder="Buscar representante..."
                   emptyMessage="Nenhum representante encontrado."
-                  className={inputClass}
+                  className={cn(
+                    inputClass,
+                    !formData.representante && 'border-amber-300 bg-amber-50/30',
+                  )}
                   onSearch={searchRepresentantes}
                 />
+                {!formData.representante && (
+                  <span className="text-[10px] text-amber-600 mt-0.5">
+                    Representante é obrigatório
+                  </span>
+                )}
                 {formData.representante_original && !formData.representante && (
                   <span className="text-[10px] text-amber-600 mt-0.5">
                     Original: {formData.representante_original}
@@ -1408,9 +1441,12 @@ export default function EmitirProposta() {
                   getSearchText={(c) => `${c.fantasia || ''} ${c.razao_social || ''}`}
                   placeholder="Buscar cliente..."
                   emptyMessage="Nenhum cliente encontrado."
-                  className={inputClass}
+                  className={cn(inputClass, !formData.cliente && 'border-amber-300 bg-amber-50/30')}
                   onSearch={searchClientes}
                 />
+                {!formData.cliente && (
+                  <span className="text-[10px] text-amber-600 mt-0.5">Cliente é obrigatório</span>
+                )}
                 {formData.cliente_original && !formData.cliente && (
                   <span className="text-[10px] text-amber-600 mt-0.5">
                     Original: {formData.cliente_original}
@@ -1452,7 +1488,7 @@ export default function EmitirProposta() {
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Versão</label>
                 <select
-                  className={inputClass}
+                  className={cn(inputClass, !formData.versao && 'border-amber-300 bg-amber-50/30')}
                   value={formData.versao || ''}
                   onChange={(e) => handleVersaoChange(e.target.value)}
                 >
@@ -1463,6 +1499,9 @@ export default function EmitirProposta() {
                     </option>
                   ))}
                 </select>
+                {!formData.versao && (
+                  <span className="text-[10px] text-amber-600 mt-0.5">Versão é obrigatória</span>
+                )}
                 {formData.versao_original && !formData.versao && (
                   <span className="text-[10px] text-amber-600 mt-0.5">
                     Original: {formData.versao_original}
@@ -1521,6 +1560,11 @@ export default function EmitirProposta() {
                     ))
                   })()}
                 </select>
+                {!formData.tipo_proposta && (
+                  <span className="text-[10px] text-amber-600 mt-0.5">
+                    Tipo de Proposta é obrigatório
+                  </span>
+                )}
               </div>
             </div>
 
