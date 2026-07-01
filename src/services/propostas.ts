@@ -79,3 +79,10 @@ export const getProposta = async (id: string) => {
 export const updateProposta = async (id: string, data: Partial<Proposta>) => {
   return pb.collection('propostas').update<Proposta>(id, data)
 }
+
+export const uploadAssinaturaCliente = async (id: string, file: Blob) => {
+  const formData = new FormData()
+  formData.append('assinatura_cliente', file, 'assinatura-cliente.png')
+  formData.append('status', 'Aprovada')
+  return pb.collection('propostas').update<Proposta>(id, formData)
+}

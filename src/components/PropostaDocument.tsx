@@ -62,6 +62,8 @@ export function PropostaDocument({
   acessoriosStandards,
   caracteristicasConstrutivas,
   especificacoesTecnicas,
+  representanteAssinaturaUrl,
+  clienteAssinaturaUrl,
 }: PropostaDocumentProps) {
   const dataEmissao = proposta.dt_cad ? new Date(`${proposta.dt_cad}T00:00:00`) : new Date()
   const dataFormatada = format(dataEmissao, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
@@ -314,24 +316,55 @@ export function PropostaDocument({
         </div>
       )}
 
-      {/* Footer info & Assinatura/QR Code */}
-      <div className="mt-20 pt-8 border-t border-black grid grid-cols-3 gap-6 font-mono print-break-inside-avoid items-end">
-        <div className="flex flex-col items-center justify-end text-center h-full">
-          <div className="w-56 border-t border-black mt-8"></div>
-          <p className="font-bold mt-3 text-[12px] uppercase">
-            {proposta.expand?.user?.name || gerenteNome}
-          </p>
-          <p className="text-[11px] mt-1">Assinatura Eletrônica</p>
+      {/* Footer info & Assinaturas */}
+      <div className="mt-20 pt-8 border-t border-black font-mono print-break-inside-avoid">
+        <div className="grid grid-cols-2 gap-12 mb-8">
+          <div className="flex flex-col items-center text-center">
+            <div className="h-20 flex items-end justify-center w-full">
+              {representanteAssinaturaUrl ? (
+                <img
+                  src={representanteAssinaturaUrl}
+                  alt="Assinatura do Representante"
+                  className="max-h-20 max-w-full object-contain"
+                />
+              ) : (
+                <div className="w-full border-t border-black mt-12"></div>
+              )}
+            </div>
+            <div className="w-full border-t border-black mt-2"></div>
+            <p className="font-bold mt-3 text-[12px] uppercase">
+              {proposta.expand?.user?.name || gerenteNome}
+            </p>
+            <p className="text-[11px] mt-1">Assinatura do Representante</p>
+          </div>
+
+          <div className="flex flex-col items-center text-center">
+            <div className="h-20 flex items-end justify-center w-full">
+              {clienteAssinaturaUrl ? (
+                <img
+                  src={clienteAssinaturaUrl}
+                  alt="Assinatura do Cliente"
+                  className="max-h-20 max-w-full object-contain"
+                />
+              ) : (
+                <div className="w-full border-t border-black mt-12"></div>
+              )}
+            </div>
+            <div className="w-full border-t border-black mt-2"></div>
+            <p className="font-bold mt-3 text-[12px] uppercase">Assine Aqui</p>
+            <p className="text-[11px] mt-1">Assinatura do Cliente</p>
+          </div>
         </div>
 
-        <div className="text-center text-[10px] flex flex-col justify-end h-full">
-          <p className="font-bold mb-1 uppercase">Bener - Soluções em Máquinas e Equipamentos</p>
-          <p>Este é um documento gerado eletronicamente e tem validade como proposta comercial.</p>
-        </div>
-
-        <div className="flex flex-col items-center justify-end h-full text-center">
+        <div className="flex justify-between items-center text-[10px] gap-4">
+          <div className="max-w-xs">
+            <p className="font-bold mb-1 uppercase">Bener - Soluções em Máquinas e Equipamentos</p>
+            <p>
+              Este é um documento gerado eletronicamente e tem validade como proposta comercial.
+            </p>
+          </div>
           {proposta.id && (
-            <>
+            <div className="flex flex-col items-center text-center shrink-0">
               <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://extranetgourmet.goskip.app/validar-proposta/${proposta.id}`)}`}
                 alt="QR Code de Validação"
@@ -341,7 +374,7 @@ export function PropostaDocument({
                 Escaneie para validar
                 <br />a autenticidade
               </p>
-            </>
+            </div>
           )}
         </div>
       </div>

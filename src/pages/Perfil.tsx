@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/components/ui/use-toast'
 import pb from '@/lib/pocketbase/client'
 import { getErrorMessage } from '@/lib/pocketbase/errors'
+import { UserSignatureSection } from '@/components/UserSignatureSection'
 
 export default function Perfil() {
   const { user, refreshUser } = useAuth()
@@ -81,6 +82,8 @@ export default function Perfil() {
           </Button>
         </CardFooter>
       </Card>
+
+      <UserSignatureSection />
     </div>
   )
 }
