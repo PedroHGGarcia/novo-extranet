@@ -732,6 +732,11 @@ export default function EmitirProposta() {
       return
     }
 
+    if (!formData.cliente) {
+      toast({ title: 'Selecione um cliente para a proposta', variant: 'destructive' })
+      return
+    }
+
     if (!formData.tipo_proposta) {
       toast({ title: 'Selecione um Tipo de Proposta obrigatório', variant: 'destructive' })
       return
@@ -878,6 +883,40 @@ export default function EmitirProposta() {
     return res.items
   }, [])
 
+  const handleClienteChange = (clienteId: string) => {
+    if (!clienteId) {
+      setFormData((prev) => ({
+        ...prev,
+        cliente: '',
+        contato: '',
+        telefone: '',
+      }))
+      return
+    }
+
+    const cliente = clientes.find((c) => c.id === clienteId)
+    if (cliente) {
+      setFormData((prev) => ({
+        ...prev,
+        cliente: clienteId,
+        contato: cliente.contato || '',
+        telefone: cliente.telefone || cliente.celular || '',
+      }))
+    } else {
+      setFormData((prev) => ({ ...prev, cliente: clienteId }))
+      pb.collection('clientes')
+        .getOne(clienteId)
+        .then((c) => {
+          setFormData((prev) => ({
+            ...prev,
+            contato: c.contato || '',
+            telefone: c.telefone || c.celular || '',
+          }))
+        })
+        .catch(() => {})
+    }
+  }
+
   const updateAccEstado = (index: number, novoEstado: 'incluir' | 'nao_exibir' | 'exibir') => {
     const newAcc = [...acessoriosProposta]
     const oldEstado = newAcc[index].estado || 'nao_exibir'
@@ -1001,6 +1040,11 @@ export default function EmitirProposta() {
       return
     }
 
+    if (!formData.cliente) {
+      toast({ title: 'Selecione um cliente para visualizar a proposta', variant: 'destructive' })
+      return
+    }
+
     // Set dt_cad if not present, though it defaults on init.
     if (!formData.dt_cad) {
       setFormData((prev) => ({ ...prev, dt_cad: format(new Date(), 'yyyy-MM-dd') }))
@@ -1028,6 +1072,7 @@ export default function EmitirProposta() {
   const renderCadastroActionBars = () => {
     const isOverDiscount = (formData.percentual_desconto || 0) > 28
     const isOwner = !selectedProposta || user?.id === selectedProposta.user
+    const hasClient = !!formData.cliente
 
     return (
       <div className="flex gap-2 flex-wrap">
@@ -1036,14 +1081,14 @@ export default function EmitirProposta() {
         </Button>
         <Button
           onClick={handlePreviewPDF}
-          disabled={isOverDiscount}
+          disabled={isOverDiscount || !hasClient}
           className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Visualizar proposta
         </Button>{' '}
         <Button
           onClick={handleSave}
-          disabled={isOverDiscount || !isOwner}
+          disabled={isOverDiscount || !isOwner || !hasClient}
           className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {selectedProposta ? 'Atualizar proposta' : 'Gerar proposta'}
@@ -1317,7 +1362,7 @@ export default function EmitirProposta() {
                 <SearchableCombobox
                   items={clientes}
                   value={formData.cliente || ''}
-                  onChange={(id) => setFormData({ ...formData, cliente: id })}
+                  onChange={(id) => handleClienteChange(id)}
                   getLabel={(c) => c.fantasia || c.razao_social}
                   getSearchText={(c) => `${c.fantasia || ''} ${c.razao_social || ''}`}
                   placeholder="Buscar cliente..."
