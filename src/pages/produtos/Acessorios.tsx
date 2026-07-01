@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef } from 'react'
+import { useState, useEffect, forwardRef, useCallback } from 'react'
 import { Package, Pencil, Copy, X, Wand2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,9 +35,10 @@ import { useRealtime } from '@/hooks/use-realtime'
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown'
 import { useTablePreferences } from '@/hooks/use-table-preferences'
 import { RichTextEditor } from '@/components/RichTextEditor'
+import { PaginationBar } from '@/components/PaginationBar'
 import { cn } from '@/lib/utils'
 import {
-  getAcessorios,
+  getAcessoriosPaginated,
   createAcessorio,
   updateAcessorio,
   deleteAcessorio,
@@ -95,10 +96,14 @@ export default function Acessorios() {
   const [error, setError] = useState<string | null>(null)
   const [items, setItems] = useState<Acessorio[]>([])
   const [versoes, setVersoes] = useState<Versao[]>([])
-  const [filtered, setFiltered] = useState<Acessorio[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState('registros')
   const [activeSubTab, setActiveSubTab] = useState('dados')
+
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(50)
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [nome, setNome] = useState('')
@@ -130,21 +135,53 @@ export default function Acessorios() {
     colunasOptions.map((c) => c.id),
   )
 
-  const loadData = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      const [ac, vs] = await Promise.all([getAcessorios(), getVersoes()])
-      setItems(ac)
-      setVersoes(vs)
-    } catch (error: any) {
-      console.error('Error loading acessorios data:', error)
-      setError(error.message || 'Erro ao carregar os dados.')
-      toast({ title: 'Erro ao carregar dados', description: error.message, variant: 'destructive' })
-    } finally {
-      setIsLoading(false)
-    }
+  const loadData = useCallback(
+    async (targetPage: number, targetPerPage: number, search?: string) => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const result = await getAcessoriosPaginated(targetPage, targetPerPage, search)
+        setItems(result.items as unknown as Acessorio[])
+        setTotalItems(result.totalItems)
+        setTotalPages(result.totalPages)
+        if (!versoes.length) {
+          const vs = await getVersoes()
+          setVersoes(vs)
+        }
+      } catch (error: any) {
+        console.error('Error loading acessorios data:', error)
+        setError(error.message || 'Erro ao carregar os dados.')
+        toast({
+          title: 'Erro ao carregar dados',
+          description: error.message,
+          variant: 'destructive',
+        })
+      } finally {
+        setIsLoading(false)
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [versoes.length],
+  )
+
+  useEffect(() => {
+    loadData(page, perPage, searchTerm || undefined)
+  }, [page, perPage]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useRealtime('acessorios', () => loadData(page, perPage, searchTerm || undefined))
+  useRealtime('versoes', () => loadData(page, perPage, searchTerm || undefined))
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value)
+    setPage(1)
+    loadData(1, perPage, value || undefined)
   }
+
+  useEffect(() => {
+    if (activeTab === 'cadastro' && activeSubTab === 'historico' && editingId) {
+      loadHistorico()
+    }
+  }, [activeTab, activeSubTab, editingId])
 
   const loadHistorico = async () => {
     if (!editingId) return
@@ -159,26 +196,6 @@ export default function Acessorios() {
       console.log('Sem permissão ou erro ao carregar histórico')
     }
   }
-
-  useEffect(() => {
-    loadData()
-  }, [])
-  useRealtime('acessorios', () => loadData())
-  useRealtime('versoes', () => loadData())
-
-  useEffect(() => {
-    let result = items
-    if (searchTerm) {
-      result = result.filter((i) => i.nome.toLowerCase().includes(searchTerm.toLowerCase()))
-    }
-    setFiltered(result)
-  }, [items, searchTerm])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' && activeSubTab === 'historico' && editingId) {
-      loadHistorico()
-    }
-  }, [activeTab, activeSubTab, editingId])
 
   const mapCurrency = (m?: string) => {
     if (m === 'Dolar' || m === 'US$') return 'USD'
@@ -242,6 +259,7 @@ export default function Acessorios() {
       for (const id of selectedIds) await deleteAcessorio(id)
       setSelectedIds([])
       toast({ title: 'Acessórios excluídos com sucesso' })
+      loadData(page, perPage, searchTerm || undefined)
     } catch {
       toast({ title: 'Erro ao excluir', variant: 'destructive' })
     }
@@ -272,6 +290,7 @@ export default function Acessorios() {
       toast({ title: `Acessório ${editingId ? 'atualizado' : 'criado'} com sucesso` })
       resetForm()
       setActiveTab('registros')
+      loadData(page, perPage, searchTerm || undefined)
     } catch (error: any) {
       toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' })
     }
@@ -314,13 +333,24 @@ export default function Acessorios() {
   }
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) setSelectedIds(filtered.map((i) => i.id))
+    if (checked) setSelectedIds(items.map((i) => i.id))
     else setSelectedIds([])
   }
 
   const handleSelect = (id: string, checked: boolean) => {
     if (checked) setSelectedIds((prev) => [...prev, id])
     else setSelectedIds((prev) => prev.filter((i) => i !== id))
+  }
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+    setSelectedIds([])
+  }
+
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage)
+    setPage(1)
+    setSelectedIds([])
   }
 
   return (
@@ -339,6 +369,15 @@ export default function Acessorios() {
             className="bg-[#00704a] hover:bg-[#005a3b] rounded-sm h-8 text-[11px] tracking-wide font-bold px-5 uppercase"
           >
             SALVAR
+          </Button>
+        )}
+        {activeTab === 'registros' && selectedIds.length > 0 && (
+          <Button
+            onClick={handleDeleteSelected}
+            variant="outline"
+            className="rounded-sm h-8 text-[11px] tracking-wide font-bold px-5 uppercase border-red-300 text-red-600 hover:bg-red-50"
+          >
+            EXCLUIR SELECIONADOS
           </Button>
         )}
         <div className="ml-auto">
@@ -387,7 +426,7 @@ export default function Acessorios() {
                 <Input
                   placeholder="Buscar acessório..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearch(e.target.value)}
                   className="w-full h-10 text-sm bg-white rounded-full pl-10 pr-4 border-gray-300 focus-visible:ring-[#00704a] focus-visible:border-[#00704a] shadow-sm transition-all"
                 />
               </div>
@@ -399,7 +438,7 @@ export default function Acessorios() {
                     <TableHead className="w-12 text-center">
                       <Checkbox
                         className="rounded-full border-gray-400 data-[state=checked]:bg-[#00704a] data-[state=checked]:border-[#00704a]"
-                        checked={selectedIds.length === filtered.length && filtered.length > 0}
+                        checked={selectedIds.length === items.length && items.length > 0}
                         onCheckedChange={handleSelectAll}
                       />
                     </TableHead>
@@ -436,88 +475,6 @@ export default function Acessorios() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((item) => (
-                    <TableRow
-                      key={item.id}
-                      className="even:bg-gray-50/50 hover:bg-gray-100/50 border-b border-gray-100 transition-colors"
-                    >
-                      <TableCell className="text-center align-middle">
-                        <Checkbox
-                          className="rounded-full border-gray-300 data-[state=checked]:bg-[#00704a] data-[state=checked]:border-[#00704a]"
-                          checked={selectedIds.includes(item.id)}
-                          onCheckedChange={(c) => handleSelect(item.id, c as boolean)}
-                        />
-                      </TableCell>
-                      {visibleColumns.includes('acoes') && (
-                        <TableCell className="py-3 align-middle">
-                          <div className="flex flex-col gap-1.5">
-                            <button
-                              onClick={() => handleEdit(item)}
-                              className="text-[#00704a] text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors select-none"
-                              draggable={false}
-                            >
-                              <Pencil className="w-3.5 h-3.5 select-none" draggable={false} />{' '}
-                              Editar
-                            </button>
-                            <button
-                              onClick={() => handleDuplicate(item)}
-                              className="text-[#00704a] text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors select-none"
-                              draggable={false}
-                            >
-                              <Copy className="w-3.5 h-3.5 select-none" draggable={false} />{' '}
-                              Duplicar
-                            </button>
-                          </div>
-                        </TableCell>
-                      )}
-                      {visibleColumns.includes('versao') && (
-                        <TableCell className="text-xs text-gray-600 py-3 align-middle max-w-[250px] leading-relaxed">
-                          {Array.isArray(item.expand?.versoes)
-                            ? item.expand.versoes.map((v: any) => v.nome).join(', ') || '-'
-                            : item.expand?.versoes?.nome || '-'}
-                        </TableCell>
-                      )}
-                      {visibleColumns.includes('nome') && (
-                        <TableCell className="text-xs font-semibold text-gray-800 py-3 align-middle">
-                          {item.nome}
-                        </TableCell>
-                      )}
-                      {visibleColumns.includes('moeda') && (
-                        <TableCell className="text-xs text-gray-600 py-3 align-middle">
-                          {item.moeda}
-                        </TableCell>
-                      )}
-                      {visibleColumns.includes('tipo') && (
-                        <TableCell className="text-xs text-gray-600 py-3 align-middle">
-                          {item.tipo}
-                        </TableCell>
-                      )}
-                      {visibleColumns.includes('valor') && (
-                        <TableCell className="text-xs text-gray-600 text-right py-3 align-middle font-medium">
-                          {formatCurrency(item.valor, item.moeda)}
-                        </TableCell>
-                      )}
-                      {visibleColumns.includes('fator') && (
-                        <TableCell className="text-xs text-gray-600 text-right py-3 align-middle">
-                          {Number(item.fator_nac).toFixed(6)}
-                        </TableCell>
-                      )}
-                      {visibleColumns.includes('status') && (
-                        <TableCell className="py-3 align-middle">
-                          <Badge
-                            className={cn(
-                              'font-medium border-none text-white rounded-full px-3 py-0.5 text-[10px] tracking-wide uppercase',
-                              item.status === 'Ativo'
-                                ? 'bg-[#22c55e] hover:bg-[#22c55e]'
-                                : 'bg-gray-400 hover:bg-gray-400',
-                            )}
-                          >
-                            {item.status}
-                          </Badge>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
                   {isLoading ? (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center py-12 text-gray-500">
@@ -536,7 +493,7 @@ export default function Acessorios() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={loadData}
+                            onClick={() => loadData(page, perPage, searchTerm || undefined)}
                             className="flex items-center gap-2"
                           >
                             <RefreshCw className="w-4 h-4" /> Tentar Novamente
@@ -544,7 +501,7 @@ export default function Acessorios() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ) : filtered.length === 0 ? (
+                  ) : items.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center py-12 text-gray-500">
                         <div className="flex flex-col items-center justify-center">
@@ -559,10 +516,101 @@ export default function Acessorios() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ) : null}
+                  ) : (
+                    items.map((item) => (
+                      <TableRow
+                        key={item.id}
+                        className="even:bg-gray-50/50 hover:bg-gray-100/50 border-b border-gray-100 transition-colors"
+                      >
+                        <TableCell className="text-center align-middle">
+                          <Checkbox
+                            className="rounded-full border-gray-300 data-[state=checked]:bg-[#00704a] data-[state=checked]:border-[#00704a]"
+                            checked={selectedIds.includes(item.id)}
+                            onCheckedChange={(c) => handleSelect(item.id, c as boolean)}
+                          />
+                        </TableCell>
+                        {visibleColumns.includes('acoes') && (
+                          <TableCell className="py-3 align-middle">
+                            <div className="flex flex-col gap-1.5">
+                              <button
+                                onClick={() => handleEdit(item)}
+                                className="text-[#00704a] text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors select-none"
+                                draggable={false}
+                              >
+                                <Pencil className="w-3.5 h-3.5 select-none" draggable={false} />{' '}
+                                Editar
+                              </button>
+                              <button
+                                onClick={() => handleDuplicate(item)}
+                                className="text-[#00704a] text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors select-none"
+                                draggable={false}
+                              >
+                                <Copy className="w-3.5 h-3.5 select-none" draggable={false} />{' '}
+                                Duplicar
+                              </button>
+                            </div>
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes('versao') && (
+                          <TableCell className="text-xs text-gray-600 py-3 align-middle max-w-[250px] leading-relaxed">
+                            {Array.isArray(item.expand?.versoes)
+                              ? item.expand.versoes.map((v: any) => v.nome).join(', ') || '-'
+                              : item.expand?.versoes?.nome || '-'}
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes('nome') && (
+                          <TableCell className="text-xs font-semibold text-gray-800 py-3 align-middle">
+                            {item.nome}
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes('moeda') && (
+                          <TableCell className="text-xs text-gray-600 py-3 align-middle">
+                            {item.moeda}
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes('tipo') && (
+                          <TableCell className="text-xs text-gray-600 py-3 align-middle">
+                            {item.tipo}
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes('valor') && (
+                          <TableCell className="text-xs text-gray-600 text-right py-3 align-middle font-medium">
+                            {formatCurrency(item.valor, item.moeda)}
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes('fator') && (
+                          <TableCell className="text-xs text-gray-600 text-right py-3 align-middle">
+                            {Number(item.fator_nac).toFixed(6)}
+                          </TableCell>
+                        )}
+                        {visibleColumns.includes('status') && (
+                          <TableCell className="py-3 align-middle">
+                            <Badge
+                              className={cn(
+                                'font-medium border-none text-white rounded-full px-3 py-0.5 text-[10px] tracking-wide uppercase',
+                                item.status === 'Ativo'
+                                  ? 'bg-[#22c55e] hover:bg-[#22c55e]'
+                                  : 'bg-gray-400 hover:bg-gray-400',
+                              )}
+                            >
+                              {item.status}
+                            </Badge>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
+            <PaginationBar
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              perPage={perPage}
+              onPageChange={handlePageChange}
+              onPerPageChange={handlePerPageChange}
+            />
           </div>
         </TabsContent>
 

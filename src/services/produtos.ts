@@ -112,6 +112,13 @@ export interface Acessorio {
 
 export const getAcessorios = () =>
   pb.collection('acessorios').getFullList<Acessorio>({ sort: '-created', expand: 'versoes' })
+
+export const getAcessoriosPaginated = (page: number, perPage: number, search?: string) =>
+  pb.collection('acessorios').getList<Acessorio>(page, perPage, {
+    sort: '-created',
+    expand: 'versoes,atualizado_por',
+    filter: search ? pb.filter('nome ~ {:search}', { search }) : undefined,
+  })
 export const createAcessorio = (data: Partial<Acessorio>) =>
   pb.collection('acessorios').create(data)
 export const updateAcessorio = (id: string, data: Partial<Acessorio>) =>
