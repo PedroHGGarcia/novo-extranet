@@ -95,6 +95,7 @@ export default function Versoes() {
   const isAdmin = user?.role === 'admin'
   const [items, setItems] = useState<Versao[]>([])
   const [modelos, setModelos] = useState<Modelo[]>([])
+  const [tiposPropostaDisponiveis, setTiposPropostaDisponiveis] = useState<TipoProposta[]>([])
   const [filtered, setFiltered] = useState<Versao[]>([])
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -153,9 +154,10 @@ export default function Versoes() {
 
   const loadData = async () => {
     try {
-      const [vs, ms] = await Promise.all([getVersoes(), getModelos()])
+      const [vs, ms, tp] = await Promise.all([getVersoes(), getModelos(), getTiposProposta()])
       setItems(vs)
       setModelos(ms)
+      setTiposPropostaDisponiveis(tp.filter((t) => t.status === 'Ativo'))
     } catch (error) {
       toast({ title: 'Erro ao carregar dados', variant: 'destructive' })
     }
@@ -166,6 +168,7 @@ export default function Versoes() {
   }, [])
   useRealtime('versoes', () => loadData())
   useRealtime('modelos', () => loadData())
+  useRealtime('tipos_proposta', () => loadData())
 
   useEffect(() => {
     let result = items
@@ -840,19 +843,19 @@ export default function Versoes() {
               </div>
               <div className="p-3 max-h-[800px] overflow-y-auto">
                 <div className="space-y-1">
-                  {PROPOSTAS_OPTIONS.map((opt) => (
+                  {tiposPropostaDisponiveis.map((opt) => (
                     <label
-                      key={opt}
+                      key={opt.id}
                       className="flex items-start gap-2 py-1 px-1 hover:bg-blue-50 rounded cursor-pointer group"
                     >
                       <input
                         type="checkbox"
                         className="mt-0.5 rounded-sm border-gray-300 text-[#2A75D3] focus:ring-[#2A75D3]"
-                        checked={tiposProposta.includes(opt)}
-                        onChange={() => toggleProposta(opt)}
+                        checked={tiposProposta.includes(opt.id)}
+                        onChange={() => toggleProposta(opt.id)}
                       />
                       <span className="text-[11px] text-gray-700 leading-tight group-hover:text-gray-900">
-                        {opt}
+                        {opt.nome}
                       </span>
                     </label>
                   ))}

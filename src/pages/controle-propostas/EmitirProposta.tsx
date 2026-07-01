@@ -369,9 +369,14 @@ export default function EmitirProposta() {
         const base = versao.valor || 0
         const desc = prev.percentual_desconto || 0
         const final = Math.round(base * (1 - desc / 100) * 100) / 100
+
+        const validIds = versao.tipos_proposta || []
+        const isTipoValid = prev.tipo_proposta ? validIds.includes(prev.tipo_proposta) : false
+
         return {
           ...prev,
           versao: versaoId,
+          tipo_proposta: isTipoValid ? prev.tipo_proposta : '',
           valor_sem_desconto: base,
           valor_atual: final,
           valor_final: final,
@@ -382,6 +387,7 @@ export default function EmitirProposta() {
       setFormData((prev) => ({
         ...prev,
         versao: '',
+        tipo_proposta: '',
         valor_sem_desconto: 0,
         valor_atual: 0,
         valor_final: 0,
@@ -1260,13 +1266,34 @@ export default function EmitirProposta() {
                         : {}),
                     })
                   }}
+                  disabled={!formData.versao}
                 >
                   <option value="">-- Selecione o Tipo de Proposta --</option>
-                  {tiposProposta.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.nome}
-                    </option>
-                  ))}
+                  {(() => {
+                    const versao = versoes.find((v) => v.id === formData.versao)
+                    const validIds = versao?.tipos_proposta || []
+                    const filtered = tiposProposta.filter(
+                      (t) => validIds.includes(t.id) && t.status === 'Ativo',
+                    )
+
+                    if (
+                      formData.tipo_proposta &&
+                      !filtered.some((t) => t.id === formData.tipo_proposta)
+                    ) {
+                      const selectedButNotActiveOrValid = tiposProposta.find(
+                        (t) => t.id === formData.tipo_proposta,
+                      )
+                      if (selectedButNotActiveOrValid) {
+                        filtered.push(selectedButNotActiveOrValid)
+                      }
+                    }
+
+                    return filtered.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.nome}
+                      </option>
+                    ))
+                  })()}
                 </select>
               </div>
             </div>
