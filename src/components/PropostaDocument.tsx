@@ -48,6 +48,8 @@ interface PropostaDocumentProps {
   representanteAssinaturaUrl?: string | null
   gerenteAssinaturaUrl?: string | null
   assinaturaClienteUrl?: string | null
+  issuerSectorLabel?: string
+  issuerName?: string
 }
 
 export function PropostaDocument({
@@ -71,6 +73,8 @@ export function PropostaDocument({
   representanteAssinaturaUrl,
   gerenteAssinaturaUrl,
   assinaturaClienteUrl,
+  issuerSectorLabel,
+  issuerName,
 }: PropostaDocumentProps) {
   let dataEmissao = new Date()
   if (typeof proposta.dt_cad === 'string' && proposta.dt_cad.length >= 10) {
@@ -364,10 +368,12 @@ export function PropostaDocument({
               ) : null}
             </div>
             <p className="font-bold text-[12px] uppercase mb-1 h-4">
-              {proposta.expand?.user?.name || representanteNome || '-'}
+              {issuerName || proposta.expand?.user?.name || representanteNome || '-'}
             </p>
             <div className="w-[250px] border-t-2 border-black mb-2"></div>
-            <p className="text-[11px] font-bold text-slate-600">Assinatura do Representante</p>
+            <p className="text-[11px] font-bold text-slate-600">
+              {issuerSectorLabel || 'Assinatura do Representante'}
+            </p>
           </div>
 
           <div className="flex flex-col items-center text-center">

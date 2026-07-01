@@ -792,6 +792,14 @@ export default function EmitirProposta() {
 
   const requiredFieldsValid = missingFields.length === 0
 
+  const issuerSectorLabel = useMemo(() => {
+    if (!user) return 'Assinatura do Representante'
+    const userGerente = gerentes.find((g) => g.usuario === user.id)
+    if (userGerente && userGerente.cargo) return userGerente.cargo
+    if (user.role === 'admin') return 'Setor Comercial'
+    return 'Representante Comercial'
+  }, [user, gerentes])
+
   const handleSave = async () => {
     if ((formData.percentual_desconto || 0) > 28) {
       toast({ title: 'O desconto máximo permitido é 28%', variant: 'destructive' })
@@ -1968,7 +1976,7 @@ export default function EmitirProposta() {
               <div className="w-full mt-8">
                 <div className="border-b border-slate-200 w-full mb-4 pb-2">
                   <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                    <PenTool className="w-4 h-4" /> Assinatura do Representante
+                    <PenTool className="w-4 h-4" /> Assinatura — {issuerSectorLabel}
                     {!selectedProposta && (
                       <span className="text-[10px] text-amber-600 font-normal ml-1">
                         (Obrigatória para nova proposta)
@@ -2484,10 +2492,12 @@ export default function EmitirProposta() {
                           : null
                     }
                     representanteAssinaturaUrl={
-                      user?.assinatura
+                      selectedProposta && user?.assinatura
                         ? pb.files.getURL(user as any, user.assinatura as string)
                         : null
                     }
+                    issuerName={user?.name}
+                    issuerSectorLabel={issuerSectorLabel}
                     gerenteAssinaturaUrl={(() => {
                       const gerente = gerentes.find((gt) => gt.id === formData.gerente)
                       const gUser = gerente?.expand?.usuario

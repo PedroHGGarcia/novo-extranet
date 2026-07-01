@@ -12,6 +12,7 @@ export default function PropostaPDF() {
   const [proposta, setProposta] = useState<Proposta | null>(null)
   const [tipoProposta, setTipoProposta] = useState<TipoProposta | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [issuerSectorLabel, setIssuerSectorLabel] = useState('Assinatura do Representante')
 
   useEffect(() => {
     if (id) {
@@ -38,6 +39,21 @@ export default function PropostaPDF() {
         })
     }
   }, [id])
+
+  useEffect(() => {
+    if (!proposta?.user) return
+    const userRole = proposta.expand?.user?.role || 'user'
+    pb.collection('gerentes')
+      .getFirstListItem(`usuario = "${proposta.user}"`)
+      .then((gerente) => {
+        setIssuerSectorLabel(
+          gerente.cargo || (userRole === 'admin' ? 'Setor Comercial' : 'Representante Comercial'),
+        )
+      })
+      .catch(() => {
+        setIssuerSectorLabel(userRole === 'admin' ? 'Setor Comercial' : 'Representante Comercial')
+      })
+  }, [proposta])
 
   if (error) {
     return (
@@ -158,6 +174,8 @@ export default function PropostaPDF() {
         representanteAssinaturaUrl={representanteAssinaturaUrl}
         gerenteAssinaturaUrl={gerenteAssinaturaUrl}
         assinaturaClienteUrl={assinaturaClienteUrl}
+        issuerSectorLabel={issuerSectorLabel}
+        issuerName={proposta.expand?.user?.name}
       />
     </div>
   )
