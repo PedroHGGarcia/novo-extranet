@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import {
   Bold,
   Italic,
@@ -30,11 +30,30 @@ interface RichTextEditorProps {
   label?: string
 }
 
+interface ResizeState {
+  img: HTMLImageElement
+  startX: number
+  startY: number
+  startWidth: number
+  startHeight: number
+  handle: string
+}
+
 export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [activeFormats, setActiveFormats] = useState<string[]>([])
+  const [selectedImg, setSelectedImg] = useState<HTMLImageElement | null>(null)
+  const [resizeState, setResizeState] = useState<ResizeState | null>(null)
+  const [overlayPos, setOverlayPos] = useState<{
+    top: number
+    left: number
+    width: number
+    height: number
+  } | null>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const shiftPressedRef = useRef(false)
 
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== value) {
@@ -43,6 +62,38 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
       }
     }
   }, [value])
+
+  const updateOverlay = useCallback(() => {
+    if (selectedImg && editorRef.current) {
+      const editorRect = editorRef.current.getBoundingClientRect()
+      const imgRect = selectedImg.getBoundingClientRect()
+      setOverlayPos({
+        top: imgRect.top - editorRect.top + editorRef.current.scrollTop,
+        left: imgRect.left - editorRect.left + editorRef.current.scrollLeft,
+        width: imgRect.width,
+        height: imgRect.height,
+      })
+    } else {
+      setOverlayPos(null)
+    }
+  }, [selectedImg])
+
+  useEffect(() => {
+    updateOverlay()
+  }, [updateOverlay, selectedImg])
+
+  useEffect(() => {
+    const handleScroll = () => updateOverlay()
+    const editor = editorRef.current
+    if (editor) {
+      editor.addEventListener('scroll', handleScroll)
+    }
+    window.addEventListener('resize', handleScroll)
+    return () => {
+      if (editor) editor.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', handleScroll)
+    }
+  }, [updateOverlay])
 
   const handleInput = () => {
     if (editorRef.current) {
@@ -74,6 +125,124 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
     handleInput()
   }
 
+  const clearSelection = useCallback(() => {
+    setSelectedImg(null)
+    setOverlayPos(null)
+  }, [])
+
+  const handleEditorClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (target.tagName === 'IMG') {
+      e.preventDefault()
+      e.stopPropagation()
+      if (selectedImg && selectedImg !== target) {
+        clearSelection()
+      }
+      setSelectedImg(target as HTMLImageElement)
+    } else {
+      clearSelection()
+    }
+  }
+
+  const handleEditorKeydown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Shift') {
+      shiftPressedRef.current = true
+    }
+    if (selectedImg && (e.key === 'Delete' || e.key === 'Backspace')) {
+      e.preventDefault()
+      const img = selectedImg
+      clearSelection()
+      img.remove()
+      handleInput()
+    }
+    if (selectedImg && e.key === 'Escape') {
+      clearSelection()
+    }
+  }
+
+  const handleEditorKeyup = (e: React.KeyboardEvent) => {
+    if (e.key === 'Shift') {
+      shiftPressedRef.current = false
+    }
+  }
+
+  const startResize = (e: React.MouseEvent, handle: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!selectedImg) return
+
+    setResizeState({
+      img: selectedImg,
+      startX: e.clientX,
+      startY: e.clientY,
+      startWidth: selectedImg.offsetWidth,
+      startHeight: selectedImg.offsetHeight,
+      handle,
+    })
+  }
+
+  useEffect(() => {
+    if (!resizeState) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizeState) return
+      const { img, startX, startY, startWidth, startHeight, handle } = resizeState
+      const deltaX = e.clientX - startX
+      const deltaY = e.clientY - startY
+
+      let newWidth = startWidth
+      let newHeight = startHeight
+
+      const aspectRatio = startWidth / startHeight
+      const keepProportional = !shiftPressedRef.current
+
+      if (handle.includes('e') || handle.includes('w')) {
+        if (handle.includes('w')) {
+          newWidth = startWidth - deltaX
+        } else {
+          newWidth = startWidth + deltaX
+        }
+        if (keepProportional) {
+          newHeight = newWidth / aspectRatio
+        }
+      }
+
+      if (handle.includes('n') || handle.includes('s')) {
+        if (handle.includes('n')) {
+          newHeight = startHeight - deltaY
+        } else {
+          newHeight = startHeight + deltaY
+        }
+        if (keepProportional) {
+          newWidth = newHeight * aspectRatio
+        }
+      }
+
+      newWidth = Math.max(30, Math.round(newWidth))
+      newHeight = Math.max(30, Math.round(newHeight))
+
+      img.style.width = `${newWidth}px`
+      img.style.height = `${newHeight}px`
+      img.setAttribute('width', String(newWidth))
+      img.setAttribute('height', String(newHeight))
+
+      updateOverlay()
+    }
+
+    const handleMouseUp = () => {
+      handleInput()
+      setResizeState(null)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [resizeState, shiftPressedRef])
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -88,7 +257,17 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
 
       if (editorRef.current) editorRef.current.focus()
       document.execCommand('insertImage', false, imageUrl)
-      handleInput()
+
+      setTimeout(() => {
+        const imgs = editorRef.current?.querySelectorAll('img')
+        if (imgs && imgs.length > 0) {
+          const lastImg = imgs[imgs.length - 1]
+          lastImg.style.maxWidth = '100%'
+          lastImg.style.height = 'auto'
+          setSelectedImg(lastImg as HTMLImageElement)
+        }
+        handleInput()
+      }, 100)
     } catch (error: any) {
       toast({
         title: 'Erro ao fazer upload da imagem',
@@ -128,6 +307,17 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
       <Icon size={16} />
     </button>
   )
+
+  const handleStyle: React.CSSProperties = {
+    position: 'absolute',
+    width: '10px',
+    height: '10px',
+    background: '#2A75D3',
+    border: '1.5px solid white',
+    borderRadius: '2px',
+    cursor: 'pointer',
+    zIndex: 10,
+  }
 
   return (
     <div className="flex flex-col">
@@ -190,16 +380,126 @@ export function RichTextEditor({ value, onChange, label }: RichTextEditorProps) 
           />
         </div>
         <div
-          ref={editorRef}
-          contentEditable
-          spellCheck={false}
-          onInput={handleInput}
-          onBlur={handleInput}
-          onKeyUp={updateActiveFormats}
-          onMouseUp={updateActiveFormats}
-          className="p-4 min-h-[150px] max-h-[400px] overflow-y-auto focus:outline-none text-sm text-slate-800 rich-text-content"
-          style={{ outline: 'none' }}
-        />
+          className="relative"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) clearSelection()
+          }}
+        >
+          <div
+            ref={editorRef}
+            contentEditable
+            spellCheck={false}
+            onInput={handleInput}
+            onBlur={handleInput}
+            onKeyUp={(e) => {
+              updateActiveFormats()
+              handleEditorKeyup(e)
+            }}
+            onMouseUp={updateActiveFormats}
+            onClick={handleEditorClick}
+            onKeyDown={handleEditorKeydown}
+            className="p-4 min-h-[150px] max-h-[400px] overflow-y-auto focus:outline-none text-sm text-slate-800 rich-text-content"
+            style={{ outline: 'none' }}
+          />
+          {selectedImg && overlayPos && (
+            <div
+              ref={overlayRef}
+              className="pointer-events-none absolute"
+              style={{
+                top: overlayPos.top,
+                left: overlayPos.left,
+                width: overlayPos.width,
+                height: overlayPos.height,
+                border: '2px solid #2A75D3',
+                boxSizing: 'border-box',
+              }}
+            >
+              <div
+                className="pointer-events-auto"
+                style={{ ...handleStyle, top: '-6px', left: '-6px', cursor: 'nwse-resize' }}
+                onMouseDown={(e) => startResize(e, 'nw')}
+                title="Arraste para redimensionar (Shift para distorcer)"
+              />
+              <div
+                className="pointer-events-auto"
+                style={{ ...handleStyle, top: '-6px', right: '-6px', cursor: 'nesw-resize' }}
+                onMouseDown={(e) => startResize(e, 'ne')}
+                title="Arraste para redimensionar (Shift para distorcer)"
+              />
+              <div
+                className="pointer-events-auto"
+                style={{ ...handleStyle, bottom: '-6px', left: '-6px', cursor: 'nesw-resize' }}
+                onMouseDown={(e) => startResize(e, 'sw')}
+                title="Arraste para redimensionar (Shift para distorcer)"
+              />
+              <div
+                className="pointer-events-auto"
+                style={{ ...handleStyle, bottom: '-6px', right: '-6px', cursor: 'nwse-resize' }}
+                onMouseDown={(e) => startResize(e, 'se')}
+                title="Arraste para redimensionar (Shift para distorcer)"
+              />
+              <div
+                className="pointer-events-auto"
+                style={{
+                  ...handleStyle,
+                  top: '50%',
+                  left: '-6px',
+                  transform: 'translateY(-50%)',
+                  cursor: 'ew-resize',
+                  width: '8px',
+                  height: '20px',
+                }}
+                onMouseDown={(e) => startResize(e, 'w')}
+                title="Arraste para redimensionar"
+              />
+              <div
+                className="pointer-events-auto"
+                style={{
+                  ...handleStyle,
+                  top: '50%',
+                  right: '-6px',
+                  transform: 'translateY(-50%)',
+                  cursor: 'ew-resize',
+                  width: '8px',
+                  height: '20px',
+                }}
+                onMouseDown={(e) => startResize(e, 'e')}
+                title="Arraste para redimensionar"
+              />
+              <div
+                className="pointer-events-auto"
+                style={{
+                  ...handleStyle,
+                  top: '-6px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  cursor: 'ns-resize',
+                  width: '20px',
+                  height: '8px',
+                }}
+                onMouseDown={(e) => startResize(e, 'n')}
+                title="Arraste para redimensionar"
+              />
+              <div
+                className="pointer-events-auto"
+                style={{
+                  ...handleStyle,
+                  bottom: '-6px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  cursor: 'ns-resize',
+                  width: '20px',
+                  height: '8px',
+                }}
+                onMouseDown={(e) => startResize(e, 's')}
+                title="Arraste para redimensionar"
+              />
+              <div className="pointer-events-none absolute top-0 left-0 -translate-y-full mt-[-4px] bg-[#2A75D3] text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap">
+                {Math.round(overlayPos.width)} × {Math.round(overlayPos.height)}px
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
