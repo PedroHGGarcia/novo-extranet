@@ -185,7 +185,13 @@ export default function PropostaPDF() {
                 descricao: string
                 imagem?: string
               }>)
-            : undefined
+            : proposta.secoes_adicionais?.custom_sections
+              ? (proposta.secoes_adicionais.custom_sections as Array<{
+                  titulo: string
+                  descricao: string
+                  imagem?: string
+                }>)
+              : undefined
         }
       />
     </div>

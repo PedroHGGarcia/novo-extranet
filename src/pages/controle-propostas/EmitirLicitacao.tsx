@@ -15,6 +15,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { SearchableCombobox } from '@/components/SearchableCombobox'
 import { SignaturePad } from '@/components/SignaturePad'
+import { SecaoPrecos } from '@/components/SecaoPrecos'
+import { MemoriaCalculo } from '@/components/MemoriaCalculo'
 import { useLicitacao } from '@/hooks/use-licitacao'
 import { cn } from '@/lib/utils'
 
@@ -310,6 +312,19 @@ export default function EmitirLicitacao() {
               </div>
             </div>
           </section>
+
+          <SecaoPrecos
+            items={lic.priceItems}
+            onAdd={lic.addPriceItem}
+            onUpdate={lic.updatePriceItem}
+            onRemove={lic.removePriceItem}
+          />
+
+          <MemoriaCalculo
+            priceItems={lic.priceItems}
+            observacoes={lic.memoriaObservacoes}
+            onUpdateObservacao={lic.updateMemoriaObservacao}
+          />
 
           <section>
             <h2 className="text-sm font-bold text-slate-700 mb-4 border-b border-slate-200 pb-2">

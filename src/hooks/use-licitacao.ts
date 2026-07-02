@@ -5,6 +5,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { getTiposProposta, type TipoProposta } from '@/services/tipos-propostas'
 import pb from '@/lib/pocketbase/client'
 import { getErrorMessage } from '@/lib/pocketbase/errors'
+import type { PriceItem } from '@/hooks/use-memoria-calculo'
 
 export function useLicitacao() {
   const { user } = useAuth()
@@ -37,6 +38,8 @@ export function useLicitacao() {
   const [customSections, setCustomSections] = useState<
     Array<{ titulo: string; descricao: string; imagem?: string }>
   >([])
+  const [priceItems, setPriceItems] = useState<PriceItem[]>([])
+  const [memoriaObservacoes, setMemoriaObservacoes] = useState<Record<string, string>>({})
 
   useEffect(() => {
     Promise.all([
@@ -164,7 +167,11 @@ export function useLicitacao() {
         ...formData,
         user: user?.id,
         numero_proposta: formData.numero_proposta || 'NOVA-0',
-        secoes_adicionais: customSections.length > 0 ? JSON.stringify(customSections) : '[]',
+        secoes_adicionais: JSON.stringify({
+          custom_sections: customSections,
+          itens_precos: priceItems,
+          memoria_observacoes: memoriaObservacoes,
+        }),
       }
       for (const [k, v] of Object.entries(fields)) {
         if (v !== undefined && v !== null) {
@@ -214,12 +221,47 @@ export function useLicitacao() {
     setCustomSections(updated)
   }
 
+  const addPriceItem = () => {
+    const nextNum = String(priceItems.length + 1).padStart(2, '0')
+    setPriceItems([
+      ...priceItems,
+      {
+        _01_unidade: nextNum,
+        descricao_item: '',
+        quantidade: 1,
+        unidade_medida: 'un',
+        preco_custo_unitario: 0,
+        desconto_percentual: 0,
+        comissao_percentual: 0,
+        markup_percentual: 0,
+        encargos_percentual: 0,
+        preco_venda_total_secao7: 0,
+      },
+    ])
+  }
+
+  const updatePriceItem = (index: number, field: keyof PriceItem, value: any) => {
+    const updated = [...priceItems]
+    updated[index] = { ...updated[index], [field]: value }
+    setPriceItems(updated)
+  }
+
+  const removePriceItem = (index: number) => {
+    setPriceItems(priceItems.filter((_, i) => i !== index))
+  }
+
+  const updateMemoriaObservacao = (unidade: string, obs: string) => {
+    setMemoriaObservacoes({ ...memoriaObservacoes, [unidade]: obs })
+  }
+
   const resetForm = () => {
     setCreatedId(null)
     setSignatureBlob(null)
     setSignatureConfirmed(false)
     setErrors({})
     setCustomSections([])
+    setPriceItems([])
+    setMemoriaObservacoes({})
     setFormData({
       moeda: 'USD',
       status: 'Em Análise',
@@ -264,5 +306,11 @@ export function useLicitacao() {
     setCustomSections,
     uploadSectionImage,
     removeSectionImage,
+    priceItems,
+    addPriceItem,
+    updatePriceItem,
+    removePriceItem,
+    memoriaObservacoes,
+    updateMemoriaObservacao,
   }
 }
