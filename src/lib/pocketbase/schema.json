@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-02T15:00:28.148Z",
+  "generatedAt": "2026-07-02T18:41:14.620Z",
   "collections": [
     {
       "name": "users",
@@ -54,6 +54,12 @@
         {
           "name": "can_issue_bidding_proposals",
           "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "menu_access",
+          "type": "json",
           "required": false,
           "system": false
         }
@@ -1180,6 +1186,12 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "filtros",
+          "type": "json",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": []

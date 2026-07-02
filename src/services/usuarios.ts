@@ -6,6 +6,7 @@ export interface Usuario {
   email: string
   role: 'admin' | 'user'
   can_issue_bidding_proposals?: boolean
+  menu_access?: Record<string, boolean>
   created: string
   updated: string
 }

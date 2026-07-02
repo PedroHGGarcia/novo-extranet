@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/hooks/use-toast'
+import { hasMenuAccess, getMenuKeyForPath } from '@/lib/menu-access'
 
 export function ProtectedRoute() {
   const { isAuthenticated, loading } = useAuth()
@@ -26,5 +27,21 @@ export function BiddingPermissionRoute() {
   if (loading) return null
   const hasPermission = user?.role === 'admin' || user?.can_issue_bidding_proposals === true
   if (!hasPermission) return <BiddingPermissionDenied />
+  return <Outlet />
+}
+
+export function MenuAccessGuard() {
+  const location = useLocation()
+  const { user, loading } = useAuth()
+  const { toast } = useToast()
+
+  if (loading) return null
+
+  const menuKey = getMenuKeyForPath(location.pathname)
+  if (menuKey && !hasMenuAccess(user, menuKey)) {
+    toast({ title: 'Você não tem permissão para acessar esta área.', variant: 'destructive' })
+    return <Navigate to="/dashboard" replace />
+  }
+
   return <Outlet />
 }

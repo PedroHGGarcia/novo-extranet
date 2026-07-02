@@ -29,6 +29,7 @@ import AreaAtuacao from './pages/AreaAtuacao'
 import Usuarios from './pages/Usuarios'
 import AuditoriaPage from './pages/Auditoria'
 import Configuracoes from './pages/Configuracoes'
+import Permissoes from './pages/Permissoes'
 import NotFound from './pages/NotFound'
 import Representantes from './pages/Representantes'
 import Login from './pages/Login'
@@ -131,6 +132,7 @@ const App = () => (
                   <Route path="/perfil" element={<Perfil />} />
                   <Route path="/usuarios" element={<Usuarios />} />
                   <Route path="/auditoria" element={<AuditoriaPage />} />
+                  <Route path="/permissoes" element={<Permissoes />} />
                   <Route path="/configuracoes" element={<Configuracoes />} />
                 </Route>
               </Route>
