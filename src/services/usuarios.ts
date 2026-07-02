@@ -5,6 +5,7 @@ export interface Usuario {
   name: string
   email: string
   role: 'admin' | 'user'
+  can_issue_bidding_proposals?: boolean
   created: string
   updated: string
 }

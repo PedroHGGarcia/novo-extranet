@@ -50,6 +50,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import {
   Dialog,
   DialogContent,
@@ -80,6 +81,7 @@ export default function Usuarios() {
     confirmEmail: '',
     password: '',
     role: 'user' as 'admin' | 'user',
+    can_issue_bidding_proposals: false,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
@@ -131,10 +133,18 @@ export default function Usuarios() {
         confirmEmail: u.email,
         password: '',
         role: u.role || 'user',
+        can_issue_bidding_proposals: u.can_issue_bidding_proposals || false,
       })
     } else {
       setEditingUser(null)
-      setFormData({ name: '', email: '', confirmEmail: '', password: '', role: 'user' })
+      setFormData({
+        name: '',
+        email: '',
+        confirmEmail: '',
+        password: '',
+        role: 'user',
+        can_issue_bidding_proposals: false,
+      })
     }
     setErrors({})
     setSheetOpen(true)
@@ -175,6 +185,7 @@ export default function Usuarios() {
         name: formData.name.trim(),
         email: formData.email.trim(),
         role: formData.role,
+        can_issue_bidding_proposals: formData.can_issue_bidding_proposals,
       }
 
       if (formData.password) {
@@ -230,6 +241,26 @@ export default function Usuarios() {
     }
   }
 
+  const handleToggleBidding = async (u: Usuario) => {
+    try {
+      await updateUsuario(u.id, {
+        can_issue_bidding_proposals: !u.can_issue_bidding_proposals,
+      })
+      toast({
+        title: !u.can_issue_bidding_proposals
+          ? 'Permissão de licitação concedida'
+          : 'Permissão de licitação removida',
+      })
+      loadData()
+    } catch (e) {
+      toast({
+        title: 'Erro ao atualizar permissão',
+        description: getErrorMessage(e),
+        variant: 'destructive',
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-gray-800">
@@ -270,19 +301,20 @@ export default function Usuarios() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Perfil</TableHead>
+                <TableHead>Licitação</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : filteredUsuarios.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                     Nenhum usuário encontrado.
                   </TableCell>
                 </TableRow>
@@ -299,6 +331,12 @@ export default function Usuarios() {
                       ) : (
                         <Badge variant="secondary">Usuário</Badge>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={u.can_issue_bidding_proposals || false}
+                        onCheckedChange={() => handleToggleBidding(u)}
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
@@ -409,6 +447,21 @@ export default function Usuarios() {
                 </SelectContent>
               </Select>
               {errors.role && <span className="text-xs text-red-500">{errors.role}</span>}
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label>Acesso a Emitir Proposta de Licitação</Label>
+                <p className="text-xs text-muted-foreground">
+                  Permite ao usuário criar e gerenciar propostas de licitação.
+                </p>
+              </div>
+              <Switch
+                checked={formData.can_issue_bidding_proposals}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, can_issue_bidding_proposals: checked })
+                }
+              />
             </div>
           </div>
           <SheetFooter>

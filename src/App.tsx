@@ -36,7 +36,7 @@ import Signup from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
 import ValidarProposta from './pages/ValidarProposta'
 import { AuthProvider } from './hooks/use-auth'
-import { ProtectedRoute } from './components/ProtectedRoute'
+import { ProtectedRoute, BiddingPermissionRoute } from './components/ProtectedRoute'
 import { GlobalAutoFormatter } from './components/GlobalAutoFormatter'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './components/theme-provider'
@@ -85,10 +85,12 @@ const App = () => (
                     element={<Navigate to="/controle-propostas/dashboard" replace />}
                   />
                   <Route path="/controle-propostas/emitir-proposta" element={<EmitirProposta />} />
-                  <Route
-                    path="/controle-propostas/emitir-licitacao"
-                    element={<EmitirLicitacao />}
-                  />
+                  <Route element={<BiddingPermissionRoute />}>
+                    <Route
+                      path="/controle-propostas/emitir-licitacao"
+                      element={<EmitirLicitacao />}
+                    />
+                  </Route>
                   <Route
                     path="/controle-propostas/propostas-avancadas"
                     element={<PropostasAvancadas />}

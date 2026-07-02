@@ -177,32 +177,41 @@ export function AppSidebar() {
                   {item.sub.length > 0 && (
                     <CollapsibleContent>
                       <SidebarMenuSub className="border-l-transparent pr-0 mr-0 gap-1 ml-5">
-                        {item.sub.map((subItem) => {
-                          const isSubActive = location.pathname.startsWith(subItem.url)
-                          return (
-                            <SidebarMenuSubItem key={subItem.title}>
-                              <SidebarMenuSubButton
-                                asChild
-                                className={cn(
-                                  'text-white/70 hover:bg-white/5 hover:text-white flex items-center gap-3 py-2 px-4 rounded-none h-10',
-                                  isSubActive &&
-                                    'text-white font-semibold border-l-4 border-brand-green',
-                                )}
-                              >
-                                <Link
-                                  to={subItem.url}
-                                  draggable={false}
-                                  className="select-none flex items-center gap-3 text-sm"
-                                >
-                                  {subItem.icon && (
-                                    <subItem.icon {...subIconProps} draggable={false} />
+                        {item.sub
+                          .filter((subItem) => {
+                            if (subItem.url === '/controle-propostas/emitir-licitacao') {
+                              return (
+                                user?.role === 'admin' || user?.can_issue_bidding_proposals === true
+                              )
+                            }
+                            return true
+                          })
+                          .map((subItem) => {
+                            const isSubActive = location.pathname.startsWith(subItem.url)
+                            return (
+                              <SidebarMenuSubItem key={subItem.title}>
+                                <SidebarMenuSubButton
+                                  asChild
+                                  className={cn(
+                                    'text-white/70 hover:bg-white/5 hover:text-white flex items-center gap-3 py-2 px-4 rounded-none h-10',
+                                    isSubActive &&
+                                      'text-white font-semibold border-l-4 border-brand-green',
                                   )}
-                                  <span>{subItem.title}</span>
-                                </Link>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          )
-                        })}
+                                >
+                                  <Link
+                                    to={subItem.url}
+                                    draggable={false}
+                                    className="select-none flex items-center gap-3 text-sm"
+                                  >
+                                    {subItem.icon && (
+                                      <subItem.icon {...subIconProps} draggable={false} />
+                                    )}
+                                    <span>{subItem.title}</span>
+                                  </Link>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            )
+                          })}
                       </SidebarMenuSub>
                     </CollapsibleContent>
                   )}
