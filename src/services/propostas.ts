@@ -6,6 +6,19 @@ export interface Proposta {
   numero_proposta: string
   revisao?: string
   cliente: string
+  modelo_licitacao?: boolean
+  descricao_proposta?: string
+  especificacoes_tecnicas?: string
+  materiais_utilizados?: string
+  certificacoes?: string
+  normas_aplicaveis?: string
+  certificacoes_seguranca?: string
+  normas_seguranca?: string
+  cobertura_garantia?: string
+  assistencia_tecnica_detalhada?: string
+  criterios_aceitacao?: string
+  garantia_acessorios?: string
+  validade_oferta?: string
   contato: string
   telefone: string
   versao: string

@@ -47,11 +47,11 @@ export default function PropostaPDF() {
       .getFirstListItem(`usuario = "${proposta.user}"`)
       .then((gerente) => {
         setIssuerSectorLabel(
-          gerente.cargo || (userRole === 'admin' ? 'Setor Comercial' : 'Representante Comercial'),
+          gerente.cargo || (userRole === 'admin' ? 'Setor Comercial' : 'Representante'),
         )
       })
       .catch(() => {
-        setIssuerSectorLabel(userRole === 'admin' ? 'Setor Comercial' : 'Representante Comercial')
+        setIssuerSectorLabel(userRole === 'admin' ? 'Setor Comercial' : 'Representante')
       })
   }, [proposta])
 
@@ -91,6 +91,7 @@ export default function PropostaPDF() {
       )
     : ''
   const clienteEmail = cliente?.email || ''
+  const clienteCnpj = cliente?.documento || ''
 
   const representante = proposta.expand?.representante
   const representanteNome = representante?.fantasia || proposta.representante_original || '-'
@@ -159,6 +160,7 @@ export default function PropostaPDF() {
         clienteNome={clienteNome}
         clienteEndereco={clienteEndereco}
         clienteEmail={clienteEmail}
+        clienteCnpj={clienteCnpj}
         representanteNome={representanteNome}
         representanteSigla={representanteSigla}
         versaoNome={versaoNome}

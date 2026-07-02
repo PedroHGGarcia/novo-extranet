@@ -33,6 +33,7 @@ interface PropostaDocumentProps {
   clienteNome: string
   clienteEndereco?: string
   clienteEmail?: string
+  clienteCnpj?: string
   representanteNome: string
   representanteSigla?: string
   versaoNome: string
@@ -58,6 +59,7 @@ export function PropostaDocument({
   clienteNome,
   clienteEndereco,
   clienteEmail,
+  clienteCnpj,
   representanteSigla,
   versaoNome,
   versaoImagemUrl,
@@ -133,6 +135,7 @@ export function PropostaDocument({
         <p>À</p>
         <p className="font-bold uppercase">{clienteNome}</p>
         <p>{clienteEndereco || '-'}</p>
+        {clienteCnpj && <p>CNPJ: {clienteCnpj}</p>}
         <p>Telefone: {proposta.telefone || '-'}</p>
         <p>E-mail: {clienteEmail || '-'}</p>
         <br />
@@ -154,6 +157,11 @@ export function PropostaDocument({
         <h2 className="text-[16px] font-bold uppercase font-mono tracking-wide">
           {categoriaNome} MARCA {marcaNome} - {versaoNome}
         </h2>
+        {proposta.descricao_proposta && (
+          <p className="mt-4 text-[13px] font-mono leading-relaxed text-justify px-4 whitespace-pre-wrap">
+            {proposta.descricao_proposta}
+          </p>
+        )}
       </div>
 
       {/* Product Image */}
@@ -201,7 +209,9 @@ export function PropostaDocument({
 
       {(acessoriosStandards?.trim() ||
         caracteristicasConstrutivas?.trim() ||
-        especificacoesTecnicas?.trim()) && (
+        especificacoesTecnicas?.trim() ||
+        proposta.especificacoes_tecnicas?.trim() ||
+        proposta.materiais_utilizados?.trim()) && (
         <div className="mb-10 print-break-inside-avoid">
           <h2 className="font-bold font-mono text-[14px] uppercase mb-4 border-b border-black pb-1">
             Detalhes Técnicos
@@ -240,8 +250,106 @@ export function PropostaDocument({
                 />
               </div>
             )}
+            {proposta.especificacoes_tecnicas?.trim() && (
+              <div>
+                <p className="font-bold font-mono text-[13px] uppercase mb-1">
+                  Especificações Técnicas (Adicionais)
+                </p>
+                <div className="font-mono text-[12px] leading-relaxed text-justify whitespace-pre-wrap">
+                  {proposta.especificacoes_tecnicas}
+                </div>
+              </div>
+            )}
+            {proposta.materiais_utilizados?.trim() && (
+              <div>
+                <p className="font-bold font-mono text-[13px] uppercase mb-1">
+                  Materiais Utilizados
+                </p>
+                <div className="font-mono text-[12px] leading-relaxed text-justify whitespace-pre-wrap">
+                  {proposta.materiais_utilizados}
+                </div>
+              </div>
+            )}
           </div>
         </div>
+      )}
+
+      {proposta.modelo_licitacao && (
+        <>
+          {(proposta.certificacoes?.trim() || proposta.normas_aplicaveis?.trim()) && (
+            <div className="mb-10 print-break-inside-avoid">
+              <h2 className="font-bold font-mono text-[14px] uppercase mb-4 border-b border-black pb-1">
+                Normalização
+              </h2>
+              <div className="space-y-4">
+                {proposta.certificacoes?.trim() && (
+                  <div>
+                    <p className="font-bold font-mono text-[13px] uppercase mb-1">Certificações</p>
+                    <div className="font-mono text-[12px] leading-relaxed text-justify whitespace-pre-wrap">
+                      {proposta.certificacoes}
+                    </div>
+                  </div>
+                )}
+                {proposta.normas_aplicaveis?.trim() && (
+                  <div>
+                    <p className="font-bold font-mono text-[13px] uppercase mb-1">
+                      Normas Aplicáveis
+                    </p>
+                    <div className="font-mono text-[12px] leading-relaxed text-justify whitespace-pre-wrap">
+                      {proposta.normas_aplicaveis}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {(proposta.certificacoes_seguranca?.trim() || proposta.normas_seguranca?.trim()) && (
+            <div className="mb-10 print-break-inside-avoid">
+              <h2 className="font-bold font-mono text-[14px] uppercase mb-4 border-b border-black pb-1">
+                Segurança
+              </h2>
+              <div className="space-y-4">
+                {proposta.certificacoes_seguranca?.trim() && (
+                  <div>
+                    <p className="font-bold font-mono text-[13px] uppercase mb-1">
+                      Certificações de Segurança
+                    </p>
+                    <div className="font-mono text-[12px] leading-relaxed text-justify whitespace-pre-wrap">
+                      {proposta.certificacoes_seguranca}
+                    </div>
+                  </div>
+                )}
+                {proposta.normas_seguranca?.trim() && (
+                  <div>
+                    <p className="font-bold font-mono text-[13px] uppercase mb-1">
+                      Normas de Segurança
+                    </p>
+                    <div className="font-mono text-[12px] leading-relaxed text-justify whitespace-pre-wrap">
+                      {proposta.normas_seguranca}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {proposta.criterios_aceitacao?.trim() && (
+            <div className="mb-10 print-break-inside-avoid">
+              <h2 className="font-bold font-mono text-[14px] uppercase mb-4 border-b border-black pb-1">
+                Testes de Aceitação
+              </h2>
+              <div>
+                <p className="font-bold font-mono text-[13px] uppercase mb-1">
+                  Critérios de Aceitação
+                </p>
+                <div className="font-mono text-[12px] leading-relaxed text-justify whitespace-pre-wrap">
+                  {proposta.criterios_aceitacao}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Break page to separate presentation from commercial clauses */}
@@ -271,7 +379,11 @@ export function PropostaDocument({
           </div>
           <div>
             <p className="font-bold uppercase tracking-wider mb-1">Validade da Oferta</p>
-            <p className="leading-relaxed">Validade da proposta: 20 dias</p>
+            <p className="leading-relaxed">
+              {proposta.validade_oferta ||
+                tipoProposta?.validade_oferta ||
+                'Validade da proposta: 20 dias'}
+            </p>
           </div>
         </div>
 
@@ -291,17 +403,32 @@ export function PropostaDocument({
 
           {tipoProposta ? (
             <div className="space-y-6">
-              {tipoProposta.garantia && (
+              {(tipoProposta.garantia ||
+                proposta.cobertura_garantia ||
+                proposta.garantia_acessorios) && (
                 <div className="print-break-inside-avoid">
                   <h3 className="font-bold mb-1.5 uppercase">1. Garantia</h3>
-                  <p className="whitespace-pre-wrap">{tipoProposta.garantia}</p>
+                  {proposta.cobertura_garantia ? (
+                    <p className="whitespace-pre-wrap">{proposta.cobertura_garantia}</p>
+                  ) : tipoProposta.garantia ? (
+                    <p className="whitespace-pre-wrap">{tipoProposta.garantia}</p>
+                  ) : null}
+
+                  {proposta.garantia_acessorios && (
+                    <div className="mt-4">
+                      <p className="font-bold text-[12px]">Garantia dos Acessórios:</p>
+                      <p className="whitespace-pre-wrap">{proposta.garantia_acessorios}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {tipoProposta.assistencia_tecnica && (
+              {(tipoProposta.assistencia_tecnica || proposta.assistencia_tecnica_detalhada) && (
                 <div className="print-break-inside-avoid">
                   <h3 className="font-bold mb-1.5 uppercase">2. Assistência Técnica</h3>
-                  <p className="whitespace-pre-wrap">{tipoProposta.assistencia_tecnica}</p>
+                  <p className="whitespace-pre-wrap">
+                    {proposta.assistencia_tecnica_detalhada || tipoProposta.assistencia_tecnica}
+                  </p>
                 </div>
               )}
 

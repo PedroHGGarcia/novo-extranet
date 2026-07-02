@@ -309,7 +309,7 @@ export default function EmitirProposta() {
   }, [])
 
   useEffect(() => {
-    if (activeTab === 'cadastro') {
+    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
       if (selectedProposta) {
         const mapCurrency = (m?: string) => {
           if (m === 'Dolar' || m === 'US$') return 'USD'
@@ -361,6 +361,7 @@ export default function EmitirProposta() {
           percentual_desconto: 0,
           nota_rep: 1,
           dt_cad: format(new Date(), 'yyyy-MM-dd'),
+          modelo_licitacao: activeTab === 'cadastro_licitacao',
         }
         setFormData(mappedData)
         setInitialFormData(mappedData)
@@ -486,7 +487,7 @@ export default function EmitirProposta() {
 
   const handleEdit = (item: Proposta) => {
     setSelectedProposta(item)
-    setActiveTab('cadastro')
+    setActiveTab(item.modelo_licitacao ? 'cadastro_licitacao' : 'cadastro')
   }
 
   const handleHistory = async (item: Proposta) => {
@@ -726,9 +727,9 @@ export default function EmitirProposta() {
     setIsViewModalOpen(true)
   }
 
-  const handleCreateNew = () => {
+  const handleCreateNew = (isLicitacao = false) => {
     setSelectedProposta(null)
-    setActiveTab('cadastro')
+    setActiveTab(isLicitacao ? 'cadastro_licitacao' : 'cadastro')
   }
 
   const stripSystemFields = (data: Partial<Proposta>) => {
@@ -797,7 +798,7 @@ export default function EmitirProposta() {
     const userGerente = gerentes.find((g) => g.usuario === user.id)
     if (userGerente && userGerente.cargo) return userGerente.cargo
     if (user.role === 'admin') return 'Setor Comercial'
-    return 'Representante Comercial'
+    return 'Representante'
   }, [user, gerentes])
 
   const handleSave = async () => {
@@ -1318,7 +1319,17 @@ export default function EmitirProposta() {
                 />
               </TableCell>
               <TableCell className="align-top py-2 px-3 min-w-[100px] border-r border-slate-100">
-                <div className="text-slate-600 text-xs mb-1">{item.numero_proposta}</div>
+                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                  <span className="text-slate-600 text-xs">{item.numero_proposta}</span>
+                  {item.modelo_licitacao && (
+                    <Badge
+                      variant="outline"
+                      className="text-[9px] px-1 py-0 h-4 bg-purple-50 text-purple-700 border-purple-200 uppercase"
+                    >
+                      Licitação
+                    </Badge>
+                  )}
+                </div>
                 <div className="flex flex-col gap-1 mt-1">
                   <button
                     onClick={() => handleEdit(item)}
@@ -1439,13 +1450,26 @@ export default function EmitirProposta() {
               value="cadastro"
               onClick={() => {
                 if (activeTab !== 'cadastro' && !selectedProposta) {
-                  handleCreateNew()
+                  handleCreateNew(false)
                 }
               }}
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#337ab7] data-[state=active]:text-[#337ab7] text-[#337ab7] font-normal shadow-none px-4 py-2.5 text-sm bg-transparent transition-colors hover:text-[#286090]"
             >
               Cadastro
             </TabsTrigger>
+            {(user?.role === 'admin' || gerentes.some((g) => g.usuario === user?.id)) && (
+              <TabsTrigger
+                value="cadastro_licitacao"
+                onClick={() => {
+                  if (activeTab !== 'cadastro_licitacao' && !selectedProposta) {
+                    handleCreateNew(true)
+                  }
+                }}
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#337ab7] data-[state=active]:text-[#337ab7] text-[#337ab7] font-normal shadow-none px-4 py-2.5 text-sm bg-transparent transition-colors hover:text-[#286090]"
+              >
+                Emitir proposta (Licitação)
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="excluidas"
               onClick={() => setPage(1)}
@@ -1467,612 +1491,783 @@ export default function EmitirProposta() {
           {renderTable()}
         </TabsContent>
 
-        <TabsContent
-          value="cadastro"
-          className="flex-1 min-h-0 m-0 overflow-y-auto outline-none p-6 bg-white"
-        >
-          <div className="max-w-7xl mx-auto w-full flex flex-col items-start pb-10">
-            <div className="mb-6 w-full border-b border-slate-200 pb-4">
-              {renderCadastroActionBars()}
-            </div>
+        {['cadastro', 'cadastro_licitacao'].map((tabValue) => (
+          <TabsContent
+            key={tabValue}
+            value={tabValue}
+            className="flex-1 min-h-0 m-0 overflow-y-auto outline-none p-6 bg-white"
+          >
+            <div className="max-w-7xl mx-auto w-full flex flex-col items-start pb-10">
+              <div className="mb-6 w-full border-b border-slate-200 pb-4">
+                {renderCadastroActionBars()}
+              </div>
 
-            <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Código Para pesquisar</label>
-                <input
-                  className={cn(inputClass, 'bg-slate-50')}
-                  readOnly
-                  placeholder="Gerado automaticamente"
-                  value={formData.numero_proposta || ''}
-                />
-              </div>
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Representante</label>
-                <SearchableCombobox
-                  items={representantes}
-                  value={formData.representante || ''}
-                  onChange={(id) => setFormData({ ...formData, representante: id })}
-                  getLabel={(r) => r.fantasia}
-                  getSearchText={(r) => `${r.fantasia || ''} ${r.sigla || ''}`}
-                  placeholder="Buscar representante..."
-                  emptyMessage="Nenhum representante encontrado."
-                  className={cn(
-                    inputClass,
-                    !formData.representante && 'border-amber-300 bg-amber-50/30',
-                  )}
-                  onSearch={searchRepresentantes}
-                />
-                {!formData.representante && (
-                  <span className="text-[10px] text-amber-600 mt-0.5">
-                    Representante é obrigatório
-                  </span>
-                )}
-                {formData.representante_original && !formData.representante && (
-                  <span className="text-[10px] text-amber-600 mt-0.5">
-                    Original: {formData.representante_original}
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Cliente</label>
-                <SearchableCombobox
-                  items={clientes}
-                  value={formData.cliente || ''}
-                  onChange={(id) => handleClienteChange(id)}
-                  getLabel={(c) => c.fantasia || c.razao_social}
-                  getSearchText={(c) => `${c.fantasia || ''} ${c.razao_social || ''}`}
-                  placeholder="Buscar cliente..."
-                  emptyMessage="Nenhum cliente encontrado."
-                  className={cn(inputClass, !formData.cliente && 'border-amber-300 bg-amber-50/30')}
-                  onSearch={searchClientes}
-                />
-                {!formData.cliente && (
-                  <span className="text-[10px] text-amber-600 mt-0.5">Cliente é obrigatório</span>
-                )}
-                {formData.cliente_original && !formData.cliente && (
-                  <span className="text-[10px] text-amber-600 mt-0.5">
-                    Original: {formData.cliente_original}
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Gerente</label>
-                <select
-                  className={inputClass}
-                  value={formData.gerente || ''}
-                  onChange={(e) => setFormData({ ...formData, gerente: e.target.value })}
-                >
-                  <option value=""></option>
-                  {gerentes.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.nome}
-                    </option>
-                  ))}
-                </select>
-                {formData.gerente_original && !formData.gerente && (
-                  <span className="text-[10px] text-amber-600 mt-0.5">
-                    Original: {formData.gerente_original}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Data de Emissão</label>
-                <input
-                  type="date"
-                  className={inputClass}
-                  value={formData.dt_cad ? formData.dt_cad.substring(0, 10) : ''}
-                  onChange={(e) => setFormData({ ...formData, dt_cad: e.target.value })}
-                />
-              </div>
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Versão</label>
-                <select
-                  className={cn(inputClass, !formData.versao && 'border-amber-300 bg-amber-50/30')}
-                  value={formData.versao || ''}
-                  onChange={(e) => handleVersaoChange(e.target.value)}
-                >
-                  <option value=""></option>
-                  {versoes.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.nome}
-                    </option>
-                  ))}
-                </select>
-                {!formData.versao && (
-                  <span className="text-[10px] text-amber-600 mt-0.5">Versão é obrigatória</span>
-                )}
-                {formData.versao_original && !formData.versao && (
-                  <span className="text-[10px] text-amber-600 mt-0.5">
-                    Original: {formData.versao_original}
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Tipo de Proposta *</label>
-                <select
-                  className={cn(
-                    inputClass,
-                    !formData.tipo_proposta && 'border-amber-300 bg-amber-50/30',
-                  )}
-                  value={formData.tipo_proposta || ''}
-                  onChange={(e) => {
-                    const tipoId = e.target.value
-                    const tipo = tiposProposta.find((t) => t.id === tipoId)
-                    setFormData({
-                      ...formData,
-                      tipo_proposta: tipoId,
-                      ...(tipo
-                        ? {
-                            prazo_entrega: tipo.prazo_entrega || formData.prazo_entrega,
-                            condicoes_pagamento:
-                              tipo.condicoes_pagamento || formData.condicoes_pagamento,
-                          }
-                        : {}),
-                    })
-                  }}
-                  disabled={!formData.versao}
-                >
-                  <option value="">-- Selecione o Tipo de Proposta --</option>
-                  {(() => {
-                    const versao = versoes.find((v) => v.id === formData.versao)
-                    const validIds = versao?.tipos_proposta || []
-                    const filtered = tiposProposta.filter(
-                      (t) => validIds.includes(t.id) && t.status === 'Ativo',
-                    )
-
-                    if (
-                      formData.tipo_proposta &&
-                      !filtered.some((t) => t.id === formData.tipo_proposta)
-                    ) {
-                      const selectedButNotActiveOrValid = tiposProposta.find(
-                        (t) => t.id === formData.tipo_proposta,
-                      )
-                      if (selectedButNotActiveOrValid) {
-                        filtered.push(selectedButNotActiveOrValid)
-                      }
-                    }
-
-                    return filtered.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.nome}
-                      </option>
-                    ))
-                  })()}
-                </select>
-                {!formData.tipo_proposta && (
-                  <span className="text-[10px] text-amber-600 mt-0.5">
-                    Tipo de Proposta é obrigatório
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Estoque</label>
-                <select
-                  className={inputClass}
-                  value={estoqueUI}
-                  onChange={(e) => setEstoqueUI(e.target.value)}
-                >
-                  <option value=""></option>
-                  <option value="disponivel">Disponível</option>
-                  <option value="indisponivel">Indisponível</option>
-                </select>
-              </div>
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Moeda</label>
-                <select
-                  className={inputClass}
-                  value={
-                    formData.moeda === 'Dolar'
-                      ? 'USD'
-                      : formData.moeda === 'Real'
-                        ? 'BRL'
-                        : formData.moeda === 'Euro'
-                          ? 'EUR'
-                          : formData.moeda === 'US$'
-                            ? 'USD'
-                            : formData.moeda || ''
-                  }
-                  onChange={(e) => {
-                    const newMoeda = e.target.value
-                    const oldMoeda = formData.moeda || 'USD'
-                    const currentBase = formData.valor_sem_desconto || 0
-                    const convertedBase =
-                      Math.round(convertCurrency(currentBase, oldMoeda, newMoeda) * 100) / 100
-                    const desc = formData.percentual_desconto || 0
-                    const convertedFinal = Math.round(convertedBase * (1 - desc / 100) * 100) / 100
-
-                    setFormData({
-                      ...formData,
-                      moeda: newMoeda,
-                      valor_sem_desconto: convertedBase,
-                      valor_final: convertedFinal,
-                      valor_atual: convertedFinal,
-                    })
-                  }}
-                >
-                  <option value="BRL">BRL</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
-              </div>
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Valor sem Desconto</label>
-                <CurrencyInput
-                  className={cn(inputClass, 'bg-slate-50 cursor-not-allowed')}
-                  value={formData.valor_sem_desconto}
-                  currency={formData.moeda || 'US$'}
-                  onChange={() => {}}
-                  readOnly
-                  onClick={() =>
-                    toast({
-                      title:
-                        'Este campo é calculado automaticamente e não pode ser editado manualmente.',
-                      variant: 'default',
-                    })
-                  }
-                />
-              </div>
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Desconto (%)</label>
-                <input
-                  type="number"
-                  className={cn(
-                    inputClass,
-                    (formData.percentual_desconto || 0) > 28 &&
-                      'border-rose-500 text-rose-600 bg-rose-50 focus:border-rose-500',
-                  )}
-                  value={
-                    formData.percentual_desconto === undefined ? '' : formData.percentual_desconto
-                  }
-                  onChange={(e) => {
-                    let valStr = e.target.value
-                    let val = valStr === '' ? undefined : parseFloat(valStr)
-                    if (val !== undefined && isNaN(val)) return
-
-                    if (val !== undefined && val > 28) {
-                      toast({ title: 'O desconto máximo permitido é 28%', variant: 'destructive' })
-                    }
-
-                    setFormData((prev) => {
-                      const base = prev.valor_sem_desconto || 0
-                      const final = Math.round(base * (1 - (val || 0) / 100) * 100) / 100
-                      return {
-                        ...prev,
-                        percentual_desconto: val,
-                        valor_final: final,
-                        valor_atual: final,
-                      }
-                    })
-                  }}
-                  step="0.01"
-                  min="0"
-                />
-                {(formData.percentual_desconto || 0) > 28 && (
-                  <span className="text-[10px] text-rose-600 mt-1 leading-tight">
-                    O desconto máximo permitido é 28%
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Valor Final</label>
-                <CurrencyInput
-                  className={cn(inputClass, 'bg-slate-50 cursor-not-allowed')}
-                  value={formData.valor_final}
-                  currency={formData.moeda || 'US$'}
-                  onChange={() => {}}
-                  readOnly
-                  onClick={() =>
-                    toast({
-                      title:
-                        'Este campo é calculado automaticamente e não pode ser editado manualmente.',
-                      variant: 'default',
-                    })
-                  }
-                />
-                {renderConvertedValue()}
-              </div>
-            </div>
-
-            <div className="text-[11px] font-bold text-slate-700 mb-8 w-full border-b border-slate-200 pb-4 flex items-center gap-4">
-              {exchangeRatesLoading ? (
-                <span>Carregando cotações...</span>
-              ) : exchangeRates ? (
-                <>
-                  <span className="flex items-center gap-1">
-                    Dólar do Dia (USD): {formatCurrency(exchangeRates.USD, 'BRL')}
-                    <span
-                      className={exchangeRates.usdPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}
-                    >
-                      ({exchangeRates.usdPct > 0 ? '+' : ''}
-                      {exchangeRates.usdPct}%)
-                    </span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    Euro (EUR): {formatCurrency(exchangeRates.EUR, 'BRL')}
-                    <span
-                      className={exchangeRates.eurPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}
-                    >
-                      ({exchangeRates.eurPct > 0 ? '+' : ''}
-                      {exchangeRates.eurPct}%)
-                    </span>
-                  </span>
-                  <span>R$: 1,00</span>
-                </>
-              ) : (
-                <span className="text-rose-600">Cotações indisponíveis no momento</span>
-              )}
-            </div>
-
-            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Prazo de Entrega</label>
-                <input
-                  className={inputClass}
-                  value={formData.prazo_entrega || ''}
-                  onChange={(e) => setFormData({ ...formData, prazo_entrega: e.target.value })}
-                />
-              </div>
-              <div className="flex flex-col w-full">
-                <label className={labelClass}>Condições de Pagamento</label>
-                <input
-                  className={inputClass}
-                  value={formData.condicoes_pagamento || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, condicoes_pagamento: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="border-b border-slate-200 w-full mb-4 pb-2">
-              <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                <List className="w-4 h-4" /> Acessórios
-              </h3>
-            </div>
-
-            <div className="w-full mb-8 border border-slate-200 rounded-sm overflow-x-auto">
-              {!formData.versao ? (
-                <div className="py-6 text-center text-slate-500 text-sm">
-                  Selecione uma versão para visualizar os acessórios disponíveis.
+              <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Código Para pesquisar</label>
+                  <input
+                    className={cn(inputClass, 'bg-slate-50')}
+                    readOnly
+                    placeholder="Gerado automaticamente"
+                    value={formData.numero_proposta || ''}
+                  />
                 </div>
-              ) : (
-                <table className="w-full text-left text-[11px] bg-white border-collapse">
-                  <thead className="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                      <th className="py-2.5 px-4 font-normal text-slate-600">Acessório (Nome)</th>
-                      <th className="py-2.5 px-4 font-normal text-slate-600">Tipo</th>
-                      <th className="py-2.5 px-4 font-normal text-slate-600">Moeda</th>
-                      <th className="py-2.5 px-4 font-normal text-slate-600">Valor</th>
-                      <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
-                        Incluir na Proposta
-                      </th>
-                      <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
-                        Não exibir na Proposta
-                      </th>
-                      <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
-                        Exibir na Proposta
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {acessoriosProposta.length === 0 ? (
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Representante</label>
+                  <SearchableCombobox
+                    items={representantes}
+                    value={formData.representante || ''}
+                    onChange={(id) => setFormData({ ...formData, representante: id })}
+                    getLabel={(r) => r.fantasia}
+                    getSearchText={(r) => `${r.fantasia || ''} ${r.sigla || ''}`}
+                    placeholder="Buscar representante..."
+                    emptyMessage="Nenhum representante encontrado."
+                    className={cn(
+                      inputClass,
+                      !formData.representante && 'border-amber-300 bg-amber-50/30',
+                    )}
+                    onSearch={searchRepresentantes}
+                  />
+                  {!formData.representante && (
+                    <span className="text-[10px] text-amber-600 mt-0.5">
+                      Representante é obrigatório
+                    </span>
+                  )}
+                  {formData.representante_original && !formData.representante && (
+                    <span className="text-[10px] text-amber-600 mt-0.5">
+                      Original: {formData.representante_original}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Cliente</label>
+                  <SearchableCombobox
+                    items={clientes}
+                    value={formData.cliente || ''}
+                    onChange={(id) => handleClienteChange(id)}
+                    getLabel={(c) => c.fantasia || c.razao_social}
+                    getSearchText={(c) => `${c.fantasia || ''} ${c.razao_social || ''}`}
+                    placeholder="Buscar cliente..."
+                    emptyMessage="Nenhum cliente encontrado."
+                    className={cn(
+                      inputClass,
+                      !formData.cliente && 'border-amber-300 bg-amber-50/30',
+                    )}
+                    onSearch={searchClientes}
+                  />
+                  {!formData.cliente && (
+                    <span className="text-[10px] text-amber-600 mt-0.5">Cliente é obrigatório</span>
+                  )}
+                  {formData.cliente_original && !formData.cliente && (
+                    <span className="text-[10px] text-amber-600 mt-0.5">
+                      Original: {formData.cliente_original}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Gerente</label>
+                  <select
+                    className={inputClass}
+                    value={formData.gerente || ''}
+                    onChange={(e) => setFormData({ ...formData, gerente: e.target.value })}
+                  >
+                    <option value=""></option>
+                    {gerentes.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.nome}
+                      </option>
+                    ))}
+                  </select>
+                  {formData.gerente_original && !formData.gerente && (
+                    <span className="text-[10px] text-amber-600 mt-0.5">
+                      Original: {formData.gerente_original}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Data de Emissão</label>
+                  <input
+                    type="date"
+                    className={inputClass}
+                    value={formData.dt_cad ? formData.dt_cad.substring(0, 10) : ''}
+                    onChange={(e) => setFormData({ ...formData, dt_cad: e.target.value })}
+                  />
+                </div>
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Versão</label>
+                  <select
+                    className={cn(
+                      inputClass,
+                      !formData.versao && 'border-amber-300 bg-amber-50/30',
+                    )}
+                    value={formData.versao || ''}
+                    onChange={(e) => handleVersaoChange(e.target.value)}
+                  >
+                    <option value=""></option>
+                    {versoes.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.nome}
+                      </option>
+                    ))}
+                  </select>
+                  {!formData.versao && (
+                    <span className="text-[10px] text-amber-600 mt-0.5">Versão é obrigatória</span>
+                  )}
+                  {formData.versao_original && !formData.versao && (
+                    <span className="text-[10px] text-amber-600 mt-0.5">
+                      Original: {formData.versao_original}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Tipo de Proposta *</label>
+                  <select
+                    className={cn(
+                      inputClass,
+                      !formData.tipo_proposta && 'border-amber-300 bg-amber-50/30',
+                    )}
+                    value={formData.tipo_proposta || ''}
+                    onChange={(e) => {
+                      const tipoId = e.target.value
+                      const tipo = tiposProposta.find((t) => t.id === tipoId)
+                      setFormData({
+                        ...formData,
+                        tipo_proposta: tipoId,
+                        ...(tipo
+                          ? {
+                              prazo_entrega: tipo.prazo_entrega || formData.prazo_entrega,
+                              condicoes_pagamento:
+                                tipo.condicoes_pagamento || formData.condicoes_pagamento,
+                              validade_oferta: tipo.validade_oferta || formData.validade_oferta,
+                            }
+                          : {}),
+                      })
+                    }}
+                    disabled={!formData.versao}
+                  >
+                    <option value="">-- Selecione o Tipo de Proposta --</option>
+                    {(() => {
+                      const versao = versoes.find((v) => v.id === formData.versao)
+                      const validIds = versao?.tipos_proposta || []
+                      const filtered = tiposProposta.filter(
+                        (t) => validIds.includes(t.id) && t.status === 'Ativo',
+                      )
+
+                      if (
+                        formData.tipo_proposta &&
+                        !filtered.some((t) => t.id === formData.tipo_proposta)
+                      ) {
+                        const selectedButNotActiveOrValid = tiposProposta.find(
+                          (t) => t.id === formData.tipo_proposta,
+                        )
+                        if (selectedButNotActiveOrValid) {
+                          filtered.push(selectedButNotActiveOrValid)
+                        }
+                      }
+
+                      return filtered.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.nome}
+                        </option>
+                      ))
+                    })()}
+                  </select>
+                  {!formData.tipo_proposta && (
+                    <span className="text-[10px] text-amber-600 mt-0.5">
+                      Tipo de Proposta é obrigatório
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Estoque</label>
+                  <select
+                    className={inputClass}
+                    value={estoqueUI}
+                    onChange={(e) => setEstoqueUI(e.target.value)}
+                  >
+                    <option value=""></option>
+                    <option value="disponivel">Disponível</option>
+                    <option value="indisponivel">Indisponível</option>
+                  </select>
+                </div>
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Moeda</label>
+                  <select
+                    className={inputClass}
+                    value={
+                      formData.moeda === 'Dolar'
+                        ? 'USD'
+                        : formData.moeda === 'Real'
+                          ? 'BRL'
+                          : formData.moeda === 'Euro'
+                            ? 'EUR'
+                            : formData.moeda === 'US$'
+                              ? 'USD'
+                              : formData.moeda || ''
+                    }
+                    onChange={(e) => {
+                      const newMoeda = e.target.value
+                      const oldMoeda = formData.moeda || 'USD'
+                      const currentBase = formData.valor_sem_desconto || 0
+                      const convertedBase =
+                        Math.round(convertCurrency(currentBase, oldMoeda, newMoeda) * 100) / 100
+                      const desc = formData.percentual_desconto || 0
+                      const convertedFinal =
+                        Math.round(convertedBase * (1 - desc / 100) * 100) / 100
+
+                      setFormData({
+                        ...formData,
+                        moeda: newMoeda,
+                        valor_sem_desconto: convertedBase,
+                        valor_final: convertedFinal,
+                        valor_atual: convertedFinal,
+                      })
+                    }}
+                  >
+                    <option value="BRL">BRL</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </div>
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Valor sem Desconto</label>
+                  <CurrencyInput
+                    className={cn(inputClass, 'bg-slate-50 cursor-not-allowed')}
+                    value={formData.valor_sem_desconto}
+                    currency={formData.moeda || 'US$'}
+                    onChange={() => {}}
+                    readOnly
+                    onClick={() =>
+                      toast({
+                        title:
+                          'Este campo é calculado automaticamente e não pode ser editado manualmente.',
+                        variant: 'default',
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Desconto (%)</label>
+                  <input
+                    type="number"
+                    className={cn(
+                      inputClass,
+                      (formData.percentual_desconto || 0) > 28 &&
+                        'border-rose-500 text-rose-600 bg-rose-50 focus:border-rose-500',
+                    )}
+                    value={
+                      formData.percentual_desconto === undefined ? '' : formData.percentual_desconto
+                    }
+                    onChange={(e) => {
+                      let valStr = e.target.value
+                      let val = valStr === '' ? undefined : parseFloat(valStr)
+                      if (val !== undefined && isNaN(val)) return
+
+                      if (val !== undefined && val > 28) {
+                        toast({
+                          title: 'O desconto máximo permitido é 28%',
+                          variant: 'destructive',
+                        })
+                      }
+
+                      setFormData((prev) => {
+                        const base = prev.valor_sem_desconto || 0
+                        const final = Math.round(base * (1 - (val || 0) / 100) * 100) / 100
+                        return {
+                          ...prev,
+                          percentual_desconto: val,
+                          valor_final: final,
+                          valor_atual: final,
+                        }
+                      })
+                    }}
+                    step="0.01"
+                    min="0"
+                  />
+                  {(formData.percentual_desconto || 0) > 28 && (
+                    <span className="text-[10px] text-rose-600 mt-1 leading-tight">
+                      O desconto máximo permitido é 28%
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Valor Final</label>
+                  <CurrencyInput
+                    className={cn(inputClass, 'bg-slate-50 cursor-not-allowed')}
+                    value={formData.valor_final}
+                    currency={formData.moeda || 'US$'}
+                    onChange={() => {}}
+                    readOnly
+                    onClick={() =>
+                      toast({
+                        title:
+                          'Este campo é calculado automaticamente e não pode ser editado manualmente.',
+                        variant: 'default',
+                      })
+                    }
+                  />
+                  {renderConvertedValue()}
+                </div>
+              </div>
+
+              <div className="text-[11px] font-bold text-slate-700 mb-8 w-full border-b border-slate-200 pb-4 flex items-center gap-4">
+                {exchangeRatesLoading ? (
+                  <span>Carregando cotações...</span>
+                ) : exchangeRates ? (
+                  <>
+                    <span className="flex items-center gap-1">
+                      Dólar do Dia (USD): {formatCurrency(exchangeRates.USD, 'BRL')}
+                      <span
+                        className={exchangeRates.usdPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}
+                      >
+                        ({exchangeRates.usdPct > 0 ? '+' : ''}
+                        {exchangeRates.usdPct}%)
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      Euro (EUR): {formatCurrency(exchangeRates.EUR, 'BRL')}
+                      <span
+                        className={exchangeRates.eurPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}
+                      >
+                        ({exchangeRates.eurPct > 0 ? '+' : ''}
+                        {exchangeRates.eurPct}%)
+                      </span>
+                    </span>
+                    <span>R$: 1,00</span>
+                  </>
+                ) : (
+                  <span className="text-rose-600">Cotações indisponíveis no momento</span>
+                )}
+              </div>
+
+              <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Prazo de Entrega</label>
+                  <input
+                    className={inputClass}
+                    value={formData.prazo_entrega || ''}
+                    onChange={(e) => setFormData({ ...formData, prazo_entrega: e.target.value })}
+                  />
+                </div>
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Condições de Pagamento</label>
+                  <input
+                    className={inputClass}
+                    value={formData.condicoes_pagamento || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, condicoes_pagamento: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="border-b border-slate-200 w-full mb-4 pb-2">
+                <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <List className="w-4 h-4" /> Acessórios
+                </h3>
+              </div>
+
+              <div className="w-full mb-8 border border-slate-200 rounded-sm overflow-x-auto">
+                {!formData.versao ? (
+                  <div className="py-6 text-center text-slate-500 text-sm">
+                    Selecione uma versão para visualizar os acessórios disponíveis.
+                  </div>
+                ) : (
+                  <table className="w-full text-left text-[11px] bg-white border-collapse">
+                    <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <td colSpan={7} className="py-6 text-center text-slate-400">
-                          Nenhum acessório encontrado para esta versão.
-                        </td>
+                        <th className="py-2.5 px-4 font-normal text-slate-600">Acessório (Nome)</th>
+                        <th className="py-2.5 px-4 font-normal text-slate-600">Tipo</th>
+                        <th className="py-2.5 px-4 font-normal text-slate-600">Moeda</th>
+                        <th className="py-2.5 px-4 font-normal text-slate-600">Valor</th>
+                        <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
+                          Incluir na Proposta
+                        </th>
+                        <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
+                          Não exibir na Proposta
+                        </th>
+                        <th className="py-2.5 px-4 font-normal text-slate-600 text-center">
+                          Exibir na Proposta
+                        </th>
                       </tr>
-                    ) : (
-                      acessoriosProposta.map((acc, idx) => (
-                        <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
-                          <td className="py-2.5 px-4 text-slate-700">{acc.nome}</td>
-                          <td className="py-2.5 px-4 text-slate-700">{acc.tipo || '-'}</td>
-                          <td className="py-2.5 px-4 text-slate-700">{acc.moeda || '-'}</td>
-                          <td className="py-2.5 px-4 text-slate-700">
-                            {formatCurrency(acc.valor, acc.moeda)}
-                          </td>
-                          <td className="py-2.5 px-4 text-center">
-                            <input
-                              type="radio"
-                              name={`acc_${idx}`}
-                              checked={acc.estado === 'incluir'}
-                              onChange={() => updateAccEstado(idx, 'incluir')}
-                              className="w-3.5 h-3.5 accent-[#337ab7] cursor-pointer"
-                            />
-                          </td>
-                          <td className="py-2.5 px-4 text-center">
-                            <input
-                              type="radio"
-                              name={`acc_${idx}`}
-                              checked={acc.estado === 'nao_exibir'}
-                              onChange={() => updateAccEstado(idx, 'nao_exibir')}
-                              className="w-3.5 h-3.5 accent-[#337ab7] cursor-pointer"
-                            />
-                          </td>
-                          <td className="py-2.5 px-4 text-center">
-                            <input
-                              type="radio"
-                              name={`acc_${idx}`}
-                              checked={acc.estado === 'exibir'}
-                              onChange={() => updateAccEstado(idx, 'exibir')}
-                              className="w-3.5 h-3.5 accent-[#337ab7] cursor-pointer"
-                            />
+                    </thead>
+                    <tbody>
+                      {acessoriosProposta.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-6 text-center text-slate-400">
+                            Nenhum acessório encontrado para esta versão.
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              )}
-            </div>
+                      ) : (
+                        acessoriosProposta.map((acc, idx) => (
+                          <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
+                            <td className="py-2.5 px-4 text-slate-700">{acc.nome}</td>
+                            <td className="py-2.5 px-4 text-slate-700">{acc.tipo || '-'}</td>
+                            <td className="py-2.5 px-4 text-slate-700">{acc.moeda || '-'}</td>
+                            <td className="py-2.5 px-4 text-slate-700">
+                              {formatCurrency(acc.valor, acc.moeda)}
+                            </td>
+                            <td className="py-2.5 px-4 text-center">
+                              <input
+                                type="radio"
+                                name={`acc_${idx}`}
+                                checked={acc.estado === 'incluir'}
+                                onChange={() => updateAccEstado(idx, 'incluir')}
+                                className="w-3.5 h-3.5 accent-[#337ab7] cursor-pointer"
+                              />
+                            </td>
+                            <td className="py-2.5 px-4 text-center">
+                              <input
+                                type="radio"
+                                name={`acc_${idx}`}
+                                checked={acc.estado === 'nao_exibir'}
+                                onChange={() => updateAccEstado(idx, 'nao_exibir')}
+                                className="w-3.5 h-3.5 accent-[#337ab7] cursor-pointer"
+                              />
+                            </td>
+                            <td className="py-2.5 px-4 text-center">
+                              <input
+                                type="radio"
+                                name={`acc_${idx}`}
+                                checked={acc.estado === 'exibir'}
+                                onChange={() => updateAccEstado(idx, 'exibir')}
+                                className="w-3.5 h-3.5 accent-[#337ab7] cursor-pointer"
+                              />
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                )}
+              </div>
 
-            {formData.versao &&
-              (() => {
-                const versao = versoes.find((v) => v.id === formData.versao)
-                if (!versao) return null
-                const hasStandards =
-                  versao.acessorios_standards && versao.acessorios_standards.trim()
-                const hasConstrutivas =
-                  versao.caracteristicas_construtivas && versao.caracteristicas_construtivas.trim()
-                const hasEspecificacoes =
-                  versao.especificacoes_tecnicas && versao.especificacoes_tecnicas.trim()
-                if (!hasStandards && !hasConstrutivas && !hasEspecificacoes) return null
-                return (
-                  <div className="w-full mb-8">
-                    <div className="border-b border-slate-200 w-full mb-4 pb-2">
-                      <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                        <FileText className="w-4 h-4" /> Detalhes Técnicos da Versão
-                      </h3>
+              {formData.versao &&
+                (() => {
+                  const versao = versoes.find((v) => v.id === formData.versao)
+                  if (!versao) return null
+                  const hasStandards =
+                    versao.acessorios_standards && versao.acessorios_standards.trim()
+                  const hasConstrutivas =
+                    versao.caracteristicas_construtivas &&
+                    versao.caracteristicas_construtivas.trim()
+                  const hasEspecificacoes =
+                    versao.especificacoes_tecnicas && versao.especificacoes_tecnicas.trim()
+                  if (!hasStandards && !hasConstrutivas && !hasEspecificacoes) return null
+                  return (
+                    <div className="w-full mb-8">
+                      <div className="border-b border-slate-200 w-full mb-4 pb-2">
+                        <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                          <FileText className="w-4 h-4" /> Detalhes Técnicos da Versão
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4">
+                        {hasStandards && (
+                          <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50 dark:bg-slate-900/20 dark:border-slate-700">
+                            <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
+                              Acessórios Standards
+                            </p>
+                            <div
+                              className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed rich-text-content"
+                              dangerouslySetInnerHTML={{
+                                __html: versao.acessorios_standards || '',
+                              }}
+                            />
+                          </div>
+                        )}
+                        {hasConstrutivas && (
+                          <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50 dark:bg-slate-900/20 dark:border-slate-700">
+                            <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
+                              Características Construtivas Principais
+                            </p>
+                            <div
+                              className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed rich-text-content"
+                              dangerouslySetInnerHTML={{
+                                __html: versao.caracteristicas_construtivas || '',
+                              }}
+                            />
+                          </div>
+                        )}
+                        {hasEspecificacoes && (
+                          <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50 dark:bg-slate-900/20 dark:border-slate-700">
+                            <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
+                              Especificações Técnicas Principais
+                            </p>
+                            <div
+                              className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed rich-text-content"
+                              dangerouslySetInnerHTML={{
+                                __html: versao.especificacoes_tecnicas || '',
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      {hasStandards && (
-                        <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50 dark:bg-slate-900/20 dark:border-slate-700">
-                          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
-                            Acessórios Standards
-                          </p>
-                          <div
-                            className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed rich-text-content"
-                            dangerouslySetInnerHTML={{ __html: versao.acessorios_standards || '' }}
-                          />
-                        </div>
-                      )}
-                      {hasConstrutivas && (
-                        <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50 dark:bg-slate-900/20 dark:border-slate-700">
-                          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
-                            Características Construtivas Principais
-                          </p>
-                          <div
-                            className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed rich-text-content"
-                            dangerouslySetInnerHTML={{
-                              __html: versao.caracteristicas_construtivas || '',
-                            }}
-                          />
-                        </div>
-                      )}
-                      {hasEspecificacoes && (
-                        <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50 dark:bg-slate-900/20 dark:border-slate-700">
-                          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
-                            Especificações Técnicas Principais
-                          </p>
-                          <div
-                            className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed rich-text-content"
-                            dangerouslySetInnerHTML={{
-                              __html: versao.especificacoes_tecnicas || '',
-                            }}
-                          />
-                        </div>
-                      )}
+                  )
+                })()}
+
+              {formData.modelo_licitacao && (
+                <div className="w-full mb-8 flex flex-col gap-6">
+                  <div className="border-b border-slate-200 w-full pb-2">
+                    <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                      <FileText className="w-4 h-4" /> Informações da Licitação
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="flex flex-col w-full">
+                      <label className={labelClass}>Descrição da Proposta</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[60px] resize-y')}
+                        value={formData.descricao_proposta || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, descricao_proposta: e.target.value })
+                        }
+                      />
                     </div>
                   </div>
-                )
-              })()}
 
-            {user && (!selectedProposta || user.id === selectedProposta.user) && (
-              <div className="w-full mt-8">
-                <div className="border-b border-slate-200 w-full mb-4 pb-2">
-                  <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                    <PenTool className="w-4 h-4" /> Assinatura — {issuerSectorLabel}
-                    {!selectedProposta && (
-                      <span className="text-[10px] text-amber-600 font-normal ml-1">
-                        (Obrigatória para nova proposta)
-                      </span>
-                    )}
-                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col w-full">
+                      <label className={labelClass}>Validade da Proposta</label>
+                      <input
+                        className={inputClass}
+                        value={formData.validade_oferta || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, validade_oferta: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col w-full">
+                      <label className={labelClass}>Garantia dos Acessórios</label>
+                      <input
+                        className={inputClass}
+                        value={formData.garantia_acessorios || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, garantia_acessorios: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col w-full">
+                      <label className={labelClass}>Especificações Técnicas (Adicionais)</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.especificacoes_tecnicas || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, especificacoes_tecnicas: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col w-full">
+                      <label className={labelClass}>Materiais Utilizados</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.materiais_utilizados || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, materiais_utilizados: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col w-full">
+                      <label className={labelClass}>Certificações</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.certificacoes || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, certificacoes: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col w-full">
+                      <label className={labelClass}>Normas Aplicáveis</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.normas_aplicaveis || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, normas_aplicaveis: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col w-full">
+                      <label className={labelClass}>Certificações de Segurança</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.certificacoes_seguranca || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, certificacoes_seguranca: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col w-full">
+                      <label className={labelClass}>Normas de Segurança</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.normas_seguranca || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, normas_seguranca: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col w-full">
+                      <label className={labelClass}>Cobertura da Garantia</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.cobertura_garantia || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cobertura_garantia: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col w-full">
+                      <label className={labelClass}>Assistência Técnica Detalhada</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.assistencia_tecnica_detalhada || ''}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            assistencia_tecnica_detalhada: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="flex flex-col w-full">
+                      <label className={labelClass}>Critérios de Aceitação (Testes)</label>
+                      <textarea
+                        className={cn(inputClass, 'min-h-[80px] resize-y')}
+                        value={formData.criterios_aceitacao || ''}
+                        onChange={(e) =>
+                          setFormData({ ...formData, criterios_aceitacao: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
                 </div>
-                {selectedProposta?.assinatura_representante ? (
-                  <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
-                    <img
-                      src={pb.files.getURL(
-                        selectedProposta as any,
-                        selectedProposta.assinatura_representante as string,
+              )}
+
+              {user && (!selectedProposta || user.id === selectedProposta.user) && (
+                <div className="w-full mt-8">
+                  <div className="border-b border-slate-200 w-full mb-4 pb-2">
+                    <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                      <PenTool className="w-4 h-4" /> Assinatura — {issuerSectorLabel}
+                      {!selectedProposta && (
+                        <span className="text-[10px] text-amber-600 font-normal ml-1">
+                          (Obrigatória para nova proposta)
+                        </span>
                       )}
-                      alt="Assinatura do Representante"
-                      className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
-                    />
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-emerald-600" />
-                      <span className="text-xs text-slate-600">
-                        Assinatura registrada para esta proposta.
-                      </span>
-                    </div>
+                    </h3>
                   </div>
-                ) : !selectedProposta ? (
-                  signatureConfirmed && propostaSignatureBlob ? (
+                  {selectedProposta?.assinatura_representante ? (
                     <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
                       <img
-                        src={URL.createObjectURL(propostaSignatureBlob)}
-                        alt="Assinatura confirmada"
+                        src={pb.files.getURL(
+                          selectedProposta as any,
+                          selectedProposta.assinatura_representante as string,
+                        )}
+                        alt="Assinatura do Representante"
                         className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
                       />
                       <div className="flex items-center gap-2">
                         <CheckCircle className="h-5 w-5 text-emerald-600" />
-                        <span className="text-xs text-slate-600">Assinatura confirmada</span>
+                        <span className="text-xs text-slate-600">
+                          Assinatura registrada para esta proposta.
+                        </span>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setPropostaSignatureBlob(null)
-                          setSignatureConfirmed(false)
-                        }}
-                        className="gap-2 text-xs ml-auto"
-                      >
-                        <PenTool className="h-4 w-4" /> Refazer Assinatura
-                      </Button>
+                    </div>
+                  ) : !selectedProposta ? (
+                    signatureConfirmed && propostaSignatureBlob ? (
+                      <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
+                        <img
+                          src={URL.createObjectURL(propostaSignatureBlob)}
+                          alt="Assinatura confirmada"
+                          className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
+                        />
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-5 w-5 text-emerald-600" />
+                          <span className="text-xs text-slate-600">Assinatura confirmada</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setPropostaSignatureBlob(null)
+                            setSignatureConfirmed(false)
+                          }}
+                          className="gap-2 text-xs ml-auto"
+                        >
+                          <PenTool className="h-4 w-4" /> Refazer Assinatura
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="p-4 border-2 border-dashed border-amber-300 rounded-sm">
+                        <p className="text-xs text-amber-600 text-center mb-3">
+                          A assinatura do representante é obrigatória para cadastrar a proposta.
+                        </p>
+                        <SignaturePad
+                          onConfirm={(blob) => {
+                            setPropostaSignatureBlob(blob)
+                            setSignatureConfirmed(true)
+                          }}
+                        />
+                      </div>
+                    )
+                  ) : user.assinatura ? (
+                    <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
+                      <img
+                        src={pb.files.getURL(user as any, user.assinatura as string)}
+                        alt="Assinatura"
+                        className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
+                      />
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-emerald-600" />
+                        <span className="text-xs text-slate-600">
+                          Usando assinatura padrão do usuário.
+                        </span>
+                      </div>
                     </div>
                   ) : (
-                    <div className="p-4 border-2 border-dashed border-amber-300 rounded-sm">
-                      <p className="text-xs text-amber-600 text-center mb-3">
-                        A assinatura do representante é obrigatória para cadastrar a proposta.
+                    <div className="p-4 border-2 border-dashed border-slate-300 rounded-sm">
+                      <p className="text-xs text-slate-500 text-center">
+                        Esta proposta não possui assinatura registrada.
                       </p>
-                      <SignaturePad
-                        onConfirm={(blob) => {
-                          setPropostaSignatureBlob(blob)
-                          setSignatureConfirmed(true)
-                        }}
-                      />
                     </div>
-                  )
-                ) : user.assinatura ? (
-                  <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
-                    <img
-                      src={pb.files.getURL(user as any, user.assinatura as string)}
-                      alt="Assinatura"
-                      className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
-                    />
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-emerald-600" />
-                      <span className="text-xs text-slate-600">
-                        Usando assinatura padrão do usuário.
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 border-2 border-dashed border-slate-300 rounded-sm">
-                    <p className="text-xs text-slate-500 text-center">
-                      Esta proposta não possui assinatura registrada.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
 
-            {selectedProposta && (
-              <div className="w-full mt-8">
-                <ProposalHistory proposalId={selectedProposta.id} />
-              </div>
-            )}
+              {selectedProposta && (
+                <div className="w-full mt-8">
+                  <ProposalHistory proposalId={selectedProposta.id} />
+                </div>
+              )}
 
-            <div className="w-full mt-4 border-t border-slate-200 pt-6">
-              {renderCadastroActionBars()}
+              <div className="w-full mt-4 border-t border-slate-200 pt-6">
+                {renderCadastroActionBars()}
+              </div>
             </div>
-          </div>
-        </TabsContent>
+          </TabsContent>
+        ))}
       </Tabs>
       <ImportadorInteligente
         open={isImportModalOpen}
@@ -2452,6 +2647,7 @@ export default function EmitirProposta() {
                         : ''
                     }
                     clienteEmail={selectedCliente?.email || ''}
+                    clienteCnpj={selectedCliente?.documento || ''}
                     representanteNome={
                       selectedRep?.fantasia || formData.representante_original || '-'
                     }

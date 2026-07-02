@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-01T15:36:55.288Z",
+  "generatedAt": "2026-07-02T11:56:25.318Z",
   "collections": [
     {
       "name": "users",
@@ -1531,6 +1531,84 @@
         {
           "name": "assinatura_representante",
           "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "modelo_licitacao",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "descricao_proposta",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "especificacoes_tecnicas",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "materiais_utilizados",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "certificacoes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "normas_aplicaveis",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "certificacoes_seguranca",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "normas_seguranca",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "cobertura_garantia",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "assistencia_tecnica_detalhada",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "criterios_aceitacao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "garantia_acessorios",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "validade_oferta",
+          "type": "text",
           "required": false,
           "system": false
         }
