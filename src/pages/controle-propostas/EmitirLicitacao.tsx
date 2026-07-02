@@ -44,6 +44,10 @@ const TEXT_FIELDS: Array<{ key: string; label: string }> = [
   { key: 'criterios_aceitacao', label: 'Critérios de Aceitação' },
   { key: 'garantia_acessorios', label: 'Garantia dos Acessórios' },
   { key: 'validade_oferta', label: 'Validade da Oferta' },
+  { key: 'treinamento_tecnico', label: 'Treinamento Técnico' },
+  { key: 'transporte_seguro', label: 'Transporte/Seguro' },
+  { key: 'imposto_ipi', label: 'Imposto IPI' },
+  { key: 'imposto_icms', label: 'Imposto ICMS' },
 ]
 
 const inputClass =
@@ -201,20 +205,7 @@ export default function EmitirLicitacao() {
                   className={cn(inputClass, err.tipo_proposta && 'border-rose-400 bg-rose-50/30')}
                   value={f.tipo_proposta || ''}
                   disabled={!f.versao}
-                  onChange={(e) => {
-                    const t = lic.tiposProposta.find((x) => x.id === e.target.value)
-                    setFormData({
-                      ...f,
-                      tipo_proposta: e.target.value,
-                      ...(t
-                        ? {
-                            prazo_entrega: t.prazo_entrega || f.prazo_entrega,
-                            condicoes_pagamento: t.condicoes_pagamento || f.condicoes_pagamento,
-                            validade_oferta: t.validade_oferta || f.validade_oferta,
-                          }
-                        : {}),
-                    })
-                  }}
+                  onChange={(e) => lic.handleTipoPropostaChange(e.target.value)}
                 >
                   <option value="">-- Selecione --</option>
                   {(() => {
@@ -231,6 +222,13 @@ export default function EmitirLicitacao() {
                 </select>
                 {err.tipo_proposta && (
                   <span className="text-[10px] text-rose-600 mt-0.5">{err.tipo_proposta}</span>
+                )}
+                {lic.templateAppliedFields.size > 0 && (
+                  <span className="text-[10px] text-blue-600 mt-0.5 flex items-center gap-1 animate-fade-in">
+                    <CheckCircle className="h-3 w-3" />
+                    {lic.templateAppliedFields.size} campo(s) preenchido(s) automaticamente pelo
+                    template. Você pode editá-los manualmente.
+                  </span>
                 )}
               </div>
               <div>
@@ -332,17 +330,39 @@ export default function EmitirLicitacao() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className={labelClass}>Prazo de Entrega</label>
+                <label className={cn(labelClass, 'flex items-center gap-1')}>
+                  Prazo de Entrega
+                  {lic.templateAppliedFields.has('prazo_entrega') && (
+                    <span className="text-[9px] text-blue-600 bg-blue-50 px-1 rounded-sm border border-blue-200 font-normal">
+                      Template
+                    </span>
+                  )}
+                </label>
                 <input
-                  className={inputClass}
+                  className={cn(
+                    inputClass,
+                    lic.templateAppliedFields.has('prazo_entrega') &&
+                      'border-blue-300 bg-blue-50/30',
+                  )}
                   value={f.prazo_entrega || ''}
                   onChange={(e) => setFormData({ ...f, prazo_entrega: e.target.value })}
                 />
               </div>
               <div>
-                <label className={labelClass}>Condições de Pagamento</label>
+                <label className={cn(labelClass, 'flex items-center gap-1')}>
+                  Condições de Pagamento
+                  {lic.templateAppliedFields.has('condicoes_pagamento') && (
+                    <span className="text-[9px] text-blue-600 bg-blue-50 px-1 rounded-sm border border-blue-200 font-normal">
+                      Template
+                    </span>
+                  )}
+                </label>
                 <input
-                  className={inputClass}
+                  className={cn(
+                    inputClass,
+                    lic.templateAppliedFields.has('condicoes_pagamento') &&
+                      'border-blue-300 bg-blue-50/30',
+                  )}
                   value={f.condicoes_pagamento || ''}
                   onChange={(e) => setFormData({ ...f, condicoes_pagamento: e.target.value })}
                 />
@@ -357,9 +377,20 @@ export default function EmitirLicitacao() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {TEXT_FIELDS.map(({ key, label }) => (
                 <div key={key}>
-                  <label className={labelClass}>{label}</label>
+                  <label className={cn(labelClass, 'flex items-center gap-1')}>
+                    {label}
+                    {lic.templateAppliedFields.has(key) && (
+                      <span className="text-[9px] text-blue-600 bg-blue-50 px-1 rounded-sm border border-blue-200 font-normal">
+                        Template
+                      </span>
+                    )}
+                  </label>
                   <textarea
-                    className={cn(inputClass, 'min-h-[80px] resize-y')}
+                    className={cn(
+                      inputClass,
+                      'min-h-[80px] resize-y',
+                      lic.templateAppliedFields.has(key) && 'border-blue-300 bg-blue-50/30',
+                    )}
                     value={f[key] || ''}
                     onChange={(e) => setFormData({ ...f, [key]: e.target.value })}
                   />

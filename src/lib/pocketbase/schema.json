@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-02T14:14:08.736Z",
+  "generatedAt": "2026-07-02T14:40:12.364Z",
   "collections": [
     {
       "name": "users",
@@ -1621,6 +1621,30 @@
         {
           "name": "secoes_adicionais",
           "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "treinamento_tecnico",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "transporte_seguro",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "imposto_ipi",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "imposto_icms",
+          "type": "text",
           "required": false,
           "system": false
         }

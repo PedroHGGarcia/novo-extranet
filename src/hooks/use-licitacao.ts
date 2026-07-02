@@ -22,6 +22,7 @@ export function useLicitacao() {
   const [signatureConfirmed, setSignatureConfirmed] = useState(false)
   const [createdId, setCreatedId] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [templateAppliedFields, setTemplateAppliedFields] = useState<Set<string>>(new Set())
 
   const [formData, setFormData] = useState<Record<string, any>>({
     moeda: 'USD',
@@ -118,6 +119,7 @@ export function useLicitacao() {
       moeda,
       tipo_proposta: '',
     }))
+    setTemplateAppliedFields(new Set())
   }
 
   const handleClienteChange = (id: string) => {
@@ -140,6 +142,41 @@ export function useLicitacao() {
       valor_final: final,
       valor_atual: final,
     }))
+  }
+
+  const handleTipoPropostaChange = (tipoId: string) => {
+    const t = tiposProposta.find((x) => x.id === tipoId)
+    if (!t) {
+      setFormData((prev) => ({ ...prev, tipo_proposta: tipoId }))
+      setTemplateAppliedFields(new Set())
+      return
+    }
+
+    const mappings: Array<{ templateField: string; formField: string }> = [
+      { templateField: 'prazo_entrega', formField: 'prazo_entrega' },
+      { templateField: 'condicoes_pagamento', formField: 'condicoes_pagamento' },
+      { templateField: 'garantia', formField: 'cobertura_garantia' },
+      { templateField: 'assistencia_tecnica', formField: 'assistencia_tecnica_detalhada' },
+      { templateField: 'treinamento_tecnico', formField: 'treinamento_tecnico' },
+      { templateField: 'transporte_seguro', formField: 'transporte_seguro' },
+      { templateField: 'validade_oferta', formField: 'validade_oferta' },
+      { templateField: 'imposto_ipi', formField: 'imposto_ipi' },
+      { templateField: 'imposto_icms', formField: 'imposto_icms' },
+    ]
+
+    const updates: Record<string, any> = { tipo_proposta: tipoId }
+    const applied = new Set<string>()
+
+    for (const { templateField, formField } of mappings) {
+      const value = (t as any)[templateField]
+      if (value !== undefined && value !== null && value !== '') {
+        updates[formField] = value
+        applied.add(formField)
+      }
+    }
+
+    setFormData((prev) => ({ ...prev, ...updates }))
+    setTemplateAppliedFields(applied)
   }
 
   const handleSubmit = async () => {
@@ -259,6 +296,7 @@ export function useLicitacao() {
     setSignatureBlob(null)
     setSignatureConfirmed(false)
     setErrors({})
+    setTemplateAppliedFields(new Set())
     setCustomSections([])
     setPriceItems([])
     setMemoriaObservacoes({})
@@ -298,6 +336,8 @@ export function useLicitacao() {
     handleVersaoChange,
     handleClienteChange,
     handleDiscountChange,
+    handleTipoPropostaChange,
+    templateAppliedFields,
     handleSubmit,
     resetForm,
     searchClientes,
