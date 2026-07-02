@@ -77,7 +77,8 @@ export function MemoriaCalculo({
 
   const toggle = (k: string) => {
     const n = new Set(expanded)
-    n.has(k) ? n.delete(k) : n.add(k)
+    if (n.has(k)) n.delete(k)
+    else n.add(k)
     setExpanded(n)
   }
 
