@@ -7,6 +7,8 @@ import {
   Printer,
   ShieldAlert,
   Loader2,
+  Plus,
+  Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SearchableCombobox } from '@/components/SearchableCombobox'
@@ -47,6 +49,20 @@ const labelClass = 'text-[11px] font-bold text-slate-700 mb-1'
 export default function EmitirLicitacao() {
   const lic = useLicitacao()
   const { formData: f, setFormData, errors: err } = lic
+
+  const addCustomSection = () => {
+    lic.setCustomSections([...lic.customSections, { titulo: '', descricao: '' }])
+  }
+
+  const updateCustomSection = (index: number, field: 'titulo' | 'descricao', value: string) => {
+    const updated = [...lic.customSections]
+    updated[index] = { ...updated[index], [field]: value }
+    lic.setCustomSections(updated)
+  }
+
+  const removeCustomSection = (index: number) => {
+    lic.setCustomSections(lic.customSections.filter((_, i) => i !== index))
+  }
 
   if (lic.loading) {
     return (
@@ -332,6 +348,68 @@ export default function EmitirLicitacao() {
                   />
                 </div>
               ))}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-sm font-bold text-slate-700 mb-4 border-b border-slate-200 pb-2">
+              Informações Adicionais
+            </h2>
+            <div className="flex flex-col gap-4">
+              {lic.customSections.map((section, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col gap-2 p-4 border border-slate-200 rounded-sm bg-slate-50/30"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-500">
+                      Campo Personalizado {i + 1}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeCustomSection(i)}
+                      className="h-6 px-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Título *</label>
+                    <input
+                      className={cn(
+                        inputClass,
+                        err[`secao_${i}_titulo`] && 'border-rose-400 bg-rose-50/30',
+                      )}
+                      value={section.titulo}
+                      onChange={(e) => updateCustomSection(i, 'titulo', e.target.value)}
+                      placeholder="Digite o título da seção..."
+                    />
+                    {err[`secao_${i}_titulo`] && (
+                      <span className="text-[10px] text-rose-600 mt-0.5">
+                        {err[`secao_${i}_titulo`]}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <label className={labelClass}>Descrição</label>
+                    <textarea
+                      className={cn(inputClass, 'min-h-[80px] resize-y')}
+                      value={section.descricao}
+                      onChange={(e) => updateCustomSection(i, 'descricao', e.target.value)}
+                      placeholder="Digite a descrição detalhada..."
+                    />
+                  </div>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addCustomSection}
+                className="gap-2 w-fit text-[#337ab7] border-[#337ab7] hover:bg-[#337ab7] hover:text-white"
+              >
+                <Plus className="h-4 w-4" /> Adicionar Campo Personalizado
+              </Button>
             </div>
           </section>
 

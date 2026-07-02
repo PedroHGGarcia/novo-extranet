@@ -34,6 +34,9 @@ export function useLicitacao() {
     revisao: 'A',
     dt_cad: format(new Date(), 'yyyy-MM-dd'),
   })
+  const [customSections, setCustomSections] = useState<
+    Array<{ titulo: string; descricao: string }>
+  >([])
 
   useEffect(() => {
     Promise.all([
@@ -142,7 +145,9 @@ export function useLicitacao() {
     if (!formData.versao) errs.versao = 'Versão é obrigatória'
     if (!formData.representante) errs.representante = 'Representante é obrigatório'
     if (!formData.tipo_proposta) errs.tipo_proposta = 'Tipo de Proposta é obrigatório'
-    if (!signatureConfirmed || !signatureBlob) errs.assinatura = 'Assinatura é obrigatória'
+    for (const [i, s] of customSections.entries()) {
+      if (!s.titulo.trim()) errs[`secao_${i}_titulo`] = 'Título é obrigatório'
+    }
     setErrors(errs)
     if (Object.keys(errs).length > 0) {
       toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' })
@@ -159,6 +164,7 @@ export function useLicitacao() {
         ...formData,
         user: user?.id,
         numero_proposta: formData.numero_proposta || 'NOVA-0',
+        secoes_adicionais: customSections.length > 0 ? JSON.stringify(customSections) : '[]',
       }
       for (const [k, v] of Object.entries(fields)) {
         if (v !== undefined && v !== null) {
@@ -189,6 +195,7 @@ export function useLicitacao() {
     setSignatureBlob(null)
     setSignatureConfirmed(false)
     setErrors({})
+    setCustomSections([])
     setFormData({
       moeda: 'USD',
       status: 'Em Análise',
@@ -229,5 +236,7 @@ export function useLicitacao() {
     resetForm,
     searchClientes,
     searchRepresentantes,
+    customSections,
+    setCustomSections,
   }
 }

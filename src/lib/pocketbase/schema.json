@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-02T12:19:55.346Z",
+  "generatedAt": "2026-07-02T13:03:26.828Z",
   "collections": [
     {
       "name": "users",
@@ -1609,6 +1609,12 @@
         {
           "name": "validade_oferta",
           "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "secoes_adicionais",
+          "type": "json",
           "required": false,
           "system": false
         }

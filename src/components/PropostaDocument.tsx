@@ -27,6 +27,11 @@ export const formatCurrency = (value: number | undefined, currency: string = 'BR
   }
 }
 
+interface SecaoAdicional {
+  titulo: string
+  descricao: string
+}
+
 interface PropostaDocumentProps {
   proposta: Partial<Proposta>
   tipoProposta?: TipoProposta | null
@@ -51,6 +56,7 @@ interface PropostaDocumentProps {
   assinaturaClienteUrl?: string | null
   issuerSectorLabel?: string
   issuerName?: string
+  secoesAdicionais?: SecaoAdicional[]
 }
 
 export function PropostaDocument({
@@ -77,6 +83,7 @@ export function PropostaDocument({
   assinaturaClienteUrl,
   issuerSectorLabel,
   issuerName,
+  secoesAdicionais,
 }: PropostaDocumentProps) {
   let dataEmissao = new Date()
   if (typeof proposta.dt_cad === 'string' && proposta.dt_cad.length >= 10) {
@@ -350,6 +357,24 @@ export function PropostaDocument({
             </div>
           )}
         </>
+      )}
+
+      {secoesAdicionais && secoesAdicionais.length > 0 && (
+        <div className="mb-10 print-break-inside-avoid">
+          <h2 className="font-bold font-mono text-[14px] uppercase mb-4 border-b border-black pb-1">
+            Informações Adicionais
+          </h2>
+          <div className="space-y-4">
+            {secoesAdicionais.map((secao, i) => (
+              <div key={i}>
+                <p className="font-bold font-mono text-[13px] uppercase mb-1">{secao.titulo}</p>
+                <div className="font-mono text-[12px] leading-relaxed text-justify whitespace-pre-wrap">
+                  {secao.descricao}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Break page to separate presentation from commercial clauses */}
