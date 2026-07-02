@@ -11,6 +11,7 @@ import Gerentes from './pages/Gerentes'
 import Clientes from './pages/ClientesWrapper'
 import Eventos from './pages/Eventos'
 import EmitirProposta from './pages/controle-propostas/EmitirProposta'
+import EmitirLicitacao from './pages/controle-propostas/EmitirLicitacao'
 import PropostasAvancadas from './pages/controle-propostas/PropostasAvancadas'
 import TiposPropostas from './pages/controle-propostas/TiposPropostas'
 import PropostaPDF from './pages/controle-propostas/PropostaPDF'
@@ -84,6 +85,10 @@ const App = () => (
                     element={<Navigate to="/controle-propostas/dashboard" replace />}
                   />
                   <Route path="/controle-propostas/emitir-proposta" element={<EmitirProposta />} />
+                  <Route
+                    path="/controle-propostas/emitir-licitacao"
+                    element={<EmitirLicitacao />}
+                  />
                   <Route
                     path="/controle-propostas/propostas-avancadas"
                     element={<PropostasAvancadas />}

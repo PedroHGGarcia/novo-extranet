@@ -71,6 +71,7 @@ const menuItems = [
     icon: FileText,
     sub: [
       { title: 'Emitir Proposta', url: '/controle-propostas/emitir-proposta' },
+      { title: 'Emitir Licitação', url: '/controle-propostas/emitir-licitacao' },
       { title: 'Propostas Avançadas', url: '/controle-propostas/propostas-avancadas' },
       { title: 'Tipos de Propostas', url: '/controle-propostas/tipos-propostas' },
     ],
