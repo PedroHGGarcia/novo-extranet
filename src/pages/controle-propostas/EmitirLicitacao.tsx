@@ -112,7 +112,7 @@ export default function EmitirLicitacao() {
           </Button>
         </Link>
         <h1 className="text-lg font-normal text-[#337ab7] flex items-center gap-2">
-          <FileText className="h-5 w-5" /> Emitir Proposta — Licitação
+          <FileText className="h-5 w-5" /> Emitir Proposta de Licitação
         </h1>
       </div>
 

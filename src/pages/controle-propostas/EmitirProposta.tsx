@@ -1467,7 +1467,7 @@ export default function EmitirProposta() {
                 }}
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#337ab7] data-[state=active]:text-[#337ab7] text-[#337ab7] font-normal shadow-none px-4 py-2.5 text-sm bg-transparent transition-colors hover:text-[#286090]"
               >
-                Emitir proposta (Licitação)
+                Emitir Proposta de Licitação
               </TabsTrigger>
             )}
             <TabsTrigger
