@@ -19,7 +19,7 @@ export interface Proposta {
   criterios_aceitacao?: string
   garantia_acessorios?: string
   validade_oferta?: string
-  secoes_adicionais?: Array<{ titulo: string; descricao: string }>
+  secoes_adicionais?: Array<{ titulo: string; descricao: string; imagem?: string }>
   contato: string
   telefone: string
   versao: string

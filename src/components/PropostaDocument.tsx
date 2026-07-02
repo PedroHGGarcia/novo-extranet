@@ -30,6 +30,7 @@ export const formatCurrency = (value: number | undefined, currency: string = 'BR
 interface SecaoAdicional {
   titulo: string
   descricao: string
+  imagem?: string
 }
 
 interface PropostaDocumentProps {
@@ -371,6 +372,15 @@ export function PropostaDocument({
                 <div className="font-mono text-[12px] leading-relaxed text-justify whitespace-pre-wrap">
                   {secao.descricao}
                 </div>
+                {secao.imagem && (
+                  <div className="mt-3 flex justify-center print-break-inside-avoid">
+                    <img
+                      src={secao.imagem}
+                      alt={secao.titulo}
+                      className="max-w-full max-h-[300px] object-contain"
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>

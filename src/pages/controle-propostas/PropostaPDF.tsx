@@ -180,7 +180,11 @@ export default function PropostaPDF() {
         issuerName={proposta.expand?.user?.name}
         secoesAdicionais={
           Array.isArray(proposta.secoes_adicionais)
-            ? (proposta.secoes_adicionais as Array<{ titulo: string; descricao: string }>)
+            ? (proposta.secoes_adicionais as Array<{
+                titulo: string
+                descricao: string
+                imagem?: string
+              }>)
             : undefined
         }
       />

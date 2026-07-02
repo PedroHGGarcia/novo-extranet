@@ -35,7 +35,7 @@ export function useLicitacao() {
     dt_cad: format(new Date(), 'yyyy-MM-dd'),
   })
   const [customSections, setCustomSections] = useState<
-    Array<{ titulo: string; descricao: string }>
+    Array<{ titulo: string; descricao: string; imagem?: string }>
   >([])
 
   useEffect(() => {
@@ -190,6 +190,30 @@ export function useLicitacao() {
     }
   }
 
+  const uploadSectionImage = async (index: number, file: File) => {
+    try {
+      const fd = new FormData()
+      fd.append('arquivo', file)
+      const record = await pb.collection('imagens_editor').create(fd)
+      const imageUrl = pb.files.getURL(record, record.arquivo)
+      const updated = [...customSections]
+      updated[index] = { ...updated[index], imagem: imageUrl }
+      setCustomSections(updated)
+    } catch (e) {
+      toast({
+        title: 'Erro ao enviar imagem',
+        description: getErrorMessage(e),
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const removeSectionImage = (index: number) => {
+    const updated = [...customSections]
+    updated[index] = { ...updated[index], imagem: undefined }
+    setCustomSections(updated)
+  }
+
   const resetForm = () => {
     setCreatedId(null)
     setSignatureBlob(null)
@@ -238,5 +262,7 @@ export function useLicitacao() {
     searchRepresentantes,
     customSections,
     setCustomSections,
+    uploadSectionImage,
+    removeSectionImage,
   }
 }

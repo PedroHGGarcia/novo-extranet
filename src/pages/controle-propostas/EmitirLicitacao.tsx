@@ -9,6 +9,8 @@ import {
   Loader2,
   Plus,
   Trash2,
+  ImagePlus,
+  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SearchableCombobox } from '@/components/SearchableCombobox'
@@ -399,6 +401,39 @@ export default function EmitirLicitacao() {
                       onChange={(e) => updateCustomSection(i, 'descricao', e.target.value)}
                       placeholder="Digite a descrição detalhada..."
                     />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Foto</label>
+                    {section.imagem ? (
+                      <div className="relative inline-block">
+                        <img
+                          src={section.imagem}
+                          alt="Preview"
+                          className="max-h-32 rounded border border-slate-300 object-contain"
+                        />
+                        <button
+                          onClick={() => lic.removeSectionImage(i)}
+                          className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 hover:bg-rose-600 transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center gap-1 border-2 border-dashed border-slate-300 rounded-sm py-4 cursor-pointer hover:border-[#337ab7] hover:bg-slate-50/50 transition-colors">
+                        <ImagePlus className="h-5 w-5 text-slate-400" />
+                        <span className="text-[10px] text-slate-500">Adicionar Foto</span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) lic.uploadSectionImage(i, file)
+                            e.target.value = ''
+                          }}
+                        />
+                      </label>
+                    )}
                   </div>
                 </div>
               ))}
