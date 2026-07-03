@@ -298,7 +298,7 @@ export default function EmitirProposta() {
         ).sort()
         setSetores(uniqueSetores)
       })
-    pb.collection('representantes')
+      .catch(() => {})
   }, [])
 
   const loadData = async () => {
@@ -347,12 +347,6 @@ export default function EmitirProposta() {
     }
   }
 
-  useEffect(() => {
-    if (activeTab === 'registros' || activeTab === 'excluidas') {
-      loadData()
-    }
-  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
-
     pb.collection('representantes')
       .getFullList({ sort: 'fantasia' })
       .then(setRepresentantes)
@@ -362,6 +356,12 @@ export default function EmitirProposta() {
       .then(setVersoes)
       .catch(() => {})
   }, [])
+=======
+  useEffect(() => {
+    if (activeTab === 'registros' || activeTab === 'excluidas') {
+      loadData()
+    }
+  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
 =======
     pb.collection('representantes')
       .getFullList({ sort: 'fantasia' })

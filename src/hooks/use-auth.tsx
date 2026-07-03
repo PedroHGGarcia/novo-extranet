@@ -33,7 +33,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (pb.authStore.isValid) {
       pb.collection('users')
         .authRefresh()
-        .catch(() => pb.authStore.clear())
+        .catch((err: any) => {
+          if (err.status >= 400 && err.status < 500 && err.status !== 429) {
+            pb.authStore.clear()
+          }
+        })
         .finally(() => setLoading(false))
     } else {
       if (pb.authStore.record) pb.authStore.clear()
@@ -71,9 +75,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!pb.authStore.isValid) return
     try {
       await pb.collection('users').authRefresh()
-    } catch {
-      // If refresh fails, keep the existing session intact
-      // The update already succeeded server-side
+    } catch (err: any) {
+      if (err.status >= 400 && err.status < 500 && err.status !== 429) {
+        pb.authStore.clear()
+      }
     }
   }
 

@@ -1,264 +1,135 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { getProposta, type Proposta } from '@/services/propostas'
-import { getTipoProposta, type TipoProposta } from '@/services/tipos-propostas'
+import { useParams, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Loader2, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Printer, AlertCircle, ArrowLeft } from 'lucide-react'
 import { PropostaDocument } from '@/components/PropostaDocument'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
+import { getProposta } from '@/services/propostas'
+import { getTiposProposta } from '@/services/tipos-propostas'
 import pb from '@/lib/pocketbase/client'
 
 export default function PropostaPDF() {
-  const { id } = useParams<{ id: string }>()
+  const { id } = useParams()
   const navigate = useNavigate()
-  const [proposta, setProposta] = useState<Proposta | null>(null)
-  const [tipoProposta, setTipoProposta] = useState<TipoProposta | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [issuerSectorLabel, setIssuerSectorLabel] = useState('Assinatura do Representante')
+  const [data, setData] = useState<any>(null)
+  const [tipos, setTipos] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (id) {
-      getProposta(id)
-        .then(async (p) => {
-          setProposta(p)
-          if (p.tipo_proposta) {
-            try {
-              const tp = await getTipoProposta(p.tipo_proposta)
-              setTipoProposta(tp)
-            } catch {
-              // Intentionally ignored
-            }
-          }
-          setTimeout(() => {
-            window.print()
-          }, 1500)
-        })
-        .catch((err) => {
-          console.error('Erro ao carregar proposta:', err)
-          if (err?.status === 401) {
-            navigate('/login')
-            return
-          }
-          setError(
-            'Não foi possível carregar o documento da proposta. Verifique se ela existe e tente novamente.',
-          )
-        })
-    }
-  }, [id])
-
-  useEffect(() => {
-    if (!proposta?.user) return
-    const userRole = proposta.expand?.user?.role || 'user'
-    pb.collection('gerentes')
-      .getFirstListItem(`usuario = "${proposta.user}"`)
-      .then((gerente) => {
-        setIssuerSectorLabel(
-          gerente.cargo || (userRole === 'admin' ? 'Setor Comercial' : 'Representante'),
-        )
+    if (!id) return
+    Promise.all([getProposta(id), getTiposProposta()])
+      .then(([prop, tps]) => {
+        setData(prop)
+        setTipos(tps)
+        setLoading(false)
       })
       .catch(() => {
-        setIssuerSectorLabel(userRole === 'admin' ? 'Setor Comercial' : 'Representante')
+        setLoading(false)
       })
-  }, [proposta])
+  }, [id])
 
-  if (error) {
+  if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-        <div className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 max-w-md w-full text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-lg font-medium text-slate-900 mb-2">Erro ao carregar documento</h2>
-          <p className="text-slate-600 text-sm mb-6">{error}</p>
-          <div className="flex gap-3 justify-center">
-            <Button
-              onClick={() => window.location.reload()}
-              className="bg-[#337ab7] hover:bg-[#286090]"
-            >
-              Tentar Novamente
-            </Button>
-            <Button
-              onClick={() => navigate('/controle-propostas/emitir-proposta')}
-              variant="outline"
-            >
-              Voltar para a Lista
-            </Button>
-          </div>
-        </div>
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#337ab7]" />
       </div>
     )
   }
 
-  if (!proposta) {
+  if (!data) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#337ab7]"></div>
-        <p className="mt-4 text-slate-500 font-medium">Carregando documento...</p>
+      <div className="flex flex-col items-center justify-center h-screen gap-4">
+        <p className="text-slate-600">Proposta não encontrada.</p>
+        <Button onClick={() => navigate('/controle-propostas/emitir')}>Voltar para Lista</Button>
       </div>
     )
   }
 
-  const cliente = proposta.expand?.cliente
-  const clienteNome = cliente?.razao_social || cliente?.fantasia || proposta.cliente_original || '-'
-  const clienteEndereco = cliente
-    ? `${cliente.logradouro || ''}, ${cliente.numero || ''} - ${cliente.bairro || ''} - ${cliente.cidade || ''}`.replace(
-        /^[,\s-]+|[,\s-]+$/g,
-        '',
-      )
-    : ''
-  const clienteEmail = cliente?.email || ''
-  const clienteCnpj = cliente?.documento || ''
+  const selectedCliente = data.expand?.cliente
+  const selectedRep = data.expand?.representante
+  const selectedVersao = data.expand?.versao
+  const modelo = selectedVersao?.expand?.modelo
+  const gerente = data.expand?.gerente
+  const user = data.expand?.user
 
-  const representante = proposta.expand?.representante
-  const representanteNome = representante?.fantasia || proposta.representante_original || '-'
-  const representanteSigla =
-    representante?.sigla || representante?.fantasia?.substring(0, 3).toUpperCase() || '-'
+  const tipoProposta = tipos.find((t) => t.id === data.tipo_proposta) || null
 
-  const versao = proposta.expand?.versao
-  const versaoNome = versao?.nome || proposta.versao_original || '-'
-  const versaoImagemUrl = versao?.imagem_preview
-    ? pb.files.getURL(versao as any, versao.imagem_preview)
-    : null
-
-  const modelo = versao?.expand?.modelo
-  const marcaNome = modelo?.expand?.marca?.nome || '-'
-  const categoriaNome = modelo?.expand?.produto?.expand?.categoria?.nome || 'EQUIPAMENTO'
-
-  const gerenteNome = proposta.expand?.gerente?.nome || proposta.gerente_original || '-'
-
-  const representanteAssinaturaUrl = proposta.expand?.user?.assinatura
-    ? pb.files.getURL(proposta.expand.user as any, proposta.expand.user.assinatura as string)
-    : null
-  const gerenteUser = proposta.expand?.gerente?.expand?.usuario
-  const gerenteAssinaturaUrl = gerenteUser?.assinatura
-    ? pb.files.getURL(gerenteUser as any, gerenteUser.assinatura as string)
-    : null
-
-  const assinaturaClienteUrl = proposta.assinatura_cliente
-    ? pb.files.getURL(proposta as any, proposta.assinatura_cliente as string)
-    : null
-
-  const assinaturaRepresentanteUrl = proposta.assinatura_representante
-    ? pb.files.getURL(proposta as any, proposta.assinatura_representante as string)
-    : null
-
-  const acessorios = Array.isArray(proposta.acessorios_proposta)
-    ? proposta.acessorios_proposta.filter((a: any) => {
-        const estado = a?.estado || (a?.incluir ? 'incluir' : a?.exibir ? 'exibir' : 'nao_exibir')
-        return estado === 'incluir' || estado === 'exibir'
-      })
-    : []
+  const getGerenteAssinatura = () => {
+    const gUser = gerente?.expand?.usuario
+    if (gUser?.assinatura) {
+      return pb.files.getURL(gUser, gUser.assinatura)
+    }
+    return null
+  }
 
   return (
-    <div className="min-h-screen bg-slate-100 print:bg-white flex justify-center pt-20 pb-8 print:py-0">
-      <style>{`
-        @media print {
-          @page { size: A4; margin: 12mm 15mm 28mm 15mm; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
-          .print-break-inside-avoid { break-inside: avoid; }
-          .print-break-before { page-break-before: always; }
-          .no-print { display: none !important; }
-        }
-      `}</style>
-
-      <div className="fixed top-0 left-0 right-0 no-print z-50 bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-4">
-          <Button
-            onClick={() =>
-              navigate(
-                proposta.modelo_licitacao
-                  ? '/controle-propostas/dashboard'
-                  : '/controle-propostas/emitir-proposta',
-              )
-            }
-            variant="outline"
-            size="sm"
-            className="gap-2 shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" /> Voltar para a Lista
-          </Button>
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to="/dashboard">Home</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link
-                    to={
-                      proposta.modelo_licitacao
-                        ? '/controle-propostas/dashboard'
-                        : '/controle-propostas/emitir-proposta'
-                    }
-                  >
-                    {proposta.modelo_licitacao ? 'Dashboard de Licitações' : 'Propostas'}
-                  </Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>{proposta.numero_proposta}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
+    <div className="min-h-screen bg-slate-100 flex flex-col items-center py-8 relative">
+      <div className="w-full max-w-5xl flex justify-between items-center mb-6 px-4 print:hidden">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/controle-propostas/emitir')}
+          className="gap-2 bg-white text-slate-700 hover:text-slate-900 shadow-sm transition-all"
+        >
+          <ArrowLeft className="w-4 h-4" /> Voltar para a Lista de Propostas
+        </Button>
         <Button
           onClick={() => window.print()}
-          className="bg-[#337ab7] hover:bg-[#286090] shadow-md gap-2 shrink-0"
-          size="sm"
+          className="bg-[#337ab7] hover:bg-[#286090] text-white gap-2 shadow-sm"
         >
-          <Printer className="w-4 h-4" /> Imprimir / Salvar PDF
+          <Printer className="w-4 h-4" /> Imprimir PDF
         </Button>
       </div>
-
-      <PropostaDocument
-        proposta={proposta}
-        tipoProposta={tipoProposta}
-        clienteNome={clienteNome}
-        clienteEndereco={clienteEndereco}
-        clienteEmail={clienteEmail}
-        clienteCnpj={clienteCnpj}
-        representanteNome={representanteNome}
-        representanteSigla={representanteSigla}
-        versaoNome={versaoNome}
-        versaoImagemUrl={versaoImagemUrl}
-        categoriaNome={categoriaNome}
-        marcaNome={marcaNome}
-        gerenteNome={gerenteNome}
-        acessorios={acessorios}
-        acessoriosStandards={versao?.acessorios_standards || ''}
-        caracteristicasConstrutivas={versao?.caracteristicas_construtivas || ''}
-        especificacoesTecnicas={versao?.especificacoes_tecnicas || ''}
-        assinaturaRepresentanteUrl={assinaturaRepresentanteUrl}
-        representanteAssinaturaUrl={representanteAssinaturaUrl}
-        gerenteAssinaturaUrl={gerenteAssinaturaUrl}
-        assinaturaClienteUrl={assinaturaClienteUrl}
-        issuerSectorLabel={issuerSectorLabel}
-        issuerName={proposta.expand?.user?.name}
-        secoesAdicionais={
-          Array.isArray(proposta.secoes_adicionais)
-            ? (proposta.secoes_adicionais as Array<{
-                titulo: string
-                descricao: string
-                imagem?: string
-              }>)
-            : proposta.secoes_adicionais?.custom_sections
-              ? (proposta.secoes_adicionais.custom_sections as Array<{
-                  titulo: string
-                  descricao: string
-                  imagem?: string
-                }>)
-              : undefined
-        }
-      />
+      <div className="bg-white shadow-xl overflow-hidden w-fit print:shadow-none print:w-full">
+        <PropostaDocument
+          proposta={data}
+          tipoProposta={tipoProposta}
+          clienteNome={
+            selectedCliente?.fantasia ||
+            selectedCliente?.razao_social ||
+            data.cliente_original ||
+            '-'
+          }
+          clienteEndereco={
+            selectedCliente
+              ? `${selectedCliente.logradouro || ''}, ${selectedCliente.numero || ''} - ${selectedCliente.bairro || ''} - ${selectedCliente.cidade || ''}`.replace(
+                  /^[,\s-]+|[,\s-]+$/g,
+                  '',
+                )
+              : ''
+          }
+          clienteEmail={selectedCliente?.email || ''}
+          clienteCnpj={selectedCliente?.documento || ''}
+          representanteNome={selectedRep?.fantasia || data.representante_original || '-'}
+          representanteSigla={
+            selectedRep?.sigla || selectedRep?.fantasia?.substring(0, 3).toUpperCase() || '-'
+          }
+          versaoNome={selectedVersao?.nome || data.versao_original || '-'}
+          versaoImagemUrl={
+            selectedVersao?.imagem_preview
+              ? pb.files.getURL(selectedVersao, selectedVersao.imagem_preview)
+              : null
+          }
+          categoriaNome={modelo?.expand?.produto?.expand?.categoria?.nome || 'EQUIPAMENTO'}
+          marcaNome={modelo?.expand?.marca?.nome || '-'}
+          gerenteNome={gerente?.nome || data.gerente_original || '-'}
+          acessorios={(data.acessorios_proposta || []).filter(
+            (a: any) => a.estado === 'incluir' || a.estado === 'exibir',
+          )}
+          acessoriosStandards={selectedVersao?.acessorios_standards || ''}
+          caracteristicasConstrutivas={selectedVersao?.caracteristicas_construtivas || ''}
+          especificacoesTecnicas={selectedVersao?.especificacoes_tecnicas || ''}
+          assinaturaRepresentanteUrl={
+            data.assinatura_representante
+              ? pb.files.getURL(data, data.assinatura_representante)
+              : null
+          }
+          representanteAssinaturaUrl={
+            user?.assinatura ? pb.files.getURL(user, user.assinatura) : null
+          }
+          issuerName={user?.name}
+          issuerSectorLabel={user?.setor || 'Comercial'}
+          gerenteAssinaturaUrl={getGerenteAssinatura()}
+        />
+      </div>
     </div>
   )
 }
