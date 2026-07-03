@@ -1,14 +1,23 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getProposta, type Proposta } from '@/services/propostas'
 import { getTipoProposta, type TipoProposta } from '@/services/tipos-propostas'
 import { Button } from '@/components/ui/button'
-import { Printer, AlertCircle } from 'lucide-react'
+import { Printer, AlertCircle, ArrowLeft } from 'lucide-react'
 import { PropostaDocument } from '@/components/PropostaDocument'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 import pb from '@/lib/pocketbase/client'
 
 export default function PropostaPDF() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [proposta, setProposta] = useState<Proposta | null>(null)
   const [tipoProposta, setTipoProposta] = useState<TipoProposta | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -33,6 +42,10 @@ export default function PropostaPDF() {
         })
         .catch((err) => {
           console.error('Erro ao carregar proposta:', err)
+          if (err?.status === 401) {
+            navigate('/login')
+            return
+          }
           setError(
             'Não foi possível carregar o documento da proposta. Verifique se ela existe e tente novamente.',
           )
@@ -62,12 +75,20 @@ export default function PropostaPDF() {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-lg font-medium text-slate-900 mb-2">Erro ao carregar documento</h2>
           <p className="text-slate-600 text-sm mb-6">{error}</p>
-          <Button
-            onClick={() => window.location.reload()}
-            className="bg-[#337ab7] hover:bg-[#286090]"
-          >
-            Tentar Novamente
-          </Button>
+          <div className="flex gap-3 justify-center">
+            <Button
+              onClick={() => window.location.reload()}
+              className="bg-[#337ab7] hover:bg-[#286090]"
+            >
+              Tentar Novamente
+            </Button>
+            <Button
+              onClick={() => navigate('/controle-propostas/emitir-proposta')}
+              variant="outline"
+            >
+              Voltar para a Lista
+            </Button>
+          </div>
         </div>
       </div>
     )
@@ -134,7 +155,7 @@ export default function PropostaPDF() {
     : []
 
   return (
-    <div className="min-h-screen bg-slate-100 print:bg-white flex justify-center py-8 print:py-0">
+    <div className="min-h-screen bg-slate-100 print:bg-white flex justify-center pt-20 pb-8 print:py-0">
       <style>{`
         @media print {
           @page { size: A4; margin: 12mm 15mm 28mm 15mm; }
@@ -145,10 +166,54 @@ export default function PropostaPDF() {
         }
       `}</style>
 
-      <div className="fixed top-4 right-4 no-print z-50">
+      <div className="fixed top-0 left-0 right-0 no-print z-50 bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={() =>
+              navigate(
+                proposta.modelo_licitacao
+                  ? '/controle-propostas/dashboard'
+                  : '/controle-propostas/emitir-proposta',
+              )
+            }
+            variant="outline"
+            size="sm"
+            className="gap-2 shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4" /> Voltar para a Lista
+          </Button>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/dashboard">Home</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link
+                    to={
+                      proposta.modelo_licitacao
+                        ? '/controle-propostas/dashboard'
+                        : '/controle-propostas/emitir-proposta'
+                    }
+                  >
+                    {proposta.modelo_licitacao ? 'Dashboard de Licitações' : 'Propostas'}
+                  </Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{proposta.numero_proposta}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
         <Button
           onClick={() => window.print()}
-          className="bg-[#337ab7] hover:bg-[#286090] shadow-md gap-2"
+          className="bg-[#337ab7] hover:bg-[#286090] shadow-md gap-2 shrink-0"
+          size="sm"
         >
           <Printer className="w-4 h-4" /> Imprimir / Salvar PDF
         </Button>

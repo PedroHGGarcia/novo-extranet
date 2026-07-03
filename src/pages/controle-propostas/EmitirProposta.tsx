@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import {
   Pencil,
@@ -108,6 +109,7 @@ const CurrencyInput = ({
 export default function EmitirProposta() {
   const { toast } = useToast()
   const { user, refreshUser } = useAuth()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('registros')
   const [selectedProposta, setSelectedProposta] = useState<Proposta | null>(null)
 
@@ -944,6 +946,7 @@ export default function EmitirProposta() {
         setSignatureConfirmed(true)
         toast({ title: 'Proposta criada com sucesso' })
         loadData()
+        navigate(`/controle-propostas/proposta-pdf/${created.id}`)
       }
       setIsPreviewModalOpen(false)
     } catch (e) {

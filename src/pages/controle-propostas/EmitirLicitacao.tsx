@@ -122,6 +122,11 @@ export default function EmitirLicitacao() {
               <Printer className="h-4 w-4" /> Visualizar / Imprimir PDF
             </Button>
           </a>
+          <Link to="/controle-propostas/dashboard">
+            <Button variant="outline" className="gap-2">
+              <ArrowLeft className="h-4 w-4" /> Voltar para a Lista
+            </Button>
+          </Link>
           <Button variant="outline" onClick={lic.resetForm} className="gap-2">
             <FileText className="h-4 w-4" /> Nova Proposta
           </Button>
