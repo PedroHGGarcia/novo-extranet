@@ -4,12 +4,9 @@ import {
   Monitor,
   Map,
   Folder,
-  FolderKanban,
   CalendarDays,
   FileText,
   Boxes,
-  BarChart3,
-  LineChart,
   UserCircle,
   ChevronLeft,
   Globe,
@@ -28,29 +25,19 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
 } from '@/components/ui/sidebar'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { hasMenuAccess } from '@/lib/menu-access'
+import { SidebarSubMenu, type SubMenuItem } from '@/components/SidebarSubMenu'
 
-interface SubItem {
-  title: string
-  url: string
-  icon?: any
-  menuKey?: string
-  fullTitle?: string
-}
 interface MenuItem {
   title: string
   url: string
   icon: any
-  sub: SubItem[]
+  sub: SubMenuItem[]
   menuKey?: string
   adminOnly?: boolean
   biddingOnly?: boolean
@@ -76,24 +63,6 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    title: 'Emitir Licitação',
-    url: '/controle-propostas/emitir',
-    icon: FolderKanban,
-    biddingOnly: true,
-    fullTitle: 'Emitir Proposta de Licitação',
-    sub: [
-      {
-        title: 'Emitir Proposta',
-        url: '/controle-propostas/emitir',
-        fullTitle: 'Emitir Proposta de Licitação',
-      },
-      {
-        title: 'Dashboard de Licitações',
-        url: '/controle-propostas/dashboard',
-      },
-    ],
-  },
-  {
     title: 'Controle de Eventos',
     url: '/eventos',
     icon: CalendarDays,
@@ -110,6 +79,20 @@ const menuItems: MenuItem[] = [
         title: 'Emitir Proposta',
         url: '/controle-propostas/emitir-proposta',
         menuKey: 'emitir_proposta',
+      },
+      {
+        title: 'Emitir Licitação',
+        url: '/controle-propostas/emitir',
+        fullTitle: 'Emitir Proposta de Licitação',
+        biddingOnly: true,
+        sub: [
+          {
+            title: 'Dashboard Licitação',
+            url: '/controle-propostas/dashboard',
+            fullTitle: 'Dashboard de Licitações',
+            biddingOnly: true,
+          },
+        ],
       },
       {
         title: 'Propostas Avançadas',
@@ -160,14 +143,33 @@ const menuItems: MenuItem[] = [
 const btnCls =
   'h-11 rounded-none text-white/80 hover:bg-white/5 hover:text-white active:bg-white/10 data-[active=true]:bg-white/5 data-[active=true]:text-white data-[active=true]:font-semibold transition-colors duration-200'
 
+function isPathActive(pathname: string, url: string): boolean {
+  return pathname === url || pathname.startsWith(url + '/')
+}
+
+function hasActiveDescendant(items: SubMenuItem[] | undefined, pathname: string): boolean {
+  if (!items || items.length === 0) return false
+  return items.some((s) => isPathActive(pathname, s.url) || hasActiveDescendant(s.sub, pathname))
+}
+
 export function AppSidebar() {
   const location = useLocation()
   const { user, signOut } = useAuth()
 
-  const canSeeSub = (s: SubItem): boolean => {
-    if (!s.menuKey) return true
-    return hasMenuAccess(user, s.menuKey)
+  const canSeeSub = (s: SubMenuItem): boolean => {
+    if (s.biddingOnly && user?.role !== 'admin' && user?.can_issue_bidding_proposals !== true) {
+      return false
+    }
+    if (s.sub && s.sub.length > 0) return s.sub.some(canSeeSub)
+    if (s.menuKey) return hasMenuAccess(user, s.menuKey)
+    return true
   }
+
+  const filterSubItems = (items: SubMenuItem[]): SubMenuItem[] =>
+    items.filter(canSeeSub).map((item) => ({
+      ...item,
+      sub: item.sub ? filterSubItems(item.sub) : undefined,
+    }))
 
   const filtered = menuItems
     .filter((item) => {
@@ -179,7 +181,7 @@ export function AppSidebar() {
       if (item.menuKey) return hasMenuAccess(user, item.menuKey)
       return true
     })
-    .map((item) => ({ ...item, sub: item.sub.filter(canSeeSub) }))
+    .map((item) => ({ ...item, sub: filterSubItems(item.sub) }))
 
   return (
     <Sidebar className="border-r-0 bg-brand-sidebar dark:bg-sidebar text-white">
@@ -196,10 +198,8 @@ export function AppSidebar() {
         <SidebarMenu>
           {filtered.map((item) => {
             const isActive =
-              location.pathname === item.url ||
-              item.sub.some(
-                (s) => location.pathname === s.url || location.pathname.startsWith(s.url + '/'),
-              )
+              isPathActive(location.pathname, item.url) ||
+              hasActiveDescendant(item.sub, location.pathname)
             return (
               <Collapsible
                 key={item.title}
@@ -260,52 +260,7 @@ export function AppSidebar() {
                   )}
                   {item.sub.length > 0 && (
                     <CollapsibleContent>
-                      <SidebarMenuSub className="border-l-transparent pr-0 mr-0 gap-1 ml-5">
-                        {item.sub.map((s) => {
-                          const isSubActive =
-                            location.pathname === s.url || location.pathname.startsWith(s.url + '/')
-                          const subBtn = (
-                            <SidebarMenuSubButton
-                              asChild
-                              className={cn(
-                                'text-white/70 hover:bg-white/5 hover:text-white flex items-center gap-3 py-2 px-4 rounded-none h-10',
-                                isSubActive &&
-                                  'text-white font-semibold border-l-4 border-brand-green',
-                              )}
-                            >
-                              <Link
-                                to={s.url}
-                                draggable={false}
-                                className="select-none flex items-center gap-3 text-sm overflow-hidden min-w-0"
-                              >
-                                {s.icon && (
-                                  <s.icon
-                                    strokeWidth={1.75}
-                                    className="h-4 w-4 shrink-0"
-                                    aria-hidden
-                                    draggable={false}
-                                  />
-                                )}
-                                <span className="truncate">{s.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          )
-                          return (
-                            <SidebarMenuSubItem key={s.title}>
-                              {s.fullTitle ? (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>{subBtn}</TooltipTrigger>
-                                  <TooltipContent side="right" className="max-w-[220px]">
-                                    {s.fullTitle}
-                                  </TooltipContent>
-                                </Tooltip>
-                              ) : (
-                                subBtn
-                              )}
-                            </SidebarMenuSubItem>
-                          )
-                        })}
-                      </SidebarMenuSub>
+                      <SidebarSubMenu items={item.sub} />
                     </CollapsibleContent>
                   )}
                 </SidebarMenuItem>
