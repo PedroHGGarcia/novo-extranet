@@ -348,10 +348,7 @@ export default function EmitirProposta() {
       .getFullList({ sort: 'nome', expand: 'usuario' })
       .then(setGerentes)
       .catch(() => {})
-    pb.collection('clientes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setClientes)
-      .catch(() => {})
+=======
     pb.collection('representantes')
       .getFullList({ sort: 'fantasia' })
       .then(setRepresentantes)
@@ -425,6 +422,15 @@ export default function EmitirProposta() {
       }
     }
   }, [selectedProposta, activeTab])
+
+  useEffect(() => {
+    if (selectedProposta?.cliente) {
+      pb.collection('clientes')
+        .getOne(selectedProposta.cliente)
+        .then((c) => setClientes((prev) => prev.some((p) => p.id === c.id) ? prev : [...prev, c]))
+        .catch(() => {})
+    }
+  }, [selectedProposta])
 
   const loadAcessorios = async (versaoId?: string) => {
     if (!versaoId) {
@@ -1038,6 +1044,11 @@ export default function EmitirProposta() {
       filter: `documento ~ "${query}" || razao_social ~ "${query}" || fantasia ~ "${query}"`,
       sort: 'fantasia',
     })
+    setClientes((prev) => {
+      const ids = new Set(prev.map((c) => c.id))
+      const fresh = res.items.filter((c) => !ids.has(c.id))
+      return fresh.length ? [...prev, ...fresh] : prev
+    })
     return res.items
   }, [])
 
@@ -1073,6 +1084,7 @@ export default function EmitirProposta() {
       pb.collection('clientes')
         .getOne(clienteId)
         .then((c) => {
+          setClientes((prev) => prev.some((p) => p.id === c.id) ? prev : [...prev, c])
           setFormData((prev) => ({
             ...prev,
             contato: c.contato || '',
