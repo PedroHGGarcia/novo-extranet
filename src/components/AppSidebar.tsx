@@ -76,11 +76,22 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    title: 'Dashboard de Licitações',
-    url: '/controle-propostas/dashboard',
+    title: 'Emitir Licitação',
+    url: '/controle-propostas/emitir',
     icon: FolderKanban,
     biddingOnly: true,
-    sub: [],
+    fullTitle: 'Emitir Proposta de Licitação',
+    sub: [
+      {
+        title: 'Emitir Proposta',
+        url: '/controle-propostas/emitir',
+        fullTitle: 'Emitir Proposta de Licitação',
+      },
+      {
+        title: 'Dashboard de Licitações',
+        url: '/controle-propostas/dashboard',
+      },
+    ],
   },
   {
     title: 'Controle de Eventos',
@@ -99,12 +110,6 @@ const menuItems: MenuItem[] = [
         title: 'Emitir Proposta',
         url: '/controle-propostas/emitir-proposta',
         menuKey: 'emitir_proposta',
-      },
-      {
-        title: 'Emitir Licitação',
-        url: '/controle-propostas/emitir',
-        menuKey: 'emitir_licitacao',
-        fullTitle: 'Emitir Proposta de Licitação',
       },
       {
         title: 'Propostas Avançadas',
@@ -160,12 +165,6 @@ export function AppSidebar() {
   const { user, signOut } = useAuth()
 
   const canSeeSub = (s: SubItem): boolean => {
-    if (s.menuKey === 'emitir_licitacao') {
-      return (
-        (user?.role === 'admin' || user?.can_issue_bidding_proposals === true) &&
-        hasMenuAccess(user, 'emitir_licitacao')
-      )
-    }
     if (!s.menuKey) return true
     return hasMenuAccess(user, s.menuKey)
   }
