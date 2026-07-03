@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { format } from 'date-fns'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/components/ui/use-toast'
-import { getTiposProposta, type TipoProposta } from '@/services/tipos-propostas'
 import pb from '@/lib/pocketbase/client'
 import { getErrorMessage } from '@/lib/pocketbase/errors'
 import type { PriceItem } from '@/hooks/use-memoria-calculo'
@@ -15,14 +14,12 @@ export function useLicitacao() {
   const [clientes, setClientes] = useState<any[]>([])
   const [representantes, setRepresentantes] = useState<any[]>([])
   const [versoes, setVersoes] = useState<any[]>([])
-  const [tiposProposta, setTiposProposta] = useState<TipoProposta[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [signatureBlob, setSignatureBlob] = useState<Blob | null>(null)
   const [signatureConfirmed, setSignatureConfirmed] = useState(false)
   const [createdId, setCreatedId] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [templateAppliedFields, setTemplateAppliedFields] = useState<Set<string>>(new Set())
 
   const [formData, setFormData] = useState<Record<string, any>>({
     moeda: 'USD',
@@ -44,7 +41,6 @@ export function useLicitacao() {
 
   useEffect(() => {
     Promise.all([
-      getTiposProposta().catch(() => []),
       pb
         .collection('gerentes')
         .getFullList({ sort: 'nome', expand: 'usuario' })
@@ -61,8 +57,7 @@ export function useLicitacao() {
         .collection('versoes')
         .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
         .catch(() => []),
-    ]).then(([tipos, ger, cli, rep, ver]) => {
-      setTiposProposta(tipos)
+    ]).then(([ger, cli, rep, ver]) => {
       setGerentes(ger)
       setClientes(cli)
       setRepresentantes(rep)
@@ -120,9 +115,7 @@ export function useLicitacao() {
       valor_atual: final,
       valor_final: final,
       moeda,
-      tipo_proposta: '',
     }))
-    setTemplateAppliedFields(new Set())
   }
 
   const handleClienteChange = (id: string) => {
@@ -147,47 +140,11 @@ export function useLicitacao() {
     }))
   }
 
-  const handleTipoPropostaChange = (tipoId: string) => {
-    const t = tiposProposta.find((x) => x.id === tipoId)
-    if (!t) {
-      setFormData((prev) => ({ ...prev, tipo_proposta: tipoId }))
-      setTemplateAppliedFields(new Set())
-      return
-    }
-
-    const mappings: Array<{ templateField: string; formField: string }> = [
-      { templateField: 'prazo_entrega', formField: 'prazo_entrega' },
-      { templateField: 'condicoes_pagamento', formField: 'condicoes_pagamento' },
-      { templateField: 'garantia', formField: 'cobertura_garantia' },
-      { templateField: 'assistencia_tecnica', formField: 'assistencia_tecnica_detalhada' },
-      { templateField: 'treinamento_tecnico', formField: 'treinamento_tecnico' },
-      { templateField: 'transporte_seguro', formField: 'transporte_seguro' },
-      { templateField: 'validade_oferta', formField: 'validade_oferta' },
-      { templateField: 'imposto_ipi', formField: 'imposto_ipi' },
-      { templateField: 'imposto_icms', formField: 'imposto_icms' },
-    ]
-
-    const updates: Record<string, any> = { tipo_proposta: tipoId }
-    const applied = new Set<string>()
-
-    for (const { templateField, formField } of mappings) {
-      const value = (t as any)[templateField]
-      if (value !== undefined && value !== null && value !== '') {
-        updates[formField] = value
-        applied.add(formField)
-      }
-    }
-
-    setFormData((prev) => ({ ...prev, ...updates }))
-    setTemplateAppliedFields(applied)
-  }
-
   const handleSubmit = async () => {
     const errs: Record<string, string> = {}
     if (!formData.cliente) errs.cliente = 'Cliente é obrigatório'
     if (!formData.versao) errs.versao = 'Versão é obrigatória'
     if (!formData.representante) errs.representante = 'Representante é obrigatório'
-    if (!formData.tipo_proposta) errs.tipo_proposta = 'Tipo de Proposta é obrigatório'
     for (const [i, s] of customSections.entries()) {
       if (!s.titulo.trim()) errs[`secao_${i}_titulo`] = 'Título é obrigatório'
     }
@@ -299,7 +256,6 @@ export function useLicitacao() {
     setSignatureBlob(null)
     setSignatureConfirmed(false)
     setErrors({})
-    setTemplateAppliedFields(new Set())
     setCustomSections([])
     setPriceItems([])
     setMemoriaObservacoes({})
@@ -329,7 +285,6 @@ export function useLicitacao() {
     clientes,
     representantes,
     versoes,
-    tiposProposta,
     gerentes,
     signatureConfirmed,
     signatureBlob,
@@ -339,8 +294,6 @@ export function useLicitacao() {
     handleVersaoChange,
     handleClienteChange,
     handleDiscountChange,
-    handleTipoPropostaChange,
-    templateAppliedFields,
     handleSubmit,
     resetForm,
     searchClientes,
