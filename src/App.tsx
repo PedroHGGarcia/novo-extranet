@@ -16,6 +16,7 @@ import PropostasAvancadas from './pages/controle-propostas/PropostasAvancadas'
 import TiposPropostas from './pages/controle-propostas/TiposPropostas'
 import PropostaPDF from './pages/controle-propostas/PropostaPDF'
 import DashboardPropostas from './pages/controle-propostas/DashboardPropostas'
+import DashboardLicitacoes from './pages/controle-propostas/DashboardLicitacoes'
 import Produtos from './pages/Produtos'
 import Categorias from './pages/produtos/Categorias'
 import Marcas from './pages/produtos/Marcas'
@@ -77,6 +78,12 @@ const App = () => (
                     element={<Navigate to="/controle-propostas/dashboard" replace />}
                   />
                   <Route path="/controle-propostas/dashboard" element={<DashboardPropostas />} />
+                  <Route element={<BiddingPermissionRoute />}>
+                    <Route
+                      path="/controle-propostas/dashboard-licitacoes"
+                      element={<DashboardLicitacoes />}
+                    />
+                  </Route>
                   <Route
                     path="/controle-propostas/propostas-excluidas"
                     element={<Navigate to="/controle-propostas/dashboard" replace />}

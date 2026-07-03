@@ -4,9 +4,11 @@ import {
   Monitor,
   Map,
   Folder,
+  FolderKanban,
   CalendarDays,
   FileText,
   Boxes,
+  BarChart3,
   LineChart,
   UserCircle,
   ChevronLeft,
@@ -49,6 +51,7 @@ interface MenuItem {
   sub: SubItem[]
   menuKey?: string
   adminOnly?: boolean
+  biddingOnly?: boolean
 }
 
 const menuItems: MenuItem[] = [
@@ -68,6 +71,13 @@ const menuItems: MenuItem[] = [
         menuKey: 'representantes',
       },
     ],
+  },
+  {
+    title: 'Dashboard de Licitações',
+    url: '/controle-propostas/dashboard-licitacoes',
+    icon: FolderKanban,
+    biddingOnly: true,
+    sub: [],
   },
   {
     title: 'Controle de Eventos',
@@ -158,6 +168,9 @@ export function AppSidebar() {
 
   const filtered = menuItems
     .filter((item) => {
+      if (item.biddingOnly) {
+        return user?.role === 'admin' || user?.can_issue_bidding_proposals === true
+      }
       if (item.adminOnly && user?.role !== 'admin') return false
       if (item.sub.length > 0) return item.sub.some(canSeeSub)
       if (item.menuKey) return hasMenuAccess(user, item.menuKey)
