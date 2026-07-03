@@ -270,7 +270,15 @@ export default function EmitirProposta() {
     return () => {
       isMounted = false
     }
-  }, [])
+    pb.collection('representantes')
+      .getFullList({ sort: 'fantasia' })
+      .then(setRepresentantes)
+      .catch(() => {})
+    pb.collection('versoes')
+      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
+      .then(setVersoes)
+      .catch(() => {})
+  }, []))
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300)
