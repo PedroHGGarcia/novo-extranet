@@ -82,6 +82,7 @@ export default function Usuarios() {
     password: '',
     role: 'user' as 'admin' | 'user',
     can_issue_bidding_proposals: false,
+    setor: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
@@ -134,6 +135,7 @@ export default function Usuarios() {
         password: '',
         role: u.role || 'user',
         can_issue_bidding_proposals: u.can_issue_bidding_proposals || false,
+        setor: u.setor || '',
       })
     } else {
       setEditingUser(null)
@@ -144,6 +146,7 @@ export default function Usuarios() {
         password: '',
         role: 'user',
         can_issue_bidding_proposals: false,
+        setor: '',
       })
     }
     setErrors({})
@@ -186,6 +189,7 @@ export default function Usuarios() {
         email: formData.email.trim(),
         role: formData.role,
         can_issue_bidding_proposals: formData.can_issue_bidding_proposals,
+        setor: formData.setor.trim(),
       }
 
       if (formData.password) {
@@ -300,6 +304,7 @@ export default function Usuarios() {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Setor</TableHead>
                 <TableHead>Perfil</TableHead>
                 <TableHead>Emitir Licitação</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -308,13 +313,13 @@ export default function Usuarios() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                     Carregando...
                   </TableCell>
                 </TableRow>
               ) : filteredUsuarios.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                     Nenhum usuário encontrado.
                   </TableCell>
                 </TableRow>
@@ -323,6 +328,7 @@ export default function Usuarios() {
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">{u.name || '-'}</TableCell>
                     <TableCell>{u.email}</TableCell>
+                    <TableCell>{u.setor || '-'}</TableCell>
                     <TableCell>
                       {u.role === 'admin' ? (
                         <Badge variant="default" className="bg-brand-green hover:bg-brand-green/80">
@@ -430,6 +436,16 @@ export default function Usuarios() {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
               {errors.password && <span className="text-xs text-red-500">{errors.password}</span>}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="setor">Setor</Label>
+              <Input
+                id="setor"
+                value={formData.setor}
+                onChange={(e) => setFormData({ ...formData, setor: e.target.value })}
+                placeholder="Ex: Administrativo, Vendas, Técnico..."
+              />
             </div>
 
             <div className="grid gap-2">

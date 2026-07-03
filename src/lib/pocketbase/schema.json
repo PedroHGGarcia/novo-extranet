@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-03T15:45:04.524Z",
+  "generatedAt": "2026-07-03T15:56:56.746Z",
   "collections": [
     {
       "name": "users",
@@ -60,6 +60,12 @@
         {
           "name": "menu_access",
           "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "setor",
+          "type": "text",
           "required": false,
           "system": false
         }

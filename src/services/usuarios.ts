@@ -7,6 +7,7 @@ export interface Usuario {
   role: 'admin' | 'user'
   can_issue_bidding_proposals?: boolean
   menu_access?: Record<string, boolean>
+  setor?: string
   created: string
   updated: string
 }
