@@ -131,7 +131,7 @@ export default function DashboardLicitacoes() {
             Gerencie suas propostas de licitação em um só lugar.
           </p>
         </div>
-        <Link to="/controle-propostas/emitir-licitacao">
+        <Link to="/controle-propostas/emitir">
           <Button className="bg-[#337ab7] hover:bg-[#286090] text-white gap-2">
             <Plus className="h-4 w-4" /> Nova Proposta de Licitação
           </Button>
@@ -228,7 +228,7 @@ export default function DashboardLicitacoes() {
                   ? 'Tente ajustar os filtros de busca para encontrar suas propostas.'
                   : 'Você ainda não criou nenhuma proposta de licitação. Comece criando a primeira!'}
               </p>
-              <Link to="/controle-propostas/emitir-licitacao">
+              <Link to="/controle-propostas/emitir">
                 <Button className="bg-[#337ab7] hover:bg-[#286090] text-white gap-2">
                   <Plus className="h-4 w-4" /> Criar Nova Proposta de Licitação
                 </Button>

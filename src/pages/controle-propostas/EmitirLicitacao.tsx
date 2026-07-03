@@ -91,7 +91,7 @@ export default function EmitirLicitacao() {
           Você não tem permissão para emitir propostas de licitação. Solicite ao administrador a
           ativação da permissão específica.
         </p>
-        <Link to="/controle-propostas/emitir-proposta">
+        <Link to="/controle-propostas/dashboard">
           <Button variant="outline" className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Button>
@@ -131,14 +131,9 @@ export default function EmitirLicitacao() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7rem)] bg-white rounded-md shadow-sm border border-slate-200 overflow-hidden">
-      <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-4 shrink-0">
-        <Link to="/controle-propostas/emitir-proposta">
-          <Button variant="ghost" size="sm" className="gap-2 text-slate-500">
-            <ArrowLeft className="h-4 w-4" /> Voltar
-          </Button>
-        </Link>
-        <h1 className="text-lg font-normal text-[#337ab7] flex items-center gap-2">
+    <div className="flex flex-col flex-1 bg-white rounded-md shadow-sm border border-slate-200 overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-slate-200 px-6 py-3 shrink-0">
+        <h1 className="text-base font-normal text-[#337ab7] flex items-center gap-2">
           <FileText className="h-5 w-5" /> Emitir Proposta de Licitação
         </h1>
       </div>

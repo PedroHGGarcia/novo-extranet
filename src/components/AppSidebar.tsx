@@ -77,7 +77,7 @@ const menuItems: MenuItem[] = [
   },
   {
     title: 'Dashboard de Licitações',
-    url: '/controle-propostas/dashboard-licitacoes',
+    url: '/controle-propostas/dashboard',
     icon: FolderKanban,
     biddingOnly: true,
     sub: [],
@@ -91,10 +91,10 @@ const menuItems: MenuItem[] = [
   },
   {
     title: 'Controle de Propostas',
-    url: '/controle-propostas',
+    url: '/controle-propostas/dashboard-geral',
     icon: FileText,
     sub: [
-      { title: 'Dashboard', url: '/controle-propostas/dashboard', menuKey: 'propostas' },
+      { title: 'Dashboard', url: '/controle-propostas/dashboard-geral', menuKey: 'propostas' },
       {
         title: 'Emitir Proposta',
         url: '/controle-propostas/emitir-proposta',
@@ -102,7 +102,7 @@ const menuItems: MenuItem[] = [
       },
       {
         title: 'Emitir Licitação',
-        url: '/controle-propostas/emitir-licitacao',
+        url: '/controle-propostas/emitir',
         menuKey: 'emitir_licitacao',
         fullTitle: 'Emitir Proposta de Licitação',
       },
@@ -198,7 +198,9 @@ export function AppSidebar() {
           {filtered.map((item) => {
             const isActive =
               location.pathname === item.url ||
-              item.sub.some((s) => location.pathname.startsWith(s.url))
+              item.sub.some(
+                (s) => location.pathname === s.url || location.pathname.startsWith(s.url + '/'),
+              )
             return (
               <Collapsible
                 key={item.title}
@@ -261,7 +263,8 @@ export function AppSidebar() {
                     <CollapsibleContent>
                       <SidebarMenuSub className="border-l-transparent pr-0 mr-0 gap-1 ml-5">
                         {item.sub.map((s) => {
-                          const isSubActive = location.pathname.startsWith(s.url)
+                          const isSubActive =
+                            location.pathname === s.url || location.pathname.startsWith(s.url + '/')
                           const subBtn = (
                             <SidebarMenuSubButton
                               asChild

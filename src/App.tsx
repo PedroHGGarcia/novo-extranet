@@ -11,12 +11,11 @@ import Gerentes from './pages/Gerentes'
 import Clientes from './pages/ClientesWrapper'
 import Eventos from './pages/Eventos'
 import EmitirProposta from './pages/controle-propostas/EmitirProposta'
-import EmitirLicitacao from './pages/controle-propostas/EmitirLicitacao'
+import ControlePropostas from './pages/controle-propostas/ControlePropostas'
 import PropostasAvancadas from './pages/controle-propostas/PropostasAvancadas'
 import TiposPropostas from './pages/controle-propostas/TiposPropostas'
 import PropostaPDF from './pages/controle-propostas/PropostaPDF'
 import DashboardPropostas from './pages/controle-propostas/DashboardPropostas'
-import DashboardLicitacoes from './pages/controle-propostas/DashboardLicitacoes'
 import Produtos from './pages/Produtos'
 import Categorias from './pages/produtos/Categorias'
 import Marcas from './pages/produtos/Marcas'
@@ -73,32 +72,29 @@ const App = () => (
                     element={<Navigate to="/dashboard" replace />}
                   />
                   <Route path="/eventos" element={<Eventos />} />
-                  <Route
-                    path="/controle-propostas"
-                    element={<Navigate to="/controle-propostas/dashboard" replace />}
-                  />
-                  <Route path="/controle-propostas/dashboard" element={<DashboardPropostas />} />
                   <Route element={<BiddingPermissionRoute />}>
-                    <Route
-                      path="/controle-propostas/dashboard-licitacoes"
-                      element={<DashboardLicitacoes />}
-                    />
+                    <Route path="/controle-propostas" element={<ControlePropostas />}>
+                      <Route
+                        index
+                        element={<Navigate to="/controle-propostas/dashboard" replace />}
+                      />
+                      <Route path="emitir" />
+                      <Route path="dashboard" />
+                    </Route>
                   </Route>
                   <Route
-                    path="/controle-propostas/propostas-excluidas"
-                    element={<Navigate to="/controle-propostas/dashboard" replace />}
+                    path="/controle-propostas/dashboard-geral"
+                    element={<DashboardPropostas />}
                   />
                   <Route
-                    path="/controle-propostas/assinaturas"
+                    path="/controle-propostas/emitir-licitacao"
+                    element={<Navigate to="/controle-propostas/emitir" replace />}
+                  />
+                  <Route
+                    path="/controle-propostas/dashboard-licitacoes"
                     element={<Navigate to="/controle-propostas/dashboard" replace />}
                   />
                   <Route path="/controle-propostas/emitir-proposta" element={<EmitirProposta />} />
-                  <Route element={<BiddingPermissionRoute />}>
-                    <Route
-                      path="/controle-propostas/emitir-licitacao"
-                      element={<EmitirLicitacao />}
-                    />
-                  </Route>
                   <Route
                     path="/controle-propostas/propostas-avancadas"
                     element={<PropostasAvancadas />}
@@ -106,16 +102,24 @@ const App = () => (
                   <Route path="/controle-propostas/tipos-propostas" element={<TiposPropostas />} />
                   <Route path="/controle-propostas/proposta-pdf/:id" element={<PropostaPDF />} />
                   <Route
+                    path="/controle-propostas/propostas-excluidas"
+                    element={<Navigate to="/controle-propostas/dashboard-geral" replace />}
+                  />
+                  <Route
+                    path="/controle-propostas/assinaturas"
+                    element={<Navigate to="/controle-propostas/dashboard-geral" replace />}
+                  />
+                  <Route
                     path="/controle-propostas/cotacoes"
-                    element={<Navigate to="/controle-propostas/dashboard" replace />}
+                    element={<Navigate to="/controle-propostas/dashboard-geral" replace />}
                   />
                   <Route
                     path="/controle-propostas/tipo-documentos"
-                    element={<Navigate to="/controle-propostas/dashboard" replace />}
+                    element={<Navigate to="/controle-propostas/dashboard-geral" replace />}
                   />
                   <Route
                     path="/controle-propostas/formas-pagamento"
-                    element={<Navigate to="/controle-propostas/dashboard" replace />}
+                    element={<Navigate to="/controle-propostas/dashboard-geral" replace />}
                   />
                   <Route path="/produtos" element={<Produtos />} />
                   <Route path="/produtos/categorias" element={<Categorias />} />
