@@ -285,7 +285,7 @@ export default function EmitirProposta() {
         ).sort()
         setSetores(uniqueSetores)
       })
-      .catch(() => {})
+    pb.collection('representantes')
   }, [])
 
   const loadData = async () => {
