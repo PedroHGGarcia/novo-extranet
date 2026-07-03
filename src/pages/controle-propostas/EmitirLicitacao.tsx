@@ -555,7 +555,7 @@ export default function EmitirLicitacao() {
             <Button
               onClick={lic.handleSubmit}
               disabled={lic.submitting}
-              className="text-white rounded-sm px-6 py-2 h-auto text-xs shadow-none uppercase font-normal bg-[#337ab7] hover:bg-[#286090] disabled:opacity-50"
+              className="text-white rounded-sm px-4 py-2 h-auto text-xs shadow-none uppercase font-normal bg-[#337ab7] hover:bg-[#286090] disabled:opacity-50 whitespace-normal leading-tight text-center max-w-[220px] sm:max-w-none"
             >
               {lic.submitting ? (
                 <>

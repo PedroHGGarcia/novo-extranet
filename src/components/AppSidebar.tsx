@@ -32,6 +32,7 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from '@/components/ui/sidebar'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
@@ -43,6 +44,7 @@ interface SubItem {
   url: string
   icon?: any
   menuKey?: string
+  fullTitle?: string
 }
 interface MenuItem {
   title: string
@@ -52,6 +54,7 @@ interface MenuItem {
   menuKey?: string
   adminOnly?: boolean
   biddingOnly?: boolean
+  fullTitle?: string
 }
 
 const menuItems: MenuItem[] = [
@@ -98,9 +101,10 @@ const menuItems: MenuItem[] = [
         menuKey: 'emitir_proposta',
       },
       {
-        title: 'Emitir Proposta de Licitação',
+        title: 'Emitir Licitação',
         url: '/controle-propostas/emitir-licitacao',
         menuKey: 'emitir_licitacao',
+        fullTitle: 'Emitir Proposta de Licitação',
       },
       {
         title: 'Propostas Avançadas',
@@ -208,12 +212,13 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         isActive={isActive}
+                        tooltip={item.fullTitle || item.title}
                         className={cn(btnCls, isActive && 'border-l-4 border-brand-green')}
                       >
                         <Link
                           to={item.url}
                           draggable={false}
-                          className="select-none flex items-center gap-3 w-full text-sm"
+                          className="select-none flex items-center gap-3 w-full text-sm overflow-hidden"
                         >
                           <item.icon
                             strokeWidth={1.75}
@@ -221,7 +226,7 @@ export function AppSidebar() {
                             aria-hidden
                             draggable={false}
                           />
-                          <span className="flex-1">{item.title}</span>
+                          <span className="flex-1 truncate">{item.title}</span>
                           <ChevronLeft
                             className="h-4 w-4 shrink-0 select-none transition-transform duration-200 group-data-[state=open]/collapsible:-rotate-90 ml-auto"
                             strokeWidth={1.75}
@@ -234,12 +239,13 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
+                      tooltip={item.fullTitle || item.title}
                       className={cn(btnCls, isActive && 'border-l-4 border-brand-green')}
                     >
                       <Link
                         to={item.url}
                         draggable={false}
-                        className="select-none flex items-center gap-3 w-full text-sm"
+                        className="select-none flex items-center gap-3 w-full text-sm overflow-hidden"
                       >
                         <item.icon
                           strokeWidth={1.75}
@@ -247,7 +253,7 @@ export function AppSidebar() {
                           aria-hidden
                           draggable={false}
                         />
-                        <span className="flex-1">{item.title}</span>
+                        <span className="flex-1 truncate">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   )}
@@ -256,32 +262,44 @@ export function AppSidebar() {
                       <SidebarMenuSub className="border-l-transparent pr-0 mr-0 gap-1 ml-5">
                         {item.sub.map((s) => {
                           const isSubActive = location.pathname.startsWith(s.url)
+                          const subBtn = (
+                            <SidebarMenuSubButton
+                              asChild
+                              className={cn(
+                                'text-white/70 hover:bg-white/5 hover:text-white flex items-center gap-3 py-2 px-4 rounded-none h-10',
+                                isSubActive &&
+                                  'text-white font-semibold border-l-4 border-brand-green',
+                              )}
+                            >
+                              <Link
+                                to={s.url}
+                                draggable={false}
+                                className="select-none flex items-center gap-3 text-sm overflow-hidden min-w-0"
+                              >
+                                {s.icon && (
+                                  <s.icon
+                                    strokeWidth={1.75}
+                                    className="h-4 w-4 shrink-0"
+                                    aria-hidden
+                                    draggable={false}
+                                  />
+                                )}
+                                <span className="truncate">{s.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          )
                           return (
                             <SidebarMenuSubItem key={s.title}>
-                              <SidebarMenuSubButton
-                                asChild
-                                className={cn(
-                                  'text-white/70 hover:bg-white/5 hover:text-white flex items-center gap-3 py-2 px-4 rounded-none h-10',
-                                  isSubActive &&
-                                    'text-white font-semibold border-l-4 border-brand-green',
-                                )}
-                              >
-                                <Link
-                                  to={s.url}
-                                  draggable={false}
-                                  className="select-none flex items-center gap-3 text-sm"
-                                >
-                                  {s.icon && (
-                                    <s.icon
-                                      strokeWidth={1.75}
-                                      className="h-4 w-4 shrink-0"
-                                      aria-hidden
-                                      draggable={false}
-                                    />
-                                  )}
-                                  <span>{s.title}</span>
-                                </Link>
-                              </SidebarMenuSubButton>
+                              {s.fullTitle ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>{subBtn}</TooltipTrigger>
+                                  <TooltipContent side="right" className="max-w-[220px]">
+                                    {s.fullTitle}
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                subBtn
+                              )}
                             </SidebarMenuSubItem>
                           )
                         })}
