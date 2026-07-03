@@ -48,19 +48,19 @@ const formatDate = (dt: string | undefined, created: string) => {
 }
 
 export default function DashboardLicitacoes() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [propostas, setPropostas] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
 
   const loadData = async () => {
-    if (!user?.id) return
+    if (authLoading) return
     try {
       setLoading(true)
       const records = await pb.collection('propostas').getFullList({
-        filter: `modelo_licitacao = true && user = "${user.id}"`,
-        expand: 'cliente',
+        filter: `modelo_licitacao = true`,
+        expand: 'cliente,user',
         sort: '-created',
       })
       setPropostas(records)
@@ -72,8 +72,8 @@ export default function DashboardLicitacoes() {
   }
 
   useEffect(() => {
-    loadData()
-  }, [user?.id])
+    if (!authLoading) loadData()
+  }, [user?.id, authLoading])
 
   useRealtime('propostas', () => loadData())
 
@@ -88,7 +88,8 @@ export default function DashboardLicitacoes() {
         (p) =>
           p.numero_proposta?.toLowerCase().includes(q) ||
           p.expand?.cliente?.razao_social?.toLowerCase().includes(q) ||
-          p.expand?.cliente?.fantasia?.toLowerCase().includes(q),
+          p.expand?.cliente?.fantasia?.toLowerCase().includes(q) ||
+          p.expand?.user?.name?.toLowerCase().includes(q),
       )
     }
     return result
@@ -112,7 +113,7 @@ export default function DashboardLicitacoes() {
 
   const statusFilters: StatusFilter[] = ['all', 'Em Análise', 'Aprovada', 'Recusada', 'Excluída']
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="animate-pulse text-slate-400">Carregando licitações...</div>
@@ -241,6 +242,8 @@ export default function DashboardLicitacoes() {
                   <TableRow>
                     <TableHead>Número</TableHead>
                     <TableHead>Cliente</TableHead>
+                    <TableHead>Criado por</TableHead>
+                    <TableHead>Setor</TableHead>
                     <TableHead>Data de Criação</TableHead>
                     <TableHead className="text-center">Status</TableHead>
                     <TableHead className="text-right">Valor Total</TableHead>
@@ -258,6 +261,12 @@ export default function DashboardLicitacoes() {
                       </TableCell>
                       <TableCell className="text-slate-700 dark:text-slate-300">
                         {p.expand?.cliente?.razao_social || p.expand?.cliente?.fantasia || 'N/A'}
+                      </TableCell>
+                      <TableCell className="text-slate-700 dark:text-slate-300 text-sm">
+                        {p.expand?.user?.name || '—'}
+                      </TableCell>
+                      <TableCell className="text-slate-600 dark:text-slate-400 text-sm">
+                        {p.expand?.user?.setor || '—'}
                       </TableCell>
                       <TableCell className="text-slate-600 dark:text-slate-400 text-sm">
                         {formatDate(p.dt_cad, p.created)}

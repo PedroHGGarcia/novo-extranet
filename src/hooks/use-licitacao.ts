@@ -163,6 +163,7 @@ export function useLicitacao() {
       const fields = {
         ...formData,
         user: user?.id,
+        modelo_licitacao: true,
         numero_proposta: formData.numero_proposta || 'NOVA-0',
         secoes_adicionais: JSON.stringify({
           custom_sections: customSections,
@@ -175,7 +176,6 @@ export function useLicitacao() {
           fd.append(k, typeof v === 'object' ? JSON.stringify(v) : String(v))
         }
       }
-      fd.append('modelo_licitacao', 'true')
       fd.append('acessorios_proposta', JSON.stringify([]))
       if (signatureBlob) {
         fd.append('assinatura_representante', signatureBlob, 'assinatura-representante.png')
