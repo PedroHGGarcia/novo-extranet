@@ -353,13 +353,6 @@ export default function EmitirProposta() {
     }
   }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
 
-  useEffect(() => {
-    getTiposProposta()
-      .then(setTiposProposta)
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
     pb.collection('representantes')
       .getFullList({ sort: 'fantasia' })
       .then(setRepresentantes)
