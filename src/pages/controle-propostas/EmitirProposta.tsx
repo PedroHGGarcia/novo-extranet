@@ -267,18 +267,22 @@ export default function EmitirProposta() {
       .finally(() => {
         if (isMounted) setExchangeRatesLoading(false)
       })
-    return () => {
-      isMounted = false
-    }
     pb.collection('representantes')
       .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
+      .then((res) => {
+        if (isMounted) setRepresentantes(res)
+      })
       .catch(() => {})
     pb.collection('versoes')
       .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
+      .then((res) => {
+        if (isMounted) setVersoes(res)
+      })
       .catch(() => {})
-  }, []))
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300)
