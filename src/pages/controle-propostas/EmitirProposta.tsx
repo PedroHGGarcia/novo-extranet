@@ -340,16 +340,88 @@ export default function EmitirProposta() {
       const res = await getPropostasPaginated(page, perPage, sortParam, filterParam)
       setData(res.items)
       setTotalItems(res.totalItems)
-    } catch (error) {
-      console.error('Failed to load propostas', error)
-    } finally {
-      setIsLoading(false)
-    }
+    pb.collection('representantes')
+      .getFullList({ sort: 'fantasia' })
+      .then(setRepresentantes)
+      .catch(() => {})
+    pb.collection('versoes')
+      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
+      .then(setVersoes)
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
+=======
+  }
+
   useEffect(() => {
     if (activeTab === 'registros' || activeTab === 'excluidas') {
       loadData()
     }
   }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
+
+  useEffect(() => {
+    pb.collection('representantes')
+      .getFullList({ sort: 'fantasia' })
+      .then(setRepresentantes)
+      .catch(() => {})
+    pb.collection('versoes')
+      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
+      .then(setVersoes)
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
+=======
+  useEffect(() => {
+    if (activeTab === 'registros' || activeTab === 'excluidas') {
+      loadData()
+    }
+  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
+=======
+    pb.collection('representantes')
+      .getFullList({ sort: 'fantasia' })
+      .then(setRepresentantes)
+      .catch(() => {})
+    pb.collection('versoes')
+      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
+      .then(setVersoes)
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
+      if (selectedProposta) {
+=======
+    } catch (error) {
+      console.error('Failed to load propostas', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'registros' || activeTab === 'excluidas') {
+      loadData()
+    }
+  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
+
+  useEffect(() => {
+    pb.collection('representantes')
+      .getFullList({ sort: 'fantasia' })
+      .then(setRepresentantes)
+      .catch(() => {})
+    pb.collection('versoes')
+      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
+      .then(setVersoes)
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
+      if (selectedProposta) {
 =======
     pb.collection('representantes')
       .getFullList({ sort: 'fantasia' })
