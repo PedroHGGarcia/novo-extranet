@@ -86,14 +86,14 @@ const menuItems: MenuItem[] = [
         biddingOnly: true,
         sub: [
           {
-            title: 'Dashboard de Licitações',
-            url: '/controle-propostas/dashboard',
-            biddingOnly: true,
-          },
-          {
             title: 'Emitir Licitação',
             url: '/controle-propostas/emitir',
             fullTitle: 'Emitir Proposta de Licitação',
+            biddingOnly: true,
+          },
+          {
+            title: 'Dashboard de Licitações',
+            url: '/controle-propostas/dashboard',
             biddingOnly: true,
           },
         ],

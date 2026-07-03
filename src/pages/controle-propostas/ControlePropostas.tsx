@@ -11,7 +11,7 @@ export default function ControlePropostas() {
   const activeTab = location.pathname.includes('/emitir') ? 'emitir' : 'dashboard'
 
   const handleTabChange = (value: string) => {
-    navigate(value === 'dashboard' ? '/controle-propostas/dashboard' : '/controle-propostas/emitir')
+    navigate(value === 'emitir' ? '/controle-propostas/emitir' : '/controle-propostas/dashboard')
   }
 
   return (
@@ -25,31 +25,21 @@ export default function ControlePropostas() {
           <div className="max-w-7xl mx-auto">
             <TabsList className="bg-transparent h-11 w-full sm:w-auto justify-start p-0 gap-2">
               <TabsTrigger
-                value="dashboard"
-                className="data-[state=active]:bg-[#337ab7] data-[state=active]:text-white text-slate-600 rounded-md h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
-              >
-                Dashboard de Licitações
-              </TabsTrigger>
-              <TabsTrigger
                 value="emitir"
                 className="data-[state=active]:bg-[#337ab7] data-[state=active]:text-white text-slate-600 rounded-md h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
               >
                 Emitir Licitação
               </TabsTrigger>
+              <TabsTrigger
+                value="dashboard"
+                className="data-[state=active]:bg-[#337ab7] data-[state=active]:text-white text-slate-600 rounded-md h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
+              >
+                Dashboard de Licitações
+              </TabsTrigger>
             </TabsList>
           </div>
         </div>
 
-        <TabsContent
-          value="dashboard"
-          forceMount
-          className={cn(
-            'mt-0 flex-1 overflow-y-auto p-4 sm:p-6',
-            activeTab !== 'dashboard' && 'hidden',
-          )}
-        >
-          <DashboardLicitacoes />
-        </TabsContent>
         <TabsContent
           value="emitir"
           forceMount
@@ -59,6 +49,16 @@ export default function ControlePropostas() {
           )}
         >
           <EmitirLicitacao />
+        </TabsContent>
+        <TabsContent
+          value="dashboard"
+          forceMount
+          className={cn(
+            'mt-0 flex-1 overflow-y-auto p-4 sm:p-6',
+            activeTab !== 'dashboard' && 'hidden',
+          )}
+        >
+          <DashboardLicitacoes />
         </TabsContent>
       </Tabs>
       <Outlet />
