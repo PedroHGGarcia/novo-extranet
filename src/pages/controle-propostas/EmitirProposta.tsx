@@ -343,6 +343,9 @@ export default function EmitirProposta() {
   useEffect(() => {
     getTiposProposta()
       .then(setTiposProposta)
+    pb.collection('representantes')
+      .getFullList({ sort: 'fantasia' })
+      .then(setRepresentantes)
       .catch(() => {})
     pb.collection('gerentes')
       .getFullList({ sort: 'nome', expand: 'usuario' })
