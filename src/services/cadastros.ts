@@ -42,6 +42,25 @@ export const updateCliente = (id: string, data: any) =>
 export const deleteCliente = (id: string) => pb.collection('clientes').delete(id)
 export const clearAllClientes = () => pb.send('/backend/v1/clientes/clear', { method: 'DELETE' })
 
+export const searchClientesPaginated = async (
+  query: string,
+  page: number = 1,
+): Promise<{ items: any[]; hasMore: boolean }> => {
+  const perPage = 20
+  const escaped = query.replace(/"/g, '\\"')
+  const filter = escaped
+    ? `documento ~ "${escaped}" || razao_social ~ "${escaped}" || fantasia ~ "${escaped}"`
+    : ''
+  const res = await pb.collection('clientes').getList(page, perPage, {
+    filter,
+    sort: 'fantasia',
+  })
+  return {
+    items: res.items,
+    hasMore: res.page < res.totalPages,
+  }
+}
+
 // Representantes
 export const getRepresentantes = () =>
   pb.collection('representantes').getFullList({ sort: '-created' })

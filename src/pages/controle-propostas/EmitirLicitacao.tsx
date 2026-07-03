@@ -20,6 +20,7 @@ import { SecaoPrecos } from '@/components/SecaoPrecos'
 import { MemoriaCalculo } from '@/components/MemoriaCalculo'
 import { CurrencyWidget } from '@/components/CurrencyWidget'
 import { useLicitacao } from '@/hooks/use-licitacao'
+import { searchClientesPaginated } from '@/services/cadastros'
 import { cn } from '@/lib/utils'
 
 const formatCurrency = (v: number | undefined, c = 'BRL') => {
@@ -161,7 +162,7 @@ export default function EmitirLicitacao() {
                   placeholder="Buscar cliente..."
                   emptyMessage="Nenhum cliente encontrado."
                   className={cn(inputClass, err.cliente && 'border-rose-400 bg-rose-50/30')}
-                  onSearch={lic.searchClientes}
+                  onPaginatedSearch={searchClientesPaginated}
                 />
                 {err.cliente && (
                   <span className="text-[10px] text-rose-600 mt-0.5">{err.cliente}</span>

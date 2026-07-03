@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/table'
 import { getPropostasPaginated, updateProposta, type Proposta } from '@/services/propostas'
 import { getTiposProposta, type TipoProposta } from '@/services/tipos-propostas'
+import { searchClientesPaginated } from '@/services/cadastros'
 import { useRealtime } from '@/hooks/use-realtime'
 import { cn } from '@/lib/utils'
 import { PropostaDocument } from '@/components/PropostaDocument'
@@ -1047,19 +1048,6 @@ export default function EmitirProposta() {
     return inBrl
   }
 
-  const searchClientes = useCallback(async (query: string) => {
-    const res = await pb.collection('clientes').getList(1, 20, {
-      filter: `documento ~ "${query}" || razao_social ~ "${query}" || fantasia ~ "${query}"`,
-      sort: 'fantasia',
-    })
-    setClientes((prev) => {
-      const ids = new Set(prev.map((c) => c.id))
-      const fresh = res.items.filter((c) => !ids.has(c.id))
-      return fresh.length ? [...prev, ...fresh] : prev
-    })
-    return res.items
-  }, [])
-
   const searchRepresentantes = useCallback(async (query: string) => {
     const res = await pb.collection('representantes').getList(1, 20, {
       filter: `documento ~ "${query}" || fantasia ~ "${query}"`,
@@ -1681,7 +1669,7 @@ export default function EmitirProposta() {
                       inputClass,
                       !formData.cliente && 'border-amber-300 bg-amber-50/30',
                     )}
-                    onSearch={searchClientes}
+                    onPaginatedSearch={searchClientesPaginated}
                   />
                   {!formData.cliente && (
                     <span className="text-[10px] text-amber-600 mt-0.5">Cliente é obrigatório</span>
