@@ -14,6 +14,7 @@ import {
   Upload,
   PenTool,
   CheckCircle,
+  Search,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -135,6 +136,10 @@ export default function EmitirProposta() {
   const [signatureConfirmed, setSignatureConfirmed] = useState(false)
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [sectorFilter, setSectorFilter] = useState<string>('')
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [setores, setSetores] = useState<string[]>([])
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('')
 
   const [exchangeRates, setExchangeRates] = useState<{
     USD: number
@@ -264,12 +269,59 @@ export default function EmitirProposta() {
     }
   }, [])
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  useEffect(() => {
+    pb.collection('users')
+      .getFullList()
+      .then((users) => {
+        const uniqueSetores = Array.from(
+          new Set(users.map((u: any) => u.setor).filter(Boolean)),
+        ).sort()
+        setSetores(uniqueSetores)
+      })
+      .catch(() => {})
+  }, [])
+
   const loadData = async () => {
     try {
       setIsLoading(true)
       const sortParam = sortDirection === 'desc' ? `-${sortField}` : sortField
-      const filterParam =
-        activeTab === 'excluidas' ? "status = 'Excluída'" : "(status = 'Em Análise' || status = '')"
+      const filters: string[] = []
+      if (activeTab === 'excluidas') {
+        filters.push("status = 'Excluída'")
+      } else {
+        filters.push("(status = 'Em Análise' || status = '')")
+      }
+
+      if (sectorFilter) {
+        const sectorUsers = await pb.collection('users').getFullList({
+          filter: `setor = "${sectorFilter}"`,
+        })
+        if (sectorUsers.length > 0) {
+          const userFilter = sectorUsers.map((u: any) => `user = "${u.id}"`).join(' || ')
+          filters.push(`(${userFilter})`)
+        } else {
+          filters.push('id = "nonexistent"')
+        }
+      }
+
+      if (debouncedSearch.trim()) {
+        const matchingUsers = await pb.collection('users').getList(1, 50, {
+          filter: `name ~ "${debouncedSearch.trim()}"`,
+        })
+        if (matchingUsers.items.length > 0) {
+          const userFilter = matchingUsers.items.map((u: any) => `user = "${u.id}"`).join(' || ')
+          filters.push(`(${userFilter})`)
+        } else {
+          filters.push('id = "nonexistent"')
+        }
+      }
+
+      const filterParam = filters.join(' && ')
       const res = await getPropostasPaginated(page, perPage, sortParam, filterParam)
       setData(res.items)
       setTotalItems(res.totalItems)
@@ -284,7 +336,7 @@ export default function EmitirProposta() {
     if (activeTab === 'registros' || activeTab === 'excluidas') {
       loadData()
     }
-  }, [page, perPage, sortField, sortDirection, activeTab])
+  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
 
   useEffect(() => {
     getTiposProposta()
@@ -482,6 +534,10 @@ export default function EmitirProposta() {
   }
 
   useRealtime('propostas', () => {
+    loadData()
+  })
+
+  useRealtime('users', () => {
     loadData()
   })
 
@@ -1292,19 +1348,22 @@ export default function EmitirProposta() {
           {renderSortableHead('Status', 'status')}
           {renderSortableHead('Valor', 'valor_final')}
           {renderSortableHead('Dt. Cad', 'dt_cad')}
-          {renderSortableHead('Por', 'created')}
+          {renderSortableHead('Responsável', 'created')}
+          <TableHead className="text-[#337ab7] font-normal text-[11px] whitespace-nowrap bg-white border-b-2 border-slate-200 py-3 px-3 h-auto">
+            Setor
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {isLoading && data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={11} className="text-center py-8 text-slate-500">
+            <TableCell colSpan={12} className="text-center py-8 text-slate-500">
               Carregando...
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={11} className="text-center py-8 text-slate-500">
+            <TableCell colSpan={12} className="text-center py-8 text-slate-500">
               Nenhuma proposta encontrada.
             </TableCell>
           </TableRow>
@@ -1423,6 +1482,9 @@ export default function EmitirProposta() {
               <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase">
                 {item.expand?.user?.name || '-'}
               </TableCell>
+              <TableCell className="align-top py-2.5 px-3 text-slate-700 text-[10px] uppercase">
+                {item.expand?.user?.setor || '-'}
+              </TableCell>
             </TableRow>
           ))
         )}
@@ -1483,6 +1545,39 @@ export default function EmitirProposta() {
           </div>
         </div>
 
+        {(activeTab === 'registros' || activeTab === 'excluidas') && (
+          <div className="flex items-center gap-3 px-4 py-2 border-b border-slate-200 bg-slate-50/50 shrink-0">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar por responsável..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setPage(1)
+                }}
+                className="pl-7 pr-2 py-1.5 text-xs border border-slate-300 rounded-sm bg-white outline-none focus:border-[#337ab7] min-w-[200px]"
+              />
+            </div>
+            <select
+              value={sectorFilter}
+              onChange={(e) => {
+                setSectorFilter(e.target.value)
+                setPage(1)
+              }}
+              className="text-xs border border-slate-300 rounded-sm bg-white px-2 py-1.5 outline-none focus:border-[#337ab7] cursor-pointer"
+            >
+              <option value="">Todos os setores</option>
+              {setores.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <TabsContent value="registros" className="flex-1 min-h-0 m-0 overflow-y-auto outline-none">
           {renderTable()}
         </TabsContent>
@@ -1500,6 +1595,15 @@ export default function EmitirProposta() {
             <div className="max-w-7xl mx-auto w-full flex flex-col items-start pb-10">
               <div className="mb-6 w-full border-b border-slate-200 pb-4">
                 {renderCadastroActionBars()}
+              </div>
+
+              <div className="mb-4 w-full p-3 bg-[#337ab7]/5 border border-[#337ab7]/20 rounded-sm">
+                <span className="text-xs font-bold text-[#337ab7] uppercase tracking-wider">
+                  Formulado por: {selectedProposta?.expand?.user?.name || user?.name || '-'}
+                  {selectedProposta?.expand?.user?.setor || user?.setor
+                    ? ` - ${selectedProposta?.expand?.user?.setor || user?.setor}`
+                    : ''}
+                </span>
               </div>
 
               <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
@@ -2400,6 +2504,14 @@ export default function EmitirProposta() {
           <div className="flex-1 overflow-y-auto p-6 pt-2">
             {viewProposta && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm text-slate-700">
+                <div className="col-span-1 md:col-span-2 mb-2 p-3 bg-[#337ab7]/5 border border-[#337ab7]/20 rounded-sm">
+                  <span className="text-xs font-bold text-[#337ab7] uppercase tracking-wider">
+                    Formulado por: {viewProposta.expand?.user?.name || '-'}
+                    {viewProposta.expand?.user?.setor
+                      ? ` - ${viewProposta.expand?.user?.setor}`
+                      : ''}
+                  </span>
+                </div>
                 <div className="flex flex-col border-b border-slate-100 pb-2">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Cliente
