@@ -20,8 +20,8 @@ export default function Layout() {
         </main>
         <footer className="border-t border-border bg-white dark:bg-card py-4 text-center text-xs text-muted-foreground select-none">
           <p>
-            Desenvolvido por <span className="text-brand-green font-medium">Skip</span> e{' '}
-            <span className="text-brand-green font-medium">Pedro Garcia</span>
+            Desenvolvido por{' '}
+            <span className="text-brand-green font-medium">Pedro Garcia - Comercial</span>
           </p>
         </footer>
       </SidebarInset>
