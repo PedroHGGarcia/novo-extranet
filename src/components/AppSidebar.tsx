@@ -81,15 +81,19 @@ const menuItems: MenuItem[] = [
         menuKey: 'emitir_proposta',
       },
       {
-        title: 'Emitir Licitação',
-        url: '/controle-propostas/emitir',
-        fullTitle: 'Emitir Proposta de Licitação',
+        title: 'Licitações',
+        url: '/controle-propostas/dashboard',
         biddingOnly: true,
         sub: [
           {
-            title: 'Dashboard Licitação',
+            title: 'Dashboard de Licitações',
             url: '/controle-propostas/dashboard',
-            fullTitle: 'Dashboard de Licitações',
+            biddingOnly: true,
+          },
+          {
+            title: 'Emitir Licitação',
+            url: '/controle-propostas/emitir',
+            fullTitle: 'Emitir Proposta de Licitação',
             biddingOnly: true,
           },
         ],

@@ -11,7 +11,7 @@ export default function ControlePropostas() {
   const activeTab = location.pathname.includes('/emitir') ? 'emitir' : 'dashboard'
 
   const handleTabChange = (value: string) => {
-    navigate(value === 'emitir' ? '/controle-propostas/emitir' : '/controle-propostas/dashboard')
+    navigate(value === 'dashboard' ? '/controle-propostas/dashboard' : '/controle-propostas/emitir')
   }
 
   return (
@@ -41,16 +41,6 @@ export default function ControlePropostas() {
         </div>
 
         <TabsContent
-          value="emitir"
-          forceMount
-          className={cn(
-            'mt-0 flex-1 flex flex-col overflow-hidden p-4',
-            activeTab !== 'emitir' && 'hidden',
-          )}
-        >
-          <EmitirLicitacao />
-        </TabsContent>
-        <TabsContent
           value="dashboard"
           forceMount
           className={cn(
@@ -59,6 +49,16 @@ export default function ControlePropostas() {
           )}
         >
           <DashboardLicitacoes />
+        </TabsContent>
+        <TabsContent
+          value="emitir"
+          forceMount
+          className={cn(
+            'mt-0 flex-1 flex flex-col overflow-hidden p-4',
+            activeTab !== 'emitir' && 'hidden',
+          )}
+        >
+          <EmitirLicitacao />
         </TabsContent>
       </Tabs>
       <Outlet />
