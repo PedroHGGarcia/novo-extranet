@@ -345,8 +345,12 @@ export default function EmitirProposta() {
     } finally {
       setIsLoading(false)
     }
-  }
-
+  useEffect(() => {
+    if (activeTab === 'registros' || activeTab === 'excluidas') {
+      loadData()
+    }
+  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
+=======
     pb.collection('representantes')
       .getFullList({ sort: 'fantasia' })
       .then(setRepresentantes)
@@ -356,6 +360,31 @@ export default function EmitirProposta() {
       .then(setVersoes)
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
+=======
+  }
+
+  useEffect(() => {
+    if (activeTab === 'registros' || activeTab === 'excluidas') {
+      loadData()
+    }
+  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
+
+  useEffect(() => {
+    pb.collection('representantes')
+      .getFullList({ sort: 'fantasia' })
+      .then(setRepresentantes)
+      .catch(() => {})
+    pb.collection('versoes')
+      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
+      .then(setVersoes)
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
 =======
   useEffect(() => {
     if (activeTab === 'registros' || activeTab === 'excluidas') {
