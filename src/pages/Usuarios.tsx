@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Pencil, Trash2, Users, Shield } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Users, Shield, Lock, ChevronDown } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -59,6 +59,8 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { cn } from '@/lib/utils'
 import { inviteUser } from '@/services/config'
 
 export default function Usuarios() {
@@ -90,6 +92,7 @@ export default function Usuarios() {
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteData, setInviteData] = useState({ email: '', role: 'user' as 'admin' | 'user' })
   const [inviting, setInviting] = useState(false)
+  const [showSecuritySection, setShowSecuritySection] = useState(false)
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -137,6 +140,7 @@ export default function Usuarios() {
         can_issue_bidding_proposals: u.can_issue_bidding_proposals || false,
         setor: u.setor || '',
       })
+      setShowSecuritySection(false)
     } else {
       setEditingUser(null)
       setFormData({
@@ -148,6 +152,7 @@ export default function Usuarios() {
         can_issue_bidding_proposals: false,
         setor: '',
       })
+      setShowSecuritySection(true)
     }
     setErrors({})
     setSheetOpen(true)
@@ -168,18 +173,33 @@ export default function Usuarios() {
     if (!safeName) {
       newErrors.name = 'Nome é obrigatório'
     }
-    if (!safeEmail) {
-      newErrors.email = 'E-mail é obrigatório'
-    } else if (!emailRegex.test(safeEmail)) {
-      newErrors.email = 'Formato de e-mail inválido'
-    }
-    if (safeEmail !== (formData.confirmEmail ?? '').trim()) {
-      newErrors.confirmEmail = 'Os e-mails não coincidem'
-    }
-    if (!editingUser && !safePassword) {
-      newErrors.password = 'Senha é obrigatória'
-    } else if (safePassword && safePassword.length < 8) {
-      newErrors.password = 'A senha deve ter no mínimo 8 caracteres'
+
+    if (editingUser) {
+      if (safeEmail && safeEmail !== editingUser.email) {
+        if (!emailRegex.test(safeEmail)) {
+          newErrors.email = 'Formato de e-mail inválido'
+        }
+        if (safeEmail !== (formData.confirmEmail ?? '').trim()) {
+          newErrors.confirmEmail = 'Os e-mails não coincidem'
+        }
+      }
+      if (safePassword && safePassword.length < 8) {
+        newErrors.password = 'A senha deve ter no mínimo 8 caracteres'
+      }
+    } else {
+      if (!safeEmail) {
+        newErrors.email = 'E-mail é obrigatório'
+      } else if (!emailRegex.test(safeEmail)) {
+        newErrors.email = 'Formato de e-mail inválido'
+      }
+      if (safeEmail !== (formData.confirmEmail ?? '').trim()) {
+        newErrors.confirmEmail = 'Os e-mails não coincidem'
+      }
+      if (!safePassword) {
+        newErrors.password = 'Senha é obrigatória'
+      } else if (safePassword.length < 8) {
+        newErrors.password = 'A senha deve ter no mínimo 8 caracteres'
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -189,23 +209,36 @@ export default function Usuarios() {
     }
 
     try {
-      const payload: Record<string, any> = {
-        name: safeName,
-        email: safeEmail,
-        role: formData.role,
-        can_issue_bidding_proposals: formData.can_issue_bidding_proposals,
-        setor: safeSetor,
-      }
-
-      if (safePassword) {
-        payload.password = safePassword
-        payload.passwordConfirm = safePassword
-      }
-
       if (editingUser) {
+        const payload: Record<string, any> = {
+          name: safeName,
+          role: formData.role,
+          can_issue_bidding_proposals: formData.can_issue_bidding_proposals,
+          setor: safeSetor,
+        }
+
+        if (safeEmail && safeEmail !== editingUser.email) {
+          payload.email = safeEmail
+        }
+
+        if (safePassword) {
+          payload.password = safePassword
+          payload.passwordConfirm = safePassword
+        }
+
         await updateUsuario(editingUser.id, payload)
         toast({ title: 'Usuário atualizado com sucesso!' })
       } else {
+        const payload: Record<string, any> = {
+          name: safeName,
+          email: safeEmail,
+          role: formData.role,
+          can_issue_bidding_proposals: formData.can_issue_bidding_proposals,
+          setor: safeSetor,
+          password: safePassword,
+          passwordConfirm: safePassword,
+        }
+
         await createUsuario(payload)
         toast({ title: 'Usuário criado com sucesso!' })
       }
@@ -396,54 +429,6 @@ export default function Usuarios() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => {
-                  setFormData({ ...formData, email: e.target.value })
-                  if (errors.email) setErrors({ ...errors, email: '' })
-                }}
-                className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
-              />
-              {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="confirmEmail">Confirmar E-mail</Label>
-              <Input
-                id="confirmEmail"
-                type="email"
-                value={formData.confirmEmail}
-                onChange={(e) => {
-                  setFormData({ ...formData, confirmEmail: e.target.value })
-                  if (errors.confirmEmail) setErrors({ ...errors, confirmEmail: '' })
-                }}
-                className={errors.confirmEmail ? 'border-red-500 focus-visible:ring-red-500' : ''}
-              />
-              {errors.confirmEmail && (
-                <span className="text-xs text-red-500">{errors.confirmEmail}</span>
-              )}
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="password">
-                Senha{' '}
-                {editingUser && (
-                  <span className="text-muted-foreground font-normal">(opcional)</span>
-                )}
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-              {errors.password && <span className="text-xs text-red-500">{errors.password}</span>}
-            </div>
-
-            <div className="grid gap-2">
               <Label htmlFor="setor">Setor</Label>
               <Input
                 id="setor"
@@ -484,6 +469,78 @@ export default function Usuarios() {
                 }
               />
             </div>
+
+            <Collapsible open={showSecuritySection} onOpenChange={setShowSecuritySection}>
+              <CollapsibleTrigger className="flex w-full items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <Lock className="h-4 w-4" />
+                Segurança / Autenticação
+                {!editingUser && <span className="text-red-500">*</span>}
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 transition-transform ml-auto',
+                    showSecuritySection && 'rotate-180',
+                  )}
+                />
+              </CollapsibleTrigger>
+              <p className="text-xs text-muted-foreground mt-1">
+                {editingUser
+                  ? 'Alterar e-mail ou senha é opcional. Deixe em branco para manter as credenciais atuais.'
+                  : 'Preencha o e-mail e a senha para criar o usuário.'}
+              </p>
+              <CollapsibleContent className="grid gap-4 pt-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value })
+                      if (errors.email) setErrors({ ...errors, email: '' })
+                    }}
+                    className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                  />
+                  {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="confirmEmail">Confirmar E-mail</Label>
+                  <Input
+                    id="confirmEmail"
+                    type="email"
+                    value={formData.confirmEmail}
+                    onChange={(e) => {
+                      setFormData({ ...formData, confirmEmail: e.target.value })
+                      if (errors.confirmEmail) setErrors({ ...errors, confirmEmail: '' })
+                    }}
+                    className={
+                      errors.confirmEmail ? 'border-red-500 focus-visible:ring-red-500' : ''
+                    }
+                  />
+                  {errors.confirmEmail && (
+                    <span className="text-xs text-red-500">{errors.confirmEmail}</span>
+                  )}
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="password">
+                    Senha{' '}
+                    {editingUser && (
+                      <span className="text-muted-foreground font-normal">(opcional)</span>
+                    )}
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  />
+                  {errors.password && (
+                    <span className="text-xs text-red-500">{errors.password}</span>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
           <SheetFooter>
             <Button variant="outline" onClick={() => setSheetOpen(false)}>
