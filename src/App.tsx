@@ -74,10 +74,7 @@ const App = () => (
                   <Route path="/eventos" element={<Eventos />} />
                   <Route element={<BiddingPermissionRoute />}>
                     <Route path="/controle-propostas" element={<ControlePropostas />}>
-                      <Route
-                        index
-                        element={<Navigate to="/controle-propostas/dashboard" replace />}
-                      />
+                      <Route index element={<Navigate to="/controle-propostas/emitir" replace />} />
                       <Route path="emitir" />
                       <Route path="dashboard" />
                     </Route>

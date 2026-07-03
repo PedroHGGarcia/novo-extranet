@@ -8,7 +8,7 @@ export default function ControlePropostas() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const activeTab = location.pathname.includes('/emitir') ? 'emitir' : 'dashboard'
+  const activeTab = location.pathname.includes('/dashboard') ? 'dashboard' : 'emitir'
 
   const handleTabChange = (value: string) => {
     navigate(value === 'emitir' ? '/controle-propostas/emitir' : '/controle-propostas/dashboard')

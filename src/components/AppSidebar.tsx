@@ -82,7 +82,7 @@ const menuItems: MenuItem[] = [
       },
       {
         title: 'Licitações',
-        url: '/controle-propostas/dashboard',
+        url: '/controle-propostas/emitir',
         biddingOnly: true,
         sub: [
           {
