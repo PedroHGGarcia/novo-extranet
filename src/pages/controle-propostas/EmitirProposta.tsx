@@ -850,11 +850,12 @@ export default function EmitirProposta() {
   const requiredFieldsValid = missingFields.length === 0
 
   const issuerSectorLabel = useMemo(() => {
-    if (!user) return 'Assinatura do Representante'
+    if (!user) return 'Responsável Interno'
+    if (user.setor) return user.setor
     const userGerente = gerentes.find((g) => g.usuario === user.id)
     if (userGerente && userGerente.cargo) return userGerente.cargo
-    if (user.role === 'admin') return 'Setor Comercial'
-    return 'Representante'
+    if (user.role === 'admin') return 'Comercial'
+    return 'Comercial'
   }, [user, gerentes])
 
   const handleSave = async () => {
@@ -1344,13 +1345,13 @@ export default function EmitirProposta() {
           {renderSortableHead('Contato', 'contato')}
           {renderSortableHead('Telefone', 'telefone')}
           {renderSortableHead('Versão', 'versao_original')}
-          {renderSortableHead('Representante', 'representante_original')}
+          {renderSortableHead('Rep. (Externo)', 'representante_original')}
           {renderSortableHead('Status', 'status')}
           {renderSortableHead('Valor', 'valor_final')}
           {renderSortableHead('Dt. Cad', 'dt_cad')}
-          {renderSortableHead('Responsável', 'created')}
+          {renderSortableHead('Responsável Interno', 'created')}
           <TableHead className="text-[#337ab7] font-normal text-[11px] whitespace-nowrap bg-white border-b-2 border-slate-200 py-3 px-3 h-auto">
-            Setor
+            Setor Resp.
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -1599,10 +1600,10 @@ export default function EmitirProposta() {
 
               <div className="mb-4 w-full p-3 bg-[#337ab7]/5 border border-[#337ab7]/20 rounded-sm">
                 <span className="text-xs font-bold text-[#337ab7] uppercase tracking-wider">
-                  Formulado por: {selectedProposta?.expand?.user?.name || user?.name || '-'}
-                  {selectedProposta?.expand?.user?.setor || user?.setor
-                    ? ` - ${selectedProposta?.expand?.user?.setor || user?.setor}`
-                    : ''}
+                  Responsável Interno: {selectedProposta?.expand?.user?.name || user?.name || '-'}{' '}
+                  <span className="font-normal text-slate-500">
+                    (Setor: {selectedProposta?.expand?.user?.setor || user?.setor || 'Comercial'})
+                  </span>
                 </span>
               </div>
 
@@ -2274,7 +2275,8 @@ export default function EmitirProposta() {
                 <div className="w-full mt-8">
                   <div className="border-b border-slate-200 w-full mb-4 pb-2">
                     <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <PenTool className="w-4 h-4" /> Assinatura — {issuerSectorLabel}
+                      <PenTool className="w-4 h-4" /> Assinatura do Responsável Interno —{' '}
+                      {issuerSectorLabel}
                       {!selectedProposta && (
                         <span className="text-[10px] text-amber-600 font-normal ml-1">
                           (Obrigatória para nova proposta)
@@ -2506,10 +2508,10 @@ export default function EmitirProposta() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm text-slate-700">
                 <div className="col-span-1 md:col-span-2 mb-2 p-3 bg-[#337ab7]/5 border border-[#337ab7]/20 rounded-sm">
                   <span className="text-xs font-bold text-[#337ab7] uppercase tracking-wider">
-                    Formulado por: {viewProposta.expand?.user?.name || '-'}
-                    {viewProposta.expand?.user?.setor
-                      ? ` - ${viewProposta.expand?.user?.setor}`
-                      : ''}
+                    Responsável Interno: {viewProposta.expand?.user?.name || '-'}{' '}
+                    <span className="font-normal text-slate-500">
+                      (Setor: {viewProposta.expand?.user?.setor || 'Comercial'})
+                    </span>
                   </span>
                 </div>
                 <div className="flex flex-col border-b border-slate-100 pb-2">
@@ -2545,7 +2547,7 @@ export default function EmitirProposta() {
                 </div>
                 <div className="flex flex-col border-b border-slate-100 pb-2">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Representante
+                    Representante (Externo)
                   </span>
                   <span className="font-medium">
                     {viewProposta.expand?.representante?.fantasia ||
@@ -2559,6 +2561,14 @@ export default function EmitirProposta() {
                   </span>
                   <span className="font-medium">
                     {viewProposta.expand?.gerente?.nome || viewProposta.gerente_original || '-'}
+                  </span>
+                </div>
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Setor do Responsável
+                  </span>
+                  <span className="font-medium">
+                    {viewProposta.expand?.user?.setor || 'Comercial'}
                   </span>
                 </div>
                 <div className="flex flex-col border-b border-slate-100 pb-2">
