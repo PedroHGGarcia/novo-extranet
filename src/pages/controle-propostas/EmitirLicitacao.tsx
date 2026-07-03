@@ -88,7 +88,8 @@ export default function EmitirLicitacao() {
         <ShieldAlert className="h-16 w-16 text-rose-500" />
         <h2 className="text-xl font-semibold text-slate-700">Acesso Negado</h2>
         <p className="text-sm text-slate-500 text-center max-w-md">
-          Apenas administradores e gerentes podem emitir propostas de licitação.
+          Você não tem permissão para emitir propostas de licitação. Solicite ao administrador a
+          ativação da permissão específica.
         </p>
         <Link to="/controle-propostas/emitir-proposta">
           <Button variant="outline" className="gap-2">

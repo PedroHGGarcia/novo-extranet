@@ -71,7 +71,10 @@ export function useLicitacao() {
     })
   }, [])
 
-  const hasAccess = user?.role === 'admin' || gerentes.some((g) => g.usuario === user?.id)
+  const hasAccess =
+    user?.role === 'admin' ||
+    user?.can_issue_bidding_proposals === true ||
+    gerentes.some((g) => g.usuario === user?.id)
 
   const issuerSectorLabel = useMemo(() => {
     if (!user) return 'Representante'

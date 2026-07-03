@@ -301,7 +301,7 @@ export default function Usuarios() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Perfil</TableHead>
-                <TableHead>Licitação</TableHead>
+                <TableHead>Emitir Licitação</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -451,7 +451,7 @@ export default function Usuarios() {
 
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
-                <Label>Acesso a Emitir Proposta de Licitação</Label>
+                <Label>Permitir emissão de propostas de licitação</Label>
                 <p className="text-xs text-muted-foreground">
                   Permite ao usuário criar e gerenciar propostas de licitação.
                 </p>
