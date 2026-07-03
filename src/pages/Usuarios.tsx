@@ -160,20 +160,25 @@ export default function Usuarios() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     const newErrors: Record<string, string> = {}
 
-    if (!formData.name.trim()) {
+    const safeName = (formData.name ?? '').trim()
+    const safeEmail = (formData.email ?? '').trim()
+    const safeSetor = (formData.setor ?? '').trim()
+    const safePassword = formData.password ?? ''
+
+    if (!safeName) {
       newErrors.name = 'Nome é obrigatório'
     }
-    if (!formData.email.trim()) {
+    if (!safeEmail) {
       newErrors.email = 'E-mail é obrigatório'
-    } else if (!emailRegex.test(formData.email)) {
+    } else if (!emailRegex.test(safeEmail)) {
       newErrors.email = 'Formato de e-mail inválido'
     }
-    if (formData.email !== formData.confirmEmail) {
+    if (safeEmail !== (formData.confirmEmail ?? '').trim()) {
       newErrors.confirmEmail = 'Os e-mails não coincidem'
     }
-    if (!editingUser && !formData.password) {
+    if (!editingUser && !safePassword) {
       newErrors.password = 'Senha é obrigatória'
-    } else if (formData.password && formData.password.length < 8) {
+    } else if (safePassword && safePassword.length < 8) {
       newErrors.password = 'A senha deve ter no mínimo 8 caracteres'
     }
 
@@ -185,16 +190,16 @@ export default function Usuarios() {
 
     try {
       const payload: Record<string, any> = {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
+        name: safeName,
+        email: safeEmail,
         role: formData.role,
         can_issue_bidding_proposals: formData.can_issue_bidding_proposals,
-        setor: formData.setor.trim(),
+        setor: safeSetor,
       }
 
-      if (formData.password) {
-        payload.password = formData.password
-        payload.passwordConfirm = formData.password
+      if (safePassword) {
+        payload.password = safePassword
+        payload.passwordConfirm = safePassword
       }
 
       if (editingUser) {
