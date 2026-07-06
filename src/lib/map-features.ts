@@ -137,17 +137,48 @@ export function repsToLayer(reps: any[]): MapLayer {
     id: 'representantes',
     name: 'Representantes',
     visible: true,
-    features: validReps.map(({ rep, coords }, i) => ({
-      id: rep.id,
-      type: 'polygon' as const,
-      coordinates: sortClockwise(coords),
-      name: rep.fantasia || rep.nome || 'Representante',
-      description: [rep.cidade, rep.uf].filter(Boolean).join(' - '),
-      fillColor: COLORS[i % COLORS.length],
-      fillOpacity: 0.3,
-      strokeColor: COLORS[i % COLORS.length],
-      strokeWidth: 2,
-    })),
+    features: validReps.map(({ rep, coords }, i) => {
+      const style = rep.kml_style as {
+        lineColor?: string
+        lineWidth?: number
+        polyColor?: string
+        polyFill?: boolean
+        description?: string
+      } | null
+
+      let fillColor = COLORS[i % COLORS.length]
+      let fillOpacity = 0.3
+      let strokeColor = COLORS[i % COLORS.length]
+      let strokeWidth = 2
+
+      if (style) {
+        if (style.polyColor) {
+          const { color, opacity } = kmlColorToHex(style.polyColor)
+          fillColor = color
+          fillOpacity = style.polyFill === false ? 0 : opacity || 0.3
+        }
+        if (style.lineColor) {
+          strokeColor = kmlColorToHex(style.lineColor).color
+        }
+        if (style.lineWidth) {
+          strokeWidth = style.lineWidth
+        }
+      }
+
+      const description = style?.description || [rep.cidade, rep.uf].filter(Boolean).join(' - ')
+
+      return {
+        id: rep.id,
+        type: 'polygon' as const,
+        coordinates: coords,
+        name: rep.fantasia || rep.nome || 'Representante',
+        description,
+        fillColor,
+        fillOpacity,
+        strokeColor,
+        strokeWidth,
+      }
+    }),
   }
 }
 
