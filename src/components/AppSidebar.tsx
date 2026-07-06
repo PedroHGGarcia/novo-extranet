@@ -16,7 +16,6 @@ import {
   Activity,
   Settings,
   LogOut,
-  ShieldCheck,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -134,7 +133,6 @@ const menuItems: MenuItem[] = [
     sub: [],
   },
   { title: 'Usuários', url: '/usuarios', icon: Users, sub: [], adminOnly: true },
-  { title: 'Permissões', url: '/permissoes', icon: ShieldCheck, sub: [], adminOnly: true },
   { title: 'Logs de Auditoria', url: '/auditoria', icon: Activity, menuKey: 'auditoria', sub: [] },
   {
     title: 'Configurações',
