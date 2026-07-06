@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Bell, User, LogOut, User as UserIcon } from 'lucide-react'
+import { Bell, User, LogOut, User as UserIcon, Search } from 'lucide-react'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import {
@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import logoUrl from '@/assets/systemlogoin-large-52274.png'
+import { CommandPalette } from '@/components/CommandPalette'
 
 export function AppHeader() {
   const { user, signOut } = useAuth()
@@ -87,10 +88,29 @@ export function AppHeader() {
       <div className="flex-1 md:hidden flex justify-center select-none items-center">
         <img src={logoUrl} alt="Bener" className="h-6 object-contain bener-logo-invert" />
       </div>
-      <div className="hidden md:flex flex-1 items-center px-4">
+      <div className="hidden md:flex flex-1 items-center gap-4 px-4">
         <img src={logoUrl} alt="Bener" className="h-8 object-contain bener-logo-invert" />
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/10 text-white/70 hover:bg-white/20 hover:text-white text-sm transition-colors select-none"
+        >
+          <Search className="h-4 w-4" draggable={false} />
+          <span>Buscar...</span>
+          <kbd className="ml-2 px-1.5 py-0.5 text-[10px] rounded bg-white/10 border border-white/20 select-none">
+            Ctrl+K
+          </kbd>
+        </button>
       </div>
       <div className="flex items-center gap-1 md:gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden rounded-full text-white hover:bg-white/10 hover:text-white"
+          onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+        >
+          <Search className="h-5 w-5" draggable={false} />
+          <span className="sr-only">Buscar</span>
+        </Button>
         <ThemeToggle />
         <Popover>
           <PopoverTrigger asChild>
@@ -201,6 +221,7 @@ export function AppHeader() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      <CommandPalette />
     </header>
   )
 }

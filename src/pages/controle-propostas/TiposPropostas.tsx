@@ -33,6 +33,7 @@ import {
   updateTipoProposta,
 } from '@/services/tipos-propostas'
 import { extractFieldErrors } from '@/lib/pocketbase/errors'
+import { TemplateAcessorios } from '@/components/TemplateAcessorios'
 
 const inputClass =
   'w-full bg-transparent border-0 border-b border-slate-300 rounded-none px-0 py-1.5 outline-none text-slate-700 text-xs focus:border-[#337ab7] focus:ring-0 transition-colors'
@@ -157,6 +158,7 @@ export default function TiposPropostas() {
     imposto_ipi: '',
     imposto_icms: '',
     formas_pagamento_selecionadas: [],
+    acessorios_default: [],
   })
   const [selectedItem, setSelectedItem] = useState<TipoProposta | null>(null)
 
@@ -216,6 +218,7 @@ export default function TiposPropostas() {
       setFormData({
         ...fullItem,
         formas_pagamento_selecionadas: fullItem.formas_pagamento_selecionadas || [],
+        acessorios_default: fullItem.acessorios_default || [],
       })
     }
   }
@@ -228,6 +231,7 @@ export default function TiposPropostas() {
       setFormData({
         ...fullItem,
         formas_pagamento_selecionadas: fullItem.formas_pagamento_selecionadas || [],
+        acessorios_default: fullItem.acessorios_default || [],
       })
     }
   }
@@ -252,6 +256,7 @@ export default function TiposPropostas() {
       setFormData({
         ...newItem,
         formas_pagamento_selecionadas: newItem.formas_pagamento_selecionadas || [],
+        acessorios_default: newItem.acessorios_default || [],
       })
       loadData()
     } catch (err) {
@@ -281,7 +286,12 @@ export default function TiposPropostas() {
       }
       setActiveTab('registros')
       setSelectedItem(null)
-      setFormData({ status: 'Ativo', tem_fator: false, formas_pagamento_selecionadas: [] })
+      setFormData({
+        status: 'Ativo',
+        tem_fator: false,
+        formas_pagamento_selecionadas: [],
+        acessorios_default: [],
+      })
       loadData()
     } catch (err) {
       const fieldErrs = extractFieldErrors(err)
@@ -712,6 +722,16 @@ export default function TiposPropostas() {
                           placeholder="0,00%"
                         />
                       </div>
+                    </div>
+
+                    <div className="border-t border-slate-200 pt-4">
+                      <label className="text-[11px] font-bold text-slate-700 mb-2 block">
+                        Acessórios Padrão (Pré-selecionados ao usar este template)
+                      </label>
+                      <TemplateAcessorios
+                        value={formData.acessorios_default || []}
+                        onChange={(val) => setFormData({ ...formData, acessorios_default: val })}
+                      />
                     </div>
                   </div>
                 </div>

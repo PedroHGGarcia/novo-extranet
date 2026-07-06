@@ -3,9 +3,11 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
 import { MenuAccessGuard } from './ProtectedRoute'
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
 
 export default function Layout() {
   const location = useLocation()
+  useKeyboardShortcuts()
 
   return (
     <SidebarProvider>

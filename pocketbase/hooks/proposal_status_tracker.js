@@ -52,6 +52,34 @@ onRecordAfterUpdateSuccess((e) => {
     } catch (err) {
       console.log('Erro ao salvar auditoria de status', err.message)
     }
+
+    try {
+      const proposalOwner = e.record.getString('user')
+      if (proposalOwner) {
+        var notifCol = $app.findCollectionByNameOrId('notificacoes')
+        var notif = new Record(notifCol)
+        notif.set('user', proposalOwner)
+        notif.set('titulo', 'Status da Proposta Atualizado')
+        notif.set(
+          'mensagem',
+          'A proposta ' +
+            e.record.getString('numero_proposta') +
+            ' teve seu status alterado de "' +
+            oldStatus +
+            '" para "' +
+            newStatus +
+            '".',
+        )
+        notif.set('lida', false)
+        var notifTipo = 'info'
+        if (newStatus === 'Aprovada') notifTipo = 'sucesso'
+        else if (newStatus === 'Recusada' || newStatus === 'Exclu\u00edda') notifTipo = 'alerta'
+        notif.set('tipo', notifTipo)
+        $app.saveNoValidate(notif)
+      }
+    } catch (notifErr) {
+      console.log('Erro ao salvar notificacao de status', notifErr.message)
+    }
   }
   return e.next()
 }, 'propostas')

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   UserCircle,
   Loader2,
@@ -60,6 +60,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
 import { extractFieldErrors } from '@/lib/pocketbase/errors'
 import pb from '@/lib/pocketbase/client'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 type Contato = { id: string; nome: string; telefone: string; email: string; observacoes: string }
 type Documento = {
@@ -88,6 +89,8 @@ export default function Clientes() {
   const [isFetchingCep, setIsFetchingCep] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(true)
+  const [formDirty, setFormDirty] = useState(false)
+  const formInitRef = useRef(false)
 
   const defaultForm = {
     id: '',
@@ -150,6 +153,21 @@ export default function Clientes() {
   useEffect(() => {
     loadData()
   }, [page, perPage, debouncedSearch])
+
+  useEffect(() => {
+    if (view === 'list') {
+      formInitRef.current = false
+      setFormDirty(false)
+      return
+    }
+    if (!formInitRef.current) {
+      formInitRef.current = true
+      return
+    }
+    setFormDirty(true)
+  }, [formData, contatos, documentos, view])
+
+  useUnsavedChanges(view === 'form' && formDirty)
 
   useRealtime('clientes', loadData)
 
@@ -431,6 +449,12 @@ export default function Clientes() {
                 <Button variant="outline" onClick={() => setView('list')}>
                   <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
                 </Button>
+                {formDirty && (
+                  <span className="text-xs text-amber-600 flex items-center gap-1 mr-2">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500" />
+                    Alterações não salvas
+                  </span>
+                )}
                 <Button onClick={handleSave} disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                   Salvar

@@ -45,6 +45,7 @@ import { DialogFooter } from '@/components/ui/dialog'
 import { SignaturePad } from '@/components/SignaturePad'
 import { SearchableCombobox } from '@/components/SearchableCombobox'
 import { getErrorMessage } from '@/lib/pocketbase/errors'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 const formatCurrency = (value: number | undefined, currency: string = 'BRL') => {
   if (value === undefined) return '-'
@@ -171,6 +172,7 @@ export default function EmitirProposta() {
   const [novoStatus, setNovoStatus] = useState<string>('')
 
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false)
+  const [formTouched, setFormTouched] = useState(false)
 
   const importConfig: ImportConfig = {
     collection: 'propostas',
@@ -843,6 +845,15 @@ export default function EmitirProposta() {
     return false
   }, [formData, initialFormData, acessoriosProposta, initialAcessorios, selectedProposta])
 
+  useUnsavedChanges(
+    (selectedProposta ? isDirty : formTouched) &&
+      (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao'),
+  )
+
+  useEffect(() => {
+    setFormTouched(false)
+  }, [selectedProposta, activeTab])
+
   const missingFields = useMemo(() => {
     const missing: string[] = []
     if (!formData.cliente) missing.push('cliente')
@@ -935,6 +946,7 @@ export default function EmitirProposta() {
         toast({ title: 'Proposta atualizada com sucesso' })
         setInitialFormData({ ...formData })
         setInitialAcessorios(acessoriosProposta.map((a) => ({ ...a })))
+        setFormTouched(false)
         loadData()
       } else {
         const fd = new FormData()
@@ -961,6 +973,7 @@ export default function EmitirProposta() {
         const created = await pb.collection('propostas').create(fd)
         setSelectedProposta(created)
         setSignatureConfirmed(true)
+        setFormTouched(false)
         toast({ title: 'Proposta criada com sucesso' })
         loadData()
         navigate(`/controle-propostas/proposta-pdf/${created.id}`)
@@ -1327,6 +1340,11 @@ export default function EmitirProposta() {
               {isDirty ? '● Alterações não salvas' : '✓ Sem alterações'}
             </span>
           )}
+          {!selectedProposta && formTouched && (
+            <span className="text-[10px] font-medium ml-auto flex items-center gap-1 text-amber-600 transition-colors duration-200">
+              ● Alterações não salvas
+            </span>
+          )}
         </div>
         {disabledReason && (
           <div className="text-[10px] text-slate-500 flex items-center gap-1.5 animate-fade-in">
@@ -1606,7 +1624,10 @@ export default function EmitirProposta() {
             value={tabValue}
             className="flex-1 min-h-0 m-0 overflow-y-auto outline-none p-6 bg-white"
           >
-            <div className="max-w-7xl mx-auto w-full flex flex-col items-start pb-10">
+            <div
+              className="max-w-7xl mx-auto w-full flex flex-col items-start pb-10"
+              onChange={() => setFormTouched(true)}
+            >
               <div className="mb-6 w-full border-b border-slate-200 pb-4">
                 {renderCadastroActionBars()}
               </div>
@@ -1751,6 +1772,53 @@ export default function EmitirProposta() {
                     onChange={(e) => {
                       const tipoId = e.target.value
                       const tipo = tiposProposta.find((t) => t.id === tipoId)
+
+                      let updatedAcc = acessoriosProposta
+                      let valueChange = 0
+
+                      if (
+                        tipo?.acessorios_default &&
+                        tipo.acessorios_default.length > 0 &&
+                        acessoriosProposta.length > 0
+                      ) {
+                        const defaults = tipo.acessorios_default
+                        updatedAcc = acessoriosProposta.map((acc) => {
+                          const def = defaults.find((d) => d.acessorio_id === acc.id)
+                          return def ? { ...acc, estado: def.estado } : acc
+                        })
+
+                        const propMoeda = formData.moeda || 'USD'
+                        updatedAcc.forEach((acc, idx) => {
+                          const oldIncluded = acessoriosProposta[idx].estado === 'incluir'
+                          const newIncluded = acc.estado === 'incluir'
+                          if (newIncluded && !oldIncluded) {
+                            valueChange += convertCurrency(
+                              acc.valor || 0,
+                              acc.moeda || 'BRL',
+                              propMoeda,
+                            )
+                          } else if (!newIncluded && oldIncluded) {
+                            valueChange -= convertCurrency(
+                              acc.valor || 0,
+                              acc.moeda || 'BRL',
+                              propMoeda,
+                            )
+                          }
+                        })
+                        setAcessoriosProposta(updatedAcc)
+                      }
+
+                      const newBase =
+                        valueChange !== 0
+                          ? Math.round(((formData.valor_sem_desconto || 0) + valueChange) * 100) /
+                            100
+                          : formData.valor_sem_desconto
+                      const desc = formData.percentual_desconto || 0
+                      const newFinal =
+                        valueChange !== 0
+                          ? Math.round(newBase * (1 - desc / 100) * 100) / 100
+                          : formData.valor_final
+
                       setFormData({
                         ...formData,
                         tipo_proposta: tipoId,
@@ -1760,6 +1828,13 @@ export default function EmitirProposta() {
                               condicoes_pagamento:
                                 tipo.condicoes_pagamento || formData.condicoes_pagamento,
                               validade_oferta: tipo.validade_oferta || formData.validade_oferta,
+                            }
+                          : {}),
+                        ...(valueChange !== 0
+                          ? {
+                              valor_sem_desconto: newBase,
+                              valor_final: newFinal,
+                              valor_atual: newFinal,
                             }
                           : {}),
                       })

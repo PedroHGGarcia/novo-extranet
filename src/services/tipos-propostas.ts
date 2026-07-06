@@ -18,6 +18,7 @@ export interface TipoProposta {
   imposto_ipi?: string
   imposto_icms?: string
   formas_pagamento_selecionadas?: string[]
+  acessorios_default?: Array<{ acessorio_id: string; nome: string; estado: string }>
   created: string
   updated: string
 }
