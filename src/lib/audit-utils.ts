@@ -19,6 +19,7 @@ const FIELD_LABELS: Record<string, string> = {
   complementos: 'Complementos',
   contatos_adicionais: 'Contatos Adicionais',
   dt_cad: 'Data de Cadastro',
+  limite_credito: 'Limite de Crédito',
 }
 
 const SKIP_FIELDS = ['id', 'created', 'updated', 'collectionId', 'collectionName', 'atualizado_por']

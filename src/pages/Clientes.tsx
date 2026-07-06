@@ -117,6 +117,7 @@ export default function Clientes() {
     logradouro: '',
     numero: '',
     complementos: '',
+    limite_credito: '',
     dt_cad: new Date().toLocaleString('pt-BR'),
   }
 
@@ -205,6 +206,7 @@ export default function Clientes() {
       logradouro: item.logradouro || '',
       numero: item.numero || '',
       complementos: item.complementos || '',
+      limite_credito: item.limite_credito || '',
       dt_cad: item.dt_cad || new Date().toLocaleString('pt-BR'),
     })
 
@@ -281,6 +283,7 @@ export default function Clientes() {
 
       const dataToSave = {
         ...formData,
+        limite_credito: formData.limite_credito ? Number(formData.limite_credito) : null,
         contatos_adicionais: contatos.map(({ id, ...rest }) => rest),
         atualizado_por: pb.authStore.record?.id,
       }
@@ -325,6 +328,7 @@ export default function Clientes() {
       setFieldErrors({})
       await updateCliente(conflictRecord.id, {
         ...formData,
+        limite_credito: formData.limite_credito ? Number(formData.limite_credito) : null,
         contatos_adicionais: contatos.map(({ id, ...rest }) => rest),
         atualizado_por: pb.authStore.record?.id,
       })
@@ -715,6 +719,15 @@ export default function Clientes() {
                   {fieldErrors.fantasia && (
                     <p className="text-sm text-destructive">{fieldErrors.fantasia}</p>
                   )}
+                </div>
+                <div className="space-y-2">
+                  <Label>Limite de Crédito</Label>
+                  <Input
+                    type="number"
+                    value={formData.limite_credito}
+                    onChange={(e) => setFormData({ ...formData, limite_credito: e.target.value })}
+                    placeholder="0,00"
+                  />
                 </div>
               </CardContent>
             </Card>

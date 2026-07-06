@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-06T15:29:48.936Z",
+  "generatedAt": "2026-07-06T15:40:56.567Z",
   "collections": [
     {
       "name": "users",
@@ -224,6 +224,12 @@
         {
           "name": "complementos",
           "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "limite_credito",
+          "type": "number",
           "required": false,
           "system": false
         }
@@ -541,8 +547,8 @@
       "name": "notificacoes",
       "type": "base",
       "apiRules": {
-        "list": "@request.auth.id != '' && user = @request.auth.id",
-        "view": "@request.auth.id != '' && user = @request.auth.id",
+        "list": "@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'admin')",
+        "view": "@request.auth.id != '' && (user = @request.auth.id || @request.auth.role = 'admin')",
         "create": "@request.auth.id != ''",
         "update": "@request.auth.id != '' && user = @request.auth.id",
         "delete": "@request.auth.id != '' && user = @request.auth.id"
