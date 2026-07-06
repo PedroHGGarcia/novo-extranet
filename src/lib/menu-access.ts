@@ -121,6 +121,7 @@ export const MENU_ACCESS_GROUPS: Array<{ title: string; keys: string[] }> = [
       'emitir_licitacao',
       'propostas_avancadas',
       'tipos_propostas',
+      'dashboard_licitacoes',
     ],
   },
   { title: 'Outros', keys: ['eventos', 'area_atuacao', 'configuracoes', 'auditoria'] },

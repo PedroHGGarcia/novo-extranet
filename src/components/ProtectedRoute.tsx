@@ -15,7 +15,7 @@ function BiddingPermissionDenied() {
   useEffect(() => {
     toast({
       title: 'Acesso Negado',
-      description: 'Você não tem permissão para acessar o módulo de Emitir Proposta de Licitação.',
+      description: 'Você não tem permissão para acessar este módulo.',
       variant: 'destructive',
     })
   }, [])
@@ -24,9 +24,25 @@ function BiddingPermissionDenied() {
 
 export function BiddingPermissionRoute() {
   const { user, loading } = useAuth()
+  const location = useLocation()
   if (loading) return null
-  const hasPermission = user?.role === 'admin' || user?.can_issue_bidding_proposals === true
-  if (!hasPermission) return <BiddingPermissionDenied />
+
+  if (user?.role === 'admin') return <Outlet />
+
+  const isDashboardRoute = location.pathname.includes('/dashboard')
+  const hasBiddingPerm = user?.can_issue_bidding_proposals === true
+  const hasDashboardMenuAccess = hasMenuAccess(user, 'dashboard_licitacoes')
+
+  if (isDashboardRoute) {
+    if (!hasBiddingPerm && !hasDashboardMenuAccess) {
+      return <BiddingPermissionDenied />
+    }
+  } else {
+    if (!hasBiddingPerm) {
+      return <BiddingPermissionDenied />
+    }
+  }
+
   return <Outlet />
 }
 

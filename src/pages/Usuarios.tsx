@@ -290,8 +290,8 @@ export default function Usuarios() {
       })
       toast({
         title: !u.can_issue_bidding_proposals
-          ? 'Permissão de licitação concedida'
-          : 'Permissão de licitação removida',
+          ? 'Acesso ao Dashboard de Licitação concedido'
+          : 'Acesso ao Dashboard de Licitação removido',
       })
       loadData()
     } catch (e) {
@@ -457,9 +457,10 @@ export default function Usuarios() {
 
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
-                <Label>Permitir emissão de propostas de licitação</Label>
+                <Label>Acesso ao Dashboard de Licitação</Label>
                 <p className="text-xs text-muted-foreground">
-                  Permite ao usuário criar e gerenciar propostas de licitação.
+                  Permite ao usuário acessar o Dashboard de Licitação e gerenciar propostas de
+                  licitação.
                 </p>
               </div>
               <Switch

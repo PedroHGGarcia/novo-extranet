@@ -30,17 +30,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAuthenticated(pb.authStore.isValid)
     })
 
-    if (pb.authStore.isValid) {
+    if (pb.authStore.record) {
       pb.collection('users')
         .authRefresh()
         .catch((err: any) => {
-          if (err.status >= 400 && err.status < 500 && err.status !== 429) {
+          if (err?.status === 401) {
             pb.authStore.clear()
           }
         })
         .finally(() => setLoading(false))
     } else {
-      if (pb.authStore.record) pb.authStore.clear()
       setLoading(false)
     }
     return () => {
@@ -72,11 +71,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const refreshUser = async () => {
-    if (!pb.authStore.isValid) return
+    if (!pb.authStore.record) return
     try {
       await pb.collection('users').authRefresh()
     } catch (err: any) {
-      if (err.status >= 400 && err.status < 500 && err.status !== 429) {
+      if (err?.status === 401) {
         pb.authStore.clear()
       }
     }

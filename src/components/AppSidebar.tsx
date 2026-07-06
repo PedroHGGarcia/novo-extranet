@@ -82,7 +82,7 @@ const menuItems: MenuItem[] = [
       },
       {
         title: 'Licitações',
-        url: '/controle-propostas/emitir',
+        url: '/controle-propostas/dashboard',
         biddingOnly: true,
         sub: [
           {
@@ -95,6 +95,7 @@ const menuItems: MenuItem[] = [
             title: 'Dashboard de Licitações',
             url: '/controle-propostas/dashboard',
             biddingOnly: true,
+            menuKey: 'dashboard_licitacoes',
           },
         ],
       },
@@ -161,10 +162,12 @@ export function AppSidebar() {
   const { user, signOut } = useAuth()
 
   const canSeeSub = (s: SubMenuItem): boolean => {
-    if (s.biddingOnly && user?.role !== 'admin' && user?.can_issue_bidding_proposals !== true) {
-      return false
-    }
     if (s.sub && s.sub.length > 0) return s.sub.some(canSeeSub)
+    if (s.biddingOnly && user?.role !== 'admin') {
+      const hasBiddingPerm = user?.can_issue_bidding_proposals === true
+      const hasMenuPerm = s.menuKey ? hasMenuAccess(user, s.menuKey) : false
+      return hasBiddingPerm || hasMenuPerm
+    }
     if (s.menuKey) return hasMenuAccess(user, s.menuKey)
     return true
   }
@@ -177,8 +180,13 @@ export function AppSidebar() {
 
   const filtered = menuItems
     .filter((item) => {
-      if (item.biddingOnly) {
-        return user?.role === 'admin' || user?.can_issue_bidding_proposals === true
+      if (item.biddingOnly && user?.role !== 'admin') {
+        const hasBiddingPerm = user?.can_issue_bidding_proposals === true
+        const hasMenuPerm = item.menuKey ? hasMenuAccess(user, item.menuKey) : false
+        if (item.sub.length > 0) {
+          return hasBiddingPerm || hasMenuPerm || item.sub.some(canSeeSub)
+        }
+        return hasBiddingPerm || hasMenuPerm
       }
       if (item.adminOnly && user?.role !== 'admin') return false
       if (item.sub.length > 0) return item.sub.some(canSeeSub)
