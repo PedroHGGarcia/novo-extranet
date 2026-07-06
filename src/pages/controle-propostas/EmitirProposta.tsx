@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/table'
 import { getPropostasPaginated, updateProposta, type Proposta } from '@/services/propostas'
 import { getTiposProposta, type TipoProposta } from '@/services/tipos-propostas'
-import { searchClientesPaginated } from '@/services/cadastros'
+import { searchClientesPaginated, getGerentes } from '@/services/cadastros'
 import { useRealtime } from '@/hooks/use-realtime'
 import { cn } from '@/lib/utils'
 import { PropostaDocument } from '@/components/PropostaDocument'
@@ -55,7 +55,7 @@ const formatCurrency = (value: number | undefined, currency: string = 'BRL') => 
       style: 'currency',
       currency: code,
     }).format(value)
-  } catch (e) {
+  } catch {
     return `${code} ${value}`
   }
 }
@@ -109,7 +109,7 @@ const CurrencyInput = ({
 
 export default function EmitirProposta() {
   const { toast } = useToast()
-  const { user, refreshUser } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('registros')
   const [selectedProposta, setSelectedProposta] = useState<Proposta | null>(null)
@@ -133,7 +133,6 @@ export default function EmitirProposta() {
   const [acessoriosProposta, setAcessoriosProposta] = useState<any[]>([])
   const [initialAcessorios, setInitialAcessorios] = useState<any[]>([])
 
-  // Local UI states for fields not directly in the Proposta schema
   const [estoqueUI, setEstoqueUI] = useState('')
   const [propostaSignatureBlob, setPropostaSignatureBlob] = useState<Blob | null>(null)
   const [signatureConfirmed, setSignatureConfirmed] = useState(false)
@@ -279,6 +278,16 @@ export default function EmitirProposta() {
         if (isMounted) setVersoes(res)
       })
       .catch(() => {})
+    getGerentes()
+      .then((res) => {
+        if (isMounted) setGerentes(res)
+      })
+      .catch(() => {})
+    getTiposProposta()
+      .then((res) => {
+        if (isMounted) setTiposProposta(res)
+      })
+      .catch(() => {})
     return () => {
       isMounted = false
     }
@@ -336,131 +345,6 @@ export default function EmitirProposta() {
         }
       }
 
-  }
-
-  useEffect(() => {
-    if (activeTab === 'registros' || activeTab === 'excluidas') {
-      loadData()
-    }
-  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
-
-  useEffect(() => {
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
-    pb.collection('versoes')
-      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
-=======
-  useEffect(() => {
-    if (activeTab === 'registros' || activeTab === 'excluidas') {
-      loadData()
-    }
-  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
-=======
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
-    pb.collection('versoes')
-      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
-      if (selectedProposta) {
-=======
-    } catch (error) {
-      console.error('Failed to load propostas', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (activeTab === 'registros' || activeTab === 'excluidas') {
-      loadData()
-    }
-  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
-
-  useEffect(() => {
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
-    pb.collection('versoes')
-      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
-      if (selectedProposta) {
-=======
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
-    pb.collection('versoes')
-      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
-=======
-  }
-
-  useEffect(() => {
-    if (activeTab === 'registros' || activeTab === 'excluidas') {
-      loadData()
-    }
-  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
-
-  useEffect(() => {
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
-    pb.collection('versoes')
-      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
-=======
-  useEffect(() => {
-    if (activeTab === 'registros' || activeTab === 'excluidas') {
-      loadData()
-    }
-  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
-=======
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
-    pb.collection('versoes')
-      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
-      if (selectedProposta) {
-=======
       const filterParam = filters.join(' && ')
       const res = await getPropostasPaginated(page, perPage, sortParam, filterParam)
       setData(res.items)
@@ -477,131 +361,6 @@ export default function EmitirProposta() {
       loadData()
     }
   }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
-      if (selectedProposta) {
-=======
-  }
-
-  useEffect(() => {
-    if (activeTab === 'registros' || activeTab === 'excluidas') {
-      loadData()
-    }
-  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
-
-  useEffect(() => {
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
-    pb.collection('versoes')
-      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
-=======
-  useEffect(() => {
-    if (activeTab === 'registros' || activeTab === 'excluidas') {
-      loadData()
-    }
-  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
-=======
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
-    pb.collection('versoes')
-      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
-      if (selectedProposta) {
-=======
-    } catch (error) {
-      console.error('Failed to load propostas', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (activeTab === 'registros' || activeTab === 'excluidas') {
-      loadData()
-    }
-  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
-
-  useEffect(() => {
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
-    pb.collection('versoes')
-      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
-      if (selectedProposta) {
-=======
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
-    pb.collection('versoes')
-      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
-=======
-  }
-
-  useEffect(() => {
-    if (activeTab === 'registros' || activeTab === 'excluidas') {
-      loadData()
-    }
-  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
-
-  useEffect(() => {
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
-    pb.collection('versoes')
-      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
-      .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
-=======
-  useEffect(() => {
-    if (activeTab === 'registros' || activeTab === 'excluidas') {
-      loadData()
-    }
-  }, [page, perPage, sortField, sortDirection, activeTab, sectorFilter, debouncedSearch])
-=======
-    pb.collection('representantes')
-      .getFullList({ sort: 'fantasia' })
-      .then(setRepresentantes)
-      .catch(() => {})
-    pb.collection('versoes')
-      .getFullList({ sort: 'nome', expand: 'modelo.marca,modelo.produto.categoria' })
-      .then(setVersoes)
-      .catch(() => {})
-  }, [])
 
   useEffect(() => {
     if (activeTab === 'cadastro' || activeTab === 'cadastro_licitacao') {
@@ -671,7 +430,7 @@ export default function EmitirProposta() {
     if (selectedProposta?.cliente) {
       pb.collection('clientes')
         .getOne(selectedProposta.cliente)
-        .then((c) => setClientes((prev) => prev.some((p) => p.id === c.id) ? prev : [...prev, c]))
+        .then((c) => setClientes((prev) => (prev.some((p) => p.id === c.id) ? prev : [...prev, c])))
         .catch(() => {})
     }
   }, [selectedProposta])
@@ -860,7 +619,7 @@ export default function EmitirProposta() {
       }
 
       setHistoryLogs(processedLogs.reverse())
-    } catch (e) {
+    } catch {
       toast({ title: 'Erro ao carregar histórico', variant: 'destructive' })
     } finally {
       setIsLoadingHistory(false)
@@ -966,7 +725,7 @@ export default function EmitirProposta() {
     }
     if (field.includes('valor')) {
       const num = Number(val)
-      if (!isNaN(num)) return formatCurrency(num, 'BRL') // Defaults to BRL if not available
+      if (!isNaN(num)) return formatCurrency(num, 'BRL')
     }
     if (typeof val === 'object') return JSON.stringify(val)
     return String(val)
@@ -1315,7 +1074,7 @@ export default function EmitirProposta() {
       pb.collection('clientes')
         .getOne(clienteId)
         .then((c) => {
-          setClientes((prev) => prev.some((p) => p.id === c.id) ? prev : [...prev, c])
+          setClientes((prev) => (prev.some((p) => p.id === c.id) ? prev : [...prev, c]))
           setFormData((prev) => ({
             ...prev,
             contato: c.contato || '',
@@ -1454,7 +1213,6 @@ export default function EmitirProposta() {
       return
     }
 
-    // Set dt_cad if not present, though it defaults on init.
     if (!formData.dt_cad) {
       setFormData((prev) => ({ ...prev, dt_cad: format(new Date(), 'yyyy-MM-dd') }))
     }
@@ -1473,7 +1231,7 @@ export default function EmitirProposta() {
       toast({ title: 'Status da proposta atualizado com sucesso' })
       setAvancarPropostaItem(null)
       loadData()
-    } catch (e) {
+    } catch {
       toast({ title: 'Erro ao atualizar status', variant: 'destructive' })
     }
   }
@@ -2320,12 +2078,12 @@ export default function EmitirProposta() {
                       </div>
                       <div className="grid grid-cols-1 gap-4">
                         {hasStandards && (
-                          <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50 dark:bg-slate-900/20 dark:border-slate-700">
-                            <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
+                          <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50">
+                            <p className="text-[11px] font-bold text-slate-700 mb-2 uppercase">
                               Acessórios Standards
                             </p>
                             <div
-                              className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed rich-text-content"
+                              className="text-xs text-slate-600 leading-relaxed rich-text-content"
                               dangerouslySetInnerHTML={{
                                 __html: versao.acessorios_standards || '',
                               }}
@@ -2333,12 +2091,12 @@ export default function EmitirProposta() {
                           </div>
                         )}
                         {hasConstrutivas && (
-                          <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50 dark:bg-slate-900/20 dark:border-slate-700">
-                            <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
+                          <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50">
+                            <p className="text-[11px] font-bold text-slate-700 mb-2 uppercase">
                               Características Construtivas Principais
                             </p>
                             <div
-                              className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed rich-text-content"
+                              className="text-xs text-slate-600 leading-relaxed rich-text-content"
                               dangerouslySetInnerHTML={{
                                 __html: versao.caracteristicas_construtivas || '',
                               }}
@@ -2346,12 +2104,12 @@ export default function EmitirProposta() {
                           </div>
                         )}
                         {hasEspecificacoes && (
-                          <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50 dark:bg-slate-900/20 dark:border-slate-700">
-                            <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase">
+                          <div className="border border-slate-200 rounded-sm p-4 bg-slate-50/50">
+                            <p className="text-[11px] font-bold text-slate-700 mb-2 uppercase">
                               Especificações Técnicas Principais
                             </p>
                             <div
-                              className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed rich-text-content"
+                              className="text-xs text-slate-600 leading-relaxed rich-text-content"
                               dangerouslySetInnerHTML={{
                                 __html: versao.especificacoes_tecnicas || '',
                               }}
