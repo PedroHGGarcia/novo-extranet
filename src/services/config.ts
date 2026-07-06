@@ -26,6 +26,13 @@ export interface ConfigDashboard {
 export const getAuditoria = () =>
   pb.collection('auditoria').getList<Auditoria>(1, 100, { sort: '-created', expand: 'user' })
 
+export const getAuditoriaByRegistro = (tabela: string, registroId: string) =>
+  pb.collection('auditoria').getList<Auditoria>(1, 100, {
+    filter: `tabela = '${tabela}' && registro_id = '${registroId}'`,
+    sort: '-created',
+    expand: 'user',
+  })
+
 export const getConfigDashboard = () =>
   pb.collection('configuracoes_dashboard').getFullList<ConfigDashboard>()
 

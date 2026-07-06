@@ -15,6 +15,7 @@ import {
   Building2,
   MapPin,
   Phone,
+  History,
 } from 'lucide-react'
 import {
   Table,
@@ -54,6 +55,7 @@ import {
   deleteDocumentoCliente,
 } from '@/services/cadastros'
 import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
+import { ClientAuditSheet } from '@/components/ClientAuditSheet'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useAuth } from '@/hooks/use-auth'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -91,6 +93,9 @@ export default function Clientes() {
   const [isLoading, setIsLoading] = useState(true)
   const [formDirty, setFormDirty] = useState(false)
   const formInitRef = useRef(false)
+  const [auditClientId, setAuditClientId] = useState('')
+  const [auditClientName, setAuditClientName] = useState('')
+  const [isAuditOpen, setIsAuditOpen] = useState(false)
 
   const defaultForm = {
     id: '',
@@ -403,6 +408,12 @@ export default function Clientes() {
     }
   }
 
+  const handleOpenAudit = (item: any) => {
+    setAuditClientId(item.id)
+    setAuditClientName(item.fantasia || '')
+    setIsAuditOpen(true)
+  }
+
   const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let v = e.target.value.replace(/\D/g, '')
     if (v.length > 5) v = v.replace(/^(\d{5})(\d)/, '$1-$2')
@@ -459,6 +470,16 @@ export default function Clientes() {
                   {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                   Salvar
                 </Button>
+                {formData.id && (
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      handleOpenAudit({ id: formData.id, fantasia: formData.fantasia })
+                    }
+                  >
+                    <History className="h-4 w-4 mr-2" /> Histórico
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -608,6 +629,9 @@ export default function Clientes() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleDuplicate(item)}>
                                   <Copy className="h-4 w-4 mr-2" /> Duplicar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleOpenAudit(item)}>
+                                  <History className="h-4 w-4 mr-2" /> Histórico
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -1120,6 +1144,12 @@ export default function Clientes() {
         onReplace={handleReplace}
         onMerge={handleMerge}
         isSubmitting={isSubmitting}
+      />
+      <ClientAuditSheet
+        clientId={auditClientId}
+        clientName={auditClientName}
+        open={isAuditOpen}
+        onOpenChange={setIsAuditOpen}
       />
     </div>
   )
