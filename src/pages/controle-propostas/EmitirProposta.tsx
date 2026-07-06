@@ -136,6 +136,7 @@ export default function EmitirProposta() {
   const [estoqueUI, setEstoqueUI] = useState('')
   const [propostaSignatureBlob, setPropostaSignatureBlob] = useState<Blob | null>(null)
   const [signatureConfirmed, setSignatureConfirmed] = useState(false)
+  const [useProfileSignature, setUseProfileSignature] = useState(false)
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [sectorFilter, setSectorFilter] = useState<string>('')
@@ -422,9 +423,10 @@ export default function EmitirProposta() {
         loadAcessorios('')
         setPropostaSignatureBlob(null)
         setSignatureConfirmed(false)
+        setUseProfileSignature(!!user?.assinatura)
       }
     }
-  }, [selectedProposta, activeTab])
+  }, [selectedProposta, activeTab, user])
 
   useEffect(() => {
     if (selectedProposta?.cliente) {
@@ -847,7 +849,7 @@ export default function EmitirProposta() {
     if (!formData.versao) missing.push('versao')
     if (!formData.representante) missing.push('representante')
     if (!formData.tipo_proposta) missing.push('tipo_proposta')
-    if (!selectedProposta && !signatureConfirmed) missing.push('assinatura')
+    if (!selectedProposta && !signatureConfirmed && !useProfileSignature) missing.push('assinatura')
     return missing
   }, [
     formData.cliente,
@@ -856,6 +858,7 @@ export default function EmitirProposta() {
     formData.tipo_proposta,
     selectedProposta,
     signatureConfirmed,
+    useProfileSignature,
   ])
 
   const requiredFieldsValid = missingFields.length === 0
@@ -895,7 +898,7 @@ export default function EmitirProposta() {
       return
     }
 
-    if (!selectedProposta && !signatureConfirmed) {
+    if (!selectedProposta && !signatureConfirmed && !useProfileSignature) {
       toast({
         title: 'É obrigatório fornecer a assinatura do representante',
         variant: 'destructive',
@@ -949,6 +952,11 @@ export default function EmitirProposta() {
             propostaSignatureBlob,
             'assinatura-representante.png',
           )
+        } else if (useProfileSignature && user?.assinatura) {
+          const sigUrl = pb.files.getURL(user as any, user.assinatura as string)
+          const sigRes = await fetch(sigUrl)
+          const sigBlob = await sigRes.blob()
+          fd.append('assinatura_representante', sigBlob, 'assinatura-representante.png')
         }
         const created = await pb.collection('propostas').create(fd)
         setSelectedProposta(created)
@@ -1252,7 +1260,8 @@ export default function EmitirProposta() {
         if (!formData.versao) missing.push('Versão')
         if (!formData.representante) missing.push('Representante')
         if (!formData.tipo_proposta) missing.push('Tipo de Proposta')
-        if (!selectedProposta && !signatureConfirmed) missing.push('Assinatura do Representante')
+        if (!selectedProposta && !signatureConfirmed && !useProfileSignature)
+          missing.push('Assinatura do Representante')
         return `Campos obrigatórios pendentes: ${missing.join(', ')}`
       }
       if (selectedProposta && !isDirty) return 'Nenhuma alteração detectada'
@@ -2329,6 +2338,28 @@ export default function EmitirProposta() {
                           <PenTool className="h-4 w-4" /> Refazer Assinatura
                         </Button>
                       </div>
+                    ) : useProfileSignature && user?.assinatura ? (
+                      <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
+                        <img
+                          src={pb.files.getURL(user as any, user.assinatura as string)}
+                          alt="Assinatura do perfil"
+                          className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
+                        />
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-5 w-5 text-emerald-600" />
+                          <span className="text-xs text-slate-600">
+                            Assinatura carregada do seu perfil
+                          </span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setUseProfileSignature(false)}
+                          className="gap-2 text-xs ml-auto"
+                        >
+                          <PenTool className="h-4 w-4" /> Limpar Assinatura
+                        </Button>
+                      </div>
                     ) : (
                       <div className="p-4 border-2 border-dashed border-amber-300 rounded-sm">
                         <p className="text-xs text-amber-600 text-center mb-3">
@@ -2811,7 +2842,9 @@ export default function EmitirProposta() {
                           )
                         : propostaSignatureBlob
                           ? URL.createObjectURL(propostaSignatureBlob)
-                          : null
+                          : useProfileSignature && user?.assinatura
+                            ? pb.files.getURL(user as any, user.assinatura as string)
+                            : null
                     }
                     representanteAssinaturaUrl={
                       selectedProposta && user?.assinatura
