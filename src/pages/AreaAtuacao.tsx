@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { KmlImportDialog } from '@/components/KmlImportDialog'
 
 const GOOGLE_MY_MAPS_URL =
-  'https://www.google.com/maps/d/embed?mid=11MTMOmKAA2gbutWJQJ9YoXaef4capGo&hl=pt-BR&ehbc=2E312F'
+  'https://www.google.com/maps/d/embed?mid=1RU6uXumBUQegCqYMO-ds0t3RVxufZ2w&hl=pt-BR&ehbc=2E312F'
 
 export default function AreaAtuacao() {
   const [importOpen, setImportOpen] = useState(false)
@@ -25,11 +25,11 @@ export default function AreaAtuacao() {
           Importar KML
         </Button>
       </div>
-      <Card className="flex-1 overflow-hidden shadow-sm border rounded-xl min-h-[500px] relative">
+      <Card className="flex-1 overflow-hidden shadow-sm border rounded-xl relative h-[600px] md:h-[calc(100vh-220px)] min-h-[500px]">
         <CardContent className="h-full p-0">
           <div className="relative h-full w-full">
             {!iframeLoaded && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#e0f3f8]">
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#e0f3f8] animate-fade-in">
                 <Loader2 className="h-8 w-8 animate-spin text-[#337ab7]" />
                 <p className="mt-3 text-sm text-gray-500">Carregando mapa...</p>
               </div>
@@ -40,7 +40,6 @@ export default function AreaAtuacao() {
               className="h-full w-full border-0"
               loading="lazy"
               onLoad={() => setIframeLoaded(true)}
-              style={{ minHeight: '500px' }}
             />
           </div>
         </CardContent>
