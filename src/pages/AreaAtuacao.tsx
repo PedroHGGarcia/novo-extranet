@@ -12,20 +12,25 @@ export default function AreaAtuacao() {
   const [iframeLoaded, setIframeLoaded] = useState(false)
 
   return (
-    <div className="flex h-full w-full flex-col p-6 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="flex h-full w-full flex-col p-3 lg:p-4 space-y-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Área de Atuação</h1>
-          <p className="text-gray-500">
+          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-gray-900">
+            Área de Atuação
+          </h1>
+          <p className="text-sm text-gray-500">
             Visualize a cobertura geográfica dos representantes no mapa interativo.
           </p>
         </div>
-        <Button onClick={() => setImportOpen(true)} className="flex items-center gap-2">
+        <Button
+          onClick={() => setImportOpen(true)}
+          className="flex items-center gap-2 shrink-0 w-full sm:w-auto"
+        >
           <UploadCloud className="w-4 h-4" />
           Importar KML
         </Button>
       </div>
-      <Card className="flex-1 overflow-hidden shadow-sm border rounded-xl relative h-[600px] md:h-[calc(100vh-220px)] min-h-[500px]">
+      <Card className="flex-1 overflow-hidden shadow-sm border rounded-xl relative h-[500px] min-h-[500px] lg:h-[calc(100vh-200px)] lg:min-h-[750px]">
         <CardContent className="h-full p-0">
           <div className="relative h-full w-full">
             {!iframeLoaded && (
