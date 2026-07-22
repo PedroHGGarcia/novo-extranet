@@ -1311,8 +1311,7 @@ export default function EmitirProposta() {
     const isOverDiscount = (formData.percentual_desconto || 0) > 28
     const isOwner = !selectedProposta || user?.id === selectedProposta.user
     const hasClient = !!formData.cliente
-    const canSave =
-      !isOverDiscount && isOwner && requiredFieldsValid && (selectedProposta ? isDirty : true)
+    const canSave = !isOverDiscount && isOwner && requiredFieldsValid
 
     const getDisabledReason = (): string | null => {
       if (isOverDiscount) return 'Desconto acima do máximo permitido (28%)'
@@ -1327,7 +1326,6 @@ export default function EmitirProposta() {
           missing.push('Assinatura do Representante')
         return `Campos obrigatórios pendentes: ${missing.join(', ')}`
       }
-      if (selectedProposta && !isDirty) return 'Nenhuma alteração detectada'
       return null
     }
     const disabledReason = getDisabledReason()
@@ -1384,10 +1382,10 @@ export default function EmitirProposta() {
             <span
               className={cn(
                 'text-[10px] font-medium ml-auto flex items-center gap-1 transition-colors duration-200',
-                isDirty ? 'text-amber-600' : 'text-slate-400',
+                isDirty ? 'text-amber-600' : 'text-emerald-600',
               )}
             >
-              {isDirty ? '● Alterações não salvas' : '✓ Sem alterações'}
+              {isDirty ? '● Alterações não salvas' : '✓ Salvo'}
             </span>
           )}
           {!selectedProposta && formTouched && (
@@ -3012,11 +3010,7 @@ export default function EmitirProposta() {
             <Button variant="outline" onClick={() => setIsPreviewModalOpen(false)}>
               Fechar
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={!!selectedProposta && !isDirty}
-              className="bg-primary hover:bg-primary/90"
-            >
+            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">
               Salvar e Fechar
             </Button>
           </div>

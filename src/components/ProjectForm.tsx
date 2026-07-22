@@ -32,6 +32,29 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
     user: user?.id || '',
   })
 
+  const isDirty = useMemo(() => {
+    if (!projeto) return true
+    const normNome = formData.nome || ''
+    const normDesc = formData.descricao || ''
+    const normCliente = formData.cliente || ''
+    const normStatus = formData.status || 'Em Andamento'
+    const normUser = formData.user || user?.id || ''
+
+    const initNome = projeto.nome || ''
+    const initDesc = projeto.descricao || ''
+    const initCliente = projeto.cliente || ''
+    const initStatus = projeto.status || 'Em Andamento'
+    const initUser = projeto.user || user?.id || ''
+
+    return (
+      normNome !== initNome ||
+      normDesc !== initDesc ||
+      normCliente !== initCliente ||
+      normStatus !== initStatus ||
+      normUser !== initUser
+    )
+  }, [formData, projeto, user])
+
   useEffect(() => {
     if (projeto) {
       setFormData({
@@ -59,11 +82,17 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
       toast({ title: 'Cliente é obrigatório', variant: 'destructive' })
       return
     }
+
+    if (projeto && !isDirty) {
+      toast({ title: 'Nenhuma alteração detectada', variant: 'default' })
+      return
+    }
+
     setIsSubmitting(true)
     try {
       if (projeto) {
         await updateProjeto(projeto.id, formData)
-        toast({ title: 'Projeto atualizado com sucesso' })
+        toast({ title: 'Alterações salvas com sucesso!' })
       } else {
         await createProjeto(formData)
         toast({ title: 'Projeto criado com sucesso' })
