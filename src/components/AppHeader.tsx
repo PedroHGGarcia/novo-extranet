@@ -25,7 +25,7 @@ import {
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import logoUrl from '@/assets/logo-bener-4ae76.png'
+import { BenerLogo } from '@/components/BenerLogo'
 import { CommandPalette } from '@/components/CommandPalette'
 
 export function AppHeader() {
@@ -86,17 +86,13 @@ export function AppHeader() {
     <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 bg-brand-green dark:bg-sidebar px-4 text-white shadow-sm">
       <SidebarTrigger className="text-white hover:bg-white/10 hover:text-white focus-visible:ring-white/20" />
       <div className="flex-1 md:hidden flex justify-center select-none items-center">
-        <Link to="/dashboard" className="flex items-center">
-          <img
-            src={logoUrl}
-            alt="Bener"
-            className="h-7 max-w-[120px] object-contain bg-white p-1 rounded"
-          />
+        <Link to="/dashboard" className="flex items-center" draggable={false}>
+          <BenerLogo variant="compact" className="h-7 w-auto" />
         </Link>
       </div>
       <div className="hidden md:flex flex-1 items-center gap-4 px-4">
-        <Link to="/dashboard" className="flex items-center">
-          <img src={logoUrl} alt="Bener" className="h-9 object-contain bg-white p-1 rounded" />
+        <Link to="/dashboard" className="flex items-center" draggable={false}>
+          <BenerLogo className="h-9 w-auto" />
         </Link>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
