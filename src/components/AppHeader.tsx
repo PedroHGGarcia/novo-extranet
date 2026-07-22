@@ -90,13 +90,13 @@ export function AppHeader() {
           <img
             src={logoUrl}
             alt="Bener"
-            className="h-6 max-w-[120px] object-contain brightness-0 invert"
+            className="h-7 max-w-[120px] object-contain bg-white p-1 rounded"
           />
         </Link>
       </div>
       <div className="hidden md:flex flex-1 items-center gap-4 px-4">
         <Link to="/dashboard" className="flex items-center">
-          <img src={logoUrl} alt="Bener" className="h-8 object-contain brightness-0 invert" />
+          <img src={logoUrl} alt="Bener" className="h-9 object-contain bg-white p-1 rounded" />
         </Link>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
