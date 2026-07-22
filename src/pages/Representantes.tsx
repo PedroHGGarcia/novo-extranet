@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Briefcase, Loader2 } from 'lucide-react'
-import { PageLayout } from '@/components/PageLayout'
-import { PaginationBar } from '@/components/PaginationBar'
-import { SortableHead } from '@/components/SortableHead'
+import { Loader2, Search, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -12,6 +9,10 @@ import {
   TableHead,
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card } from '@/components/ui/card'
 import {
   Sheet,
   SheetContent,
@@ -27,12 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { RegistrationActionBar } from '@/components/RegistrationActionBar'
+import { Skeleton } from '@/components/ui/skeleton'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
+import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
 import {
   getRepresentantes,
   createRepresentante,
@@ -40,7 +39,6 @@ import {
   deleteRepresentante,
   getByDocumento,
 } from '@/services/cadastros'
-import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useToast } from '@/hooks/use-toast'
 import { extractFieldErrors } from '@/lib/pocketbase/errors'
@@ -48,29 +46,15 @@ import { extractFieldErrors } from '@/lib/pocketbase/errors'
 export default function Representantes() {
   const [data, setData] = useState<any[]>([])
   const [search, setSearch] = useState('')
-  const [showSearch, setShowSearch] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [conflictRecord, setConflictRecord] = useState<any>(null)
   const [isConflictOpen, setIsConflictOpen] = useState(false)
-
-  const resetForm = () => {
-    setIsCreateOpen(false)
-    setFormData({
-      fantasia: '',
-      documento: '',
-      sigla: '',
-      telefone: '',
-      cidade: '',
-      uf: '',
-      status: 'Ativo',
-      dt_cad: new Date().toISOString().split('T')[0],
-      coordenadas: '',
-    })
-    setConflictRecord(null)
-  }
+  const [page, setPage] = useState(1)
+  const [perPage] = useState(50)
 
   const [formData, setFormData] = useState({
     fantasia: '',
@@ -86,7 +70,17 @@ export default function Representantes() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { toast } = useToast()
 
-  const loadData = async () => setData(await getRepresentantes().catch(() => []))
+  const loadData = async () => {
+    try {
+      setIsLoading(true)
+      setData(await getRepresentantes())
+    } catch {
+      setData([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   useEffect(() => {
     loadData()
   }, [])
@@ -97,10 +91,14 @@ export default function Representantes() {
       d.fantasia?.toLowerCase().includes(search.toLowerCase()) ||
       d.sigla?.toLowerCase().includes(search.toLowerCase()),
   )
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage)
+  const totalPages = Math.ceil(filtered.length / perPage) || 1
 
   const toggleAll = () =>
     setSelected(
-      selected.length === filtered.length && filtered.length > 0 ? [] : filtered.map((d) => d.id),
+      selected.length === paginated.length && paginated.length > 0
+        ? []
+        : paginated.map((d) => d.id),
     )
   const toggleOne = (id: string) =>
     setSelected((p) => (p.includes(id) ? p.filter((i) => i !== id) : [...p, id]))
@@ -109,10 +107,27 @@ export default function Representantes() {
     try {
       await Promise.all(selected.map((id) => deleteRepresentante(id)))
       setSelected([])
-      toast({ title: 'Registros excluídos' })
-    } catch (e) {
+      toast({ title: 'Registros excluídos com sucesso' })
+    } catch {
       toast({ title: 'Erro ao excluir', variant: 'destructive' })
     }
+  }
+
+  const resetForm = () => {
+    setIsCreateOpen(false)
+    setFormData({
+      fantasia: '',
+      documento: '',
+      sigla: '',
+      telefone: '',
+      cidade: '',
+      uf: '',
+      status: 'Ativo',
+      dt_cad: new Date().toISOString().split('T')[0],
+      coordenadas: '',
+    })
+    setConflictRecord(null)
+    setErrors({})
   }
 
   const handleCreate = async () => {
@@ -124,11 +139,9 @@ export default function Representantes() {
         return toast({ title: 'JSON de Coordenadas inválido', variant: 'destructive' })
       }
     }
-
     try {
       setIsSubmitting(true)
       setErrors({})
-
       if (formData.documento) {
         const existing = await getByDocumento('representantes', formData.documento)
         if (existing) {
@@ -138,14 +151,13 @@ export default function Representantes() {
           return
         }
       }
-
       await createRepresentante({
         ...formData,
         coordenadas: coords,
         dt_cad: formData.dt_cad.split('-').reverse().join('/'),
       })
       resetForm()
-      toast({ title: 'Registro criado' })
+      toast({ title: 'Registro criado com sucesso' })
     } catch (err) {
       setErrors(extractFieldErrors(err))
     } finally {
@@ -172,7 +184,7 @@ export default function Representantes() {
       setIsConflictOpen(false)
       resetForm()
       toast({ title: 'Registro substituído com sucesso' })
-    } catch (err) {
+    } catch {
       toast({ title: 'Erro ao substituir', variant: 'destructive' })
     } finally {
       setIsSubmitting(false)
@@ -188,27 +200,22 @@ export default function Representantes() {
         return
       }
     }
-
     try {
       setIsSubmitting(true)
-      const formattedFormData = {
+      const merged = { ...conflictRecord }
+      const formatted = {
         ...formData,
         dt_cad: formData.dt_cad ? formData.dt_cad.split('-').reverse().join('/') : formData.dt_cad,
         ...(coords !== undefined ? { coordenadas: coords } : {}),
       }
-
-      const mergedData = { ...conflictRecord }
-      for (const [key, value] of Object.entries(formattedFormData)) {
-        if (value !== undefined && value !== null && String(value).trim() !== '') {
-          mergedData[key] = value
-        }
+      for (const [k, v] of Object.entries(formatted)) {
+        if (v !== undefined && v !== null && String(v).trim() !== '') merged[k] = v
       }
-
-      await updateRepresentante(conflictRecord.id, mergedData)
+      await updateRepresentante(conflictRecord.id, merged)
       setIsConflictOpen(false)
       resetForm()
       toast({ title: 'Registros mesclados com sucesso' })
-    } catch (err) {
+    } catch {
       toast({ title: 'Erro ao mesclar', variant: 'destructive' })
     } finally {
       setIsSubmitting(false)
@@ -216,65 +223,141 @@ export default function Representantes() {
   }
 
   return (
-    <PageLayout title="Representantes" icon={Briefcase}>
-      <RegistrationActionBar
-        onSearchToggle={() => setShowSearch(!showSearch)}
-        onNewClick={() => setIsCreateOpen(true)}
-        onDeleteClick={() =>
-          selected.length > 0 ? setIsDeleteOpen(true) : toast({ title: 'Selecione registros' })
-        }
-        showSearch={showSearch}
-        searchQuery={search}
-        onSearchChange={setSearch}
-      />
-      <PaginationBar total={filtered.length} displayTotal={filtered.length} />
-      <div className="overflow-x-auto bg-white rounded-md shadow-sm border border-slate-200">
-        <Table className="min-w-full text-sm">
-          <TableHeader>
-            <TableRow className="border-b-2 border-slate-200 hover:bg-transparent">
-              <TableHead className="w-10">
-                <Checkbox
-                  checked={selected.length === filtered.length && filtered.length > 0}
-                  onCheckedChange={toggleAll}
-                />
-              </TableHead>
-              <SortableHead>Fantasia</SortableHead>
-              <SortableHead>CPF/CNPJ</SortableHead>
-              <SortableHead>Sigla</SortableHead>
-              <SortableHead>Telefone</SortableHead>
-              <SortableHead>Cidade</SortableHead>
-              <SortableHead>UF</SortableHead>
-              <SortableHead>Status</SortableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((item) => (
-              <TableRow key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <TableCell>
-                  <Checkbox
-                    checked={selected.includes(item.id)}
-                    onCheckedChange={() => toggleOne(item.id)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className="text-slate-700">{item.fantasia}</div>
-                </TableCell>
-                <TableCell className="text-slate-600">{item.documento}</TableCell>
-                <TableCell className="text-slate-600">{item.sigla}</TableCell>
-                <TableCell className="text-slate-600 whitespace-nowrap">{item.telefone}</TableCell>
-                <TableCell className="text-slate-600">{item.cidade}</TableCell>
-                <TableCell className="text-slate-600">{item.uf}</TableCell>
-                <TableCell>
-                  <span
-                    className={`text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase transition-colors ${item.status === 'Ativo' ? 'bg-[#5cb85c] hover:bg-[#4cae4c] dark:bg-green-900/40 dark:hover:bg-green-900/60 dark:text-green-400' : 'bg-[#d9534f] hover:bg-[#c9302c] dark:bg-red-900/40 dark:hover:bg-red-900/60 dark:text-red-400'}`}
-                  >
-                    {item.status}
-                  </span>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+    <div className="flex flex-1 flex-col p-4 md:p-6 w-full">
+      <div className="flex flex-col space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar representantes..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPage(1)
+                }}
+                className="pl-8 w-[250px] md:w-[350px] bg-background"
+              />
+            </div>
+            <Button
+              onClick={() => {
+                resetForm()
+                setIsCreateOpen(true)
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" /> Novo Representante
+            </Button>
+            {selected.length > 0 && (
+              <Button variant="destructive" onClick={() => setIsDeleteOpen(true)}>
+                Excluir ({selected.length})
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="text-sm text-muted-foreground mr-2">
+              {filtered.length > 0 ? Math.min((page - 1) * perPage + 1, filtered.length) : 0} -{' '}
+              {Math.min(page * perPage, filtered.length)} de {filtered.length} registros
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 bg-background"
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm px-2 font-medium">
+                {page} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 bg-background"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <Card className="shadow-sm">
+          <div className="overflow-x-auto min-h-[500px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selected.length === paginated.length && paginated.length > 0}
+                      onCheckedChange={toggleAll}
+                    />
+                  </TableHead>
+                  <TableHead>Fantasia</TableHead>
+                  <TableHead>CPF/CNPJ</TableHead>
+                  <TableHead>Sigla</TableHead>
+                  <TableHead>Telefone</TableHead>
+                  <TableHead>Cidade</TableHead>
+                  <TableHead>UF</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: 10 }).map((_, i) => (
+                    <TableRow key={`skeleton-${i}`}>
+                      {Array.from({ length: 8 }).map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton className="h-4 w-full" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : paginated.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                      Nenhum representante encontrado.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginated.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selected.includes(item.id)}
+                          onCheckedChange={() => toggleOne(item.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium text-foreground">{item.fantasia}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.documento || '-'}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{item.sigla || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
+                        {item.telefone || '-'}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{item.cidade || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground">{item.uf || '-'}</TableCell>
+                      <TableCell>
+                        {item.status === 'Ativo' ? (
+                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                            Ativo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                            {item.status}
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
       </div>
 
       <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -294,7 +377,6 @@ export default function Representantes() {
               />
               {errors.fantasia && <span className="text-red-500 text-xs">{errors.fantasia}</span>}
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="documento">CPF/CNPJ</Label>
               <Input
@@ -305,7 +387,6 @@ export default function Representantes() {
               />
               {errors.documento && <span className="text-red-500 text-xs">{errors.documento}</span>}
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="sigla">Sigla</Label>
@@ -326,7 +407,6 @@ export default function Representantes() {
                 />
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="cidade">Cidade</Label>
@@ -347,7 +427,6 @@ export default function Representantes() {
                 />
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="dt_cad">Data de Cadastro</Label>
@@ -374,7 +453,6 @@ export default function Representantes() {
                 </Select>
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="coordenadas">Coordenadas JSON</Label>
               <Textarea
@@ -394,6 +472,7 @@ export default function Representantes() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
       <DeleteConfirmModal
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
@@ -407,6 +486,6 @@ export default function Representantes() {
         onMerge={handleMerge}
         isSubmitting={isSubmitting}
       />
-    </PageLayout>
+    </div>
   )
 }

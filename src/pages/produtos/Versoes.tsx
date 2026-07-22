@@ -559,9 +559,15 @@ export default function Versoes() {
                       )}
                       {visibleColumns.includes('status') && (
                         <TableCell className="py-2">
-                          <Badge variant="outline" className="font-normal text-gray-600 bg-gray-50">
-                            {item.status}
-                          </Badge>
+                          {item.status === 'Ativo' ? (
+                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                              {item.status}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                              {item.status}
+                            </span>
+                          )}
                         </TableCell>
                       )}
                       <TableCell className="py-2"></TableCell>

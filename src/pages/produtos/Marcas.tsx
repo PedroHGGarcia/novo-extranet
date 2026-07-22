@@ -151,24 +151,24 @@ export default function Marcas() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-transparent border-b border-[#337ab7] dark:border-primary rounded-none w-full justify-start h-auto p-0 gap-1">
+        <TabsList className="bg-transparent border-b border-border dark:border-primary rounded-none w-full justify-start h-auto p-0 gap-1">
           <TabsTrigger
             value="registros"
-            className="rounded-t-md rounded-b-none border border-b-0 border-transparent data-[state=active]:border-[#337ab7] dark:data-[state=active]:border-primary data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-[#337ab7] dark:data-[state=active]:text-primary px-6 py-2 -mb-[1px] text-slate-500 dark:text-slate-400 text-sm font-normal hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            className="rounded-t-md rounded-b-none border border-b-0 border-transparent data-[state=active]:border-primary data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary px-6 py-2 -mb-[1px] text-slate-500 dark:text-slate-400 text-sm font-normal hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           >
             Registros
           </TabsTrigger>
           <TabsTrigger
             value="cadastro"
-            className="rounded-t-md rounded-b-none border border-b-0 border-transparent data-[state=active]:border-[#337ab7] dark:data-[state=active]:border-primary data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-[#337ab7] dark:data-[state=active]:text-primary px-6 py-2 -mb-[1px] text-slate-500 dark:text-slate-400 text-sm font-normal hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            className="rounded-t-md rounded-b-none border border-b-0 border-transparent data-[state=active]:border-primary data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary px-6 py-2 -mb-[1px] text-slate-500 dark:text-slate-400 text-sm font-normal hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           >
             Cadastro
-          </TabsTrigger>
+          </TabsTrigger>{' '}
         </TabsList>
 
         <TabsContent
           value="registros"
-          className="mt-0 border border-[#337ab7] dark:border-border bg-white dark:bg-card rounded-b-md"
+          className="mt-0 border border-border bg-white dark:bg-card rounded-b-md"
         >
           <PaginationBar total={filteredItems.length} />
 
@@ -178,32 +178,14 @@ export default function Marcas() {
                 <TableHead className="w-[50px] text-center px-4">
                   <input
                     type="checkbox"
-                    className="rounded-sm border-slate-300 dark:border-border w-3.5 h-3.5 accent-[#337ab7] dark:accent-primary"
+                    className="rounded-sm border-slate-300 dark:border-border w-3.5 h-3.5 accent-primary"
                     checked={selectedIds.size === filteredItems.length && filteredItems.length > 0}
                     onChange={handleToggleSelectAll}
                   />
                 </TableHead>
-                <SortableHead
-                  label="Nome"
-                  sortKey="nome"
-                  currentSort=""
-                  onSort={() => {}}
-                  className="text-table-header text-[#337ab7] dark:text-primary"
-                />
-                <SortableHead
-                  label="Status"
-                  sortKey="status"
-                  currentSort=""
-                  onSort={() => {}}
-                  className="text-table-header text-[#337ab7] dark:text-primary"
-                />
-                <SortableHead
-                  label="Dt Cad."
-                  sortKey="created"
-                  currentSort=""
-                  onSort={() => {}}
-                  className="text-table-header text-[#337ab7] dark:text-primary"
-                />
+                <SortableHead label="Nome" sortKey="nome" currentSort="" onSort={() => {}} />
+                <SortableHead label="Status" sortKey="status" currentSort="" onSort={() => {}} />
+                <SortableHead label="Dt Cad." sortKey="created" currentSort="" onSort={() => {}} />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -215,7 +197,7 @@ export default function Marcas() {
                   <TableCell className="text-center py-3 px-4">
                     <input
                       type="checkbox"
-                      className="rounded-sm border-slate-300 dark:border-border w-3.5 h-3.5 accent-[#337ab7] dark:accent-primary"
+                      className="rounded-sm border-slate-300 dark:border-border w-3.5 h-3.5 accent-primary"
                       checked={selectedIds.has(item.id)}
                       onChange={() => handleToggleSelect(item.id)}
                     />
@@ -227,28 +209,28 @@ export default function Marcas() {
                     <div className="flex items-center gap-3 mt-1">
                       <button
                         onClick={() => handleEdit(item)}
-                        className="text-[#337ab7] dark:text-primary text-xs hover:underline inline-flex items-center gap-1 transition-colors"
+                        className="text-primary text-xs hover:underline inline-flex items-center gap-1 transition-colors"
                       >
                         <Pencil className="w-3.5 h-3.5" strokeWidth={1.75} /> Editar
                       </button>
                       <button
                         onClick={() => handleDuplicate(item)}
-                        className="text-[#337ab7] dark:text-primary text-xs hover:underline inline-flex items-center gap-1 transition-colors"
+                        className="text-primary text-xs hover:underline inline-flex items-center gap-1 transition-colors"
                       >
                         <Copy className="w-3.5 h-3.5" strokeWidth={1.75} /> Duplicar
                       </button>
                     </div>
                   </TableCell>
                   <TableCell className="py-3">
-                    <Badge
-                      className={
-                        item.status === 'Ativo'
-                          ? 'bg-[#5cb85c] hover:bg-[#4cae4c] dark:bg-green-900/40 dark:hover:bg-green-900/60 dark:text-green-400 font-normal text-white px-2 py-0.5'
-                          : 'bg-[#d9534f] hover:bg-[#c9302c] dark:bg-red-900/40 dark:hover:bg-red-900/60 dark:text-red-400 font-normal text-white px-2 py-0.5'
-                      }
-                    >
-                      {item.status}
-                    </Badge>
+                    {item.status === 'Ativo' ? (
+                      <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                        Ativo
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                        {item.status}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="text-sm text-slate-600 dark:text-slate-400 py-3">
                     {new Date(item.created).toLocaleDateString('pt-BR')}
@@ -273,7 +255,7 @@ export default function Marcas() {
 
         <TabsContent
           value="cadastro"
-          className="mt-0 border border-[#337ab7] dark:border-border bg-white dark:bg-card p-6 rounded-b-md"
+          className="mt-0 border border-border bg-white dark:bg-card p-6 rounded-b-md"
         >
           <form onSubmit={handleSave} className="max-w-xl space-y-6">
             <div className="grid gap-2">
@@ -307,7 +289,7 @@ export default function Marcas() {
             <div className="pt-2">
               <Button
                 type="submit"
-                className="bg-[#337ab7] hover:bg-[#286090] dark:bg-primary dark:hover:bg-primary/80 text-white h-9 px-6 rounded-md text-sm font-medium transition-colors duration-200"
+                className="h-9 px-6 rounded-md text-sm font-medium transition-colors duration-200"
               >
                 Salvar
               </Button>

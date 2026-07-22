@@ -585,16 +585,15 @@ export default function Acessorios() {
                         )}
                         {visibleColumns.includes('status') && (
                           <TableCell className="py-3 align-middle">
-                            <Badge
-                              className={cn(
-                                'font-medium border-none text-white rounded-full px-3 py-0.5 text-[10px] tracking-wide uppercase',
-                                item.status === 'Ativo'
-                                  ? 'bg-[#22c55e] hover:bg-[#22c55e]'
-                                  : 'bg-gray-400 hover:bg-gray-400',
-                              )}
-                            >
-                              {item.status}
-                            </Badge>
+                            {item.status === 'Ativo' ? (
+                              <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                                Ativo
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                                {item.status}
+                              </span>
+                            )}
                           </TableCell>
                         )}
                       </TableRow>

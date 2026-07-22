@@ -490,14 +490,15 @@ export default function TiposPropostas() {
                               {item.created ? format(new Date(item.created), 'dd/MM/yyyy') : '-'}
                             </TableCell>
                             <TableCell className="align-top py-2.5 px-3">
-                              <span
-                                className={cn(
-                                  'px-1.5 py-0.5 text-[10px] rounded-[3px] text-white',
-                                  item.status === 'Ativo' ? 'bg-[#5cb85c]' : 'bg-[#d9534f]',
-                                )}
-                              >
-                                {item.status}
-                              </span>
+                              {item.status === 'Ativo' ? (
+                                <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                                  Ativo
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                                  {item.status}
+                                </span>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))

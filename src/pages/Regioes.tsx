@@ -265,10 +265,10 @@ export default function Regioes() {
                     onCheckedChange={toggleAll}
                   />
                 </TableHead>
-                <TableHead className="text-[#3b82f6] font-semibold">Nome</TableHead>
-                <TableHead className="text-[#3b82f6] font-semibold">Última Atualização</TableHead>
-                <TableHead className="text-[#3b82f6] font-semibold">Atualizado por</TableHead>
-                <TableHead className="text-[#3b82f6] font-semibold">Status</TableHead>
+                <TableHead className="font-medium">Nome</TableHead>
+                <TableHead className="font-medium">Última Atualização</TableHead>
+                <TableHead className="font-medium">Atualizado por</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -291,13 +291,15 @@ export default function Regioes() {
                     {item.expand?.atualizado_por?.name || '-'}
                   </TableCell>
                   <TableCell>
-                    <span
-                      className={`text-white text-[11px] px-2 py-0.5 rounded-sm font-medium tracking-wide uppercase ${
-                        item.status === 'Ativo' ? 'bg-[#16a34a]' : 'bg-gray-400'
-                      }`}
-                    >
-                      {item.status}
-                    </span>
+                    {item.status === 'Ativo' ? (
+                      <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                        Ativo
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                        {item.status}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
@@ -461,11 +463,7 @@ export default function Regioes() {
             </div>
 
             <div className="flex justify-end pt-4">
-              <Button
-                onClick={handleSave}
-                disabled={isSubmitting}
-                className="bg-[#3b82f6] hover:bg-blue-600 text-white rounded-sm h-9 px-6"
-              >
+              <Button onClick={handleSave} disabled={isSubmitting} className="rounded-sm h-9 px-6">
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isSubmitting ? 'Salvando...' : 'Salvar'}
               </Button>

@@ -73,6 +73,8 @@ export function PaginationBar({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
               <SelectItem value="50">50</SelectItem>
               <SelectItem value="100">100</SelectItem>
             </SelectContent>
@@ -97,7 +99,7 @@ export function PaginationBar({
                 className={cn(
                   'h-8 min-w-8 px-2.5 text-xs font-medium',
                   p === currentPage
-                    ? 'bg-[#00704a] text-white hover:bg-[#005a3b]'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                     : 'text-gray-600 hover:bg-gray-100',
                 )}
                 onClick={() => onPageChange(p)}

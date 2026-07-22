@@ -1,11 +1,31 @@
 import { ArrowDownUp } from 'lucide-react'
 import { TableHead } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 
-export function SortableHead({ children }: { children: React.ReactNode }) {
+interface SortableHeadProps {
+  children?: React.ReactNode
+  label?: string
+  className?: string
+  sortKey?: string
+  currentSort?: string
+  onSort?: () => void
+}
+
+export function SortableHead({
+  children,
+  label,
+  className,
+  sortKey,
+  currentSort,
+  onSort,
+}: SortableHeadProps) {
   return (
-    <TableHead className="font-semibold text-[#337ab7] hover:text-[#286090] cursor-pointer">
+    <TableHead
+      className={cn('font-medium cursor-pointer hover:text-foreground', className)}
+      onClick={onSort}
+    >
       <div className="flex items-center gap-1 whitespace-nowrap">
-        {children}
+        {label || children}
         <ArrowDownUp className="w-3 h-3 opacity-50" />
       </div>
     </TableHead>

@@ -400,19 +400,19 @@ export default function Produtos() {
                     <input type="checkbox" className="rounded border-gray-300" />
                   </TableHead>
                   {visibleColumns.includes('foto') && (
-                    <TableHead className="w-[60px] font-medium text-brand-cyan">Foto</TableHead>
+                    <TableHead className="w-[60px] font-medium">Foto</TableHead>
                   )}
                   {visibleColumns.includes('nome') && (
-                    <TableHead className="font-medium text-brand-cyan">Nome</TableHead>
+                    <TableHead className="font-medium">Nome</TableHead>
                   )}
                   {visibleColumns.includes('categoria') && (
-                    <TableHead className="font-medium text-brand-cyan">Categoria</TableHead>
+                    <TableHead className="font-medium">Categoria</TableHead>
                   )}
                   {visibleColumns.includes('dt_cad') && (
-                    <TableHead className="font-medium text-brand-cyan">Dt Cad.</TableHead>
+                    <TableHead className="font-medium">Dt Cad.</TableHead>
                   )}
                   {visibleColumns.includes('status') && (
-                    <TableHead className="font-medium text-brand-cyan">Status</TableHead>
+                    <TableHead className="font-medium">Status</TableHead>
                   )}
                 </TableRow>
               </TableHeader>
@@ -475,15 +475,15 @@ export default function Produtos() {
                     )}
                     {visibleColumns.includes('status') && (
                       <TableCell>
-                        <Badge
-                          className={
-                            item.status === 'Ativo'
-                              ? 'bg-green-500 hover:bg-green-600'
-                              : 'bg-gray-400 hover:bg-gray-500'
-                          }
-                        >
-                          {item.status}
-                        </Badge>
+                        {item.status === 'Ativo' ? (
+                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                            Ativo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                            {item.status}
+                          </span>
+                        )}
                       </TableCell>
                     )}
                   </TableRow>

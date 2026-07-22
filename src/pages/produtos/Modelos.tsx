@@ -200,11 +200,11 @@ export default function Modelos() {
                   <TableHead className="w-[50px]">
                     <input type="checkbox" className="rounded border-gray-300" />
                   </TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Nome</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Produto</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Marca</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Dt Cad.</TableHead>
-                  <TableHead className="font-medium text-brand-cyan">Status</TableHead>
+                  <TableHead className="font-medium">Nome</TableHead>
+                  <TableHead className="font-medium">Produto</TableHead>
+                  <TableHead className="font-medium">Marca</TableHead>
+                  <TableHead className="font-medium">Dt Cad.</TableHead>
+                  <TableHead className="font-medium">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -246,9 +246,15 @@ export default function Modelos() {
                       {new Date(item.created).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell>
-                      <Badge className={item.status === 'Ativo' ? 'bg-green-500' : 'bg-gray-400'}>
-                        {item.status}
-                      </Badge>
+                      {item.status === 'Ativo' ? (
+                        <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                          Ativo
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                          {item.status}
+                        </span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

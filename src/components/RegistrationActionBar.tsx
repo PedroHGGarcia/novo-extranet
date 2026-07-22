@@ -28,21 +28,21 @@ export function RegistrationActionBar({
       <div className="flex gap-2">
         <Button
           onClick={onSearchToggle}
-          className="bg-[#337ab7] hover:bg-[#286090] dark:bg-primary dark:hover:bg-primary/80 text-white rounded-md h-9 px-4 text-sm font-medium tracking-wide transition-colors duration-200"
+          className="rounded-md h-9 px-4 text-sm font-medium tracking-wide transition-colors duration-200"
         >
           <Search className="mr-1.5 h-4 w-4" strokeWidth={1.75} />
           PESQUISAR
         </Button>
         <Button
           onClick={onNewClick}
-          className="bg-[#337ab7] hover:bg-[#286090] dark:bg-primary dark:hover:bg-primary/80 text-white rounded-md h-9 px-4 text-sm font-medium tracking-wide transition-colors duration-200"
+          className="rounded-md h-9 px-4 text-sm font-medium tracking-wide transition-colors duration-200"
         >
           <Plus className="mr-1.5 h-4 w-4" strokeWidth={1.75} />
           NOVO
         </Button>
         <Button
           onClick={onDeleteClick}
-          className="bg-[#337ab7] hover:bg-[#286090] dark:bg-primary dark:hover:bg-primary/80 text-white rounded-md h-9 px-4 text-sm font-medium tracking-wide transition-colors duration-200"
+          className="rounded-md h-9 px-4 text-sm font-medium tracking-wide transition-colors duration-200"
         >
           <Trash2 className="mr-1.5 h-4 w-4" strokeWidth={1.75} />
           EXCLUIR
@@ -53,7 +53,7 @@ export function RegistrationActionBar({
           placeholder="Digite para pesquisar..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="max-w-md bg-white dark:bg-input border-slate-300 dark:border-border text-sm"
+          className="max-w-md bg-background border-input text-sm"
         />
       )}
     </div>

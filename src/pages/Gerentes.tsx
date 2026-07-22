@@ -339,12 +339,12 @@ export default function Gerentes() {
                     onCheckedChange={toggleAll}
                   />
                 </TableHead>
-                <TableHead className="text-[#3b82f6] font-semibold">Nome</TableHead>
-                <TableHead className="text-[#3b82f6] font-semibold">Cargo</TableHead>
-                <TableHead className="text-[#3b82f6] font-semibold">CPF/CNPJ</TableHead>
-                <TableHead className="text-[#3b82f6] font-semibold">Email</TableHead>
-                <TableHead className="text-[#3b82f6] font-semibold">Celular</TableHead>
-                <TableHead className="text-[#3b82f6] font-semibold">Status</TableHead>
+                <TableHead className="font-medium">Nome</TableHead>
+                <TableHead className="font-medium">Cargo</TableHead>
+                <TableHead className="font-medium">CPF/CNPJ</TableHead>
+                <TableHead className="font-medium">Email</TableHead>
+                <TableHead className="font-medium">Celular</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -363,13 +363,15 @@ export default function Gerentes() {
                   <TableCell className="text-gray-600">{item.email}</TableCell>
                   <TableCell className="text-gray-600">{item.telefone}</TableCell>
                   <TableCell>
-                    <span
-                      className={`text-white text-[11px] px-2 py-0.5 rounded-sm font-medium tracking-wide ${
-                        item.status === 'Ativo' ? 'bg-[#16a34a]' : 'bg-gray-400'
-                      }`}
-                    >
-                      {item.status}
-                    </span>
+                    {item.status === 'Ativo' ? (
+                      <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                        Ativo
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                        {item.status}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
@@ -578,11 +580,7 @@ export default function Gerentes() {
               >
                 Cancelar
               </Button>
-              <Button
-                onClick={handleSave}
-                disabled={isSubmitting}
-                className="bg-[#3b82f6] hover:bg-blue-600 text-white"
-              >
+              <Button onClick={handleSave} disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isSubmitting ? 'Salvando...' : 'Salvar'}
               </Button>
