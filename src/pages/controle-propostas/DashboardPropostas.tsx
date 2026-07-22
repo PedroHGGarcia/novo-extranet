@@ -34,6 +34,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
+import { getRepresentantes } from '@/services/cadastros'
 
 export default function DashboardPropostas() {
   const { user } = useAuth()
@@ -44,6 +45,8 @@ export default function DashboardPropostas() {
 
   const [avancarPropostaItem, setAvancarPropostaItem] = useState<any>(null)
   const [novoStatus, setNovoStatus] = useState<string>('')
+  const [representantes, setRepresentantes] = useState<any[]>([])
+  const [selectedRepresentante, setSelectedRepresentante] = useState<string>('todos')
 
   const months = useMemo(() => {
     return Array.from({ length: 12 }).map((_, i) => {
@@ -52,14 +55,31 @@ export default function DashboardPropostas() {
     })
   }, [])
 
+  useEffect(() => {
+    const loadRepresentantes = async () => {
+      try {
+        const reps = await getRepresentantes()
+        setRepresentantes(reps.filter((r: any) => r.status === 'Ativo'))
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    loadRepresentantes()
+  }, [])
+
   const loadData = async () => {
     try {
-      const startStr = format(startOfMonth(selectedMonth), 'yyyy-MM-dd 00:00:00')
-      const endStr = format(endOfMonth(selectedMonth), 'yyyy-MM-dd 23:59:59')
+      const startStr = format(startOfMonth(selectedMonth), 'yyyy-MM-dd')
+      const endStr = format(endOfMonth(selectedMonth), 'yyyy-MM-dd')
+
+      let filter = `dt_cad >= "${startStr}" && dt_cad <= "${endStr}"`
+      if (selectedRepresentante !== 'todos') {
+        filter += ` && representante = "${selectedRepresentante}"`
+      }
 
       const records = await pb.collection('propostas').getFullList({
-        filter: `created >= "${startStr}" && created <= "${endStr}"`,
-        expand: 'cliente,versao,user,ultimo_usuario_status',
+        filter,
+        expand: 'cliente,versao,user,ultimo_usuario_status,representante',
         sort: '-created',
       })
       setPropostas(records)
@@ -70,7 +90,7 @@ export default function DashboardPropostas() {
 
   useEffect(() => {
     loadData()
-  }, [selectedMonth])
+  }, [selectedMonth, selectedRepresentante])
 
   useRealtime('propostas', () => loadData())
 
@@ -132,25 +152,54 @@ export default function DashboardPropostas() {
           </p>
         </div>
 
-        <Select
-          value={selectedMonth.toISOString()}
-          onValueChange={(val) => setSelectedMonth(new Date(val))}
-        >
-          <SelectTrigger className="w-[180px] bg-white dark:bg-slate-950 text-sm">
-            <SelectValue placeholder="Selecione o mês" />
-          </SelectTrigger>
-          <SelectContent>
-            {months.map((m) => (
-              <SelectItem
-                key={m.toISOString()}
-                value={m.toISOString()}
-                className="capitalize text-sm"
-              >
-                {format(m, 'MMMM yyyy', { locale: ptBR })}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+              Representante
+            </span>
+            <Select
+              value={selectedRepresentante}
+              onValueChange={(val) => setSelectedRepresentante(val)}
+            >
+              <SelectTrigger className="w-[200px] bg-white dark:bg-slate-950 text-sm">
+                <SelectValue placeholder="Selecione o representante" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos" className="text-sm">
+                  Todos
+                </SelectItem>
+                {representantes.map((r) => (
+                  <SelectItem key={r.id} value={r.id} className="text-sm">
+                    {r.fantasia || r.razao_social || 'Sem nome'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Mês</span>
+            <Select
+              value={selectedMonth.toISOString()}
+              onValueChange={(val) => setSelectedMonth(new Date(val))}
+            >
+              <SelectTrigger className="w-[180px] bg-white dark:bg-slate-950 text-sm">
+                <SelectValue placeholder="Selecione o mês" />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((m) => (
+                  <SelectItem
+                    key={m.toISOString()}
+                    value={m.toISOString()}
+                    className="capitalize text-sm"
+                  >
+                    {format(m, 'MMMM yyyy', { locale: ptBR })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
