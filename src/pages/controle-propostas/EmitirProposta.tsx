@@ -452,6 +452,20 @@ export default function EmitirProposta() {
       .catch(() => setProjetos([]))
   }, [formData.cliente])
 
+  useEffect(() => {
+    if (selectedProposta?.projeto) {
+      pb.collection('projetos')
+        .getOne(selectedProposta.projeto)
+        .then((p) => {
+          setProjetos((prev) => {
+            if (prev.some((item) => item.id === p.id)) return prev
+            return [...prev, p]
+          })
+        })
+        .catch(() => {})
+    }
+  }, [selectedProposta])
+
   const loadAcessorios = async (versaoId?: string) => {
     if (!versaoId) {
       setAcessoriosProposta([])
@@ -1900,7 +1914,7 @@ export default function EmitirProposta() {
                     getLabel={(p) => p.nome}
                     getSearchText={(p) => p.nome}
                     placeholder="Selecionar projeto..."
-                    emptyMessage="Nenhum projeto ativo para este cliente."
+                    emptyMessage="Nenhum projeto encontrado."
                     className={inputClass}
                   />
                   {!formData.cliente && (
