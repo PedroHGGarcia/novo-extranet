@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Bell, User, LogOut, User as UserIcon, Search } from 'lucide-react'
+import { Bell, User, LogOut, User as UserIcon } from 'lucide-react'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
+import { HeaderSearch } from '@/components/HeaderSearch'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,6 +86,7 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 bg-brand-green dark:bg-sidebar px-4 text-white shadow-sm">
       <SidebarTrigger className="text-white hover:bg-white/10 hover:text-white focus-visible:ring-white/20" />
+      <HeaderSearch />
       <div className="flex-1 md:hidden flex justify-center select-none items-center">
         <Link to="/dashboard" className="flex items-center" draggable={false}>
           <BenerLogo variant="compact" className="h-7 w-auto" />
@@ -94,27 +96,8 @@ export function AppHeader() {
         <Link to="/dashboard" className="flex items-center" draggable={false}>
           <BenerLogo className="h-9 w-auto" />
         </Link>
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/10 text-white/70 hover:bg-white/20 hover:text-white text-sm transition-colors select-none"
-        >
-          <Search className="h-4 w-4" draggable={false} />
-          <span>Buscar...</span>
-          <kbd className="ml-2 px-1.5 py-0.5 text-[10px] rounded bg-white/10 border border-white/20 select-none">
-            Ctrl+K
-          </kbd>
-        </button>
       </div>
       <div className="flex items-center gap-1 md:gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden rounded-full text-white hover:bg-white/10 hover:text-white"
-          onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-        >
-          <Search className="h-5 w-5" draggable={false} />
-          <span className="sr-only">Buscar</span>
-        </Button>
         <ThemeToggle />
         <Popover>
           <PopoverTrigger asChild>
