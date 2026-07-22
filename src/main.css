@@ -314,3 +314,132 @@
 .data-\[state\=active\]\:text-\[\#337ab7\][data-state='active'] {
   color: hsl(var(--primary));
 }
+
+/* ============================================================
+   Legacy color unification — map all hardcoded hex colors to
+   the centralized CSS variables so every screen shares the
+   same brand palette.  Follows the same pattern as the
+   #337ab7 overrides above.
+   ============================================================ */
+
+/* #3b82f6 → primary (Gerentes, Regiões) */
+.bg-\[\#3b82f6\] {
+  background-color: hsl(var(--primary));
+}
+.text-\[\#3b82f6\] {
+  color: hsl(var(--primary));
+}
+.border-\[\#3b82f6\] {
+  border-color: hsl(var(--primary));
+}
+.border-t-\[\#3b82f6\] {
+  border-top-color: hsl(var(--primary));
+}
+.border-b-\[\#3b82f6\] {
+  border-bottom-color: hsl(var(--primary));
+}
+.hover\:bg-\[\#3b82f6\]:hover {
+  background-color: hsl(var(--primary));
+}
+.focus\:border-\[\#3b82f6\]:focus {
+  border-color: hsl(var(--primary));
+}
+.focus-visible\:border-\[\#3b82f6\]:focus-visible {
+  border-color: hsl(var(--primary));
+}
+.hover\:bg-gray-50\/50:hover {
+  background-color: hsl(var(--muted) / 0.5);
+}
+
+/* #2A75D3 → primary (Versões, Produtos, Acessórios) */
+.bg-\[\#2A75D3\] {
+  background-color: hsl(var(--primary));
+}
+.hover\:bg-\[\#2A75D3\]\/90:hover {
+  background-color: hsl(var(--primary) / 0.9);
+}
+.text-\[\#2A75D3\] {
+  color: hsl(var(--primary));
+}
+.border-\[\#2A75D3\] {
+  border-color: hsl(var(--primary));
+}
+.border-t-\[\#2A75D3\] {
+  border-top-color: hsl(var(--primary));
+}
+.focus-visible\:ring-\[\#2A75D3\]:focus-visible {
+  --tw-ring-color: hsl(var(--primary));
+}
+.focus-visible\:border-\[\#2A75D3\]:focus-visible {
+  border-color: hsl(var(--primary));
+}
+.focus\:ring-\[\#2A75D3\]:focus {
+  --tw-ring-color: hsl(var(--primary));
+}
+.focus\:border-\[\#2A75D3\]:focus {
+  border-color: hsl(var(--primary));
+}
+
+/* #00704a → primary (Acessórios) */
+.bg-\[\#00704a\] {
+  background-color: hsl(var(--primary));
+}
+.hover\:bg-\[\#005a3b\]:hover {
+  background-color: hsl(var(--primary) / 0.9);
+}
+.text-\[\#00704a\] {
+  color: hsl(var(--primary));
+}
+.border-\[\#00704a\] {
+  border-color: hsl(var(--primary));
+}
+.border-\[\#00704a\]\/20 {
+  border-color: hsl(var(--primary) / 0.2);
+}
+.bg-\[\#00704a\]\/10 {
+  background-color: hsl(var(--primary) / 0.1);
+}
+.focus-visible\:ring-\[\#00704a\]:focus-visible {
+  --tw-ring-color: hsl(var(--primary));
+}
+.focus-visible\:border-\[\#00704a\]:focus-visible {
+  border-color: hsl(var(--primary));
+}
+.focus\:ring-\[\#00704a\]:focus {
+  --tw-ring-color: hsl(var(--primary));
+}
+.focus\:border-\[\#00704a\]:focus {
+  border-color: hsl(var(--primary));
+}
+.data-\[state\=checked\]\:bg-\[\#00704a\][data-state='checked'] {
+  background-color: hsl(var(--primary));
+}
+.data-\[state\=checked\]\:border-\[\#00704a\][data-state='checked'] {
+  border-color: hsl(var(--primary));
+}
+
+/* #00b4d8 → brand-cyan (Regiões) */
+.border-t-\[\#00b4d8\] {
+  border-top-color: hsl(var(--brand-cyan));
+}
+.text-\[\#00b4d8\] {
+  color: hsl(var(--brand-cyan));
+}
+.border-\[\#00b4d8\] {
+  border-color: hsl(var(--brand-cyan));
+}
+
+/* #286090 → primary/0.9 (hover states) */
+.hover\:bg-\[\#286090\]:hover {
+  background-color: hsl(var(--primary) / 0.9);
+}
+
+/* Border-blue-200 used as card container borders → primary/20 */
+.border-blue-200 {
+  border-color: hsl(var(--primary) / 0.2);
+}
+
+/* Blue-50 used as highlight backgrounds → primary/5 */
+.bg-blue-50 {
+  background-color: hsl(var(--primary) / 0.05);
+}

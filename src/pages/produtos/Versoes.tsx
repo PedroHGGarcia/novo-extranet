@@ -397,20 +397,19 @@ export default function Versoes() {
       <div className="flex items-center gap-1 mb-4 bg-gray-100 p-2 rounded-sm border border-gray-200">
         <Button
           onClick={handleSave}
-          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 text-xs font-semibold px-4"
+          className="bg-primary hover:bg-primary/90 rounded-none h-8 text-xs font-semibold px-4 text-white"
           disabled={activeTab !== 'cadastro'}
         >
           SALVAR
         </Button>
         <Button
           onClick={resetForm}
-          className="bg-[#2A75D3] hover:bg-[#2A75D3]/90 rounded-none h-8 px-3"
+          className="bg-primary hover:bg-primary/90 rounded-none h-8 px-3 text-white"
           title="Desfazer/Resetar"
           disabled={activeTab !== 'cadastro'}
         >
           <Undo2 className="h-4 w-4" />
         </Button>
-
         <div className="ml-auto">
           <ColumnVisibilityDropdown
             columns={colunasOptions}
@@ -577,7 +576,7 @@ export default function Versoes() {
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                         <div className="flex items-center justify-center">
-                          <div className="w-5 h-5 border-2 border-gray-300 border-t-[#2A75D3] rounded-full animate-spin"></div>
+                          <div className="w-5 h-5 border-2 border-gray-300 border-t-primary rounded-full animate-spin"></div>
                           <span className="ml-2">Carregando...</span>
                         </div>
                       </TableCell>
@@ -616,8 +615,8 @@ export default function Versoes() {
 
         <TabsContent value="cadastro" className="mt-0">
           <div className="flex flex-col lg:flex-row gap-4 items-start">
-            <div className="w-full lg:w-3/4 border border-blue-200 rounded-sm bg-white shadow-sm flex flex-col">
-              <div className="bg-white border-b border-blue-200 px-4 py-2 flex items-center gap-2 text-[#2A75D3]">
+            <div className="w-full lg:w-3/4 border border-primary/20 rounded-sm bg-white shadow-sm flex flex-col">
+              <div className="bg-white border-b border-primary/20 px-4 py-2 flex items-center gap-2 text-primary">
                 <FileText className="w-4 h-4" />
                 <h3 className="font-semibold text-sm">Dados</h3>
               </div>
@@ -892,7 +891,7 @@ export default function Versoes() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-6 px-3 text-[11px] text-[#2A75D3] border-[#2A75D3]"
+                        className="h-6 px-3 text-[11px] text-primary border-primary"
                         onClick={handleSuggestSpecs}
                         disabled={loadingSpecs || !modeloId}
                       >
@@ -921,8 +920,8 @@ export default function Versoes() {
               </div>
             </div>
 
-            <div className="w-full lg:w-1/4 border border-blue-200 rounded-sm bg-white shadow-sm flex flex-col">
-              <div className="bg-white border-b border-blue-200 px-4 py-2 flex items-center gap-2 text-[#2A75D3]">
+            <div className="w-full lg:w-1/4 border border-primary/20 rounded-sm bg-white shadow-sm flex flex-col">
+              <div className="bg-white border-b border-primary/20 px-4 py-2 flex items-center gap-2 text-primary">
                 <ListChecks className="w-4 h-4" />
                 <h3 className="font-semibold text-sm">Tipos de Proposta</h3>
               </div>
@@ -935,7 +934,7 @@ export default function Versoes() {
                     >
                       <input
                         type="checkbox"
-                        className="mt-0.5 rounded-sm border-gray-300 text-[#2A75D3] focus:ring-[#2A75D3]"
+                        className="mt-0.5 rounded-sm border-gray-300 text-primary focus:ring-primary"
                         checked={tiposProposta.includes(opt.id)}
                         onChange={() => toggleProposta(opt.id)}
                       />
@@ -951,8 +950,8 @@ export default function Versoes() {
         </TabsContent>
 
         <TabsContent value="historico" className="mt-0">
-          <div className="border border-blue-200 rounded-sm bg-white shadow-sm flex flex-col">
-            <div className="bg-white border-b border-blue-200 px-4 py-2 flex items-center gap-2 text-[#2A75D3]">
+          <div className="border border-primary/20 rounded-sm bg-white shadow-sm flex flex-col">
+            <div className="bg-white border-b border-primary/20 px-4 py-2 flex items-center gap-2 text-primary">
               <FileText className="w-4 h-4" />
               <h3 className="font-semibold text-sm">Histórico de Alterações</h3>
             </div>

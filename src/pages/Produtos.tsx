@@ -642,7 +642,7 @@ export default function Produtos() {
                   className={cn(
                     'border-2 border-dashed rounded-md p-8 text-center transition-colors cursor-pointer',
                     isDraggingFotos
-                      ? 'border-[#2A75D3] bg-blue-50'
+                      ? 'border-primary bg-primary/5'
                       : 'border-gray-300 hover:bg-gray-50',
                   )}
                   onDragOver={(e) => {

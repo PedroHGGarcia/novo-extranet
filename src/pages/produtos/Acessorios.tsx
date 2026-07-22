@@ -366,7 +366,7 @@ export default function Acessorios() {
         {activeTab === 'cadastro' && (
           <Button
             onClick={handleSave}
-            className="bg-[#00704a] hover:bg-[#005a3b] rounded-sm h-8 text-[11px] tracking-wide font-bold px-5 uppercase"
+            className="bg-primary hover:bg-primary/90 rounded-sm h-8 text-[11px] tracking-wide font-bold px-5 uppercase text-white"
           >
             SALVAR
           </Button>
@@ -427,7 +427,7 @@ export default function Acessorios() {
                   placeholder="Buscar acessório..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full h-10 text-sm bg-white rounded-full pl-10 pr-4 border-gray-300 focus-visible:ring-[#00704a] focus-visible:border-[#00704a] shadow-sm transition-all"
+                  className="w-full h-10 text-sm bg-white rounded-full pl-10 pr-4 border-gray-300 focus-visible:ring-primary focus-visible:border-primary shadow-sm transition-all"
                 />
               </div>
             </div>
@@ -437,7 +437,7 @@ export default function Acessorios() {
                   <TableRow className="border-b border-gray-200 hover:bg-transparent">
                     <TableHead className="w-12 text-center">
                       <Checkbox
-                        className="rounded-full border-gray-400 data-[state=checked]:bg-[#00704a] data-[state=checked]:border-[#00704a]"
+                        className="rounded-full border-gray-400 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         checked={selectedIds.length === items.length && items.length > 0}
                         onCheckedChange={handleSelectAll}
                       />
@@ -478,7 +478,7 @@ export default function Acessorios() {
                   {isLoading ? (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center py-12 text-gray-500">
-                        <RefreshCw className="h-6 w-6 animate-spin mx-auto text-[#00704a]" />
+                        <RefreshCw className="h-6 w-6 animate-spin mx-auto text-primary" />
                         <p className="mt-2 text-sm">Carregando...</p>
                       </TableCell>
                     </TableRow>
@@ -524,7 +524,7 @@ export default function Acessorios() {
                       >
                         <TableCell className="text-center align-middle">
                           <Checkbox
-                            className="rounded-full border-gray-300 data-[state=checked]:bg-[#00704a] data-[state=checked]:border-[#00704a]"
+                            className="rounded-full border-gray-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                             checked={selectedIds.includes(item.id)}
                             onCheckedChange={(c) => handleSelect(item.id, c as boolean)}
                           />
@@ -534,7 +534,7 @@ export default function Acessorios() {
                             <div className="flex flex-col gap-1.5">
                               <button
                                 onClick={() => handleEdit(item)}
-                                className="text-[#00704a] text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors select-none"
+                                className="text-primary text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors select-none"
                                 draggable={false}
                               >
                                 <Pencil className="w-3.5 h-3.5 select-none" draggable={false} />{' '}
@@ -542,7 +542,7 @@ export default function Acessorios() {
                               </button>
                               <button
                                 onClick={() => handleDuplicate(item)}
-                                className="text-[#00704a] text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors select-none"
+                                className="text-primary text-[11px] hover:underline flex items-center gap-1.5 font-medium transition-colors select-none"
                                 draggable={false}
                               >
                                 <Copy className="w-3.5 h-3.5 select-none" draggable={false} />{' '}
@@ -650,13 +650,13 @@ export default function Acessorios() {
                   <Input
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    className="focus-visible:ring-[#00704a] focus-visible:border-[#00704a] h-9"
+                    className="focus-visible:ring-primary focus-visible:border-primary h-9"
                   />
                 </div>
                 <div className="col-span-4 flex flex-col">
                   <label className="text-xs font-medium text-gray-700 mb-1.5">Status</label>
                   <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="focus:ring-[#00704a] focus:border-[#00704a] h-9">
+                    <SelectTrigger className="focus:ring-primary focus:border-primary h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -671,7 +671,7 @@ export default function Acessorios() {
                 <div className="col-span-4 flex flex-col">
                   <label className="text-xs font-medium text-gray-700 mb-1.5">Tipo</label>
                   <Select value={tipo} onValueChange={setTipo}>
-                    <SelectTrigger className="focus:ring-[#00704a] focus:border-[#00704a] h-9">
+                    <SelectTrigger className="focus:ring-primary focus:border-primary h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -684,7 +684,7 @@ export default function Acessorios() {
                 <div className="col-span-4 flex flex-col">
                   <label className="text-xs font-medium text-gray-700 mb-1.5">Moeda</label>
                   <Select value={moeda} onValueChange={setMoeda}>
-                    <SelectTrigger className="focus:ring-[#00704a] focus:border-[#00704a] h-9">
+                    <SelectTrigger className="focus:ring-primary focus:border-primary h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -700,7 +700,7 @@ export default function Acessorios() {
                     value={valor}
                     onChange={setValor}
                     currency={moeda}
-                    className="focus-visible:ring-[#00704a] focus-visible:border-[#00704a] h-9"
+                    className="focus-visible:ring-primary focus-visible:border-primary h-9"
                   />
                 </div>
               </div>
@@ -711,7 +711,7 @@ export default function Acessorios() {
                   <Input
                     value={fatorNac}
                     onChange={(e) => setFatorNac(e.target.value.replace(/[^0-9.,]/g, ''))}
-                    className="focus-visible:ring-[#00704a] focus-visible:border-[#00704a] h-9"
+                    className="focus-visible:ring-primary focus-visible:border-primary h-9"
                   />
                 </div>
                 <div className="col-span-8 flex flex-col">
@@ -722,7 +722,7 @@ export default function Acessorios() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-full justify-between min-h-9 h-auto py-1.5 text-xs border-gray-300 font-normal hover:bg-gray-50 focus:ring-[#00704a]"
+                        className="w-full justify-between min-h-9 h-auto py-1.5 text-xs border-gray-300 font-normal hover:bg-gray-50 focus:ring-primary"
                       >
                         {selectedVersoes.length > 0 ? (
                           <span className="text-xs truncate">
@@ -825,7 +825,7 @@ export default function Acessorios() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 text-xs flex items-center gap-2 border-gray-300 hover:bg-gray-50 text-[#00704a]"
+                  className="h-8 text-xs flex items-center gap-2 border-gray-300 hover:bg-gray-50 text-primary"
                   onClick={handleSuggestSpecs}
                   disabled={loadingAi}
                 >
@@ -835,7 +835,7 @@ export default function Acessorios() {
                     <Wand2 className="w-3 h-3 select-none" draggable={false} />
                   )}
                   Sugestões Inteligentes
-                </Button>
+                </Button>{' '}
               </div>
               <RichTextEditor
                 value={especificacoesTecnicas}

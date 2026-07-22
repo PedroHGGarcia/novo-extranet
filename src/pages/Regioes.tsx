@@ -210,10 +210,10 @@ export default function Regioes() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center gap-2 mb-3 text-gray-800">
-        <Globe className="h-6 w-6 text-[#3b82f6]" />
+        <Globe className="h-6 w-6 text-primary" />
         <h1 className="text-xl font-semibold">Regiões</h1>
       </div>
-      <div className="h-[2px] bg-[#3b82f6] w-full mb-6"></div>
+      <div className="h-[2px] bg-primary w-full mb-6"></div>
 
       <RegistrationActionBar
         onSearchToggle={() => setShowSearch(!showSearch)}
@@ -232,8 +232,8 @@ export default function Regioes() {
             onClick={() => setActiveTab('registros')}
             className={`px-6 py-2.5 text-sm font-medium ${
               activeTab === 'registros'
-                ? 'bg-white border border-b-0 border-gray-200 border-t-2 border-t-[#3b82f6] text-gray-700'
-                : 'text-[#3b82f6] hover:bg-gray-50/50'
+                ? 'bg-white border border-b-0 border-gray-200 border-t-2 border-t-primary text-gray-700'
+                : 'text-primary hover:bg-muted/50'
             }`}
           >
             Registros
@@ -242,8 +242,8 @@ export default function Regioes() {
             onClick={() => setActiveTab('cadastro')}
             className={`px-6 py-2.5 text-sm font-medium ${
               activeTab === 'cadastro'
-                ? 'bg-white border border-b-0 border-gray-200 border-t-2 border-t-[#3b82f6] text-gray-700'
-                : 'text-[#3b82f6] hover:bg-gray-50/50'
+                ? 'bg-white border border-b-0 border-gray-200 border-t-2 border-t-primary text-gray-700'
+                : 'text-primary hover:bg-muted/50'
             }`}
           >
             Cadastro
@@ -324,12 +324,12 @@ export default function Regioes() {
             <div className="flex gap-6">
               <div className="flex-1 space-y-1">
                 <Label
-                  className={`text-[11px] uppercase tracking-wide ${errors.nome ? 'text-red-500' : 'text-[#3b82f6]'}`}
+                  className={`text-[11px] uppercase tracking-wide ${errors.nome ? 'text-red-500' : 'text-primary'}`}
                 >
                   Nome
                 </Label>
                 <Input
-                  className={`border-0 border-b-2 rounded-none px-0 shadow-none focus-visible:ring-0 bg-transparent h-8 ${errors.nome ? 'border-red-500' : 'border-[#00b4d8]'}`}
+                  className={`border-0 border-b-2 rounded-none px-0 shadow-none focus-visible:ring-0 bg-transparent h-8 ${errors.nome ? 'border-red-500' : 'border-brand-cyan'}`}
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                 />
@@ -354,9 +354,9 @@ export default function Regioes() {
 
             <div className="flex gap-4">
               <div className="flex-1 border border-gray-200 rounded-sm">
-                <div className="border-t-[3px] border-t-[#00b4d8] p-3 flex items-center gap-2 bg-gray-50/50">
-                  <Globe className="h-4 w-4 text-gray-600" />
-                  <span className="font-semibold text-gray-700">Estados</span>
+                <div className="border-t-[3px] border-t-brand-cyan p-3 flex items-center gap-2 bg-muted/50">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-semibold text-foreground">Estados</span>
                 </div>
                 <div className="h-[300px] overflow-y-auto p-3 space-y-2">
                   {estados.map((est) => (
@@ -378,10 +378,10 @@ export default function Regioes() {
               </div>
 
               <div className="flex-[1.5] border border-gray-200 rounded-sm">
-                <div className="border-t-[3px] border-t-[#00b4d8] p-3 flex items-center justify-between bg-gray-50/50">
+                <div className="border-t-[3px] border-t-brand-cyan p-3 flex items-center justify-between bg-muted/50">
                   <div className="flex items-center gap-2">
-                    <MapIcon className="h-4 w-4 text-gray-600" />
-                    <span className="font-semibold text-gray-700">Cidades</span>
+                    <MapIcon className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-semibold text-foreground">Cidades</span>
                   </div>
                 </div>
                 <div className="h-[300px] overflow-y-auto p-3 space-y-2">

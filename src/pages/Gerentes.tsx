@@ -284,10 +284,10 @@ export default function Gerentes() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center gap-2 mb-3 text-gray-800">
-        <User className="h-6 w-6" />
+        <User className="h-6 w-6 text-primary" />
         <h1 className="text-xl font-semibold">Gerentes</h1>
       </div>
-      <div className="h-[2px] bg-[#3b82f6] w-full mb-6"></div>
+      <div className="h-[2px] bg-primary w-full mb-6"></div>
 
       <RegistrationActionBar
         onSearchToggle={() => setShowSearch(!showSearch)}
@@ -306,8 +306,8 @@ export default function Gerentes() {
             onClick={() => setActiveTab('registros')}
             className={`px-6 py-2.5 text-sm font-medium ${
               activeTab === 'registros'
-                ? 'bg-white border border-b-0 border-gray-200 border-t-2 border-t-[#3b82f6] text-gray-700'
-                : 'text-[#3b82f6] hover:bg-gray-50/50'
+                ? 'bg-white border border-b-0 border-gray-200 border-t-2 border-t-primary text-gray-700'
+                : 'text-primary hover:bg-muted/50'
             }`}
           >
             Registros
@@ -316,8 +316,8 @@ export default function Gerentes() {
             onClick={() => setActiveTab('cadastro')}
             className={`px-6 py-2.5 text-sm font-medium ${
               activeTab === 'cadastro'
-                ? 'bg-white border border-b-0 border-gray-200 border-t-2 border-t-[#3b82f6] text-gray-700'
-                : 'text-[#3b82f6] hover:bg-gray-50/50'
+                ? 'bg-white border border-b-0 border-gray-200 border-t-2 border-t-primary text-gray-700'
+                : 'text-primary hover:bg-muted/50'
             }`}
           >
             Cadastro
@@ -390,14 +390,14 @@ export default function Gerentes() {
               <div className="flex-1 space-y-1">
                 <Label
                   className={`text-[11px] uppercase tracking-wide ${
-                    errors.nome ? 'text-red-500' : 'text-[#3b82f6]'
+                    errors.nome ? 'text-red-500' : 'text-primary'
                   }`}
                 >
                   Nome
                 </Label>
                 <Input
                   className={`border-0 border-b-2 rounded-none px-0 shadow-none focus-visible:ring-0 bg-transparent ${
-                    errors.nome ? 'border-red-500' : 'border-[#3b82f6]'
+                    errors.nome ? 'border-red-500' : 'border-primary'
                   }`}
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
@@ -432,9 +432,7 @@ export default function Gerentes() {
                 </Label>
                 <Input
                   className={`border-0 border-b rounded-none px-0 shadow-none focus-visible:ring-0 bg-transparent ${
-                    errors.cargo
-                      ? 'border-red-500'
-                      : 'border-gray-300 focus-visible:border-[#3b82f6]'
+                    errors.cargo ? 'border-red-500' : 'border-gray-300 focus-visible:border-primary'
                   }`}
                   value={formData.cargo}
                   onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
@@ -452,9 +450,7 @@ export default function Gerentes() {
                 <Input
                   type="email"
                   className={`border-0 border-b rounded-none px-0 shadow-none focus-visible:ring-0 bg-transparent ${
-                    errors.email
-                      ? 'border-red-500'
-                      : 'border-gray-300 focus-visible:border-[#3b82f6]'
+                    errors.email ? 'border-red-500' : 'border-gray-300 focus-visible:border-primary'
                   }`}
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -464,7 +460,7 @@ export default function Gerentes() {
               <div className="flex-1 space-y-1">
                 <Label className="text-[11px] uppercase tracking-wide text-gray-500">Celular</Label>
                 <Input
-                  className="border-0 border-b border-gray-300 rounded-none px-0 shadow-none focus-visible:ring-0 focus-visible:border-[#3b82f6] bg-transparent"
+                  className="border-0 border-b border-gray-300 rounded-none px-0 shadow-none focus-visible:ring-0 focus-visible:border-primary bg-transparent"
                   value={formData.telefone}
                   onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
                 />
@@ -481,7 +477,7 @@ export default function Gerentes() {
                   className={`border-0 border-b rounded-none px-0 shadow-none focus-visible:ring-0 bg-transparent ${
                     errors.rd_station_id
                       ? 'border-red-500'
-                      : 'border-gray-300 focus-visible:border-[#3b82f6]'
+                      : 'border-gray-300 focus-visible:border-primary'
                   }`}
                   value={formData.rd_station_id}
                   onChange={(e) => setFormData({ ...formData, rd_station_id: e.target.value })}
@@ -513,7 +509,7 @@ export default function Gerentes() {
                 >
                   <SelectTrigger
                     className={`border-0 border-b rounded-none px-0 shadow-none focus:ring-0 bg-transparent ${
-                      errors.usuario ? 'border-red-500' : 'border-gray-300 focus:border-[#3b82f6]'
+                      errors.usuario ? 'border-red-500' : 'border-gray-300 focus:border-primary'
                     }`}
                   >
                     <SelectValue placeholder="Selecione um usuário" />
@@ -543,7 +539,7 @@ export default function Gerentes() {
                   className={`border-0 border-b rounded-none px-0 shadow-none focus-visible:ring-0 bg-transparent ${
                     errors.documento
                       ? 'border-red-500'
-                      : 'border-gray-300 focus-visible:border-[#3b82f6]'
+                      : 'border-gray-300 focus-visible:border-primary'
                   }`}
                   value={formData.documento}
                   onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
