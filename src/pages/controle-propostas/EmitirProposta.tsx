@@ -2235,7 +2235,7 @@ export default function EmitirProposta() {
                               Acessórios Standards
                             </p>
                             <div
-                              className="text-xs text-slate-600 leading-relaxed rich-text-content"
+                              className="text-xs text-slate-600 leading-relaxed rich-text-content overflow-visible max-h-none h-auto"
                               dangerouslySetInnerHTML={{
                                 __html: versao.acessorios_standards || '',
                               }}
@@ -2248,7 +2248,7 @@ export default function EmitirProposta() {
                               Características Construtivas Principais
                             </p>
                             <div
-                              className="text-xs text-slate-600 leading-relaxed rich-text-content"
+                              className="text-xs text-slate-600 leading-relaxed rich-text-content overflow-visible max-h-none h-auto"
                               dangerouslySetInnerHTML={{
                                 __html: versao.caracteristicas_construtivas || '',
                               }}
@@ -2261,7 +2261,7 @@ export default function EmitirProposta() {
                               Especificações Técnicas Principais
                             </p>
                             <div
-                              className="text-xs text-slate-600 leading-relaxed rich-text-content"
+                              className="text-xs text-slate-600 leading-relaxed rich-text-content overflow-visible max-h-none h-auto"
                               dangerouslySetInnerHTML={{
                                 __html: versao.especificacoes_tecnicas || '',
                               }}

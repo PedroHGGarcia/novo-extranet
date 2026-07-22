@@ -97,9 +97,20 @@
   font-style: italic;
 }
 .rich-text-content {
-  overflow: visible;
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
   word-wrap: break-word;
   overflow-wrap: break-word;
+}
+.rich-text-content p,
+.rich-text-content div,
+.rich-text-content ul,
+.rich-text-content ol,
+.rich-text-content li,
+.rich-text-content span {
+  max-height: none !important;
+  overflow: visible !important;
 }
 .rich-text-content table {
   border-collapse: collapse;
@@ -119,14 +130,22 @@
   .rich-text-content {
     overflow: visible !important;
     max-height: none !important;
+    height: auto !important;
+  }
+  .rich-text-content p,
+  .rich-text-content div,
+  .rich-text-content ul,
+  .rich-text-content ol,
+  .rich-text-content li,
+  .rich-text-content span {
+    max-height: none !important;
+    overflow: visible !important;
   }
   .rich-text-content img[data-align='left'],
   .rich-text-content img[data-align='right'] {
-    float: none !important;
-    display: block;
-    margin: 0.5em auto;
-    max-width: 60% !important;
+    max-width: 50% !important;
     page-break-inside: avoid;
+    break-inside: avoid;
   }
   .rich-text-content img {
     page-break-inside: avoid;

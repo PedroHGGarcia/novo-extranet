@@ -610,15 +610,24 @@ export function PropostaDocument({
             page-break-inside: auto;
           }
           .print-detail-block {
-            break-inside: avoid-page;
-            page-break-inside: avoid;
             margin-bottom: 1rem;
+          }
+          .print-detail-block img,
+          .print-detail-block table,
+          .print-detail-block li {
+            break-inside: avoid;
+            page-break-inside: avoid;
           }
           .print-detail-block .rich-text-content {
             overflow: visible !important;
             max-height: none !important;
+            height: auto !important;
             word-wrap: break-word;
             overflow-wrap: break-word;
+          }
+          .print-detail-block .rich-text-content * {
+            max-height: none !important;
+            overflow: visible !important;
           }
           .print-detail-block .rich-text-content img {
             max-width: 50% !important;
@@ -626,12 +635,12 @@ export function PropostaDocument({
             break-inside: avoid;
           }
           .print-detail-block .rich-text-content img[data-align='left'] {
-            float: left;
+            float: left !important;
             margin-right: 1em;
             margin-bottom: 0.5em;
           }
           .print-detail-block .rich-text-content img[data-align='right'] {
-            float: right;
+            float: right !important;
             margin-left: 1em;
             margin-bottom: 0.5em;
           }
@@ -642,8 +651,10 @@ export function PropostaDocument({
           }
           .print-detail-block .rich-text-content p,
           .print-detail-block .rich-text-content ul,
-          .print-detail-block .rich-text-content ol {
+          .print-detail-block .rich-text-content ol,
+          .print-detail-block .rich-text-content li {
             overflow: visible !important;
+            max-height: none !important;
             word-wrap: break-word;
             overflow-wrap: break-word;
           }
