@@ -41,6 +41,7 @@ export interface Proposta {
   dt_cad: string
   user: string
   tipo_proposta?: string
+  projeto?: string
   status?: string
   data_alteracao_status?: string
   created: string
@@ -72,6 +73,7 @@ export interface Proposta {
     user?: { name: string; assinatura?: string; id: string }
     tipo_proposta?: TipoProposta
     ultimo_usuario_status?: { name: string; email: string; id: string }
+    projeto?: { id: string; nome: string; status?: string }
   }
 }
 
@@ -85,14 +87,14 @@ export const getPropostasPaginated = async (
     sort,
     filter,
     expand:
-      'cliente,versao.modelo.marca,versao.modelo.produto.categoria,representante,gerente.usuario,user,tipo_proposta,ultimo_usuario_status',
+      'cliente,versao.modelo.marca,versao.modelo.produto.categoria,representante,gerente.usuario,user,tipo_proposta,ultimo_usuario_status,projeto',
   })
 }
 
 export const getProposta = async (id: string) => {
   return pb.collection('propostas').getOne<Proposta>(id, {
     expand:
-      'cliente,versao.modelo.marca,versao.modelo.produto.categoria,representante,gerente.usuario,user,tipo_proposta,ultimo_usuario_status',
+      'cliente,versao.modelo.marca,versao.modelo.produto.categoria,representante,gerente.usuario,user,tipo_proposta,ultimo_usuario_status,projeto',
   })
 }
 

@@ -25,6 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { CurrencyWidget } from '@/components/CurrencyWidget'
+import { ProjectsWidget } from '@/components/ProjectsWidget'
 import {
   PieChart,
   Pie,
@@ -357,6 +358,10 @@ export default function Dashboard() {
 
       <div className="mt-4">
         <CurrencyWidget />
+      </div>
+
+      <div className="mt-4">
+        <ProjectsWidget />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

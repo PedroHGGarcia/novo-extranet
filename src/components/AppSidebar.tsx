@@ -16,6 +16,7 @@ import {
   Activity,
   Settings,
   LogOut,
+  FolderKanban,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -109,6 +110,13 @@ const menuItems: MenuItem[] = [
         menuKey: 'tipos_propostas',
       },
     ],
+  },
+  {
+    title: 'Projetos',
+    url: '/projetos',
+    icon: FolderKanban,
+    menuKey: 'projetos',
+    sub: [],
   },
   {
     title: 'Controle de Produtos',

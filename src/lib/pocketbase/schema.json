@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-09T14:07:53.171Z",
+  "generatedAt": "2026-07-22T11:43:02.196Z",
   "collections": [
     {
       "name": "users",
@@ -324,10 +324,85 @@
           "type": "json",
           "required": false,
           "system": false
+        },
+        {
+          "name": "razao_social",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "rd_station_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "telefone_principal",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "emails",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "regiao_texto",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "cep",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "bairro",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "logradouro",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "numero",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "complementos",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "categorias_rel",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "categorias_produtos"
+        },
+        {
+          "name": "regioes_rel",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "regioes"
         }
       ],
       "indexes": [
-        "CREATE UNIQUE INDEX `idx_representantes_documento` ON `representantes` (documento) WHERE documento != ''"
+        "CREATE UNIQUE INDEX `idx_representantes_documento` ON `representantes` (documento) WHERE documento != ''",
+        "CREATE INDEX `idx_representantes_rd_station_id` ON `representantes` (rd_station_id)"
       ]
     },
     {
@@ -811,6 +886,13 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "parent",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "categorias_produtos"
         }
       ],
       "indexes": []
@@ -916,6 +998,24 @@
         {
           "name": "fotos",
           "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tags",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "motivo_inativacao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "vetor",
+          "type": "json",
           "required": false,
           "system": false
         }
@@ -1153,6 +1253,25 @@
           "required": false,
           "system": false,
           "collectionRef": "modelos"
+        },
+        {
+          "name": "galeria",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["Ativo", "Inativo", "Fora de Linha"]
+        },
+        {
+          "name": "alerta_estoque_minimo",
+          "type": "number",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": ["CREATE UNIQUE INDEX idx_versoes_coderp ON versoes (cod_erp) WHERE cod_erp != ''"]
@@ -1306,6 +1425,12 @@
         {
           "name": "versoes_new",
           "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "compatibilidade_json",
+          "type": "json",
           "required": false,
           "system": false
         }
@@ -1673,6 +1798,56 @@
           "type": "text",
           "required": false,
           "system": false
+        },
+        {
+          "name": "notas_internas",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tags",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "itens_adicionais",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "probabilidade_fechamento",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "motivo_perda",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_fechamento_prevista",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "prioridade",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["Alta", "Media", "Baixa"]
+        },
+        {
+          "name": "projeto",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "projetos"
         }
       ],
       "indexes": [
@@ -1846,6 +2021,188 @@
         }
       ],
       "indexes": []
+    },
+    {
+      "name": "agendamento_precos",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "origem_id",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "tabela",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "novo_valor",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "data_execucao",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Pendente", "Executado"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_agendamento_precos_status_data ON agendamento_precos (status, data_execucao)"
+      ]
+    },
+    {
+      "name": "visualizacoes_proposta",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "proposta",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "propostas"
+        },
+        {
+          "name": "tipo",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["abertura_link", "download_pdf", "visualizacao"]
+        },
+        {
+          "name": "ip",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "user_agent",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_visualizacoes_proposta ON visualizacoes_proposta (proposta, created DESC)"
+      ]
+    },
+    {
+      "name": "projetos",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.role = 'admin'"
+      },
+      "fields": [
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "descricao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "cliente",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "clientes"
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["Em Andamento", "Concluído", "Cancelado", "Suspenso"]
+        },
+        {
+          "name": "user",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_projetos_cliente ON projetos (cliente)",
+        "CREATE INDEX idx_projetos_status ON projetos (status)",
+        "CREATE INDEX idx_projetos_nome ON projetos (nome)"
+      ]
     }
   ]
 }

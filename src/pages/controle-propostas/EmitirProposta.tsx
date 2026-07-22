@@ -45,6 +45,7 @@ import { DialogFooter } from '@/components/ui/dialog'
 import { SignaturePad } from '@/components/SignaturePad'
 import { SearchableCombobox } from '@/components/SearchableCombobox'
 import { getErrorMessage } from '@/lib/pocketbase/errors'
+import { getProjetosByCliente } from '@/services/projetos'
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 const formatCurrency = (value: number | undefined, currency: string = 'BRL') => {
@@ -128,6 +129,7 @@ export default function EmitirProposta() {
   const [representantes, setRepresentantes] = useState<any[]>([])
   const [versoes, setVersoes] = useState<any[]>([])
   const [tiposProposta, setTiposProposta] = useState<TipoProposta[]>([])
+  const [projetos, setProjetos] = useState<any[]>([])
 
   const [formData, setFormData] = useState<Partial<Proposta>>({})
   const [initialFormData, setInitialFormData] = useState<Partial<Proposta>>({})
@@ -419,6 +421,7 @@ export default function EmitirProposta() {
           nota_rep: 1,
           dt_cad: format(new Date(), 'yyyy-MM-dd'),
           modelo_licitacao: activeTab === 'cadastro_licitacao',
+          projeto: '',
         }
         setFormData(mappedData)
         setInitialFormData(mappedData)
@@ -438,6 +441,16 @@ export default function EmitirProposta() {
         .catch(() => {})
     }
   }, [selectedProposta])
+
+  useEffect(() => {
+    if (!formData.cliente) {
+      setProjetos([])
+      return
+    }
+    getProjetosByCliente(formData.cliente)
+      .then(setProjetos)
+      .catch(() => setProjetos([]))
+  }, [formData.cliente])
 
   const loadAcessorios = async (versaoId?: string) => {
     if (!versaoId) {
@@ -933,9 +946,11 @@ export default function EmitirProposta() {
         sanitizedData[key] = value
       }
     }
-    ;['cliente', 'versao', 'representante', 'gerente', 'tipo_proposta'].forEach((field) => {
-      if (sanitizedData[field] === '') sanitizedData[field] = null
-    })
+    ;['cliente', 'versao', 'representante', 'gerente', 'tipo_proposta', 'projeto'].forEach(
+      (field) => {
+        if (sanitizedData[field] === '') sanitizedData[field] = null
+      },
+    )
 
     try {
       if (selectedProposta) {
@@ -1078,6 +1093,7 @@ export default function EmitirProposta() {
         cliente: '',
         contato: '',
         telefone: '',
+        projeto: '',
       }))
       return
     }
@@ -1089,9 +1105,10 @@ export default function EmitirProposta() {
         cliente: clienteId,
         contato: cliente.contato || '',
         telefone: cliente.telefone || cliente.celular || '',
+        projeto: '',
       }))
     } else {
-      setFormData((prev) => ({ ...prev, cliente: clienteId }))
+      setFormData((prev) => ({ ...prev, cliente: clienteId, projeto: '' }))
       pb.collection('clientes')
         .getOne(clienteId)
         .then((c) => {
@@ -1725,7 +1742,7 @@ export default function EmitirProposta() {
                 </div>
               </div>
 
-              <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="w-full grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                 <div className="flex flex-col w-full">
                   <label className={labelClass}>Data de Emissão</label>
                   <input
@@ -1871,6 +1888,24 @@ export default function EmitirProposta() {
                   {!formData.tipo_proposta && (
                     <span className="text-[10px] text-amber-600 mt-0.5">
                       Tipo de Proposta é obrigatório
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col w-full">
+                  <label className={labelClass}>Vincular ao Projeto</label>
+                  <SearchableCombobox
+                    items={projetos}
+                    value={formData.projeto || ''}
+                    onChange={(id) => setFormData({ ...formData, projeto: id })}
+                    getLabel={(p) => p.nome}
+                    getSearchText={(p) => p.nome}
+                    placeholder="Selecionar projeto..."
+                    emptyMessage="Nenhum projeto ativo para este cliente."
+                    className={inputClass}
+                  />
+                  {!formData.cliente && (
+                    <span className="text-[10px] text-slate-400 mt-0.5">
+                      Selecione um cliente primeiro
                     </span>
                   )}
                 </div>

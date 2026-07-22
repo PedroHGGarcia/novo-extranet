@@ -21,6 +21,7 @@ export const MENU_ACCESS_KEYS = [
   'area_atuacao',
   'configuracoes',
   'auditoria',
+  'projetos',
 ] as const
 
 export type MenuAccessKey = (typeof MENU_ACCESS_KEYS)[number]
@@ -79,6 +80,7 @@ const PATH_TO_MENU_KEY: Record<string, string> = {
   '/area-atuacao': 'area_atuacao',
   '/configuracoes': 'configuracoes',
   '/auditoria': 'auditoria',
+  '/projetos': 'projetos',
 }
 
 export function getMenuKeyForPath(pathname: string): string | null {
@@ -124,7 +126,7 @@ export const MENU_ACCESS_GROUPS: Array<{ title: string; keys: string[] }> = [
       'dashboard_licitacoes',
     ],
   },
-  { title: 'Outros', keys: ['eventos', 'area_atuacao', 'configuracoes', 'auditoria'] },
+  { title: 'Outros', keys: ['eventos', 'area_atuacao', 'configuracoes', 'auditoria', 'projetos'] },
 ]
 
 export const MENU_KEY_LABELS: Record<string, string> = {
@@ -150,6 +152,7 @@ export const MENU_KEY_LABELS: Record<string, string> = {
   area_atuacao: 'Área de Atuação',
   configuracoes: 'Configurações',
   auditoria: 'Auditoria',
+  projetos: 'Projetos',
 }
 
 export const PERMISSION_TEMPLATES: Array<{
@@ -183,6 +186,7 @@ export const PERMISSION_TEMPLATES: Array<{
       area_atuacao: false,
       configuracoes: false,
       auditoria: false,
+      projetos: true,
     },
   },
   {
@@ -211,6 +215,7 @@ export const PERMISSION_TEMPLATES: Array<{
       area_atuacao: true,
       configuracoes: false,
       auditoria: true,
+      projetos: true,
     },
   },
   {
@@ -239,6 +244,7 @@ export const PERMISSION_TEMPLATES: Array<{
       area_atuacao: false,
       configuracoes: false,
       auditoria: false,
+      projetos: false,
     },
   },
   {
