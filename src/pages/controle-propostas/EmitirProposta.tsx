@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import {
   Pencil,
@@ -2746,6 +2746,21 @@ export default function EmitirProposta() {
                   <span className="font-medium">
                     {viewProposta.expand?.user?.setor || 'Comercial'}
                   </span>
+                </div>
+                <div className="flex flex-col border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Projeto Vinculado
+                  </span>
+                  {viewProposta.expand?.projeto ? (
+                    <Link
+                      to={`/projetos/${viewProposta.expand.projeto.id}`}
+                      className="font-medium text-[#337ab7] hover:underline"
+                    >
+                      {viewProposta.expand.projeto.nome}
+                    </Link>
+                  ) : (
+                    <span className="font-medium text-slate-400">Nenhum projeto vinculado</span>
+                  )}
                 </div>
                 <div className="flex flex-col border-b border-slate-100 pb-2">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
