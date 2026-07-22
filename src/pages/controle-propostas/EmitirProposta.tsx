@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { format } from 'date-fns'
 import {
   Pencil,
@@ -31,7 +31,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { getPropostasPaginated, updateProposta, type Proposta } from '@/services/propostas'
+import {
+  getPropostasPaginated,
+  getProposta,
+  updateProposta,
+  type Proposta,
+} from '@/services/propostas'
 import { getTiposProposta, type TipoProposta } from '@/services/tipos-propostas'
 import { searchClientesPaginated, getGerentes } from '@/services/cadastros'
 import { useRealtime } from '@/hooks/use-realtime'
@@ -113,6 +118,7 @@ export default function EmitirProposta() {
   const { toast } = useToast()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState('registros')
   const [selectedProposta, setSelectedProposta] = useState<Proposta | null>(null)
 
@@ -313,6 +319,19 @@ export default function EmitirProposta() {
         setSetores(uniqueSetores)
       })
       .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const editId = searchParams.get('edit')
+    if (editId) {
+      getProposta(editId)
+        .then((prop) => {
+          setSelectedProposta(prop)
+          setActiveTab(prop.modelo_licitacao ? 'cadastro_licitacao' : 'cadastro')
+        })
+        .catch(() => {})
+      setSearchParams({}, { replace: true })
+    }
   }, [])
 
   const loadData = async () => {

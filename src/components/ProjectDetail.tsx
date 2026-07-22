@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getProjeto, type Projeto } from '@/services/projetos'
-import { getPropostasPaginated, type Proposta } from '@/services/propostas'
+import { getPropostasPaginated, createPropostaRevision, type Proposta } from '@/services/propostas'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -12,9 +13,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, Pencil, Building2, FileText } from 'lucide-react'
+import {
+  ChevronLeft,
+  Pencil,
+  Building2,
+  FileText,
+  Eye,
+  Printer,
+  GitBranch,
+  Loader2,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useRealtime } from '@/hooks/use-realtime'
+import { useToast } from '@/hooks/use-toast'
 
 const formatCurrency = (v?: number) =>
   v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v) : '-'
@@ -42,9 +53,12 @@ export function ProjectDetail({
   onBack: () => void
   onEdit: () => void
 }) {
+  const navigate = useNavigate()
+  const { toast } = useToast()
   const [projetoData, setProjetoData] = useState<Projeto>(projeto)
   const [propostas, setPropostas] = useState<Proposta[]>([])
   const [loading, setLoading] = useState(true)
+  const [cloningId, setCloningId] = useState<string | null>(null)
 
   const loadData = async () => {
     try {
@@ -69,6 +83,27 @@ export function ProjectDetail({
   const totalProjeto = propostas
     .filter((p) => p.status !== 'Excluída')
     .reduce((acc, p) => acc + (p.valor_final || 0), 0)
+
+  const handleViewDetails = (propostaId: string) => {
+    navigate(`/controle-propostas/emitir-proposta?edit=${propostaId}`)
+  }
+
+  const handleGeneratePDF = (propostaId: string) => {
+    window.open(`/controle-propostas/proposta-pdf/${propostaId}`, '_blank')
+  }
+
+  const handleNewVersion = async (proposta: Proposta) => {
+    setCloningId(proposta.id)
+    try {
+      const newRevision = await createPropostaRevision(proposta.id)
+      toast({ title: 'Nova versão criada com sucesso' })
+      navigate(`/controle-propostas/emitir-proposta?edit=${newRevision.id}`)
+    } catch {
+      toast({ title: 'Erro ao criar nova versão', variant: 'destructive' })
+    } finally {
+      setCloningId(null)
+    }
+  }
 
   return (
     <div className="flex flex-1 flex-col p-4 md:p-6 w-full space-y-6">
@@ -132,16 +167,27 @@ export function ProjectDetail({
               <TableHeader>
                 <TableRow>
                   <TableHead>Número</TableHead>
+                  <TableHead>Revisão</TableHead>
                   <TableHead>Versão</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor Final</TableHead>
+                  <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {propostas.map((p) => (
-                  <TableRow key={p.id}>
+                  <TableRow
+                    key={p.id}
+                    className="cursor-pointer hover:bg-slate-50"
+                    onClick={() => handleViewDetails(p.id)}
+                  >
                     <TableCell className="font-medium text-brand-blue">
                       {p.numero_proposta}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {p.revisao || 'A'}
+                      </Badge>
                     </TableCell>
                     <TableCell>{p.expand?.versao?.nome || p.versao_original || '-'}</TableCell>
                     <TableCell>
@@ -158,6 +204,42 @@ export function ProjectDetail({
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(p.valor_final)}
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Ver Detalhes"
+                          onClick={() => handleViewDetails(p.id)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Gerar PDF"
+                          onClick={() => handleGeneratePDF(p.id)}
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Nova Versão"
+                          disabled={cloningId === p.id}
+                          onClick={() => handleNewVersion(p)}
+                        >
+                          {cloningId === p.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <GitBranch className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

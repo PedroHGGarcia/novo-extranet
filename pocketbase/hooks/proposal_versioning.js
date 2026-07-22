@@ -1,4 +1,10 @@
 onRecordCreateRequest((e) => {
+  const revisao = e.record.getString('revisao')
+  if (revisao && revisao !== 'A') {
+    e.next()
+    return
+  }
+
   let maxNum = 39130
   try {
     const records = $app.findRecordsByFilter(

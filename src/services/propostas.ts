@@ -108,3 +108,46 @@ export const uploadAssinaturaCliente = async (id: string, file: Blob) => {
   formData.append('status', 'Aprovada')
   return pb.collection('propostas').update<Proposta>(id, formData)
 }
+
+const getNextRevision = (current?: string): string => {
+  if (!current || current === 'A') return 'B'
+  if (current === 'Z') return 'AA'
+  return String.fromCharCode(current.charCodeAt(0) + 1)
+}
+
+export const createPropostaRevision = async (id: string): Promise<Proposta> => {
+  const original = await pb.collection('propostas').getOne<Proposta>(id)
+
+  const currentRev = original.revisao || 'A'
+  const nextRev = getNextRevision(currentRev)
+  const numPart = original.numero_proposta.split('-')[0]
+
+  const excludeFields = new Set([
+    'id',
+    'created',
+    'updated',
+    'collectionId',
+    'collectionName',
+    'expand',
+    'assinatura_cliente',
+    'assinatura_representante',
+    'numero_proposta',
+    'revisao',
+    'status',
+    'data_alteracao_status',
+    'ultimo_usuario_status',
+  ])
+
+  const cloneData: Record<string, any> = {}
+  for (const [key, value] of Object.entries(original)) {
+    if (!excludeFields.has(key) && value !== undefined && value !== null) {
+      cloneData[key] = value
+    }
+  }
+
+  cloneData.numero_proposta = `${numPart}-${nextRev}`
+  cloneData.revisao = nextRev
+  cloneData.status = 'Em Análise'
+
+  return pb.collection('propostas').create<Proposta>(cloneData)
+}
