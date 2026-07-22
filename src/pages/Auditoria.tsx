@@ -85,15 +85,17 @@ export default function AuditoriaPage() {
                       {new Date(log.created).toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      {log.expand?.user?.name || log.expand?.user?.email || 'Desconhecido'}
+                      {log.user
+                        ? log.expand?.user?.name || log.expand?.user?.email || 'Desconhecido'
+                        : 'Sistema'}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
                         className={
-                          log.acao === 'Create'
+                          log.acao?.toLowerCase() === 'create'
                             ? 'text-green-700 border-green-200 bg-green-50'
-                            : log.acao === 'Update'
+                            : log.acao?.toLowerCase() === 'update'
                               ? 'text-blue-700 border-blue-200 bg-blue-50'
                               : 'text-red-700 border-red-200 bg-red-50'
                         }

@@ -1,10 +1,12 @@
 onRecordAfterCreateSuccess((e) => {
   const adminOrUser = e.auth?.id || null
-  if (!adminOrUser || e.collection.name === 'auditoria') return e.next()
+  if (e.collection.name === 'auditoria') return e.next()
 
   try {
     const auditoria = new Record($app.findCollectionByNameOrId('auditoria'))
-    auditoria.set('user', adminOrUser)
+    if (adminOrUser) {
+      auditoria.set('user', adminOrUser)
+    }
     auditoria.set('acao', 'create')
     auditoria.set('tabela', e.collection.name)
     auditoria.set('registro_id', e.record.id)
@@ -18,11 +20,13 @@ onRecordAfterCreateSuccess((e) => {
 
 onRecordAfterUpdateSuccess((e) => {
   const adminOrUser = e.auth?.id || null
-  if (!adminOrUser || e.collection.name === 'auditoria') return e.next()
+  if (e.collection.name === 'auditoria') return e.next()
 
   try {
     const auditoria = new Record($app.findCollectionByNameOrId('auditoria'))
-    auditoria.set('user', adminOrUser)
+    if (adminOrUser) {
+      auditoria.set('user', adminOrUser)
+    }
     auditoria.set('acao', 'update')
     auditoria.set('tabela', e.collection.name)
     auditoria.set('registro_id', e.record.id)
@@ -39,11 +43,13 @@ onRecordAfterUpdateSuccess((e) => {
 
 onRecordAfterDeleteSuccess((e) => {
   const adminOrUser = e.auth?.id || null
-  if (!adminOrUser || e.collection.name === 'auditoria') return e.next()
+  if (e.collection.name === 'auditoria') return e.next()
 
   try {
     const auditoria = new Record($app.findCollectionByNameOrId('auditoria'))
-    auditoria.set('user', adminOrUser)
+    if (adminOrUser) {
+      auditoria.set('user', adminOrUser)
+    }
     auditoria.set('acao', 'delete')
     auditoria.set('tabela', e.collection.name)
     auditoria.set('registro_id', e.record.id)
