@@ -25,7 +25,7 @@ import {
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import logoUrl from '@/assets/logo-bener-19c85.png'
+import logoUrl from '@/assets/logo-bener-4ae76.png'
 import { CommandPalette } from '@/components/CommandPalette'
 
 export function AppHeader() {
@@ -87,7 +87,11 @@ export function AppHeader() {
       <SidebarTrigger className="text-white hover:bg-white/10 hover:text-white focus-visible:ring-white/20" />
       <div className="flex-1 md:hidden flex justify-center select-none items-center">
         <Link to="/dashboard" className="flex items-center">
-          <img src={logoUrl} alt="Bener" className="h-6 object-contain bener-logo-invert" />
+          <img
+            src={logoUrl}
+            alt="Bener"
+            className="h-6 max-w-[120px] object-contain bener-logo-invert"
+          />
         </Link>
       </div>
       <div className="hidden md:flex flex-1 items-center gap-4 px-4">
