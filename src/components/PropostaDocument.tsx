@@ -173,7 +173,10 @@ export function PropostaDocument({
       </div>
 
       {/* Product Image */}
-      <div className="flex flex-col items-center mb-12 print-break-inside-avoid">
+      <div
+        className="flex flex-col items-center mb-12 print-break-inside-avoid"
+        style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
+      >
         {versaoImagemUrl ? (
           <img
             src={versaoImagemUrl}
@@ -192,7 +195,7 @@ export function PropostaDocument({
 
       {/* Acessorios (Included & Optional) */}
       {acessorios.length > 0 && (
-        <div className="mb-10 print-break-inside-avoid px-8">
+        <div className="mb-10 print-detail-block px-8">
           <h3 className="font-bold font-mono text-[14px] uppercase mb-3 border-b border-black pb-1">
             Itens Adicionais e Opcionais
           </h3>
@@ -220,13 +223,13 @@ export function PropostaDocument({
         especificacoesTecnicas?.trim() ||
         proposta.especificacoes_tecnicas?.trim() ||
         proposta.materiais_utilizados?.trim()) && (
-        <div className="mb-10 print-break-inside-avoid">
+        <div className="mb-10 print-details-section">
           <h2 className="font-bold font-mono text-[14px] uppercase mb-4 border-b border-black pb-1">
             Detalhes Técnicos
           </h2>
           <div className="space-y-4">
             {acessoriosStandards?.trim() && (
-              <div>
+              <div className="print-detail-block">
                 <p className="font-bold font-mono text-[13px] uppercase mb-1">
                   Acessórios Standards
                 </p>
@@ -237,7 +240,7 @@ export function PropostaDocument({
               </div>
             )}
             {caracteristicasConstrutivas?.trim() && (
-              <div>
+              <div className="print-detail-block">
                 <p className="font-bold font-mono text-[13px] uppercase mb-1">
                   Características Construtivas Principais
                 </p>
@@ -248,7 +251,7 @@ export function PropostaDocument({
               </div>
             )}
             {especificacoesTecnicas?.trim() && (
-              <div>
+              <div className="print-detail-block">
                 <p className="font-bold font-mono text-[13px] uppercase mb-1">
                   Especificações Técnicas Principais
                 </p>
@@ -259,7 +262,7 @@ export function PropostaDocument({
               </div>
             )}
             {proposta.especificacoes_tecnicas?.trim() && (
-              <div>
+              <div className="print-detail-block">
                 <p className="font-bold font-mono text-[13px] uppercase mb-1">
                   Especificações Técnicas (Adicionais)
                 </p>
@@ -269,7 +272,7 @@ export function PropostaDocument({
               </div>
             )}
             {proposta.materiais_utilizados?.trim() && (
-              <div>
+              <div className="print-detail-block">
                 <p className="font-bold font-mono text-[13px] uppercase mb-1">
                   Materiais Utilizados
                 </p>
@@ -285,7 +288,7 @@ export function PropostaDocument({
       {proposta.modelo_licitacao && (
         <>
           {(proposta.certificacoes?.trim() || proposta.normas_aplicaveis?.trim()) && (
-            <div className="mb-10 print-break-inside-avoid">
+            <div className="mb-10 print-detail-block">
               <h2 className="font-bold font-mono text-[14px] uppercase mb-4 border-b border-black pb-1">
                 Normalização
               </h2>
@@ -313,7 +316,7 @@ export function PropostaDocument({
           )}
 
           {(proposta.certificacoes_seguranca?.trim() || proposta.normas_seguranca?.trim()) && (
-            <div className="mb-10 print-break-inside-avoid">
+            <div className="mb-10 print-detail-block">
               <h2 className="font-bold font-mono text-[14px] uppercase mb-4 border-b border-black pb-1">
                 Segurança
               </h2>
@@ -343,7 +346,7 @@ export function PropostaDocument({
           )}
 
           {proposta.criterios_aceitacao?.trim() && (
-            <div className="mb-10 print-break-inside-avoid">
+            <div className="mb-10 print-detail-block">
               <h2 className="font-bold font-mono text-[14px] uppercase mb-4 border-b border-black pb-1">
                 Testes de Aceitação
               </h2>
@@ -361,13 +364,13 @@ export function PropostaDocument({
       )}
 
       {secoesAdicionais && secoesAdicionais.length > 0 && (
-        <div className="mb-10 print-break-inside-avoid">
+        <div className="mb-10 print-details-section">
           <h2 className="font-bold font-mono text-[14px] uppercase mb-4 border-b border-black pb-1">
             Informações Adicionais
           </h2>
           <div className="space-y-4">
             {secoesAdicionais.map((secao, i) => (
-              <div key={i}>
+              <div key={i} className="print-detail-block">
                 <p className="font-bold font-mono text-[13px] uppercase mb-1">{secao.titulo}</p>
                 <div className="font-mono text-[12px] leading-relaxed text-justify whitespace-pre-wrap">
                   {secao.descricao}
@@ -602,6 +605,48 @@ export function PropostaDocument({
           .print-break-inside-avoid { break-inside: avoid; }
           .print-break-before { page-break-before: always; }
           .no-print { display: none !important; }
+          .print-details-section {
+            break-inside: auto;
+            page-break-inside: auto;
+          }
+          .print-detail-block {
+            break-inside: avoid-page;
+            page-break-inside: avoid;
+            margin-bottom: 1rem;
+          }
+          .print-detail-block .rich-text-content {
+            overflow: visible !important;
+            max-height: none !important;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+          }
+          .print-detail-block .rich-text-content img {
+            max-width: 50% !important;
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          .print-detail-block .rich-text-content img[data-align='left'] {
+            float: left;
+            margin-right: 1em;
+            margin-bottom: 0.5em;
+          }
+          .print-detail-block .rich-text-content img[data-align='right'] {
+            float: right;
+            margin-left: 1em;
+            margin-bottom: 0.5em;
+          }
+          .print-detail-block .rich-text-content::after {
+            content: '';
+            display: table;
+            clear: both;
+          }
+          .print-detail-block .rich-text-content p,
+          .print-detail-block .rich-text-content ul,
+          .print-detail-block .rich-text-content ol {
+            overflow: visible !important;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+          }
           .print-only-footer {
             display: block;
             position: fixed;
