@@ -25,7 +25,7 @@ import {
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import logoUrl from '@/assets/systemlogoin-large-52274.png'
+import logoUrl from '@/assets/logo-bener-19c85.png'
 import { CommandPalette } from '@/components/CommandPalette'
 
 export function AppHeader() {
@@ -86,10 +86,14 @@ export function AppHeader() {
     <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 bg-brand-green dark:bg-sidebar px-4 text-white shadow-sm">
       <SidebarTrigger className="text-white hover:bg-white/10 hover:text-white focus-visible:ring-white/20" />
       <div className="flex-1 md:hidden flex justify-center select-none items-center">
-        <img src={logoUrl} alt="Bener" className="h-6 object-contain bener-logo-invert" />
+        <Link to="/dashboard" className="flex items-center">
+          <img src={logoUrl} alt="Bener" className="h-6 object-contain bener-logo-invert" />
+        </Link>
       </div>
       <div className="hidden md:flex flex-1 items-center gap-4 px-4">
-        <img src={logoUrl} alt="Bener" className="h-8 object-contain bener-logo-invert" />
+        <Link to="/dashboard" className="flex items-center">
+          <img src={logoUrl} alt="Bener" className="h-8 object-contain bener-logo-invert" />
+        </Link>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
           className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/10 text-white/70 hover:bg-white/20 hover:text-white text-sm transition-colors select-none"
