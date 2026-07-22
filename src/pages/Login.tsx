@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Eye, EyeOff, Lock, Mail, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, Loader2, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Turnstile } from '@/components/Turnstile'
+import { verifyCaptchaToken } from '@/services/captcha'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from '@/hooks/use-toast'
 import { z } from 'zod'
@@ -12,12 +14,16 @@ const loginSchema = z.object({
   password: z.string().min(8, 'A senha deve ter no mínimo 8 caracteres'),
 })
 
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'
+
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaError, setCaptchaError] = useState(false)
   const { signIn } = useAuth()
   const navigate = useNavigate()
 
@@ -42,9 +48,34 @@ export default function Login() {
     validateField('password', e.target.value)
   }
 
+  const handleCaptchaVerify = (token: string) => {
+    setCaptchaToken(token)
+    setCaptchaError(false)
+  }
+
+  const handleCaptchaExpire = () => {
+    setCaptchaToken('')
+    toast({
+      title: 'CAPTCHA expirado',
+      description: 'Por favor, complete a verificação de segurança novamente.',
+      variant: 'destructive',
+    })
+  }
+
+  const handleCaptchaError = () => {
+    setCaptchaToken('')
+    setCaptchaError(true)
+    toast({
+      title: 'Erro no CAPTCHA',
+      description: 'Não foi possível carregar o desafio. Recarregue a página e tente novamente.',
+      variant: 'destructive',
+    })
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrors({})
+
     const result = loginSchema.safeParse({ email, password })
     if (!result.success) {
       const fieldErrors: Record<string, string> = {}
@@ -55,7 +86,28 @@ export default function Login() {
       return
     }
 
+    if (!captchaToken) {
+      toast({
+        title: 'Verificação de segurança obrigatória',
+        description: 'Por favor, complete o desafio CAPTCHA para continuar.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     setLoading(true)
+
+    const captchaResult = await verifyCaptchaToken(captchaToken)
+    if (!captchaResult.success) {
+      setLoading(false)
+      toast({
+        title: 'Falha na verificação de segurança',
+        description: captchaResult.error || 'CAPTCHA inválido. Tente novamente.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     const { error } = await signIn(email, password)
     setLoading(false)
 
@@ -138,6 +190,28 @@ export default function Login() {
             >
               Esqueceu a senha?
             </Link>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-700 flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-brand-green" />
+              Verificação de segurança
+            </label>
+            <div className="rounded-lg border border-gray-200 bg-gray-50/50 p-3 overflow-hidden">
+              <Turnstile
+                siteKey={TURNSTILE_SITE_KEY}
+                onVerify={handleCaptchaVerify}
+                onExpire={handleCaptchaExpire}
+                onError={handleCaptchaError}
+                theme="light"
+                className="flex justify-center max-w-full overflow-x-auto"
+              />
+              {captchaError && (
+                <p className="text-xs text-red-500 mt-2 text-center">
+                  Não foi possível carregar a verificação. Recarregue a página.
+                </p>
+              )}
+            </div>
           </div>
 
           <Button
