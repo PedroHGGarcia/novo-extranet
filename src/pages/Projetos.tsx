@@ -21,7 +21,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, ShieldCheck } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { ProjectForm } from '@/components/ProjectForm'
 import { ProjectDetail } from '@/components/ProjectDetail'
 import { useToast } from '@/hooks/use-toast'
@@ -48,6 +49,7 @@ export default function Projetos() {
   const [clientes, setClientes] = useState<any[]>([])
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null)
   const [proposalCounts, setProposalCounts] = useState<Record<string, number>>({})
+  const [biddingCounts, setBiddingCounts] = useState<Record<string, number>>({})
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 400)
@@ -75,17 +77,21 @@ export default function Projetos() {
       const res = await getProjetosPaginated(1, 100, filter)
       setData(res.items)
       const counts: Record<string, number> = {}
+      const bids: Record<string, number> = {}
       for (const proj of res.items) {
         try {
-          const props = await pb.collection('propostas').getList(1, 1, {
-            filter: `projeto = "${proj.id}"`,
+          const props = await pb.collection('propostas').getList(1, 200, {
+            filter: `projeto = "${proj.id}" && status != 'Excluída'`,
           })
           counts[proj.id] = props.totalItems
+          bids[proj.id] = props.items.filter((p: any) => p.modelo_licitacao).length
         } catch {
           counts[proj.id] = 0
+          bids[proj.id] = 0
         }
       }
       setProposalCounts(counts)
+      setBiddingCounts(bids)
     } catch {
       setData([])
     } finally {
@@ -243,7 +249,20 @@ export default function Projetos() {
                         {item.status || '-'}
                       </span>
                     </TableCell>
-                    <TableCell className="text-center">{proposalCounts[item.id] || 0}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <span>{proposalCounts[item.id] || 0}</span>
+                        {biddingCounts[item.id] > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] px-1 py-0 h-4 bg-purple-50 text-purple-700 border-purple-200"
+                          >
+                            <ShieldCheck className="h-2.5 w-2.5 mr-0.5" />
+                            {biddingCounts[item.id]}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {new Date(item.created).toLocaleDateString('pt-BR')}
                     </TableCell>

@@ -22,7 +22,9 @@ import {
   Printer,
   GitBranch,
   Loader2,
+  ShieldCheck,
 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useToast } from '@/hooks/use-toast'
@@ -151,6 +153,15 @@ export function ProjectDetail({
         <CardHeader className="border-b flex flex-row items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
             <FileText className="h-5 w-5" /> Propostas Vinculadas
+            {propostas.some((p) => p.modelo_licitacao) && (
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0 h-5 bg-purple-50 text-purple-700 border-purple-200"
+              >
+                <ShieldCheck className="h-3 w-3 mr-1" />
+                {propostas.filter((p) => p.modelo_licitacao).length} Licitação(ões)
+              </Badge>
+            )}
           </CardTitle>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Total do Projeto</p>
@@ -182,7 +193,18 @@ export function ProjectDetail({
                     onClick={() => handleViewDetails(p.id)}
                   >
                     <TableCell className="font-medium text-brand-blue">
-                      {p.numero_proposta}
+                      <div className="flex items-center gap-2">
+                        {p.numero_proposta}
+                        {p.modelo_licitacao && (
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] px-1 py-0 h-4 bg-purple-50 text-purple-700 border-purple-200 uppercase whitespace-nowrap"
+                          >
+                            <ShieldCheck className="h-2.5 w-2.5 mr-0.5" />
+                            Licitação
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-xs">

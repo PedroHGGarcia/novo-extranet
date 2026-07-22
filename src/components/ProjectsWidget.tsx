@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { FolderKanban, ArrowRight } from 'lucide-react'
+import { FolderKanban, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import pb from '@/lib/pocketbase/client'
 import { useRealtime } from '@/hooks/use-realtime'
 import { cn } from '@/lib/utils'
@@ -15,6 +16,9 @@ const statusColors: Record<string, string> = {
 
 export function ProjectsWidget() {
   const [projects, setProjects] = useState<any[]>([])
+  const [proposalCounts, setProposalCounts] = useState<
+    Record<string, { total: number; licitacoes: number }>
+  >({})
   const [loading, setLoading] = useState(true)
 
   const loadData = async () => {
@@ -24,6 +28,22 @@ export function ProjectsWidget() {
         expand: 'cliente',
       })
       setProjects(res.items)
+
+      const counts: Record<string, { total: number; licitacoes: number }> = {}
+      for (const proj of res.items) {
+        try {
+          const props = await pb.collection('propostas').getList(1, 200, {
+            filter: `projeto = "${proj.id}" && status != 'Excluída'`,
+          })
+          counts[proj.id] = {
+            total: props.totalItems,
+            licitacoes: props.items.filter((p: any) => p.modelo_licitacao).length,
+          }
+        } catch {
+          counts[proj.id] = { total: 0, licitacoes: 0 }
+        }
+      }
+      setProposalCounts(counts)
     } catch {
       setProjects([])
     } finally {
@@ -71,7 +91,20 @@ export function ProjectsWidget() {
                   <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
                     {proj.nome}
                   </p>
-                  <p className="text-xs text-slate-500">{proj.expand?.cliente?.fantasia || '-'}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-slate-500">
+                      {proj.expand?.cliente?.fantasia || '-'}
+                    </p>
+                    {proposalCounts[proj.id]?.licitacoes > 0 && (
+                      <Badge
+                        variant="outline"
+                        className="text-[9px] px-1 py-0 h-4 bg-purple-50 text-purple-700 border-purple-200"
+                      >
+                        <ShieldCheck className="h-2.5 w-2.5 mr-0.5" />
+                        {proposalCounts[proj.id].licitacoes} Lic.
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <span
                   className={cn(

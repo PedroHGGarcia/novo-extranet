@@ -21,7 +21,9 @@ import { MemoriaCalculo } from '@/components/MemoriaCalculo'
 import { CurrencyWidget } from '@/components/CurrencyWidget'
 import { useLicitacao } from '@/hooks/use-licitacao'
 import { searchClientesPaginated } from '@/services/cadastros'
+import { getProjetosByCliente } from '@/services/projetos'
 import { cn } from '@/lib/utils'
+import { FolderKanban } from 'lucide-react'
 
 const formatCurrency = (v: number | undefined, c = 'BRL') => {
   if (v === undefined) return '-'
@@ -226,6 +228,44 @@ export default function EmitirLicitacao() {
                   value={f.dt_cad ? f.dt_cad.substring(0, 10) : ''}
                   onChange={(e) => setFormData({ ...f, dt_cad: e.target.value })}
                 />
+              </div>
+              <div>
+                <label className={cn(labelClass, 'flex items-center gap-1')}>
+                  <FolderKanban className="h-3 w-3 text-slate-400" /> Vincular ao Projeto
+                </label>
+                <select
+                  className={cn(inputClass, lic.projetoError && 'border-rose-400 bg-rose-50/30')}
+                  value={f.projeto || ''}
+                  onChange={(e) => lic.handleProjetoChange(e.target.value)}
+                >
+                  <option value="">-- Sem projeto --</option>
+                  {lic.projetos.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nome}
+                    </option>
+                  ))}
+                </select>
+                {!f.cliente && (
+                  <span className="text-[10px] text-slate-400 mt-0.5">
+                    Selecione um cliente primeiro
+                  </span>
+                )}
+                {f.cliente && lic.projetos.length === 0 && (
+                  <span className="text-[10px] text-slate-400 mt-0.5">
+                    Nenhum projeto em andamento para este cliente.
+                  </span>
+                )}
+                {lic.projetoError && (
+                  <span className="text-[10px] text-rose-600 mt-0.5">{lic.projetoError}</span>
+                )}
+                {f.projeto && (
+                  <a
+                    href={`/projetos`}
+                    className="text-[10px] text-[#337ab7] hover:underline mt-0.5 inline-block"
+                  >
+                    Ver projeto →
+                  </a>
+                )}
               </div>
             </div>
           </section>

@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import pb from '@/lib/pocketbase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { getErrorMessage } from '@/lib/pocketbase/errors'
+import { getProjetosByCliente } from '@/services/projetos'
 
 interface PriceItem {
   id: string
@@ -47,6 +48,7 @@ const defaultForm: Record<string, any> = {
   transporte_seguro: '',
   imposto_ipi: '',
   imposto_icms: '',
+  projeto: '',
 }
 
 export function useLicitacao() {
@@ -66,6 +68,8 @@ export function useLicitacao() {
   const [signatureConfirmed, setSignatureConfirmed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [createdId, setCreatedId] = useState<string | null>(null)
+  const [projetos, setProjetos] = useState<any[]>([])
+  const [projetoError, setProjetoError] = useState<string>('')
 
   useEffect(() => {
     pb.collection('gerentes')
@@ -120,10 +124,13 @@ export function useLicitacao() {
   const handleClienteChange = useCallback(
     (clienteId: string) => {
       if (!clienteId) {
-        setFormData((p) => ({ ...p, cliente: '' }))
+        setFormData((p) => ({ ...p, cliente: '', projeto: '' }))
+        setProjetos([])
+        setProjetoError('')
         return
       }
-      setFormData((p) => ({ ...p, cliente: clienteId }))
+      setFormData((p) => ({ ...p, cliente: clienteId, projeto: '' }))
+      setProjetoError('')
       const existing = clientes.find((c) => c.id === clienteId)
       if (!existing) {
         pb.collection('clientes')
@@ -133,8 +140,28 @@ export function useLicitacao() {
           })
           .catch(() => {})
       }
+      getProjetosByCliente(clienteId)
+        .then(setProjetos)
+        .catch(() => setProjetos([]))
     },
     [clientes],
+  )
+
+  const handleProjetoChange = useCallback(
+    (projetoId: string) => {
+      setFormData((p) => ({ ...p, projeto: projetoId }))
+      if (!projetoId) {
+        setProjetoError('')
+        return
+      }
+      const projeto = projetos.find((p) => p.id === projetoId)
+      if (projeto && formData.cliente && projeto.cliente !== formData.cliente) {
+        setProjetoError('O cliente do projeto não corresponde ao cliente selecionado.')
+      } else {
+        setProjetoError('')
+      }
+    },
+    [projetos, formData.cliente],
   )
 
   const handleVersaoChange = useCallback(
@@ -207,6 +234,8 @@ export function useLicitacao() {
     setSignatureBlob(null)
     setSignatureConfirmed(false)
     setCreatedId(null)
+    setProjetos([])
+    setProjetoError('')
   }, [])
 
   const handleSubmit = useCallback(async () => {
@@ -218,10 +247,19 @@ export function useLicitacao() {
     setErrors(errs)
     if (Object.keys(errs).length > 0) return
 
+    if (formData.projeto) {
+      const projeto = projetos.find((p) => p.id === formData.projeto)
+      if (projeto && formData.cliente && projeto.cliente !== formData.cliente) {
+        setErrors({ projeto: 'O cliente do projeto não corresponde ao cliente da proposta.' })
+        return
+      }
+    }
+
     setSubmitting(true)
     try {
       const fd = new FormData()
       Object.entries(formData).forEach(([k, v]) => {
+        if (k === 'projeto' && !v) return
         if (v !== undefined && v !== null && v !== '') fd.append(k, String(v))
       })
       fd.append('user', user?.id || '')
@@ -276,5 +314,8 @@ export function useLicitacao() {
     resetForm,
     handleSubmit,
     issuerSectorLabel,
+    projetos,
+    handleProjetoChange,
+    projetoError,
   }
 }
