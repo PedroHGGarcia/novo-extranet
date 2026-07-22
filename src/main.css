@@ -258,3 +258,59 @@
     animation: slide-down 0.6s ease-out;
   }
 }
+
+/* ============================================================
+   EmitirProposta visual alignment with Cadastros module
+   Remaps legacy #337ab7 blue to primary brand green
+   Placed outside @layer so these override Tailwind utilities
+   by source order (same specificity, later in cascade).
+   ============================================================ */
+
+.bg-\[\#337ab7\] {
+  background-color: hsl(var(--primary));
+}
+.hover\:bg-\[\#286090\]:hover {
+  background-color: hsl(var(--primary) / 0.9);
+}
+.text-\[\#337ab7\] {
+  color: hsl(var(--primary));
+}
+.hover\:text-\[\#286090\]:hover {
+  color: hsl(var(--primary) / 0.8);
+}
+.border-\[\#337ab7\] {
+  border-color: hsl(var(--primary));
+}
+.border-\[\#337ab7\]\/20 {
+  border-color: hsl(var(--primary) / 0.2);
+}
+.focus\:border-\[\#337ab7\]:focus {
+  border-color: hsl(var(--primary));
+}
+.accent-\[\#337ab7\] {
+  accent-color: hsl(var(--primary));
+}
+.border-t-\[\#337ab7\] {
+  border-top-color: hsl(var(--primary));
+}
+.bg-\[\#337ab7\]\/5 {
+  background-color: hsl(var(--primary) / 0.05);
+}
+.bg-\[\#337ab7\]\/50 {
+  background-color: hsl(var(--primary) / 0.5);
+}
+.ring-\[\#337ab7\]\/30 {
+  --tw-ring-color: hsl(var(--primary) / 0.3);
+}
+.data-\[state\=checked\]\:bg-\[\#337ab7\][data-state='checked'] {
+  background-color: hsl(var(--primary));
+}
+.data-\[state\=checked\]\:border-\[\#337ab7\][data-state='checked'] {
+  border-color: hsl(var(--primary));
+}
+.data-\[state\=active\]\:border-\[\#337ab7\][data-state='active'] {
+  border-color: hsl(var(--primary));
+}
+.data-\[state\=active\]\:text-\[\#337ab7\][data-state='active'] {
+  color: hsl(var(--primary));
+}

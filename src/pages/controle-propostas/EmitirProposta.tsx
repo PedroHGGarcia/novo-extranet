@@ -1335,13 +1335,13 @@ export default function EmitirProposta() {
     return (
       <div className="flex flex-col gap-2 w-full">
         <div className="flex gap-2 flex-wrap items-center">
-          <Button className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal">
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-4 py-2 h-auto text-sm shadow-none font-medium">
             PESQUISAR
           </Button>
           <Button
             onClick={handlePreviewPDF}
             disabled={isOverDiscount || !hasClient}
-            className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-4 py-2 h-auto text-sm shadow-none font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Visualizar proposta
           </Button>
@@ -1350,10 +1350,10 @@ export default function EmitirProposta() {
             disabled={!canSave}
             title={disabledReason || undefined}
             className={cn(
-              'text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal transition-all duration-200',
+              'text-primary-foreground rounded-md px-4 py-2 h-auto text-sm shadow-none font-medium transition-all duration-200',
               canSave
-                ? 'bg-[#337ab7] hover:bg-[#286090] ring-2 ring-[#337ab7]/30 ring-offset-1'
-                : 'bg-[#337ab7] hover:bg-[#286090] disabled:opacity-50 disabled:cursor-not-allowed',
+                ? 'bg-primary hover:bg-primary/90 ring-2 ring-primary/30 ring-offset-1'
+                : 'bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed',
             )}
           >
             {selectedProposta ? 'ATUALIZAR PROPOSTA' : 'GERAR PROPOSTA'}
@@ -1367,10 +1367,10 @@ export default function EmitirProposta() {
               }
             }}
             disabled={!selectedProposta || isOverDiscount}
-            className="bg-[#337ab7] hover:bg-[#286090] text-white rounded-sm px-4 py-1.5 h-auto text-xs shadow-none uppercase font-normal disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-4 py-2 h-auto text-sm shadow-none font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             GERAR PDF
-          </Button>
+          </Button>{' '}
           {selectedProposta && (
             <Button
               onClick={() => setIsCancelDialogOpen(true)}
@@ -1407,8 +1407,8 @@ export default function EmitirProposta() {
   }
 
   const inputClass =
-    'w-full bg-white border border-slate-300 rounded-sm px-2 py-1.5 outline-none text-slate-700 text-xs focus:border-[#337ab7] min-h-[30px]'
-  const labelClass = 'text-[11px] font-bold text-slate-700 mb-1'
+    'w-full bg-background border border-input rounded-md px-3 py-2 outline-none text-foreground text-sm focus:border-primary focus:ring-1 focus:ring-ring min-h-[38px] transition-colors'
+  const labelClass = 'text-sm font-medium text-foreground mb-2'
 
   const renderTable = () => (
     <Table>
@@ -1575,7 +1575,7 @@ export default function EmitirProposta() {
   )
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7rem)] bg-white text-slate-700 font-sans pt-2 rounded-md shadow-sm border border-slate-200 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-7rem)] bg-background text-foreground font-sans pt-2 rounded-lg shadow-sm border border-border overflow-hidden">
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
@@ -1639,7 +1639,7 @@ export default function EmitirProposta() {
                   setSearchQuery(e.target.value)
                   setPage(1)
                 }}
-                className="pl-7 pr-2 py-1.5 text-xs border border-slate-300 rounded-sm bg-white outline-none focus:border-[#337ab7] min-w-[200px]"
+                className="pl-7 pr-2 py-2 text-sm border border-input rounded-md bg-background outline-none focus:border-primary focus:ring-1 focus:ring-ring min-w-[200px] transition-colors"
               />
             </div>
             <select
@@ -1648,7 +1648,7 @@ export default function EmitirProposta() {
                 setSectorFilter(e.target.value)
                 setPage(1)
               }}
-              className="text-xs border border-slate-300 rounded-sm bg-white px-2 py-1.5 outline-none focus:border-[#337ab7] cursor-pointer"
+              className="text-sm border border-input rounded-md bg-background px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-ring cursor-pointer transition-colors"
             >
               <option value="">Todos os setores</option>
               {setores.map((s) => (
@@ -1682,7 +1682,7 @@ export default function EmitirProposta() {
                 {renderCadastroActionBars()}
               </div>
 
-              <div className="mb-4 w-full p-3 bg-[#337ab7]/5 border border-[#337ab7]/20 rounded-sm">
+              <div className="mb-4 w-full p-4 bg-primary/5 border border-primary/20 rounded-lg">
                 <span className="text-xs font-bold text-[#337ab7] uppercase tracking-wider">
                   Responsável Interno: {selectedProposta?.expand?.user?.name || user?.name || '-'}{' '}
                   <span className="font-normal text-slate-500">
@@ -1695,7 +1695,7 @@ export default function EmitirProposta() {
                 <div className="flex flex-col w-full">
                   <label className={labelClass}>Código Para pesquisar</label>
                   <input
-                    className={cn(inputClass, 'bg-slate-50')}
+                    className={cn(inputClass, 'bg-muted')}
                     readOnly
                     placeholder="Gerado automaticamente"
                     value={formData.numero_proposta || ''}
@@ -1948,7 +1948,7 @@ export default function EmitirProposta() {
                 <div className="flex flex-col w-full">
                   <label className={labelClass}>Estoque</label>
                   <select
-                    className={inputClass}
+                    className={cn(inputClass, 'cursor-pointer')}
                     value={estoqueUI}
                     onChange={(e) => setEstoqueUI(e.target.value)}
                   >
@@ -1960,7 +1960,7 @@ export default function EmitirProposta() {
                 <div className="flex flex-col w-full">
                   <label className={labelClass}>Moeda</label>
                   <select
-                    className={inputClass}
+                    className={cn(inputClass, 'cursor-pointer')}
                     value={
                       formData.moeda === 'Dolar'
                         ? 'USD'
@@ -1999,7 +1999,7 @@ export default function EmitirProposta() {
                 <div className="flex flex-col w-full">
                   <label className={labelClass}>Valor sem Desconto</label>
                   <CurrencyInput
-                    className={cn(inputClass, 'bg-slate-50 cursor-not-allowed')}
+                    className={cn(inputClass, 'bg-muted cursor-not-allowed')}
                     value={formData.valor_sem_desconto}
                     currency={formData.moeda || 'US$'}
                     onChange={() => {}}
@@ -2060,7 +2060,7 @@ export default function EmitirProposta() {
                 <div className="flex flex-col w-full">
                   <label className={labelClass}>Valor Final</label>
                   <CurrencyInput
-                    className={cn(inputClass, 'bg-slate-50 cursor-not-allowed')}
+                    className={cn(inputClass, 'bg-muted cursor-not-allowed')}
                     value={formData.valor_final}
                     currency={formData.moeda || 'US$'}
                     onChange={() => {}}
@@ -2077,7 +2077,7 @@ export default function EmitirProposta() {
                 </div>
               </div>
 
-              <div className="text-[11px] font-bold text-slate-700 mb-8 w-full border-b border-slate-200 pb-4 flex items-center gap-4">
+              <div className="text-sm font-medium text-foreground mb-8 w-full border-b border-border pb-4 flex items-center gap-4">
                 {exchangeRatesLoading ? (
                   <span>Carregando cotações...</span>
                 ) : exchangeRates ? (
@@ -2128,13 +2128,13 @@ export default function EmitirProposta() {
                 </div>
               </div>
 
-              <div className="border-b border-slate-200 w-full mb-4 pb-2">
-                <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                  <List className="w-4 h-4" /> Acessórios
+              <div className="border-b border-border w-full mb-4 pb-2">
+                <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                  <List className="w-5 h-5 text-primary" /> Acessórios
                 </h3>
               </div>
 
-              <div className="w-full mb-8 border border-slate-200 rounded-sm overflow-x-auto">
+              <div className="w-full mb-8 border border-border rounded-lg overflow-x-auto">
                 {!formData.versao ? (
                   <div className="py-6 text-center text-slate-500 text-sm">
                     Selecione uma versão para visualizar os acessórios disponíveis.
@@ -2223,9 +2223,9 @@ export default function EmitirProposta() {
                   if (!hasStandards && !hasConstrutivas && !hasEspecificacoes) return null
                   return (
                     <div className="w-full mb-8">
-                      <div className="border-b border-slate-200 w-full mb-4 pb-2">
-                        <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                          <FileText className="w-4 h-4" /> Detalhes Técnicos da Versão
+                      <div className="border-b border-border w-full mb-4 pb-2">
+                        <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-primary" /> Detalhes Técnicos da Versão
                         </h3>
                       </div>
                       <div className="grid grid-cols-1 gap-4">
@@ -2275,9 +2275,9 @@ export default function EmitirProposta() {
 
               {formData.modelo_licitacao && (
                 <div className="w-full mb-8 flex flex-col gap-6">
-                  <div className="border-b border-slate-200 w-full pb-2">
-                    <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <FileText className="w-4 h-4" /> Informações da Licitação
+                  <div className="border-b border-border w-full pb-2">
+                    <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-primary" /> Informações da Licitação
                     </h3>
                   </div>
 
@@ -2429,10 +2429,10 @@ export default function EmitirProposta() {
 
               {user && (!selectedProposta || user.id === selectedProposta.user) && (
                 <div className="w-full mt-8">
-                  <div className="border-b border-slate-200 w-full mb-4 pb-2">
-                    <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <PenTool className="w-4 h-4" /> Assinatura do Responsável Interno —{' '}
-                      {issuerSectorLabel}
+                  <div className="border-b border-border w-full mb-4 pb-2">
+                    <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                      <PenTool className="w-5 h-5 text-primary" /> Assinatura do Responsável Interno
+                      — {issuerSectorLabel}
                       {!selectedProposta && (
                         <span className="text-[10px] text-amber-600 font-normal ml-1">
                           (Obrigatória para nova proposta)
@@ -2623,7 +2623,7 @@ export default function EmitirProposta() {
                     >
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-3">
-                          <span className="font-semibold text-[#337ab7] text-base">
+                          <span className="font-semibold text-primary text-base">
                             {versionName}
                           </span>
                           <span className="text-slate-500 text-sm">
@@ -2677,15 +2677,15 @@ export default function EmitirProposta() {
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-2 shrink-0">
-            <DialogTitle className="text-xl font-normal text-[#337ab7]">
+            <DialogTitle className="text-xl font-normal text-primary">
               Visualizar Proposta: {viewProposta?.numero_proposta}
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto p-6 pt-2">
             {viewProposta && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm text-slate-700">
-                <div className="col-span-1 md:col-span-2 mb-2 p-3 bg-[#337ab7]/5 border border-[#337ab7]/20 rounded-sm">
-                  <span className="text-xs font-bold text-[#337ab7] uppercase tracking-wider">
+                <div className="col-span-1 md:col-span-2 mb-2 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <span className="text-xs font-bold text-primary uppercase tracking-wider">
                     Responsável Interno: {viewProposta.expand?.user?.name || '-'}{' '}
                     <span className="font-normal text-slate-500">
                       (Setor: {viewProposta.expand?.user?.setor || 'Comercial'})
@@ -2765,9 +2765,9 @@ export default function EmitirProposta() {
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Valor Final
                   </span>
-                  <span className="font-medium text-[#337ab7] text-base">
+                  <span className="font-medium text-primary text-base">
                     {formatCurrency(viewProposta.valor_final, viewProposta.moeda)}
-                  </span>
+                  </span>{' '}
                 </div>
                 <div className="flex flex-col border-b border-slate-100 pb-2">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
@@ -2785,7 +2785,7 @@ export default function EmitirProposta() {
                 {viewProposta.acessorios_proposta &&
                   viewProposta.acessorios_proposta.length > 0 && (
                     <div className="col-span-1 md:col-span-2 mt-6">
-                      <h4 className="text-sm font-bold text-[#337ab7] mb-3 flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
                         <List className="w-4 h-4" />
                         Acessórios da Proposta
                       </h4>
@@ -2904,9 +2904,9 @@ export default function EmitirProposta() {
             <Button variant="outline" onClick={() => setAvancarPropostaItem(null)}>
               Cancelar
             </Button>
-            <Button onClick={handleAvancarProposta} className="bg-[#337ab7] hover:bg-[#286090]">
+            <Button onClick={handleAvancarProposta} className="bg-primary hover:bg-primary/90">
               Confirmar
-            </Button>
+            </Button>{' '}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2914,7 +2914,7 @@ export default function EmitirProposta() {
       <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
         <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-100">
           <DialogHeader className="p-4 pb-2 shrink-0 bg-white border-b border-slate-200 flex flex-row items-center justify-between">
-            <DialogTitle className="text-lg font-normal text-[#337ab7]">
+            <DialogTitle className="text-lg font-normal text-primary">
               Pré-visualização do PDF
             </DialogTitle>
           </DialogHeader>
@@ -3015,7 +3015,7 @@ export default function EmitirProposta() {
             <Button
               onClick={handleSave}
               disabled={!!selectedProposta && !isDirty}
-              className="bg-[#337ab7] hover:bg-[#286090]"
+              className="bg-primary hover:bg-primary/90"
             >
               Salvar e Fechar
             </Button>

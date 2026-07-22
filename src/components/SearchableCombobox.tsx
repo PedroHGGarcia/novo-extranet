@@ -154,7 +154,7 @@ export function SearchableCombobox({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            'w-full bg-white border border-slate-300 rounded-sm px-2 py-1.5 outline-none text-slate-700 text-xs focus:border-[#337ab7] min-h-[30px] flex items-center justify-between',
+            'w-full bg-background border border-input rounded-md px-3 py-2 outline-none text-foreground text-sm focus:border-primary focus:ring-1 focus:ring-ring min-h-[38px] flex items-center justify-between transition-colors',
             className,
           )}
         >
