@@ -43,8 +43,8 @@ export default function Projetos() {
   const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [clienteFilter, setClienteFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [clienteFilter, setClienteFilter] = useState('all')
   const [clientes, setClientes] = useState<any[]>([])
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null)
   const [proposalCounts, setProposalCounts] = useState<Record<string, number>>({})
@@ -69,8 +69,8 @@ export default function Projetos() {
         const s = debouncedSearch.replace(/"/g, '\\"')
         filters.push(`nome ~ "${s}"`)
       }
-      if (statusFilter) filters.push(`status = "${statusFilter}"`)
-      if (clienteFilter) filters.push(`cliente = "${clienteFilter}"`)
+      if (statusFilter && statusFilter !== 'all') filters.push(`status = "${statusFilter}"`)
+      if (clienteFilter && clienteFilter !== 'all') filters.push(`cliente = "${clienteFilter}"`)
       const filter = filters.join(' && ')
       const res = await getProjetosPaginated(1, 100, filter)
       setData(res.items)
@@ -160,7 +160,7 @@ export default function Projetos() {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="Em Andamento">Em Andamento</SelectItem>
               <SelectItem value="Concluído">Concluído</SelectItem>
               <SelectItem value="Cancelado">Cancelado</SelectItem>
@@ -172,12 +172,14 @@ export default function Projetos() {
               <SelectValue placeholder="Cliente" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
-              {clientes.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.fantasia}
-                </SelectItem>
-              ))}
+              <SelectItem value="all">Todos</SelectItem>
+              {clientes.map((c) =>
+                c.id ? (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.fantasia || 'Sem nome'}
+                  </SelectItem>
+                ) : null,
+              )}
             </SelectContent>
           </Select>
           <Button

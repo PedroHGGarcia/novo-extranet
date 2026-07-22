@@ -47,6 +47,7 @@ import { ProtectedRoute, BiddingPermissionRoute } from './components/ProtectedRo
 import { GlobalAutoFormatter } from './components/GlobalAutoFormatter'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './components/theme-provider'
+import { RouteError } from './components/RouteError'
 import './styles/editor.css'
 
 const RootLayout = () => (
@@ -60,7 +61,7 @@ const RootLayout = () => (
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route element={<RootLayout />}>
+    <Route element={<RootLayout />} errorElement={<RouteError />}>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -75,7 +76,7 @@ const router = createBrowserRouter(
           <Route path="/cadastros/gerentes" element={<Gerentes />} />
           <Route path="/cadastros/clientes" element={<Clientes />} />
           <Route path="/cadastros/representantes" element={<Representantes />} />
-          <Route path="/projetos" element={<Projetos />} />
+          <Route path="/projetos" element={<Projetos />} errorElement={<RouteError />} />
           <Route path="/cadastros/prepostos" element={<Navigate to="/dashboard" replace />} />
           <Route path="/eventos" element={<Eventos />} />
           <Route element={<BiddingPermissionRoute />}>
