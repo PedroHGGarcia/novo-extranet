@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Eye, EyeOff, Lock, Mail, Loader2, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Turnstile } from '@/components/Turnstile'
-import { verifyCaptchaToken } from '@/services/captcha'
+import { ReCaptcha } from '@/components/ReCaptcha'
+import { verifyReCaptchaToken } from '@/services/recaptcha'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from '@/hooks/use-toast'
 import { z } from 'zod'
@@ -14,7 +14,8 @@ const loginSchema = z.object({
   password: z.string().min(8, 'A senha deve ter no mínimo 8 caracteres'),
 })
 
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'
+const RECAPTCHA_SITE_KEY =
+  import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -24,6 +25,7 @@ export default function Login() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [captchaToken, setCaptchaToken] = useState('')
   const [captchaError, setCaptchaError] = useState(false)
+  const captchaContainerRef = useRef<HTMLDivElement>(null)
   const { signIn } = useAuth()
   const navigate = useNavigate()
 
@@ -56,8 +58,9 @@ export default function Login() {
   const handleCaptchaExpire = () => {
     setCaptchaToken('')
     toast({
-      title: 'CAPTCHA expirado',
-      description: 'Por favor, complete a verificação de segurança novamente.',
+      title: 'reCAPTCHA expirado',
+      description:
+        'A verificação de segurança expirou. Por favor, marque "Não sou um robô" novamente.',
       variant: 'destructive',
     })
   }
@@ -66,8 +69,9 @@ export default function Login() {
     setCaptchaToken('')
     setCaptchaError(true)
     toast({
-      title: 'Erro no CAPTCHA',
-      description: 'Não foi possível carregar o desafio. Recarregue a página e tente novamente.',
+      title: 'Erro no reCAPTCHA',
+      description:
+        'Não foi possível carregar a verificação de segurança. Recarregue a página e tente novamente.',
       variant: 'destructive',
     })
   }
@@ -89,7 +93,7 @@ export default function Login() {
     if (!captchaToken) {
       toast({
         title: 'Verificação de segurança obrigatória',
-        description: 'Por favor, complete o desafio CAPTCHA para continuar.',
+        description: 'Por favor, marque a caixa "Não sou um robô" para continuar.',
         variant: 'destructive',
       })
       return
@@ -97,12 +101,14 @@ export default function Login() {
 
     setLoading(true)
 
-    const captchaResult = await verifyCaptchaToken(captchaToken)
+    const captchaResult = await verifyReCaptchaToken(captchaToken)
     if (!captchaResult.success) {
       setLoading(false)
+      setCaptchaToken('')
       toast({
-        title: 'Falha na verificação de segurança',
-        description: captchaResult.error || 'CAPTCHA inválido. Tente novamente.',
+        title: 'Falha na verificação do CAPTCHA',
+        description:
+          captchaResult.error || 'Falha na verificação do CAPTCHA. Por favor, tente novamente.',
         variant: 'destructive',
       })
       return
@@ -123,6 +129,7 @@ export default function Login() {
         description: desc,
         variant: 'destructive',
       })
+      setCaptchaToken('')
     } else {
       navigate('/dashboard')
     }
@@ -197,9 +204,12 @@ export default function Login() {
               <ShieldCheck className="h-3.5 w-3.5 text-brand-green" />
               Verificação de segurança
             </label>
-            <div className="rounded-lg border border-gray-200 bg-gray-50/50 p-3 overflow-hidden">
-              <Turnstile
-                siteKey={TURNSTILE_SITE_KEY}
+            <div
+              ref={captchaContainerRef}
+              className="rounded-lg border border-gray-200 bg-gray-50/50 p-3 overflow-hidden"
+            >
+              <ReCaptcha
+                siteKey={RECAPTCHA_SITE_KEY}
                 onVerify={handleCaptchaVerify}
                 onExpire={handleCaptchaExpire}
                 onError={handleCaptchaError}
@@ -208,7 +218,7 @@ export default function Login() {
               />
               {captchaError && (
                 <p className="text-xs text-red-500 mt-2 text-center">
-                  Não foi possível carregar a verificação. Recarregue a página.
+                  Não foi possível carregar a verificação reCAPTCHA. Recarregue a página.
                 </p>
               )}
             </div>
