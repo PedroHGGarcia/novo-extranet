@@ -70,6 +70,13 @@ const menuItems: MenuItem[] = [
     sub: [{ title: 'Agenda', url: '/eventos', menuKey: 'eventos' }],
   },
   {
+    title: 'Projetos',
+    url: '/projetos',
+    icon: FolderKanban,
+    menuKey: 'projetos',
+    sub: [],
+  },
+  {
     title: 'Controle de Propostas',
     url: '/controle-propostas/dashboard-geral',
     icon: FileText,
@@ -110,13 +117,6 @@ const menuItems: MenuItem[] = [
         menuKey: 'tipos_propostas',
       },
     ],
-  },
-  {
-    title: 'Projetos',
-    url: '/projetos',
-    icon: FolderKanban,
-    menuKey: 'projetos',
-    sub: [],
   },
   {
     title: 'Controle de Produtos',
