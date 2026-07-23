@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { createProjeto, updateProjeto, type Projeto } from '@/services/projetos'
+import { extractFieldErrors, type FieldErrors } from '@/lib/pocketbase/errors'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +24,7 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
   const { user } = useAuth()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [clientes, setClientes] = useState<any[]>([])
   const [formData, setFormData] = useState({
     nome: '',
@@ -74,12 +76,21 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
   }, [projeto, user])
 
   const handleSave = async () => {
-    if (!formData.nome) {
-      toast({ title: 'Nome é obrigatório', variant: 'destructive' })
-      return
+    setFieldErrors({})
+    let hasError = false
+    const errors: FieldErrors = {}
+
+    if (!formData.nome.trim()) {
+      errors.nome = 'Nome é obrigatório'
+      hasError = true
     }
     if (!formData.cliente) {
-      toast({ title: 'Cliente é obrigatório', variant: 'destructive' })
+      errors.cliente = 'Cliente é obrigatório'
+      hasError = true
+    }
+
+    if (hasError) {
+      setFieldErrors(errors)
       return
     }
 
@@ -99,6 +110,7 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
       }
       onBack()
     } catch (e: any) {
+      setFieldErrors(extractFieldErrors(e))
       toast({ title: e.message || 'Erro ao salvar', variant: 'destructive' })
     } finally {
       setIsSubmitting(false)
@@ -122,22 +134,28 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
           <div className="space-y-2 md:col-span-2">
-            <Label>Nome do Projeto *</Label>
+            <Label className={fieldErrors.nome ? 'text-destructive' : ''}>Nome do Projeto *</Label>
             <Input
               value={formData.nome}
               onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+              className={fieldErrors.nome ? 'border-destructive' : ''}
             />
+            {fieldErrors.nome && <p className="text-xs text-destructive">{fieldErrors.nome}</p>}
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label>Descrição</Label>
+            <Label className={fieldErrors.descricao ? 'text-destructive' : ''}>Descrição</Label>
             <Textarea
               value={formData.descricao}
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
               rows={3}
+              className={fieldErrors.descricao ? 'border-destructive' : ''}
             />
+            {fieldErrors.descricao && (
+              <p className="text-xs text-destructive">{fieldErrors.descricao}</p>
+            )}
           </div>
           <div className="space-y-2">
-            <Label>Cliente *</Label>
+            <Label className={fieldErrors.cliente ? 'text-destructive' : ''}>Cliente *</Label>
             <SearchableCombobox
               items={clientes}
               value={formData.cliente}
@@ -146,16 +164,25 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
               getSearchText={(c) => `${c.fantasia || ''} ${c.razao_social || ''}`}
               placeholder="Buscar cliente..."
               onPaginatedSearch={searchClientesPaginated}
-              className={!formData.cliente ? 'border-amber-300 bg-amber-50/30' : ''}
+              className={
+                fieldErrors.cliente
+                  ? 'border-destructive ring-destructive'
+                  : !formData.cliente
+                    ? 'border-amber-300 bg-amber-50/30'
+                    : ''
+              }
             />
+            {fieldErrors.cliente && (
+              <p className="text-xs text-destructive">{fieldErrors.cliente}</p>
+            )}
           </div>
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label className={fieldErrors.status ? 'text-destructive' : ''}>Status</Label>
             <Select
               value={formData.status}
               onValueChange={(v) => setFormData({ ...formData, status: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger className={fieldErrors.status ? 'border-destructive' : ''}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -165,6 +192,7 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
                 <SelectItem value="Suspenso">Suspenso</SelectItem>
               </SelectContent>
             </Select>
+            {fieldErrors.status && <p className="text-xs text-destructive">{fieldErrors.status}</p>}
           </div>
         </CardContent>
       </Card>
