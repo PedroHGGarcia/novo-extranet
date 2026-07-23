@@ -89,12 +89,12 @@ export function AppHeader() {
       <HeaderSearch />
       <div className="flex-1 md:hidden flex justify-center select-none items-center">
         <Link to="/dashboard" className="flex items-center" draggable={false}>
-          <BenerLogo variant="compact" className="h-14 w-auto" />
+          <BenerLogo variant="compact" className="h-14 w-auto max-w-full" />
         </Link>
       </div>
-      <div className="hidden md:flex flex-1 items-center gap-4 px-4">
+      <div className="hidden md:flex flex-1 items-center">
         <Link to="/dashboard" className="flex items-center" draggable={false}>
-          <BenerLogo className="h-16 w-auto" />
+          <BenerLogo className="h-16 w-auto max-w-full" />
         </Link>
       </div>
       <div className="flex items-center gap-1 md:gap-2">

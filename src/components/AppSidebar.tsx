@@ -203,16 +203,16 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r-0 bg-brand-sidebar dark:bg-sidebar text-white">
-      <SidebarHeader className="flex h-36 items-center justify-center bg-brand-sidebar dark:bg-sidebar p-0 rounded-none mb-2">
+      <SidebarHeader className="flex items-center justify-start bg-brand-sidebar dark:bg-sidebar p-3 rounded-none mb-2">
         <Link
           to="/"
-          className="flex flex-col items-center justify-center p-3 select-none w-full"
+          className="flex items-center justify-start select-none w-full"
           draggable={false}
         >
           <img
             src={logoUrl}
             alt="Bener"
-            className="h-20 w-auto max-w-[80%] object-contain bener-logo-invert"
+            className="h-20 w-auto max-w-full object-contain bener-logo-invert"
           />
         </Link>
       </SidebarHeader>
