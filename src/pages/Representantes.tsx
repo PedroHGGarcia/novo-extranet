@@ -85,7 +85,16 @@ export default function Representantes() {
   useEffect(() => {
     loadData()
   }, [])
-  useRealtime('representantes', loadData)
+
+  useRealtime('representantes', (e) => {
+    if (e.action === 'create') {
+      setData((prev) => [e.record, ...prev])
+    } else if (e.action === 'update') {
+      setData((prev) => prev.map((item) => (item.id === e.record.id ? e.record : item)))
+    } else if (e.action === 'delete') {
+      setData((prev) => prev.filter((item) => item.id !== e.record.id))
+    }
+  })
 
   const filtered = data.filter(
     (d) =>
@@ -193,14 +202,19 @@ export default function Representantes() {
   }
 
   const handleToggleStatus = async (item: any, newStatus: string) => {
-    const prevData = [...data]
-    setData(prevData.map((d) => (d.id === item.id ? { ...d, status: newStatus } : d)))
+    // Optimistic update
+    setData((prev) => prev.map((d) => (d.id === item.id ? { ...d, status: newStatus } : d)))
     try {
       await updateRepresentante(item.id, { status: newStatus })
       toast({ title: `Representante ${newStatus === 'Ativo' ? 'ativado' : 'desativado'}.` })
-    } catch {
-      setData(prevData)
-      toast({ title: 'Erro ao atualizar status', variant: 'destructive' })
+    } catch (err: any) {
+      // Revert optimistic update on error
+      setData((prev) => prev.map((d) => (d.id === item.id ? { ...d, status: item.status } : d)))
+      toast({
+        title: 'Aviso',
+        description: 'Não foi possível atualizar o status no momento.',
+        variant: 'default',
+      })
     }
   }
 
