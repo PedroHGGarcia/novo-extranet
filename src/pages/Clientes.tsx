@@ -46,7 +46,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal'
-import { ClearAllClientsDialog } from '@/components/ClearAllClientsDialog'
+
 import {
   getClientesPaginated,
   createCliente,
@@ -56,7 +56,6 @@ import {
   getDocumentosCliente,
   createDocumentoCliente,
   deleteDocumentoCliente,
-  getTotalClienteCount,
   getAllFilteredClienteIds,
 } from '@/services/cadastros'
 import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
@@ -103,9 +102,6 @@ export default function Clientes() {
   const [auditClientId, setAuditClientId] = useState('')
   const [auditClientName, setAuditClientName] = useState('')
   const [isAuditOpen, setIsAuditOpen] = useState(false)
-  const [isClearAllOpen, setIsClearAllOpen] = useState(false)
-  const [isClearingAll, setIsClearingAll] = useState(false)
-  const [totalClientCount, setTotalClientCount] = useState(0)
   const [allFilteredSelected, setAllFilteredSelected] = useState(false)
 
   const defaultForm = {
@@ -322,23 +318,6 @@ export default function Clientes() {
       toast({ title: 'Registros excluídos com sucesso' })
     } catch (e) {
       toast({ title: 'Erro ao excluir', variant: 'destructive' })
-    }
-  }
-
-  const handleClearAll = async () => {
-    try {
-      setIsClearingAll(true)
-      await pb.send('/backend/v1/clientes/clear', { method: 'DELETE' })
-      toast({ title: 'Todos os clientes foram excluídos com sucesso' })
-      setIsClearAllOpen(false)
-      setSelected([])
-      setAllFilteredSelected(false)
-      await loadData()
-    } catch (err: any) {
-      const message = err?.response?.error || err?.message || 'Erro ao limpar clientes'
-      toast({ title: message, variant: 'destructive' })
-    } finally {
-      setIsClearingAll(false)
     }
   }
 
@@ -570,16 +549,6 @@ export default function Clientes() {
                     </>
                   )}
                 </div>
-
-                {isAdmin && totalItems > 0 && (
-                  <Button
-                    variant="outline"
-                    className="text-destructive border-destructive hover:bg-destructive/10"
-                    onClick={() => setIsClearAllOpen(true)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" /> Limpar Tudo
-                  </Button>
-                )}
               </>
             ) : (
               <>
@@ -1336,13 +1305,6 @@ export default function Clientes() {
         clientName={auditClientName}
         open={isAuditOpen}
         onOpenChange={setIsAuditOpen}
-      />
-      <ClearAllClientsDialog
-        open={isClearAllOpen}
-        onOpenChange={setIsClearAllOpen}
-        onConfirm={handleClearAll}
-        count={totalItems}
-        isSubmitting={isClearingAll}
       />
     </div>
   )
