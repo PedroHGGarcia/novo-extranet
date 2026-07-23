@@ -70,6 +70,7 @@ export default function RepresentanteEdit() {
   const [categorias, setCategorias] = useState<any[]>([])
   const [regioes, setRegioes] = useState<any[]>([])
   const [coordenadasText, setCoordenadasText] = useState('')
+  const [originalStatus, setOriginalStatus] = useState('')
 
   const set = (k: string, v: any) => setFormData((p) => ({ ...p, [k]: v }))
 
@@ -96,6 +97,7 @@ export default function RepresentanteEdit() {
             ? [rep.regioes_rel]
             : []
         setFormData(data)
+        setOriginalStatus(data.status || 'Ativo')
         setCoordenadasText(rep.coordenadas ? JSON.stringify(rep.coordenadas, null, 2) : '')
         setCategorias(cats)
         setRegioes(regs)
@@ -119,6 +121,10 @@ export default function RepresentanteEdit() {
       setErrors({ documento: 'Documento é obrigatório' })
       return
     }
+    if (!formData.status?.trim()) {
+      setErrors({ status: 'Status é obrigatório' })
+      return
+    }
     let coords = formData.coordenadas
     if (coordenadasText.trim()) {
       try {
@@ -133,10 +139,11 @@ export default function RepresentanteEdit() {
     setIsSubmitting(true)
     try {
       await updateRepresentante(id!, { ...formData, coordenadas: coords })
-      toast({ title: 'Perfil atualizado com sucesso' })
+      toast({ title: 'Representante atualizado com sucesso' })
       navigate('/cadastros/representantes')
     } catch (err) {
       setErrors(extractFieldErrors(err))
+      set('status', originalStatus)
       toast({ title: 'Erro ao atualizar representante', variant: 'destructive' })
     } finally {
       setIsSubmitting(false)
@@ -263,7 +270,7 @@ export default function RepresentanteEdit() {
             <Field label="Região (texto)">
               <Input {...txt('regiao_texto')} />
             </Field>
-            <Field label="Status">
+            <Field label="Status" error={errors.status}>
               <Select value={formData.status} onValueChange={(v) => set('status', v)}>
                 <SelectTrigger>
                   <SelectValue />
