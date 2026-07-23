@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   UserCircle,
   Loader2,
@@ -17,6 +17,7 @@ import {
   Phone,
   History,
   Filter,
+  Info,
 } from 'lucide-react'
 import {
   Table,
@@ -55,6 +56,8 @@ import {
   getDocumentosCliente,
   createDocumentoCliente,
   deleteDocumentoCliente,
+  getTotalClienteCount,
+  getAllFilteredClienteIds,
 } from '@/services/cadastros'
 import { DuplicateConflictDialog } from '@/components/DuplicateConflictDialog'
 import { ClientAuditSheet } from '@/components/ClientAuditSheet'
@@ -101,6 +104,8 @@ export default function Clientes() {
   const [isAuditOpen, setIsAuditOpen] = useState(false)
   const [isClearAllOpen, setIsClearAllOpen] = useState(false)
   const [isClearingAll, setIsClearingAll] = useState(false)
+  const [totalClientCount, setTotalClientCount] = useState(0)
+  const [allFilteredSelected, setAllFilteredSelected] = useState(false)
 
   const defaultForm = {
     id: '',
@@ -141,25 +146,35 @@ export default function Clientes() {
     return () => clearTimeout(timer)
   }, [search])
 
+  const buildFilter = () => {
+    const conditions: string[] = []
+    if (debouncedSearch) {
+      const s = debouncedSearch.replace(/"/g, '\\"')
+      conditions.push(`(fantasia ~ "${s}" || razao_social ~ "${s}" || documento ~ "${s}")`)
+    }
+    if (documentoFilter === 'com-cnpj') {
+      conditions.push(`documento != ''`)
+    } else if (documentoFilter === 'sem-cnpj') {
+      conditions.push(`documento = ''`)
+    }
+    return conditions.join(' && ')
+  }
+
   const loadData = async () => {
     try {
       setIsLoading(true)
-      let filter = ''
-      const conditions: string[] = []
-      if (debouncedSearch) {
-        const s = debouncedSearch.replace(/"/g, '\\"')
-        conditions.push(`(fantasia ~ "${s}" || razao_social ~ "${s}" || documento ~ "${s}")`)
-      }
-      if (documentoFilter === 'com-cnpj') {
-        conditions.push(`documento != ''`)
-      } else if (documentoFilter === 'sem-cnpj') {
-        conditions.push(`documento = ''`)
-      }
-      filter = conditions.join(' && ')
+      const filter = buildFilter()
       const res = await getClientesPaginated(page, perPage, filter)
       setData(res.items)
       setTotalItems(res.totalItems)
       setTotalPages(res.totalPages)
+      if (!filter) {
+        setTotalClientCount(res.totalItems)
+      } else {
+        getTotalClienteCount()
+          .then(setTotalClientCount)
+          .catch(() => {})
+      }
     } catch (e) {
       setData([])
       setTotalItems(0)
@@ -172,6 +187,11 @@ export default function Clientes() {
   useEffect(() => {
     loadData()
   }, [page, perPage, debouncedSearch, documentoFilter])
+
+  useEffect(() => {
+    setSelected([])
+    setAllFilteredSelected(false)
+  }, [documentoFilter, debouncedSearch])
 
   useEffect(() => {
     if (view === 'list') {
@@ -258,15 +278,42 @@ export default function Clientes() {
     })
   }
 
-  const toggleAll = () =>
-    setSelected(selected.length === data.length && data.length > 0 ? [] : data.map((d) => d.id))
-  const toggleOne = (id: string) =>
+  const selectedSet = useMemo(() => new Set(selected), [selected])
+
+  const visibleIds = data.map((d) => d.id)
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedSet.has(id))
+  const someVisibleSelected = visibleIds.some((id) => selectedSet.has(id)) && !allVisibleSelected
+
+  const toggleAll = () => {
+    setAllFilteredSelected(false)
+    if (allVisibleSelected) {
+      setSelected((prev) => prev.filter((id) => !visibleIds.includes(id)))
+    } else {
+      setSelected((prev) => [...new Set([...prev, ...visibleIds])])
+    }
+  }
+
+  const toggleOne = (id: string) => {
+    setAllFilteredSelected(false)
     setSelected((p) => (p.includes(id) ? p.filter((i) => i !== id) : [...p, id]))
+  }
+
+  const handleSelectAllFiltered = async () => {
+    try {
+      const filter = buildFilter()
+      const ids = await getAllFilteredClienteIds(filter)
+      setSelected(ids)
+      setAllFilteredSelected(true)
+    } catch (e) {
+      toast({ title: 'Erro ao selecionar todos os clientes', variant: 'destructive' })
+    }
+  }
 
   const handleDelete = async () => {
     try {
       await Promise.all(selected.map((id) => deleteCliente(id)))
       setSelected([])
+      setAllFilteredSelected(false)
       toast({ title: 'Registros excluídos com sucesso' })
     } catch (e) {
       toast({ title: 'Erro ao excluir', variant: 'destructive' })
@@ -280,6 +327,7 @@ export default function Clientes() {
       toast({ title: 'Todos os clientes foram excluídos com sucesso' })
       setIsClearAllOpen(false)
       setSelected([])
+      setAllFilteredSelected(false)
       await loadData()
     } catch (err: any) {
       const message = err?.response?.error || err?.message || 'Erro ao limpar clientes'
@@ -504,9 +552,15 @@ export default function Clientes() {
                   <Plus className="h-4 w-4 mr-2" /> Novo Cliente
                 </Button>
                 {selected.length > 0 && (
-                  <Button variant="destructive" onClick={() => setIsDeleteOpen(true)}>
-                    <Trash2 className="h-4 w-4 mr-2" /> Excluir ({selected.length})
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                      {selected.length} selecionado{selected.length !== 1 ? 's' : ''}
+                      {allFilteredSelected && ' (todos os clientes do filtro)'}
+                    </span>
+                    <Button variant="destructive" onClick={() => setIsDeleteOpen(true)}>
+                      <Trash2 className="h-4 w-4 mr-2" /> Excluir Selecionados
+                    </Button>
+                  </div>
                 )}
                 {isAdmin && totalItems > 0 && (
                   <Button
@@ -599,116 +653,150 @@ export default function Clientes() {
         </div>
 
         {view === 'list' ? (
-          <Card className="shadow-sm">
-            <div className="overflow-x-auto min-h-[500px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={selected.length === data.length && data.length > 0}
-                        onCheckedChange={toggleAll}
-                      />
-                    </TableHead>
-                    <TableHead>Nome Fantasia</TableHead>
-                    <TableHead>Razão Social</TableHead>
-                    <TableHead>CPF/CNPJ</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    Array.from({ length: Math.min(perPage, 10) }).map((_, i) => (
-                      <TableRow key={`skeleton-${i}`}>
-                        <TableCell>
-                          <Skeleton className="h-4 w-4" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-4 w-[250px]" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-4 w-[200px]" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-4 w-[150px]" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-6 w-[60px] rounded-full" />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-end">
-                            <Skeleton className="h-8 w-8 rounded-md" />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : data.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                        {totalItems === 0 && !debouncedSearch && documentoFilter === 'todos'
-                          ? 'Nenhum cliente cadastrado'
-                          : 'Nenhum cliente encontrado.'}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    data.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selected.includes(item.id)}
-                            onCheckedChange={() => toggleOne(item.id)}
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium text-foreground">
-                          {item.fantasia}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {item.razao_social || '-'}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {item.documento || '-'}
-                        </TableCell>
-                        <TableCell>
-                          {item.status === 'Ativo' ? (
-                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
-                              Ativo
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
-                              {item.status}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-end gap-2">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEdit(item)}>
-                                  <Pencil className="h-4 w-4 mr-2" /> Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleDuplicate(item)}>
-                                  <Copy className="h-4 w-4 mr-2" /> Duplicar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleOpenAudit(item)}>
-                                  <History className="h-4 w-4 mr-2" /> Histórico
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
+          <>
+            {totalItems > 0 &&
+              totalClientCount > 0 &&
+              totalItems < totalClientCount &&
+              !allFilteredSelected && (
+                <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm animate-fade-in">
+                  <Info className="h-4 w-4 text-blue-600 shrink-0" />
+                  {selected.length > 0 && (
+                    <span className="text-blue-700 whitespace-nowrap">
+                      {selected.length} cliente(s) selecionado(s).
+                    </span>
                   )}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
+                  <button
+                    type="button"
+                    onClick={handleSelectAllFiltered}
+                    className="font-semibold text-blue-700 underline hover:text-blue-900"
+                    aria-label={`Selecionar todos os ${totalItems} clientes que correspondem a este filtro`}
+                  >
+                    Selecionar todos os {totalItems} clientes que correspondem a este filtro
+                  </button>
+                </div>
+              )}
+            <Card className="shadow-sm">
+              <div className="overflow-x-auto min-h-[500px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={
+                            allVisibleSelected
+                              ? true
+                              : someVisibleSelected
+                                ? 'indeterminate'
+                                : false
+                          }
+                          onCheckedChange={toggleAll}
+                          aria-label="Selecionar todos os clientes da página"
+                        />
+                      </TableHead>
+                      <TableHead>Nome Fantasia</TableHead>
+                      <TableHead>Razão Social</TableHead>
+                      <TableHead>CPF/CNPJ</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-10"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      Array.from({ length: Math.min(perPage, 10) }).map((_, i) => (
+                        <TableRow key={`skeleton-${i}`}>
+                          <TableCell>
+                            <Skeleton className="h-4 w-4" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-4 w-[250px]" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-4 w-[200px]" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-4 w-[150px]" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-6 w-[60px] rounded-full" />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex justify-end">
+                              <Skeleton className="h-8 w-8 rounded-md" />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : data.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                          {totalItems === 0 && !debouncedSearch && documentoFilter === 'todos'
+                            ? 'Nenhum cliente cadastrado'
+                            : 'Nenhum cliente encontrado.'}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      data.map((item) => (
+                        <TableRow
+                          key={item.id}
+                          className={selectedSet.has(item.id) ? 'bg-blue-50' : ''}
+                        >
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedSet.has(item.id)}
+                              onCheckedChange={() => toggleOne(item.id)}
+                              aria-label={`Selecionar ${item.fantasia}`}
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium text-foreground">
+                            {item.fantasia}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {item.razao_social || '-'}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {item.documento || '-'}
+                          </TableCell>
+                          <TableCell>
+                            {item.status === 'Ativo' ? (
+                              <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                                Ativo
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                                {item.status}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-end gap-2">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEdit(item)}>
+                                    <Pencil className="h-4 w-4 mr-2" /> Editar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleDuplicate(item)}>
+                                    <Copy className="h-4 w-4 mr-2" /> Duplicar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleOpenAudit(item)}>
+                                    <History className="h-4 w-4 mr-2" /> Histórico
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          </>
         ) : (
           <div className="space-y-6 pb-12">
             <Card className="shadow-sm bg-card">

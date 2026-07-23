@@ -42,6 +42,28 @@ export const updateCliente = (id: string, data: any) =>
 export const deleteCliente = (id: string) => pb.collection('clientes').delete(id)
 export const clearAllClientes = () => pb.send('/backend/v1/clientes/clear', { method: 'DELETE' })
 
+export const getTotalClienteCount = async (): Promise<number> => {
+  const res = await pb.collection('clientes').getList(1, 1, { fields: 'id' })
+  return res.totalItems
+}
+
+export const getAllFilteredClienteIds = async (filter: string = ''): Promise<string[]> => {
+  const allIds: string[] = []
+  let currentPage = 1
+  const perPage = 500
+  while (true) {
+    const res = await pb.collection('clientes').getList(currentPage, perPage, {
+      filter,
+      fields: 'id',
+      sort: '-created',
+    })
+    allIds.push(...res.items.map((r: any) => r.id))
+    if (res.page >= res.totalPages) break
+    currentPage++
+  }
+  return allIds
+}
+
 export const searchClientesPaginated = async (
   query: string,
   page: number = 1,
