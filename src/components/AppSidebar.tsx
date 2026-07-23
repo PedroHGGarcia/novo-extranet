@@ -203,7 +203,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r-0 bg-brand-sidebar dark:bg-sidebar text-white">
-      <SidebarHeader className="flex items-center justify-center bg-brand-sidebar-header dark:bg-sidebar-accent p-3 rounded-none mb-2">
+      <SidebarHeader className="flex items-center justify-center p-3 rounded-none">
         <Link
           to="/"
           className="flex items-center justify-center select-none w-full"
@@ -216,7 +216,7 @@ export function AppSidebar() {
           />
         </Link>
       </SidebarHeader>
-      <SidebarContent className="bg-brand-sidebar py-2 text-left">
+      <SidebarContent className="bg-brand-sidebar pb-2 pt-0 text-left">
         <SidebarMenu>
           {filtered.map((item) => {
             const isActive =
