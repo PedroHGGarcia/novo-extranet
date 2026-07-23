@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import logoUrl from '@/assets/systemlogoin-large-52274.png'
+import logoUrl from '@/assets/editedimage1784830847543-97196.png'
 import {
   Monitor,
   Map,
