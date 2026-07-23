@@ -84,17 +84,17 @@ export function AppHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 bg-brand-green dark:bg-sidebar px-4 text-white shadow-sm">
+    <header className="sticky top-0 z-50 flex h-20 shrink-0 items-center gap-2 bg-brand-green dark:bg-sidebar px-4 text-white shadow-sm">
       <SidebarTrigger className="text-white hover:bg-white/10 hover:text-white focus-visible:ring-white/20" />
       <HeaderSearch />
       <div className="flex-1 md:hidden flex justify-center select-none items-center">
         <Link to="/dashboard" className="flex items-center" draggable={false}>
-          <BenerLogo variant="compact" className="h-10 w-auto" />
+          <BenerLogo variant="compact" className="h-14 w-auto" />
         </Link>
       </div>
       <div className="hidden md:flex flex-1 items-center gap-4 px-4">
         <Link to="/dashboard" className="flex items-center" draggable={false}>
-          <BenerLogo className="h-12 w-auto" />
+          <BenerLogo className="h-16 w-auto" />
         </Link>
       </div>
       <div className="flex items-center gap-1 md:gap-2">

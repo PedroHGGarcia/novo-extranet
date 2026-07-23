@@ -11,7 +11,7 @@ interface PageLayoutProps {
 
 export function PageLayout({ title, icon: Icon, children }: PageLayoutProps) {
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 dark:bg-background min-h-[calc(100vh-3.5rem)]">
+    <div className="flex-1 flex flex-col bg-slate-50 dark:bg-background min-h-[calc(100vh-5rem)]">
       <div className="bg-white dark:bg-card mb-4 shadow-sm border-b border-border">
         <div className="flex items-center gap-2 p-4 pb-3 border-b border-border">
           <Icon className="w-6 h-6 text-primary" strokeWidth={1.75} />
