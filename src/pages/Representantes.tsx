@@ -42,7 +42,7 @@ import {
 } from '@/services/cadastros'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useToast } from '@/hooks/use-toast'
-import { extractFieldErrors, getErrorMessage } from '@/lib/pocketbase/errors'
+import { extractFieldErrors } from '@/lib/pocketbase/errors'
 
 export default function Representantes() {
   const [data, setData] = useState<any[]>([])
@@ -209,13 +209,11 @@ export default function Representantes() {
     setData((prev) => prev.map((d) => (d.id === item.id ? { ...d, status: newStatus } : d)))
     try {
       await updateRepresentante(item.id, { status: newStatus })
-      toast({ title: 'Status atualizado com sucesso' })
-    } catch (err: any) {
-      // Revert optimistic update on error
+      toast({ title: 'Status do representante atualizado com sucesso.' })
+    } catch {
       setData((prev) => prev.map((d) => (d.id === item.id ? { ...d, status: item.status } : d)))
       toast({
-        title: 'Erro ao atualizar status',
-        description: getErrorMessage(err),
+        title: 'Não foi possível alterar o status do representante. Tente novamente.',
         variant: 'destructive',
       })
     } finally {
