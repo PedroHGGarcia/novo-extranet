@@ -86,6 +86,8 @@ export const searchClientesPaginated = async (
 // Representantes
 export const getRepresentantes = () =>
   pb.collection('representantes').getFullList({ sort: '-created' })
+export const getRepresentante = (id: string) =>
+  pb.collection('representantes').getOne(id, { expand: 'categorias_rel,regioes_rel' })
 export const createRepresentante = (data: any) => pb.collection('representantes').create(data)
 export const updateRepresentante = (id: string, data: any) =>
   pb.collection('representantes').update(id, data)

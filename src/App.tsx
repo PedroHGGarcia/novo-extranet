@@ -37,6 +37,7 @@ import AuditoriaPage from './pages/Auditoria'
 import Configuracoes from './pages/Configuracoes'
 import NotFound from './pages/NotFound'
 import Representantes from './pages/Representantes'
+import RepresentanteEdit from './pages/RepresentanteEdit'
 import Projetos from './pages/Projetos'
 import ProjectDetailPage from './pages/ProjectDetailPage'
 import Login from './pages/Login'
@@ -77,6 +78,7 @@ const router = createBrowserRouter(
           <Route path="/cadastros/gerentes" element={<Gerentes />} />
           <Route path="/cadastros/clientes" element={<Clientes />} />
           <Route path="/cadastros/representantes" element={<Representantes />} />
+          <Route path="/cadastros/representantes/editar/:id" element={<RepresentanteEdit />} />
           <Route path="/projetos" element={<Projetos />} errorElement={<RouteError />} />
           <Route
             path="/projetos/:id"

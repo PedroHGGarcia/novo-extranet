@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Loader2, Search, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Loader2, Search, Plus, ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -332,13 +333,14 @@ export default function Representantes() {
                   <TableHead>Cidade</TableHead>
                   <TableHead>UF</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   Array.from({ length: 10 }).map((_, i) => (
                     <TableRow key={`skeleton-${i}`}>
-                      {Array.from({ length: 8 }).map((_, j) => (
+                      {Array.from({ length: 9 }).map((_, j) => (
                         <TableCell key={j}>
                           <Skeleton className="h-4 w-full" />
                         </TableCell>
@@ -347,7 +349,7 @@ export default function Representantes() {
                   ))
                 ) : paginated.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
                       Nenhum representante encontrado.
                     </TableCell>
                   </TableRow>
@@ -394,6 +396,13 @@ export default function Representantes() {
                             </span>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link to={`/cadastros/representantes/editar/${item.id}`}>
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
