@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import logoUrl from '@/assets/editedimage1784830847543-97196.png'
+import logoUrl from '@/assets/editedimage1784831163387-cbb7a.png'
 
 interface BenerLogoProps {
   className?: string
