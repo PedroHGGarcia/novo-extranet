@@ -559,19 +559,16 @@ export default function Clientes() {
 
                 <div className="flex items-center gap-3">
                   {selected.length > 0 && (
-                    <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-                      {selected.length} selecionado{selected.length !== 1 ? 's' : ''}
-                      {allFilteredSelected && ' (todos os clientes do filtro)'}
-                    </span>
+                    <>
+                      <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                        {selected.length} selecionado{selected.length !== 1 ? 's' : ''}
+                        {allFilteredSelected && ' (todos os clientes do filtro)'}
+                      </span>
+                      <Button variant="destructive" onClick={() => setIsDeleteOpen(true)}>
+                        <Trash2 className="h-4 w-4 mr-2" /> Excluir Selecionados
+                      </Button>
+                    </>
                   )}
-                  <Button
-                    variant="destructive"
-                    onClick={() => setIsDeleteOpen(true)}
-                    disabled={selected.length === 0}
-                    title={selected.length === 0 ? 'Selecione ao menos um cliente' : ''}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" /> Excluir Selecionados
-                  </Button>
                 </div>
 
                 {isAdmin && totalItems > 0 && (
