@@ -165,13 +165,6 @@ export default function Clientes() {
       setData(res.items)
       setTotalItems(res.totalItems)
       setTotalPages(res.totalPages)
-      if (!filter) {
-        setTotalClientCount(res.totalItems)
-      } else {
-        getTotalClienteCount()
-          .then(setTotalClientCount)
-          .catch(() => {})
-      }
     } catch (e) {
       setData([])
       setTotalItems(0)
