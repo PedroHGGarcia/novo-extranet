@@ -16,6 +16,7 @@ import {
   MapPin,
   Phone,
   History,
+  Filter,
 } from 'lucide-react'
 import {
   Table,
@@ -79,6 +80,7 @@ export default function Clientes() {
   const [data, setData] = useState<any[]>([])
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [documentoFilter, setDocumentoFilter] = useState<'todos' | 'com-cnpj' | 'sem-cnpj'>('todos')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(50)
   const [totalItems, setTotalItems] = useState(0)
@@ -139,10 +141,17 @@ export default function Clientes() {
     try {
       setIsLoading(true)
       let filter = ''
+      const conditions: string[] = []
       if (debouncedSearch) {
         const s = debouncedSearch.replace(/"/g, '\\"')
-        filter = `fantasia ~ "${s}" || razao_social ~ "${s}" || documento ~ "${s}"`
+        conditions.push(`(fantasia ~ "${s}" || razao_social ~ "${s}" || documento ~ "${s}")`)
       }
+      if (documentoFilter === 'com-cnpj') {
+        conditions.push(`documento != ''`)
+      } else if (documentoFilter === 'sem-cnpj') {
+        conditions.push(`documento = ''`)
+      }
+      filter = conditions.join(' && ')
       const res = await getClientesPaginated(page, perPage, filter)
       setData(res.items)
       setTotalItems(res.totalItems)
@@ -158,7 +167,7 @@ export default function Clientes() {
 
   useEffect(() => {
     loadData()
-  }, [page, perPage, debouncedSearch])
+  }, [page, perPage, debouncedSearch, documentoFilter])
 
   useEffect(() => {
     if (view === 'list') {
@@ -445,6 +454,27 @@ export default function Clientes() {
                     className="pl-8 w-[250px] md:w-[350px] bg-background"
                   />
                 </div>
+                <Select
+                  value={documentoFilter}
+                  onValueChange={(val) => {
+                    setDocumentoFilter(val as 'todos' | 'com-cnpj' | 'sem-cnpj')
+                    setPage(1)
+                  }}
+                >
+                  <SelectTrigger
+                    className="w-[140px] h-9 bg-background"
+                    aria-label="Filtrar por CNPJ preenchido"
+                    title="Filtrar por CNPJ preenchido"
+                  >
+                    <Filter className="h-4 w-4 mr-1.5 text-muted-foreground" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="com-cnpj">Com CNPJ</SelectItem>
+                    <SelectItem value="sem-cnpj">Sem CNPJ</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button
                   onClick={() => {
                     resetForm()
