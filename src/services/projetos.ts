@@ -38,3 +38,43 @@ export const getProjetosByCliente = (clienteId: string) =>
     filter: `cliente = "${clienteId}" && status = "Em Andamento"`,
     sort: 'nome',
   })
+
+export interface ProposalCount {
+  total: number
+  bidding: number
+}
+
+export async function getProposalCountsForProjects(
+  projetoIds: string[],
+): Promise<Record<string, ProposalCount>> {
+  if (projetoIds.length === 0) return {}
+  const result: Record<string, ProposalCount> = {}
+  for (const id of projetoIds) {
+    result[id] = { total: 0, bidding: 0 }
+  }
+
+  const pageSize = 500
+  let page = 1
+  let hasMore = true
+
+  const idFilter = projetoIds.map((id) => `projeto = "${id}"`).join(' || ')
+
+  while (hasMore) {
+    const res = await pb.collection('propostas').getList(page, pageSize, {
+      filter: `(${idFilter}) && status != 'Excluída'`,
+      fields: 'id,projeto,modelo_licitacao',
+    })
+    for (const item of res.items as any[]) {
+      const pid = typeof item.projeto === 'string' ? item.projeto : item.projeto?.id
+      if (pid && result[pid]) {
+        result[pid].total++
+        if (item.modelo_licitacao) result[pid].bidding++
+      }
+    }
+    hasMore = res.page * res.perPage < res.totalItems
+    page++
+    if (page > 50) break
+  }
+
+  return result
+}

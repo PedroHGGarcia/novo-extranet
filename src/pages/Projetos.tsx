@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useAuth } from '@/hooks/use-auth'
-import { getProjetosPaginated, deleteProjeto, type Projeto } from '@/services/projetos'
+import {
+  getProjetosPaginated,
+  deleteProjeto,
+  getProposalCountsForProjects,
+  type Projeto,
+} from '@/services/projetos'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -25,6 +30,7 @@ import { Plus, Search, Pencil, Trash2, ShieldCheck } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { ProjectForm } from '@/components/ProjectForm'
 import { ProjectDetail } from '@/components/ProjectDetail'
+import { PaginationBar } from '@/components/PaginationBar'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import pb from '@/lib/pocketbase/client'
@@ -35,6 +41,8 @@ const statusColors: Record<string, string> = {
   Cancelado: 'bg-rose-100 text-rose-700',
   Suspenso: 'bg-amber-100 text-amber-700',
 }
+
+const PER_PAGE_DEFAULT = 50
 
 export default function Projetos() {
   const { user } = useAuth()
@@ -48,11 +56,20 @@ export default function Projetos() {
   const [clienteFilter, setClienteFilter] = useState('all')
   const [clientes, setClientes] = useState<any[]>([])
   const [selectedProjeto, setSelectedProjeto] = useState<Projeto | null>(null)
-  const [proposalCounts, setProposalCounts] = useState<Record<string, number>>({})
-  const [biddingCounts, setBiddingCounts] = useState<Record<string, number>>({})
+  const [proposalCounts, setProposalCounts] = useState<
+    Record<string, { total: number; bidding: number }>
+  >({})
+  const [countsLoading, setCountsLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(PER_PAGE_DEFAULT)
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 400)
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+      setPage(1)
+    }, 400)
     return () => clearTimeout(timer)
   }, [search])
 
@@ -63,45 +80,57 @@ export default function Projetos() {
       .catch(() => {})
   }, [])
 
-  const loadData = async () => {
+  const buildFilter = useCallback(() => {
+    const filters: string[] = []
+    if (debouncedSearch) {
+      const s = debouncedSearch.replace(/"/g, '\\"')
+      filters.push(`nome ~ "${s}"`)
+    }
+    if (statusFilter && statusFilter !== 'all') filters.push(`status = "${statusFilter}"`)
+    if (clienteFilter && clienteFilter !== 'all') filters.push(`cliente = "${clienteFilter}"`)
+    return filters.join(' && ')
+  }, [debouncedSearch, statusFilter, clienteFilter])
+
+  const loadData = useCallback(async () => {
     setIsLoading(true)
     try {
-      const filters: string[] = []
-      if (debouncedSearch) {
-        const s = debouncedSearch.replace(/"/g, '\\"')
-        filters.push(`nome ~ "${s}"`)
-      }
-      if (statusFilter && statusFilter !== 'all') filters.push(`status = "${statusFilter}"`)
-      if (clienteFilter && clienteFilter !== 'all') filters.push(`cliente = "${clienteFilter}"`)
-      const filter = filters.join(' && ')
-      const res = await getProjetosPaginated(1, 100, filter)
+      const filter = buildFilter()
+      const res = await getProjetosPaginated(page, perPage, filter)
       setData(res.items)
-      const counts: Record<string, number> = {}
-      const bids: Record<string, number> = {}
-      for (const proj of res.items) {
-        try {
-          const props = await pb.collection('propostas').getList(1, 200, {
-            filter: `projeto = "${proj.id}" && status != 'Excluída'`,
-          })
-          counts[proj.id] = props.totalItems
-          bids[proj.id] = props.items.filter((p: any) => p.modelo_licitacao).length
-        } catch {
-          counts[proj.id] = 0
-          bids[proj.id] = 0
-        }
-      }
-      setProposalCounts(counts)
-      setBiddingCounts(bids)
+      setTotalItems(res.totalItems)
+      setTotalPages(res.totalPages)
     } catch {
       setData([])
+      setTotalItems(0)
+      setTotalPages(0)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [page, perPage, buildFilter])
+
+  const loadCounts = useCallback(async () => {
+    if (data.length === 0) {
+      setProposalCounts({})
+      return
+    }
+    setCountsLoading(true)
+    try {
+      const counts = await getProposalCountsForProjects(data.map((p) => p.id))
+      setProposalCounts(counts)
+    } catch {
+      setProposalCounts({})
+    } finally {
+      setCountsLoading(false)
+    }
+  }, [data])
 
   useEffect(() => {
     loadData()
-  }, [debouncedSearch, statusFilter, clienteFilter])
+  }, [loadData])
+
+  useEffect(() => {
+    loadCounts()
+  }, [loadCounts])
 
   useRealtime('projetos', loadData)
 
@@ -161,7 +190,13 @@ export default function Projetos() {
               className="pl-8 w-[250px] md:w-[350px] bg-background"
             />
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v)
+              setPage(1)
+            }}
+          >
             <SelectTrigger className="w-[160px] bg-background">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -173,7 +208,13 @@ export default function Projetos() {
               <SelectItem value="Suspenso">Suspenso</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={clienteFilter} onValueChange={setClienteFilter}>
+          <Select
+            value={clienteFilter}
+            onValueChange={(v) => {
+              setClienteFilter(v)
+              setPage(1)
+            }}
+          >
             <SelectTrigger className="w-[200px] bg-background">
               <SelectValue placeholder="Cliente" />
             </SelectTrigger>
@@ -198,8 +239,8 @@ export default function Projetos() {
           </Button>
         </div>
       </div>
-      <Card className="shadow-sm">
-        <div className="overflow-x-auto min-h-[400px]">
+      <Card className="shadow-sm flex flex-col">
+        <div className="overflow-x-auto min-h-[400px] flex-1">
           <Table>
             <TableHeader>
               <TableRow>
@@ -213,7 +254,7 @@ export default function Projetos() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
+                Array.from({ length: Math.min(perPage, 10) }).map((_, i) => (
                   <TableRow key={i}>
                     {Array.from({ length: 6 }).map((_, j) => (
                       <TableCell key={j}>
@@ -229,71 +270,90 @@ export default function Projetos() {
                   </TableCell>
                 </TableRow>
               ) : (
-                data.map((item) => (
-                  <TableRow
-                    key={item.id}
-                    className="cursor-pointer hover:bg-slate-50"
-                    onClick={() => handleDetail(item)}
-                  >
-                    <TableCell className="font-medium">{item.nome}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {item.expand?.cliente?.fantasia || '-'}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={cn(
-                          'px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap',
-                          statusColors[item.status] || 'bg-slate-100 text-slate-700',
-                        )}
-                      >
-                        {item.status || '-'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex flex-col items-center gap-1">
-                        <span>{proposalCounts[item.id] || 0}</span>
-                        {biddingCounts[item.id] > 0 && (
-                          <Badge
-                            variant="outline"
-                            className="text-[9px] px-1 py-0 h-4 bg-purple-50 text-purple-700 border-purple-200"
-                          >
-                            <ShieldCheck className="h-2.5 w-2.5 mr-0.5" />
-                            {biddingCounts[item.id]}
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(item.created).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleEdit(item)}
+                data.map((item) => {
+                  const counts = proposalCounts[item.id]
+                  const showCountSkeleton = countsLoading && !counts
+                  return (
+                    <TableRow
+                      key={item.id}
+                      className="cursor-pointer hover:bg-slate-50"
+                      onClick={() => handleDetail(item)}
+                    >
+                      <TableCell className="font-medium">{item.nome}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.expand?.cliente?.fantasia || '-'}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={cn(
+                            'px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap',
+                            statusColors[item.status] || 'bg-slate-100 text-slate-700',
+                          )}
                         >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        {user?.role === 'admin' && (
+                          {item.status || '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          {showCountSkeleton ? (
+                            <Skeleton className="h-4 w-6" />
+                          ) : (
+                            <span>{counts?.total || 0}</span>
+                          )}
+                          {counts && counts.bidding > 0 && (
+                            <Badge
+                              variant="outline"
+                              className="text-[9px] px-1 py-0 h-4 bg-purple-50 text-purple-700 border-purple-200"
+                            >
+                              <ShieldCheck className="h-2.5 w-2.5 mr-0.5" />
+                              {counts.bidding}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(item.created).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-destructive"
-                            onClick={() => handleDelete(item.id)}
+                            className="h-8 w-8"
+                            onClick={() => handleEdit(item)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Pencil className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                          {user?.role === 'admin' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
+                              onClick={() => handleDelete(item.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               )}
             </TableBody>
           </Table>
         </div>
+        <PaginationBar
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          perPage={perPage}
+          onPageChange={setPage}
+          onPerPageChange={(v) => {
+            setPerPage(v)
+            setPage(1)
+          }}
+        />
       </Card>
     </div>
   )
