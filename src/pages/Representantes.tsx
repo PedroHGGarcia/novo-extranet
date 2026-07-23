@@ -42,7 +42,7 @@ import {
 } from '@/services/cadastros'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useToast } from '@/hooks/use-toast'
-import { extractFieldErrors } from '@/lib/pocketbase/errors'
+import { extractFieldErrors, getErrorMessage } from '@/lib/pocketbase/errors'
 
 export default function Representantes() {
   const [data, setData] = useState<any[]>([])
@@ -56,6 +56,7 @@ export default function Representantes() {
   const [isConflictOpen, setIsConflictOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [perPage] = useState(50)
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     fantasia: '',
@@ -202,19 +203,23 @@ export default function Representantes() {
   }
 
   const handleToggleStatus = async (item: any, newStatus: string) => {
+    if (updatingStatusId === item.id) return
+    setUpdatingStatusId(item.id)
     // Optimistic update
     setData((prev) => prev.map((d) => (d.id === item.id ? { ...d, status: newStatus } : d)))
     try {
       await updateRepresentante(item.id, { status: newStatus })
-      toast({ title: `Representante ${newStatus === 'Ativo' ? 'ativado' : 'desativado'}.` })
+      toast({ title: 'Status atualizado com sucesso' })
     } catch (err: any) {
       // Revert optimistic update on error
       setData((prev) => prev.map((d) => (d.id === item.id ? { ...d, status: item.status } : d)))
       toast({
-        title: 'Aviso',
-        description: 'Não foi possível atualizar o status no momento.',
-        variant: 'default',
+        title: 'Erro ao atualizar status',
+        description: getErrorMessage(err),
+        variant: 'destructive',
       })
+    } finally {
+      setUpdatingStatusId(null)
     }
   }
 
@@ -371,6 +376,7 @@ export default function Representantes() {
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={item.status === 'Ativo'}
+                            disabled={updatingStatusId === item.id}
                             onCheckedChange={(checked) =>
                               handleToggleStatus(item, checked ? 'Ativo' : 'Inativo')
                             }
