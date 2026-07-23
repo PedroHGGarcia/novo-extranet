@@ -203,7 +203,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r-0 bg-brand-sidebar dark:bg-sidebar text-white">
-      <SidebarHeader className="flex items-center justify-center bg-brand-sidebar dark:bg-sidebar p-3 rounded-none mb-2">
+      <SidebarHeader className="flex items-center justify-center bg-brand-sidebar-header dark:bg-sidebar-accent p-3 rounded-none mb-2">
         <Link
           to="/"
           className="flex items-center justify-center select-none w-full"

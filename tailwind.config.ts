@@ -38,6 +38,7 @@ export default {
         brand: {
           green: 'hsl(var(--brand-green))',
           sidebar: 'hsl(var(--brand-sidebar))',
+          'sidebar-header': 'hsl(var(--brand-sidebar-header))',
           bg: 'hsl(var(--brand-bg))',
           orange: 'hsl(var(--brand-orange))',
           cyan: 'hsl(var(--brand-cyan))',
