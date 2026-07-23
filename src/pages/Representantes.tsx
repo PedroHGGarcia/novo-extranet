@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
@@ -191,6 +192,18 @@ export default function Representantes() {
     }
   }
 
+  const handleToggleStatus = async (item: any, newStatus: string) => {
+    const prevData = [...data]
+    setData(prevData.map((d) => (d.id === item.id ? { ...d, status: newStatus } : d)))
+    try {
+      await updateRepresentante(item.id, { status: newStatus })
+      toast({ title: `Representante ${newStatus === 'Ativo' ? 'ativado' : 'desativado'}.` })
+    } catch {
+      setData(prevData)
+      toast({ title: 'Erro ao atualizar status', variant: 'destructive' })
+    }
+  }
+
   const handleMerge = async () => {
     let coords = undefined
     if (formData.coordenadas) {
@@ -341,15 +354,28 @@ export default function Representantes() {
                       <TableCell className="text-muted-foreground">{item.cidade || '-'}</TableCell>
                       <TableCell className="text-muted-foreground">{item.uf || '-'}</TableCell>
                       <TableCell>
-                        {item.status === 'Ativo' ? (
-                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
-                            Ativo
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
-                            {item.status}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={item.status === 'Ativo'}
+                            onCheckedChange={(checked) =>
+                              handleToggleStatus(item, checked ? 'Ativo' : 'Inativo')
+                            }
+                            aria-label={
+                              item.status === 'Ativo'
+                                ? 'Desativar representante'
+                                : 'Ativar representante'
+                            }
+                          />
+                          {item.status === 'Ativo' ? (
+                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
+                              Ativo
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
+                              {item.status || 'Inativo'}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
