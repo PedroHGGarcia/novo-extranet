@@ -68,6 +68,7 @@ import { useToast } from '@/hooks/use-toast'
 import { extractFieldErrors } from '@/lib/pocketbase/errors'
 import pb from '@/lib/pocketbase/client'
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
+import { cn } from '@/lib/utils'
 
 type Contato = { id: string; nome: string; telefone: string; email: string; observacoes: string }
 type Documento = {
@@ -284,18 +285,22 @@ export default function Clientes() {
   const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedSet.has(id))
   const someVisibleSelected = visibleIds.some((id) => selectedSet.has(id)) && !allVisibleSelected
 
-  const toggleAll = () => {
+  const toggleAll = (checked: boolean) => {
     setAllFilteredSelected(false)
-    if (allVisibleSelected) {
-      setSelected((prev) => prev.filter((id) => !visibleIds.includes(id)))
-    } else {
+    if (checked) {
       setSelected((prev) => [...new Set([...prev, ...visibleIds])])
+    } else {
+      setSelected((prev) => prev.filter((id) => !visibleIds.includes(id)))
     }
   }
 
-  const toggleOne = (id: string) => {
+  const toggleOne = (id: string, checked: boolean) => {
     setAllFilteredSelected(false)
-    setSelected((p) => (p.includes(id) ? p.filter((i) => i !== id) : [...p, id]))
+    if (checked) {
+      setSelected((p) => [...new Set([...p, id])])
+    } else {
+      setSelected((p) => p.filter((i) => i !== id))
+    }
   }
 
   const handleSelectAllFiltered = async () => {
@@ -551,17 +556,24 @@ export default function Clientes() {
                 >
                   <Plus className="h-4 w-4 mr-2" /> Novo Cliente
                 </Button>
-                {selected.length > 0 && (
-                  <div className="flex items-center gap-3">
+
+                <div className="flex items-center gap-3">
+                  {selected.length > 0 && (
                     <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
                       {selected.length} selecionado{selected.length !== 1 ? 's' : ''}
                       {allFilteredSelected && ' (todos os clientes do filtro)'}
                     </span>
-                    <Button variant="destructive" onClick={() => setIsDeleteOpen(true)}>
-                      <Trash2 className="h-4 w-4 mr-2" /> Excluir Selecionados
-                    </Button>
-                  </div>
-                )}
+                  )}
+                  <Button
+                    variant="destructive"
+                    onClick={() => setIsDeleteOpen(true)}
+                    disabled={selected.length === 0}
+                    title={selected.length === 0 ? 'Selecione ao menos um cliente' : ''}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" /> Excluir Selecionados
+                  </Button>
+                </div>
+
                 {isAdmin && totalItems > 0 && (
                   <Button
                     variant="outline"
@@ -654,27 +666,38 @@ export default function Clientes() {
 
         {view === 'list' ? (
           <>
-            {totalItems > 0 &&
-              totalClientCount > 0 &&
-              totalItems < totalClientCount &&
-              !allFilteredSelected && (
-                <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm animate-fade-in">
-                  <Info className="h-4 w-4 text-blue-600 shrink-0" />
-                  {selected.length > 0 && (
-                    <span className="text-blue-700 whitespace-nowrap">
-                      {selected.length} cliente(s) selecionado(s).
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleSelectAllFiltered}
-                    className="font-semibold text-blue-700 underline hover:text-blue-900"
-                    aria-label={`Selecionar todos os ${totalItems} clientes que correspondem a este filtro`}
-                  >
-                    Selecionar todos os {totalItems} clientes que correspondem a este filtro
-                  </button>
-                </div>
-              )}
+            {allVisibleSelected && selected.length < totalItems && !allFilteredSelected && (
+              <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm animate-fade-in mb-4">
+                <Info className="h-4 w-4 text-blue-600 shrink-0" />
+                <span className="text-blue-700 whitespace-nowrap">
+                  Todos os {visibleIds.length} clientes desta página estão selecionados.
+                </span>
+                <button
+                  type="button"
+                  onClick={handleSelectAllFiltered}
+                  className="font-semibold text-blue-700 underline hover:text-blue-900"
+                  aria-label={`Selecionar todos os ${totalItems} clientes que correspondem a este filtro`}
+                >
+                  Selecionar todos os {totalItems} clientes que correspondem a este filtro
+                </button>
+              </div>
+            )}
+            {allFilteredSelected && (
+              <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm animate-fade-in mb-4">
+                <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0" />
+                <span className="text-blue-700">Todos os {totalItems} clientes selecionados.</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelected([])
+                    setAllFilteredSelected(false)
+                  }}
+                  className="font-semibold text-blue-700 underline hover:text-blue-900 ml-auto"
+                >
+                  Limpar seleção
+                </button>
+              </div>
+            )}
             <Card className="shadow-sm">
               <div className="overflow-x-auto min-h-[500px]">
                 <Table>
@@ -683,13 +706,13 @@ export default function Clientes() {
                       <TableHead className="w-12">
                         <Checkbox
                           checked={
-                            allVisibleSelected
+                            allVisibleSelected && visibleIds.length > 0
                               ? true
                               : someVisibleSelected
                                 ? 'indeterminate'
                                 : false
                           }
-                          onCheckedChange={toggleAll}
+                          onCheckedChange={(checked) => toggleAll(checked === true)}
                           aria-label="Selecionar todos os clientes da página"
                         />
                       </TableHead>
@@ -738,12 +761,16 @@ export default function Clientes() {
                       data.map((item) => (
                         <TableRow
                           key={item.id}
-                          className={selectedSet.has(item.id) ? 'bg-blue-50' : ''}
+                          className={cn(
+                            'cursor-pointer transition-colors hover:bg-muted/50',
+                            selectedSet.has(item.id) ? 'bg-blue-50 hover:bg-blue-50/80' : '',
+                          )}
+                          onClick={() => toggleOne(item.id, !selectedSet.has(item.id))}
                         >
-                          <TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                               checked={selectedSet.has(item.id)}
-                              onCheckedChange={() => toggleOne(item.id)}
+                              onCheckedChange={(checked) => toggleOne(item.id, checked === true)}
                               aria-label={`Selecionar ${item.fantasia}`}
                             />
                           </TableCell>
@@ -767,7 +794,7 @@ export default function Clientes() {
                               </span>
                             )}
                           </TableCell>
-                          <TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-2">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
