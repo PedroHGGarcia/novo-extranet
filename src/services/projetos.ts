@@ -106,6 +106,7 @@ export async function createProjetoWithPropostas(
     } catch {
       rollbackFailed = true
     }
+    err.isLinkError = true
     if (rollbackFailed) {
       err.rollbackFailed = true
       err.projetoId = projeto.id

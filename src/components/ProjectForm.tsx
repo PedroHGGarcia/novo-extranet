@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { updateProjeto, createProjetoWithPropostas, type Projeto } from '@/services/projetos'
+import { getUsuarios, type Usuario } from '@/services/usuarios'
 import { extractFieldErrors, type FieldErrors } from '@/lib/pocketbase/errors'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,7 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [clientes, setClientes] = useState<any[]>([])
+  const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [formData, setFormData] = useState({
     nome: '',
     descricao: '',
@@ -38,6 +40,12 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
   })
   const [selectedPropostas, setSelectedPropostas] = useState<string[]>([])
   const [propostasRefreshSignal, setPropostasRefreshSignal] = useState(0)
+
+  useEffect(() => {
+    getUsuarios()
+      .then(setUsuarios)
+      .catch(() => {})
+  }, [])
 
   useRealtime('propostas', () => {
     setPropostasRefreshSignal((prev) => prev + 1)
@@ -58,13 +66,13 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
     const normDesc = formData.descricao || ''
     const normCliente = formData.cliente || ''
     const normStatus = formData.status || 'Em Andamento'
-    const normUser = formData.user || user?.id || ''
+    const normUser = formData.user || ''
 
     const initNome = projeto.nome || ''
     const initDesc = projeto.descricao || ''
     const initCliente = projeto.cliente || ''
     const initStatus = projeto.status || 'Em Andamento'
-    const initUser = projeto.user || user?.id || ''
+    const initUser = projeto.user || ''
 
     return (
       normNome !== initNome ||
@@ -82,7 +90,7 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
         descricao: projeto.descricao || '',
         cliente: projeto.cliente,
         status: projeto.status || 'Em Andamento',
-        user: projeto.user || user?.id || '',
+        user: projeto.user || '',
       })
       if (projeto.cliente) {
         pb.collection('clientes')
@@ -118,12 +126,18 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
     }
 
     setIsSubmitting(true)
+
+    const payload = { ...formData }
+    if (!payload.user) {
+      payload.user = null as any
+    }
+
     try {
       if (projeto) {
-        await updateProjeto(projeto.id, formData)
+        await updateProjeto(projeto.id, payload)
         toast({ title: 'Alterações salvas com sucesso!' })
       } else {
-        const { linkedCount } = await createProjetoWithPropostas(formData, selectedPropostas)
+        const { linkedCount } = await createProjetoWithPropostas(payload, selectedPropostas)
         if (linkedCount > 0) {
           toast({ title: `Projeto criado com sucesso, e ${linkedCount} proposta(s) vinculada(s).` })
         } else {
@@ -144,7 +158,7 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
             .join(', ')
       }
 
-      if (!projeto && selectedPropostas.length > 0) {
+      if (!projeto && e.isLinkError) {
         if (e.rollbackFailed) {
           toast({
             title: 'Erro parcial ao vincular',
@@ -243,6 +257,26 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
               </SelectContent>
             </Select>
             {fieldErrors.status && <p className="text-xs text-destructive">{fieldErrors.status}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label className={fieldErrors.user ? 'text-destructive' : ''}>Responsável</Label>
+            <Select
+              value={formData.user || 'none'}
+              onValueChange={(v) => setFormData({ ...formData, user: v === 'none' ? '' : v })}
+            >
+              <SelectTrigger className={fieldErrors.user ? 'border-destructive' : ''}>
+                <SelectValue placeholder="Selecione um responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Não definido</SelectItem>
+                {usuarios.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.name || u.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {fieldErrors.user && <p className="text-xs text-destructive">{fieldErrors.user}</p>}
           </div>
           {!projeto && (
             <div className="space-y-2 md:col-span-2">
