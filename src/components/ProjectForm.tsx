@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { updateProjeto, createProjetoWithPropostas, type Projeto } from '@/services/projetos'
 import { getUsuarios, type Usuario } from '@/services/usuarios'
@@ -28,6 +28,7 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
   const { user } = useAuth()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isSubmittingRef = useRef(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [clientes, setClientes] = useState<any[]>([])
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
@@ -102,6 +103,8 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
   }, [projeto, user])
 
   const handleSave = async () => {
+    if (isSubmittingRef.current) return
+    isSubmittingRef.current = true
     setFieldErrors({})
     let hasError = false
     const errors: FieldErrors = {}
@@ -117,31 +120,42 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
 
     if (hasError) {
       setFieldErrors(errors)
+      isSubmittingRef.current = false
       return
     }
 
     if (projeto && !isDirty) {
       toast({ title: 'Nenhuma alteração detectada', variant: 'default' })
+      isSubmittingRef.current = false
       return
     }
 
     setIsSubmitting(true)
 
-    const payload = { ...formData }
-    if (!payload.user) {
-      payload.user = null as any
+    const payload: any = { ...formData }
+    if (!payload.user || payload.user === 'none') {
+      payload.user = ''
     }
 
     try {
       if (projeto) {
         await updateProjeto(projeto.id, payload)
-        toast({ title: 'Alterações salvas com sucesso!' })
+        toast({
+          title: 'Projeto salvo com sucesso',
+          className: 'bg-emerald-600 text-white border-emerald-700',
+        })
       } else {
         const { linkedCount } = await createProjetoWithPropostas(payload, selectedPropostas)
         if (linkedCount > 0) {
-          toast({ title: `Projeto criado com sucesso, e ${linkedCount} proposta(s) vinculada(s).` })
+          toast({
+            title: `Projeto criado com sucesso, e ${linkedCount} proposta(s) vinculada(s).`,
+            className: 'bg-emerald-600 text-white border-emerald-700',
+          })
         } else {
-          toast({ title: 'Projeto criado com sucesso' })
+          toast({
+            title: 'Projeto criado com sucesso',
+            className: 'bg-emerald-600 text-white border-emerald-700',
+          })
         }
         setSelectedPropostas([])
       }
@@ -164,6 +178,7 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
             title: 'Erro parcial ao vincular',
             description: `O projeto foi criado, mas falhou ao vincular as propostas. Detalhes: ${errorMsg}`,
             variant: 'destructive',
+            className: 'bg-red-600 text-white border-red-700',
           })
           onBack()
         } else {
@@ -171,13 +186,20 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
             title: 'Erro ao vincular propostas',
             description: `A criação do projeto foi revertida. Detalhes: ${errorMsg}`,
             variant: 'destructive',
+            className: 'bg-red-600 text-white border-red-700',
           })
         }
       } else {
-        toast({ title: 'Erro ao salvar', description: errorMsg, variant: 'destructive' })
+        toast({
+          title: 'Erro ao salvar',
+          description: errorMsg,
+          variant: 'destructive',
+          className: 'bg-red-600 text-white border-red-700',
+        })
       }
     } finally {
       setIsSubmitting(false)
+      isSubmittingRef.current = false
     }
   }
 
