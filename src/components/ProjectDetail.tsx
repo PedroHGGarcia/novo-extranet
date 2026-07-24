@@ -141,6 +141,10 @@ export function ProjectDetail({
             </span>
           </div>
           <div>
+            <p className="text-xs text-muted-foreground">Responsável</p>
+            <p className="font-medium">{projetoData.expand?.user?.name || 'Não definido'}</p>
+          </div>
+          <div>
             <p className="text-xs text-muted-foreground">Data de Criação</p>
             <p className="font-medium">
               {new Date(projetoData.created).toLocaleDateString('pt-BR')}

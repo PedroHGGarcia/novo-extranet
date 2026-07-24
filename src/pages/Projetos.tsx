@@ -246,6 +246,7 @@ export default function Projetos() {
               <TableRow>
                 <TableHead>Nome do Projeto</TableHead>
                 <TableHead>Cliente</TableHead>
+                <TableHead>Responsável</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-center">Propostas</TableHead>
                 <TableHead>Data Criação</TableHead>
@@ -256,7 +257,7 @@ export default function Projetos() {
               {isLoading ? (
                 Array.from({ length: Math.min(perPage, 10) }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 6 }).map((_, j) => (
+                    {Array.from({ length: 7 }).map((_, j) => (
                       <TableCell key={j}>
                         <Skeleton className="h-4 w-full" />
                       </TableCell>
@@ -265,7 +266,7 @@ export default function Projetos() {
                 ))
               ) : data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                     Nenhum projeto encontrado.
                   </TableCell>
                 </TableRow>
@@ -282,6 +283,9 @@ export default function Projetos() {
                       <TableCell className="font-medium">{item.nome}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {item.expand?.cliente?.fantasia || '-'}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.expand?.user?.name || '—'}
                       </TableCell>
                       <TableCell>
                         <span
