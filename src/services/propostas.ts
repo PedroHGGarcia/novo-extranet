@@ -152,9 +152,16 @@ export const createPropostaRevision = async (id: string): Promise<Proposta> => {
   return pb.collection('propostas').create<Proposta>(cloneData)
 }
 
-export const getUnlinkedPropostasPaginated = async (query: string, page: number) => {
+export const getUnlinkedPropostasPaginated = async (
+  query: string,
+  page: number,
+  clienteId?: string,
+) => {
   const perPage = 20
-  const baseFilter = '(projeto = "" || projeto = null)'
+  if (!clienteId) {
+    return { items: [] as Proposta[], hasMore: false }
+  }
+  const baseFilter = `(projeto = "" || projeto = null) && cliente = "${clienteId}"`
   const escapedQuery = query.replace(/"/g, '\\"')
   const filter = query.trim()
     ? `${baseFilter} && (numero_proposta ~ "${escapedQuery}" || cliente.fantasia ~ "${escapedQuery}")`

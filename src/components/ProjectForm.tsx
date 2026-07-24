@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { updateProjeto, createProjetoWithPropostas, type Projeto } from '@/services/projetos'
 import { extractFieldErrors, type FieldErrors } from '@/lib/pocketbase/errors'
@@ -42,6 +42,15 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
   useRealtime('propostas', () => {
     setPropostasRefreshSignal((prev) => prev + 1)
   })
+
+  useEffect(() => {
+    setSelectedPropostas([])
+  }, [formData.cliente])
+
+  const handlePropostaSearch = useCallback(
+    (query: string, page: number) => getUnlinkedPropostasPaginated(query, page, formData.cliente),
+    [formData.cliente],
+  )
 
   const isDirty = useMemo(() => {
     if (!projeto) return true
@@ -243,10 +252,19 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
                 onChange={setSelectedPropostas}
                 getLabel={(p: any) => p.numero_proposta || 'Sem número'}
                 getSubLabel={(p: any) => p.expand?.cliente?.fantasia || 'Sem cliente'}
-                placeholder="Selecionar propostas para vincular..."
-                emptyMessage="Nenhuma proposta disponível."
-                onPaginatedSearch={getUnlinkedPropostasPaginated}
+                placeholder={
+                  formData.cliente
+                    ? 'Selecionar propostas para vincular...'
+                    : 'Selecione um cliente primeiro'
+                }
+                emptyMessage={
+                  formData.cliente
+                    ? 'Nenhuma proposta disponível para este cliente.'
+                    : 'Selecione um cliente para ver propostas.'
+                }
+                onPaginatedSearch={handlePropostaSearch}
                 refreshSignal={propostasRefreshSignal}
+                dependentValue={formData.cliente}
               />
               <p className="text-xs text-muted-foreground">
                 Apenas propostas sem projeto vinculado são exibidas.

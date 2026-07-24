@@ -21,6 +21,7 @@ interface SearchableMultiSelectProps {
   className?: string
   onPaginatedSearch: (query: string, page: number) => Promise<PaginatedSearchResult>
   refreshSignal?: number
+  dependentValue?: string
 }
 
 export function SearchableMultiSelect({
@@ -33,6 +34,7 @@ export function SearchableMultiSelect({
   className,
   onPaginatedSearch,
   refreshSignal = 0,
+  dependentValue,
 }: SearchableMultiSelectProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -92,6 +94,15 @@ export function SearchableMultiSelect({
       doSearch(query.trim(), 1, false)
     }
   }, [refreshSignal])
+
+  useEffect(() => {
+    setQuery('')
+    setItemCache({})
+    if (open) {
+      doSearch('', 1, false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dependentValue])
 
   const loadMore = () => {
     if (hasMore && !loading && !loadingMore) doSearch(query.trim(), page + 1, true)
