@@ -92,18 +92,23 @@ export async function createProjetoWithPropostas(
       await pb.collection('propostas').update(id, { projeto: projeto.id })
       linkedIds.push(id)
     }
-  } catch (err) {
+  } catch (err: any) {
+    let rollbackFailed = false
     for (const id of linkedIds) {
       try {
-        await pb.collection('propostas').update(id, { projeto: '' })
+        await pb.collection('propostas').update(id, { projeto: null })
       } catch {
-        /* intentionally ignored */
+        rollbackFailed = true
       }
     }
     try {
       await pb.collection('projetos').delete(projeto.id)
     } catch {
-      /* intentionally ignored */
+      rollbackFailed = true
+    }
+    if (rollbackFailed) {
+      err.rollbackFailed = true
+      err.projetoId = projeto.id
     }
     throw err
   }

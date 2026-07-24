@@ -124,14 +124,34 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
       }
       onBack()
     } catch (e: any) {
+      const extractedErrors = extractFieldErrors(e)
+      setFieldErrors(extractedErrors)
+      let errorMsg = e.message || 'Erro inesperado'
+      if (Object.keys(extractedErrors).length > 0) {
+        errorMsg +=
+          ' - ' +
+          Object.entries(extractedErrors)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(', ')
+      }
+
       if (!projeto && selectedPropostas.length > 0) {
-        toast({
-          title: 'Erro ao vincular propostas. Nenhum dado foi salvo.',
-          variant: 'destructive',
-        })
+        if (e.rollbackFailed) {
+          toast({
+            title: 'Erro parcial ao vincular',
+            description: `O projeto foi criado, mas falhou ao vincular as propostas. Detalhes: ${errorMsg}`,
+            variant: 'destructive',
+          })
+          onBack()
+        } else {
+          toast({
+            title: 'Erro ao vincular propostas',
+            description: `A criação do projeto foi revertida. Detalhes: ${errorMsg}`,
+            variant: 'destructive',
+          })
+        }
       } else {
-        setFieldErrors(extractFieldErrors(e))
-        toast({ title: e.message || 'Erro ao salvar', variant: 'destructive' })
+        toast({ title: 'Erro ao salvar', description: errorMsg, variant: 'destructive' })
       }
     } finally {
       setIsSubmitting(false)

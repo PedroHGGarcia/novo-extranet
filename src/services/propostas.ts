@@ -154,7 +154,7 @@ export const createPropostaRevision = async (id: string): Promise<Proposta> => {
 
 export const getUnlinkedPropostasPaginated = async (query: string, page: number) => {
   const perPage = 20
-  const baseFilter = 'projeto = ""'
+  const baseFilter = '(projeto = "" || projeto = null)'
   const escapedQuery = query.replace(/"/g, '\\"')
   const filter = query.trim()
     ? `${baseFilter} && (numero_proposta ~ "${escapedQuery}" || cliente.fantasia ~ "${escapedQuery}")`
