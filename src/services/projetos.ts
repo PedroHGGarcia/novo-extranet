@@ -78,3 +78,34 @@ export async function getProposalCountsForProjects(
 
   return result
 }
+
+export async function createProjetoWithPropostas(
+  data: Partial<Projeto>,
+  propostaIds: string[],
+): Promise<{ projeto: Projeto; linkedCount: number }> {
+  const projeto = await createProjeto(data)
+  if (propostaIds.length === 0) return { projeto, linkedCount: 0 }
+
+  const linkedIds: string[] = []
+  try {
+    for (const id of propostaIds) {
+      await pb.collection('propostas').update(id, { projeto: projeto.id })
+      linkedIds.push(id)
+    }
+  } catch (err) {
+    for (const id of linkedIds) {
+      try {
+        await pb.collection('propostas').update(id, { projeto: '' })
+      } catch {
+        /* intentionally ignored */
+      }
+    }
+    try {
+      await pb.collection('projetos').delete(projeto.id)
+    } catch {
+      /* intentionally ignored */
+    }
+    throw err
+  }
+  return { projeto, linkedCount: linkedIds.length }
+}

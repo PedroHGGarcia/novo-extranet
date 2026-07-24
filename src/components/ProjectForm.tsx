@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/hooks/use-auth'
-import { createProjeto, updateProjeto, type Projeto } from '@/services/projetos'
+import { updateProjeto, createProjetoWithPropostas, type Projeto } from '@/services/projetos'
 import { extractFieldErrors, type FieldErrors } from '@/lib/pocketbase/errors'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,10 @@ import {
 import { ChevronLeft, Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { SearchableCombobox } from '@/components/SearchableCombobox'
+import { SearchableMultiSelect } from '@/components/SearchableMultiSelect'
 import { searchClientesPaginated } from '@/services/cadastros'
+import { getUnlinkedPropostasPaginated } from '@/services/propostas'
+import { useRealtime } from '@/hooks/use-realtime'
 import pb from '@/lib/pocketbase/client'
 
 export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBack: () => void }) {
@@ -32,6 +35,12 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
     cliente: '',
     status: 'Em Andamento',
     user: user?.id || '',
+  })
+  const [selectedPropostas, setSelectedPropostas] = useState<string[]>([])
+  const [propostasRefreshSignal, setPropostasRefreshSignal] = useState(0)
+
+  useRealtime('propostas', () => {
+    setPropostasRefreshSignal((prev) => prev + 1)
   })
 
   const isDirty = useMemo(() => {
@@ -105,13 +114,25 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
         await updateProjeto(projeto.id, formData)
         toast({ title: 'Alterações salvas com sucesso!' })
       } else {
-        await createProjeto(formData)
-        toast({ title: 'Projeto criado com sucesso' })
+        const { linkedCount } = await createProjetoWithPropostas(formData, selectedPropostas)
+        if (linkedCount > 0) {
+          toast({ title: `Projeto criado com sucesso, e ${linkedCount} proposta(s) vinculada(s).` })
+        } else {
+          toast({ title: 'Projeto criado com sucesso' })
+        }
+        setSelectedPropostas([])
       }
       onBack()
     } catch (e: any) {
-      setFieldErrors(extractFieldErrors(e))
-      toast({ title: e.message || 'Erro ao salvar', variant: 'destructive' })
+      if (!projeto && selectedPropostas.length > 0) {
+        toast({
+          title: 'Erro ao vincular propostas. Nenhum dado foi salvo.',
+          variant: 'destructive',
+        })
+      } else {
+        setFieldErrors(extractFieldErrors(e))
+        toast({ title: e.message || 'Erro ao salvar', variant: 'destructive' })
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -194,6 +215,24 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
             </Select>
             {fieldErrors.status && <p className="text-xs text-destructive">{fieldErrors.status}</p>}
           </div>
+          {!projeto && (
+            <div className="space-y-2 md:col-span-2">
+              <Label>Vincular Propostas</Label>
+              <SearchableMultiSelect
+                value={selectedPropostas}
+                onChange={setSelectedPropostas}
+                getLabel={(p: any) => p.numero_proposta || 'Sem número'}
+                getSubLabel={(p: any) => p.expand?.cliente?.fantasia || 'Sem cliente'}
+                placeholder="Selecionar propostas para vincular..."
+                emptyMessage="Nenhuma proposta disponível."
+                onPaginatedSearch={getUnlinkedPropostasPaginated}
+                refreshSignal={propostasRefreshSignal}
+              />
+              <p className="text-xs text-muted-foreground">
+                Apenas propostas sem projeto vinculado são exibidas.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
