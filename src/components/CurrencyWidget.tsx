@@ -48,7 +48,20 @@ export function CurrencyWidget() {
     return () => clearInterval(interval)
   }, [])
 
-  if (error) return null
+  if (error) {
+    return (
+      <Card className="w-full shadow-sm">
+        <CardContent className="p-4 flex items-center gap-3">
+          <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+            <DollarSign className="w-4 h-4 text-slate-400" />
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Taxas de câmbio indisponíveis no momento
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
 
   if (!currencies) {
     return (
