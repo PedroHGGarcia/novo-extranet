@@ -71,8 +71,12 @@ export function EmitirPropostaForm({
   useEffect(() => {
     let mounted = true
     const fetchExchangeRates = async () => {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
       try {
-        const res = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL')
+        const res = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL', {
+          signal: controller.signal,
+        })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const d = await res.json()
         if (!d?.USDBRL?.bid || !d?.EURBRL?.bid) throw new Error('Invalid response format')
@@ -87,6 +91,7 @@ export function EmitirPropostaForm({
       } catch {
         if (mounted) setExchangeRates(null)
       } finally {
+        clearTimeout(timeoutId)
         if (mounted) setExchangeRatesLoading(false)
       }
     }
@@ -959,9 +964,16 @@ export function EmitirPropostaForm({
               <span>R$: 1,00</span>
             </>
           ) : (
-            <span className="flex items-center gap-1.5 text-amber-600">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              Taxa de câmbio temporariamente indisponível
+            <span className="flex flex-col gap-1 text-amber-600">
+              <span className="flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                Taxa de câmbio temporariamente indisponível
+              </span>
+              <span className="flex items-center gap-4 text-slate-500">
+                <span>Dólar (USD): Indisponível</span>
+                <span>Euro (EUR): Indisponível</span>
+                <span>R$: 1,00</span>
+              </span>
             </span>
           )}
         </div>
