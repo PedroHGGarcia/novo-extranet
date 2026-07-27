@@ -28,6 +28,7 @@ routerAdd(
     } catch (_) {}
 
     var createdProject = null
+    var linkedCount = 0
 
     try {
       $app.runInTransaction((txApp) => {
@@ -58,30 +59,24 @@ routerAdd(
           } catch (_) {}
         }
 
-        if (propostas.length > 0) {
-          for (var i = 0; i < propostas.length; i++) {
-            var propId = propostas[i]
-            var propRecord = null
+        for (var i = 0; i < propostas.length; i++) {
+          var propId = propostas[i]
+          var propRecord = txApp.findRecordById('propostas', propId)
+
+          propRecord.set('projeto', record.id)
+          txApp.save(propRecord)
+          linkedCount++
+
+          if (auditoriaCol) {
             try {
-              propRecord = txApp.findRecordById('propostas', propId)
+              var auditProp = new Record(auditoriaCol)
+              auditProp.set('user', userId)
+              auditProp.set('acao', 'Vínculo de Projeto em Proposta')
+              auditProp.set('tabela', 'propostas')
+              auditProp.set('registro_id', propId)
+              auditProp.set('dados', { projeto_id: record.id, projeto_nome: nome })
+              txApp.save(auditProp)
             } catch (_) {}
-
-            if (propRecord) {
-              propRecord.set('projeto', record.id)
-              txApp.save(propRecord)
-
-              if (auditoriaCol) {
-                try {
-                  var auditProp = new Record(auditoriaCol)
-                  auditProp.set('user', userId)
-                  auditProp.set('acao', 'Vínculo de Projeto em Proposta')
-                  auditProp.set('tabela', 'propostas')
-                  auditProp.set('registro_id', propId)
-                  auditProp.set('dados', { projeto_id: record.id, projeto_nome: nome })
-                  txApp.save(auditProp)
-                } catch (_) {}
-              }
-            }
           }
         }
       })
@@ -99,7 +94,7 @@ routerAdd(
     return e.json(200, {
       success: true,
       projeto: createdProject,
-      linkedCount: propostas.length,
+      linkedCount: linkedCount,
     })
   },
   $apis.requireAuth(),

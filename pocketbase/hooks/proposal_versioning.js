@@ -32,6 +32,12 @@ onRecordCreateRequest((e) => {
 }, 'propostas')
 
 onRecordUpdateRequest((e) => {
+  const body = e.requestInfo().body || {}
+  if (body.revisao === undefined && body.numero_proposta === undefined) {
+    e.next()
+    return
+  }
+
   const oldNumStr = e.record.original().getString('numero_proposta')
   const parts = oldNumStr.split('-')
   let numPart = parts[0]

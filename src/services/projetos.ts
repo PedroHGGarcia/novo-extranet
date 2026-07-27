@@ -85,28 +85,52 @@ export async function updateProjetoWithPropostas(
   propostaIds: string[],
   currentPropostaIds: string[],
 ): Promise<{ linkedCount: number; unlinkedCount: number }> {
-  await updateProjeto(projetoId, data)
-
   const toLink = propostaIds.filter((id) => !currentPropostaIds.includes(id))
   const toUnlink = currentPropostaIds.filter((id) => !propostaIds.includes(id))
 
-  for (const id of toLink) {
-    try {
-      await pb.collection('propostas').update(id, { projeto: projetoId })
-    } catch {
-      /* continue linking others */
-    }
-  }
+  try {
+    const res = await pb.send('/backend/v1/projetos/update-with-propostas', {
+      method: 'PUT',
+      body: JSON.stringify({
+        projetoId,
+        nome: data.nome,
+        descricao: data.descricao || '',
+        cliente: data.cliente,
+        status: data.status || 'Em Andamento',
+        toLink,
+        toUnlink,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    return { linkedCount: res.linkedCount || 0, unlinkedCount: res.unlinkedCount || 0 }
+  } catch (err: any) {
+    if (err?.status === 404 || err?.status === 405) {
+      await updateProjeto(projetoId, data)
 
-  for (const id of toUnlink) {
-    try {
-      await pb.collection('propostas').update(id, { projeto: null })
-    } catch {
-      /* continue unlinking others */
-    }
-  }
+      const linkedIds: string[] = []
+      try {
+        for (const id of toLink) {
+          await pb.collection('propostas').update(id, { projeto: projetoId })
+          linkedIds.push(id)
+        }
+        for (const id of toUnlink) {
+          await pb.collection('propostas').update(id, { projeto: null })
+        }
+      } catch (linkErr: any) {
+        for (const id of linkedIds) {
+          try {
+            await pb.collection('propostas').update(id, { projeto: null })
+          } catch {
+            /* best-effort rollback */
+          }
+        }
+        throw linkErr
+      }
 
-  return { linkedCount: toLink.length, unlinkedCount: toUnlink.length }
+      return { linkedCount: linkedIds.length, unlinkedCount: toUnlink.length }
+    }
+    throw err
+  }
 }
 
 export async function createProjetoWithPropostas(
