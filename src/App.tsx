@@ -232,6 +232,10 @@ const router = createBrowserRouter(
               </LazyRoute>
             }
           />
+          <Route
+            path="/controle-propostas/emitir"
+            element={<Navigate to="/controle-propostas/emitir-proposta" replace />}
+          />
           <Route element={<BiddingPermissionRoute />}>
             <Route
               path="/controle-propostas"
