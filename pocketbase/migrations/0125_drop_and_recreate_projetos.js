@@ -14,7 +14,7 @@ migrate(
     try {
       projetosCol = app.findCollectionByNameOrId('projetos')
       existed = true
-    } catch {
+    } catch (_) {
       projetosCol = new Collection({
           name: 'projetos',
           type: 'base',
