@@ -6,51 +6,56 @@ import {
   Outlet,
   Navigate,
 } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import Layout from './components/Layout'
-import Dashboard from './pages/Dashboard'
-import Cadastros from './pages/Cadastros'
-import Regioes from './pages/Regioes'
-import Gerentes from './pages/Gerentes'
-import Clientes from './pages/ClientesWrapper'
-import Eventos from './pages/Eventos'
-import EmitirProposta from './pages/controle-propostas/EmitirProposta'
-import ControlePropostas from './pages/controle-propostas/ControlePropostas'
-import PropostasAvancadas from './pages/controle-propostas/PropostasAvancadas'
-import TiposPropostas from './pages/controle-propostas/TiposPropostas'
-import PropostaPDF from './pages/controle-propostas/PropostaPDF'
-import DashboardPropostas from './pages/controle-propostas/DashboardPropostas'
-import Produtos from './pages/Produtos'
-import Categorias from './pages/produtos/Categorias'
-import Marcas from './pages/produtos/Marcas'
-import Modelos from './pages/produtos/Modelos'
-import Versoes from './pages/produtos/Versoes'
-import DashboardProdutos from './pages/produtos/Dashboard'
-import Acessorios from './pages/produtos/Acessorios'
-import AlterarPrecos from './pages/produtos/AlterarPrecos'
-import Perfil from './pages/Perfil'
-import AreaAtuacao from './pages/AreaAtuacao'
-import Usuarios from './pages/Usuarios'
-import AuditoriaPage from './pages/Auditoria'
-import Configuracoes from './pages/Configuracoes'
-import NotFound from './pages/NotFound'
-import Representantes from './pages/Representantes'
-import RepresentanteEdit from './pages/RepresentanteEdit'
-import Projetos from './pages/Projetos'
-import ProjectDetailPage from './pages/ProjectDetailPage'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
-import ForgotPassword from './pages/ForgotPassword'
-import ValidarProposta from './pages/ValidarProposta'
-import { AuthProvider } from './hooks/use-auth'
-import { ProtectedRoute, BiddingPermissionRoute } from './components/ProtectedRoute'
-import { GlobalAutoFormatter } from './components/GlobalAutoFormatter'
-import { ErrorBoundary } from './components/ErrorBoundary'
-import { ThemeProvider } from './components/theme-provider'
-import { RouteError } from './components/RouteError'
+import { PageLoading } from '@/components/PageLoading'
+import { AuthProvider } from '@/hooks/use-auth'
+import { ProtectedRoute, BiddingPermissionRoute } from '@/components/ProtectedRoute'
+import { GlobalAutoFormatter } from '@/components/GlobalAutoFormatter'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { ThemeProvider } from '@/components/theme-provider'
+import { RouteError } from '@/components/RouteError'
 import './styles/editor.css'
+
+const Layout = lazy(() => import('@/components/Layout').then((m) => ({ default: m.default })))
+const Dashboard = lazy(() => import('@/pages/Dashboard'))
+const Cadastros = lazy(() => import('@/pages/Cadastros'))
+const Regioes = lazy(() => import('@/pages/Regioes'))
+const Gerentes = lazy(() => import('@/pages/Gerentes'))
+const Clientes = lazy(() => import('@/pages/ClientesWrapper'))
+const Eventos = lazy(() => import('@/pages/Eventos'))
+const EmitirProposta = lazy(() => import('@/pages/controle-propostas/EmitirProposta'))
+const ControlePropostas = lazy(() => import('@/pages/controle-propostas/ControlePropostas'))
+const PropostasAvancadas = lazy(() => import('@/pages/controle-propostas/PropostasAvancadas'))
+const TiposPropostas = lazy(() => import('@/pages/controle-propostas/TiposPropostas'))
+const PropostaPDF = lazy(() => import('@/pages/controle-propostas/PropostaPDF'))
+const DashboardPropostas = lazy(() => import('@/pages/controle-propostas/DashboardPropostas'))
+const Produtos = lazy(() => import('@/pages/Produtos'))
+const Categorias = lazy(() => import('@/pages/produtos/Categorias'))
+const Marcas = lazy(() => import('@/pages/produtos/Marcas'))
+const Modelos = lazy(() => import('@/pages/produtos/Modelos'))
+const Versoes = lazy(() => import('@/pages/produtos/Versoes'))
+const DashboardProdutos = lazy(() => import('@/pages/produtos/Dashboard'))
+const Acessorios = lazy(() => import('@/pages/produtos/Acessorios'))
+const AlterarPrecos = lazy(() => import('@/pages/produtos/AlterarPrecos'))
+const Perfil = lazy(() => import('@/pages/Perfil'))
+const AreaAtuacao = lazy(() => import('@/pages/AreaAtuacao'))
+const Usuarios = lazy(() => import('@/pages/Usuarios'))
+const AuditoriaPage = lazy(() => import('@/pages/Auditoria'))
+const Configuracoes = lazy(() => import('@/pages/Configuracoes'))
+const NotFound = lazy(() => import('@/pages/NotFound'))
+const Representantes = lazy(() => import('@/pages/Representantes'))
+const RepresentanteEdit = lazy(() => import('@/pages/RepresentanteEdit'))
+const Projetos = lazy(() => import('@/pages/Projetos'))
+const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage'))
+const Login = lazy(() => import('@/pages/Login'))
+const Signup = lazy(() => import('@/pages/Signup'))
+const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'))
+const ValidarProposta = lazy(() => import('@/pages/ValidarProposta'))
+const Notificacoes = lazy(() => import('@/pages/Notificacoes'))
+const HistoricoImportacoes = lazy(() => import('@/pages/HistoricoImportacoes'))
 
 const RootLayout = () => (
   <TooltipProvider>
@@ -61,40 +66,183 @@ const RootLayout = () => (
   </TooltipProvider>
 )
 
+const LazyRoute = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<PageLoading />}>{children}</Suspense>
+)
+
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<RootLayout />} errorElement={<RouteError />}>
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/validar-proposta/:id" element={<ValidarProposta />} />
+      <Route
+        path="/login"
+        element={
+          <LazyRoute>
+            <Login />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <LazyRoute>
+            <Signup />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <LazyRoute>
+            <ForgotPassword />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/validar-proposta/:id"
+        element={
+          <LazyRoute>
+            <ValidarProposta />
+          </LazyRoute>
+        }
+      />
       <Route element={<ProtectedRoute />}>
-        <Route element={<Layout />}>
+        <Route
+          element={
+            <LazyRoute>
+              <Layout />
+            </LazyRoute>
+          }
+        >
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/area-atuacao" element={<AreaAtuacao />} />
-          <Route path="/cadastros" element={<Cadastros />} />
-          <Route path="/cadastros/regioes" element={<Regioes />} />
-          <Route path="/cadastros/gerentes" element={<Gerentes />} />
-          <Route path="/cadastros/clientes" element={<Clientes />} />
-          <Route path="/cadastros/representantes" element={<Representantes />} />
-          <Route path="/cadastros/representantes/editar/:id" element={<RepresentanteEdit />} />
-          <Route path="/projetos" element={<Projetos />} errorElement={<RouteError />} />
+          <Route
+            path="/dashboard"
+            element={
+              <LazyRoute>
+                <Dashboard />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/area-atuacao"
+            element={
+              <LazyRoute>
+                <AreaAtuacao />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/cadastros"
+            element={
+              <LazyRoute>
+                <Cadastros />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/cadastros/regioes"
+            element={
+              <LazyRoute>
+                <Regioes />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/cadastros/gerentes"
+            element={
+              <LazyRoute>
+                <Gerentes />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/cadastros/clientes"
+            element={
+              <LazyRoute>
+                <Clientes />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/cadastros/representantes"
+            element={
+              <LazyRoute>
+                <Representantes />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/cadastros/representantes/editar/:id"
+            element={
+              <LazyRoute>
+                <RepresentanteEdit />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/projetos"
+            element={
+              <LazyRoute>
+                <Projetos />
+              </LazyRoute>
+            }
+            errorElement={<RouteError />}
+          />
           <Route
             path="/projetos/:id"
-            element={<ProjectDetailPage />}
+            element={
+              <LazyRoute>
+                <ProjectDetailPage />
+              </LazyRoute>
+            }
             errorElement={<RouteError />}
           />
           <Route path="/cadastros/prepostos" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/eventos" element={<Eventos />} />
+          <Route
+            path="/eventos"
+            element={
+              <LazyRoute>
+                <Eventos />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/notificacoes"
+            element={
+              <LazyRoute>
+                <Notificacoes />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/historico-importacoes"
+            element={
+              <LazyRoute>
+                <HistoricoImportacoes />
+              </LazyRoute>
+            }
+          />
           <Route element={<BiddingPermissionRoute />}>
-            <Route path="/controle-propostas" element={<ControlePropostas />}>
+            <Route
+              path="/controle-propostas"
+              element={
+                <LazyRoute>
+                  <ControlePropostas />
+                </LazyRoute>
+              }
+            >
               <Route index element={<Navigate to="/controle-propostas/emitir" replace />} />
               <Route path="emitir" />
               <Route path="dashboard" />
             </Route>
           </Route>
-          <Route path="/controle-propostas/dashboard-geral" element={<DashboardPropostas />} />
+          <Route
+            path="/controle-propostas/dashboard-geral"
+            element={
+              <LazyRoute>
+                <DashboardPropostas />
+              </LazyRoute>
+            }
+          />
           <Route
             path="/controle-propostas/emitir-licitacao"
             element={<Navigate to="/controle-propostas/emitir" replace />}
@@ -103,10 +251,38 @@ const router = createBrowserRouter(
             path="/controle-propostas/dashboard-licitacoes"
             element={<Navigate to="/controle-propostas/dashboard" replace />}
           />
-          <Route path="/controle-propostas/emitir-proposta" element={<EmitirProposta />} />
-          <Route path="/controle-propostas/propostas-avancadas" element={<PropostasAvancadas />} />
-          <Route path="/controle-propostas/tipos-propostas" element={<TiposPropostas />} />
-          <Route path="/controle-propostas/proposta-pdf/:id" element={<PropostaPDF />} />
+          <Route
+            path="/controle-propostas/emitir-proposta"
+            element={
+              <LazyRoute>
+                <EmitirProposta />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/controle-propostas/propostas-avancadas"
+            element={
+              <LazyRoute>
+                <PropostasAvancadas />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/controle-propostas/tipos-propostas"
+            element={
+              <LazyRoute>
+                <TiposPropostas />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/controle-propostas/proposta-pdf/:id"
+            element={
+              <LazyRoute>
+                <PropostaPDF />
+              </LazyRoute>
+            }
+          />
           <Route
             path="/controle-propostas/propostas-excluidas"
             element={<Navigate to="/controle-propostas/dashboard-geral" replace />}
@@ -127,30 +303,121 @@ const router = createBrowserRouter(
             path="/controle-propostas/formas-pagamento"
             element={<Navigate to="/controle-propostas/dashboard-geral" replace />}
           />
-          <Route path="/produtos" element={<Produtos />} />
-          <Route path="/produtos/categorias" element={<Categorias />} />
-          <Route path="/produtos/marcas" element={<Marcas />} />
-          <Route path="/produtos/modelos" element={<Modelos />} />
-          <Route path="/produtos/versoes" element={<Versoes />} />
+          <Route
+            path="/produtos"
+            element={
+              <LazyRoute>
+                <Produtos />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/produtos/categorias"
+            element={
+              <LazyRoute>
+                <Categorias />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/produtos/marcas"
+            element={
+              <LazyRoute>
+                <Marcas />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/produtos/modelos"
+            element={
+              <LazyRoute>
+                <Modelos />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/produtos/versoes"
+            element={
+              <LazyRoute>
+                <Versoes />
+              </LazyRoute>
+            }
+          />
           <Route path="/produtos/versao-imagens" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/produtos/acessorios" element={<Acessorios />} />
-          <Route path="/produtos/alterar-precos" element={<AlterarPrecos />} />
+          <Route
+            path="/produtos/acessorios"
+            element={
+              <LazyRoute>
+                <Acessorios />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/produtos/alterar-precos"
+            element={
+              <LazyRoute>
+                <AlterarPrecos />
+              </LazyRoute>
+            }
+          />
           <Route
             path="/produtos/hierarquia-versoes"
             element={<Navigate to="/produtos" replace />}
           />
-          <Route path="/produtos/dashboard" element={<DashboardProdutos />} />
+          <Route
+            path="/produtos/dashboard"
+            element={
+              <LazyRoute>
+                <DashboardProdutos />
+              </LazyRoute>
+            }
+          />
           <Route path="/relatorios" element={<Navigate to="/dashboard" replace />} />
           <Route path="/vendas" element={<Navigate to="/dashboard" replace />} />
           <Route path="/assinaturas" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/perfil" element={<Perfil />} />
-          <Route path="/usuarios" element={<Usuarios />} />
-          <Route path="/auditoria" element={<AuditoriaPage />} />
+          <Route
+            path="/perfil"
+            element={
+              <LazyRoute>
+                <Perfil />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/usuarios"
+            element={
+              <LazyRoute>
+                <Usuarios />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/auditoria"
+            element={
+              <LazyRoute>
+                <AuditoriaPage />
+              </LazyRoute>
+            }
+          />
           <Route path="/permissoes" element={<Navigate to="/usuarios" replace />} />
-          <Route path="/configuracoes" element={<Configuracoes />} />
+          <Route
+            path="/configuracoes"
+            element={
+              <LazyRoute>
+                <Configuracoes />
+              </LazyRoute>
+            }
+          />
         </Route>
       </Route>
-      <Route path="*" element={<NotFound />} />
+      <Route
+        path="*"
+        element={
+          <LazyRoute>
+            <NotFound />
+          </LazyRoute>
+        }
+      />
     </Route>,
   ),
 )
