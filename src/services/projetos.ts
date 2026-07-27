@@ -33,3 +33,9 @@ export const updateProjeto = (id: string, data: Partial<Projeto>) =>
   pb.collection('projetos').update<Projeto>(id, data)
 
 export const deleteProjeto = (id: string) => pb.collection('projetos').delete(id)
+
+export const getProjetosByCliente = (clienteId: string) =>
+  pb.collection('projetos').getFullList<Projeto>({
+    filter: `cliente = "${clienteId}"`,
+    expand: 'cliente,user',
+  })
