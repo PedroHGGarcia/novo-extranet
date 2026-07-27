@@ -4,4 +4,5 @@ onRecordCreate((e) => {
       e.record.set('user', e.auth.id)
     }
   } catch (_) {}
+  e.next()
 }, 'propostas')

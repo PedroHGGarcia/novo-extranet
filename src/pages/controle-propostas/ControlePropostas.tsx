@@ -1,12 +1,19 @@
+import { useState } from 'react'
 import { useLocation, useNavigate, Outlet } from 'react-router-dom'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
+import { useRealtime } from '@/hooks/use-realtime'
 import EmitirLicitacao from './EmitirLicitacao'
 import DashboardLicitacoes from './DashboardLicitacoes'
 
 export default function ControlePropostas() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  useRealtime('propostas', () => {
+    setRefreshKey((k) => k + 1)
+  })
 
   const activeTab = location.pathname.includes('/dashboard') ? 'dashboard' : 'emitir'
 
@@ -48,7 +55,7 @@ export default function ControlePropostas() {
             activeTab !== 'emitir' && 'hidden',
           )}
         >
-          <EmitirLicitacao />
+          <EmitirLicitacao key={refreshKey} />
         </TabsContent>
         <TabsContent
           value="dashboard"

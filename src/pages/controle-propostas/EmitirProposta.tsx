@@ -1020,9 +1020,9 @@ export default function EmitirProposta() {
         setSelectedProposta(created)
         setSignatureConfirmed(true)
         setFormTouched(false)
-        toast({ title: 'Proposta criada com sucesso' })
+        toast({ title: 'Proposta criada com sucesso!' })
         loadData()
-        navigate(`/controle-propostas/proposta-pdf/${created.id}`)
+        navigate('/controle-propostas')
       }
       setIsPreviewModalOpen(false)
     } catch (e) {
