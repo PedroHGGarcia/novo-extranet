@@ -28,6 +28,7 @@ const Clientes = lazy(() => import('@/pages/ClientesWrapper'))
 const Eventos = lazy(() => import('@/pages/Eventos'))
 const ControlePropostas = lazy(() => import('@/pages/controle-propostas/ControlePropostas'))
 const PropostasCriadasPage = lazy(() => import('@/pages/controle-propostas/PropostasCriadasPage'))
+const DashboardPropostas = lazy(() => import('@/pages/controle-propostas/DashboardPropostas'))
 const EmitirPropostaPage = lazy(() => import('@/pages/controle-propostas/EmitirPropostaPage'))
 const PropostasAvancadas = lazy(() => import('@/pages/controle-propostas/PropostasAvancadas'))
 const TiposPropostas = lazy(() => import('@/pages/controle-propostas/TiposPropostas'))
@@ -253,10 +254,6 @@ const router = createBrowserRouter(
               }
             />
           </Route>
-          <Route
-            path="/controle-propostas/dashboard-geral"
-            element={<Navigate to="/dashboard" replace />}
-          />
           <Route
             path="/controle-propostas/emitir-licitacao"
             element={<Navigate to="/controle-propostas/emitir-proposta" replace />}
