@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Bell } from 'lucide-react'
+import { Bell, WifiOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -9,7 +9,8 @@ import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export function NotificationBell() {
-  const { notificacoes, naoLidas, marcarComoLida, marcarTodasComoLidas } = useNotificacoes()
+  const { notificacoes, naoLidas, connectionError, marcarComoLida, marcarTodasComoLidas } =
+    useNotificacoes()
 
   return (
     <Popover>
@@ -19,7 +20,10 @@ export function NotificationBell() {
           size="icon"
           className="relative rounded-full text-white hover:bg-white/10 hover:text-white"
         >
-          <Bell className="h-5 w-5 select-none" draggable={false} />
+          <Bell
+            className={cn('h-5 w-5 select-none', connectionError && 'text-amber-400')}
+            draggable={false}
+          />{' '}
           {naoLidas.length > 0 && (
             <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
               {naoLidas.length > 9 ? '9+' : naoLidas.length}
@@ -73,6 +77,12 @@ export function NotificationBell() {
             </div>
           )}
         </ScrollArea>
+        {connectionError && (
+          <div className="flex items-center gap-1.5 border-t border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-700">
+            <WifiOff className="h-3 w-3 shrink-0" />
+            Notificações em tempo real temporariamente indisponíveis
+          </div>
+        )}
         {notificacoes.length > 0 && (
           <div className="border-t p-2 text-center">
             <Link

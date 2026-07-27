@@ -34,7 +34,7 @@ export function useNotificacoes() {
     fetchNotificacoes()
   }, [fetchNotificacoes])
 
-  useRealtime<Notificacao>('notificacoes', fetchNotificacoes, !!user)
+  const { connectionError } = useRealtime<Notificacao>('notificacoes', fetchNotificacoes, !!user)
 
   const naoLidas = notificacoes.filter((n) => !n.lida)
 
@@ -62,6 +62,7 @@ export function useNotificacoes() {
     notificacoes,
     naoLidas,
     isLoading,
+    connectionError,
     marcarComoLida,
     marcarTodasComoLidas,
     fetchNotificacoes,
