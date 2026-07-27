@@ -253,6 +253,14 @@ const router = createBrowserRouter(
                 </LazyRoute>
               }
             />
+            <Route
+              path="/controle-propostas/dashboard"
+              element={
+                <LazyRoute>
+                  <DashboardPropostas />
+                </LazyRoute>
+              }
+            />
           </Route>
           <Route
             path="/controle-propostas/emitir-licitacao"
@@ -260,7 +268,7 @@ const router = createBrowserRouter(
           />
           <Route
             path="/controle-propostas/dashboard-licitacoes"
-            element={<Navigate to="/controle-propostas/propostas-criadas" replace />}
+            element={<Navigate to="/controle-propostas/dashboard" replace />}
           />
           <Route
             path="/controle-propostas/propostas-avancadas"
@@ -288,23 +296,27 @@ const router = createBrowserRouter(
           />
           <Route
             path="/controle-propostas/propostas-excluidas"
-            element={<Navigate to="/controle-propostas/dashboard-geral" replace />}
+            element={<Navigate to="/controle-propostas/dashboard" replace />}
           />
           <Route
             path="/controle-propostas/assinaturas"
-            element={<Navigate to="/controle-propostas/dashboard-geral" replace />}
+            element={<Navigate to="/controle-propostas/dashboard" replace />}
           />
           <Route
             path="/controle-propostas/cotacoes"
-            element={<Navigate to="/controle-propostas/dashboard-geral" replace />}
+            element={<Navigate to="/controle-propostas/dashboard" replace />}
           />
           <Route
             path="/controle-propostas/tipo-documentos"
-            element={<Navigate to="/controle-propostas/dashboard-geral" replace />}
+            element={<Navigate to="/controle-propostas/dashboard" replace />}
           />
           <Route
             path="/controle-propostas/formas-pagamento"
-            element={<Navigate to="/controle-propostas/dashboard-geral" replace />}
+            element={<Navigate to="/controle-propostas/dashboard" replace />}
+          />
+          <Route
+            path="/controle-propostas/dashboard-geral"
+            element={<Navigate to="/controle-propostas/dashboard" replace />}
           />
           <Route
             path="/produtos"

@@ -70,7 +70,6 @@ const PATH_TO_MENU_KEY: Record<string, string> = {
   '/controle-propostas/propostas-avancadas': 'propostas_avancadas',
   '/controle-propostas/tipos-propostas': 'tipos_propostas',
   '/controle-propostas/proposta-pdf': 'propostas',
-  '/controle-propostas/dashboard-geral': 'propostas',
   '/controle-propostas/dashboard': 'dashboard_licitacoes',
   '/controle-propostas': 'propostas_criadas',
   '/produtos/categorias': 'categorias',
