@@ -8,8 +8,15 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-react'
+import { Check, ChevronsUpDown, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  detectEntityType,
+  getEntityName,
+  getEntitySearchText,
+  EntityCardFields,
+  StatusBadge,
+} from '@/components/entity-fields'
 
 interface PaginatedSearchResult {
   items: any[]
@@ -27,6 +34,7 @@ interface SearchableComboboxProps {
   className?: string
   onSearch?: (query: string) => Promise<any[]>
   onPaginatedSearch?: (query: string, page: number) => Promise<PaginatedSearchResult>
+  entityType?: 'representante' | 'cliente' | 'gerente'
 }
 
 export function SearchableCombobox({
@@ -40,6 +48,7 @@ export function SearchableCombobox({
   className,
   onSearch,
   onPaginatedSearch,
+  entityType: entityTypeProp,
 }: SearchableComboboxProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -52,13 +61,20 @@ export function SearchableCombobox({
 
   const usePaginated = !!onPaginatedSearch
   const useAsync = !!onSearch || usePaginated
+  const entityType = useMemo(
+    () => entityTypeProp || detectEntityType(items) || detectEntityType(asyncItems),
+    [entityTypeProp, items, asyncItems],
+  )
 
   const localFiltered = useMemo(() => {
     if (useAsync) return items
     if (!query.trim()) return items
     const q = query.toLowerCase()
+    if (entityType) {
+      return items.filter((item) => getEntitySearchText(entityType, item).includes(q))
+    }
     return items.filter((item) => getSearchText(item).toLowerCase().includes(q))
-  }, [items, query, getSearchText, useAsync])
+  }, [items, query, getSearchText, useAsync, entityType])
 
   useEffect(() => {
     if (!usePaginated || !onPaginatedSearch) return
@@ -158,13 +174,37 @@ export function SearchableCombobox({
             className,
           )}
         >
-          <span className={cn('truncate text-left', !selectedItem && 'text-slate-400')}>
-            {selectedItem ? getLabel(selectedItem) : placeholder}
+          <span className="flex items-center gap-1 truncate text-left">
+            {selectedItem ? (
+              <>
+                <span className={cn('truncate', !selectedItem && 'text-slate-400')}>
+                  {entityType ? getEntityName(entityType, selectedItem) : getLabel(selectedItem)}
+                </span>
+                {entityType && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onChange('')
+                    }}
+                    className="p-0.5 rounded-full hover:bg-slate-200 transition-colors cursor-pointer shrink-0"
+                  >
+                    <X className="h-3 w-3 text-slate-400" />
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-slate-400">{placeholder}</span>
+            )}
           </span>
           <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-50 ml-1" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent
+        className={cn('p-0', entityType ? 'w-[500px]' : 'w-[--radix-popover-trigger-width]')}
+        align="start"
+      >
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Digite para buscar..."
@@ -187,26 +227,68 @@ export function SearchableCombobox({
             ) : (
               <>
                 <CommandGroup>
-                  {displayItems.map((item) => (
-                    <CommandItem
-                      key={item.id}
-                      value={item.id}
-                      onSelect={() => {
-                        onChange(item.id === value ? '' : item.id)
-                        setOpen(false)
-                        setQuery('')
-                      }}
-                      className="text-xs cursor-pointer"
-                    >
-                      <Check
-                        className={cn(
-                          'mr-2 h-3 w-3',
-                          value === item.id ? 'opacity-100' : 'opacity-0',
-                        )}
-                      />
-                      {getLabel(item)}
-                    </CommandItem>
-                  ))}
+                  {displayItems.map((item) => {
+                    const isSelected = value === item.id
+                    if (entityType) {
+                      return (
+                        <CommandItem
+                          key={item.id}
+                          value={item.id}
+                          onSelect={() => {
+                            onChange(item.id === value ? '' : item.id)
+                            setOpen(false)
+                            setQuery('')
+                          }}
+                          className="p-1 cursor-pointer"
+                        >
+                          <div
+                            className={cn(
+                              'flex items-start gap-3 p-2.5 rounded-lg border text-left transition-all duration-150 w-full',
+                              isSelected
+                                ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                                : 'border-transparent hover:border-slate-200 hover:bg-slate-50',
+                            )}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-foreground truncate">
+                                  {getEntityName(entityType, item)}
+                                </span>
+                                <StatusBadge status={item.status} />
+                              </div>
+                              <div className="flex flex-col gap-0.5 mt-0.5">
+                                <EntityCardFields type={entityType} item={item} />
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <div className="shrink-0">
+                                <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                                  <Check className="h-3 w-3 text-white" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </CommandItem>
+                      )
+                    }
+                    return (
+                      <CommandItem
+                        key={item.id}
+                        value={item.id}
+                        onSelect={() => {
+                          onChange(item.id === value ? '' : item.id)
+                          setOpen(false)
+                          setQuery('')
+                        }}
+                        className="text-xs cursor-pointer"
+                      >
+                        <Check
+                          className={cn('mr-2 h-3 w-3', isSelected ? 'opacity-100' : 'opacity-0')}
+                        />
+                        {getLabel(item)}
+                      </CommandItem>
+                    )
+                  })}
                 </CommandGroup>
                 {loadingMore && (
                   <div className="flex items-center justify-center py-2">
