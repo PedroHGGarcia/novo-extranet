@@ -53,7 +53,7 @@ export default function EmitirPropostaPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-slate-50 overflow-hidden">
+    <div className="emitir-proposta-theme flex flex-col h-[calc(100vh-3.5rem)] bg-slate-50 overflow-hidden">
       <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button

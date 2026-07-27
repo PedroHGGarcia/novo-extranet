@@ -605,7 +605,7 @@ export function EmitirPropostaForm({
         <div className="mb-6 w-full border-b border-slate-200 pb-4">{renderActionBar()}</div>
 
         <div className="mb-4 w-full p-4 bg-primary/5 border border-primary/20 rounded-lg">
-          <span className="text-xs font-bold text-[#337ab7] uppercase tracking-wider">
+          <span className="text-xs font-bold text-primary uppercase tracking-wider">
             Responsável Interno: {selectedProposta?.expand?.user?.name || user?.name || '-'}{' '}
             <span className="font-normal text-slate-500">
               (Setor: {selectedProposta?.expand?.user?.setor || user?.setor || 'Comercial'})
@@ -1005,7 +1005,7 @@ export function EmitirPropostaForm({
                           name={`acc_${idx}`}
                           checked={acc.estado === 'incluir'}
                           onChange={() => updateAccEstado(idx, 'incluir')}
-                          className="w-3.5 h-3.5 accent-[#337ab7] cursor-pointer"
+                          className="w-3.5 h-3.5 accent-primary cursor-pointer"
                         />
                       </td>
                       <td className="py-2.5 px-4 text-center">
@@ -1014,7 +1014,7 @@ export function EmitirPropostaForm({
                           name={`acc_${idx}`}
                           checked={acc.estado === 'nao_exibir'}
                           onChange={() => updateAccEstado(idx, 'nao_exibir')}
-                          className="w-3.5 h-3.5 accent-[#337ab7] cursor-pointer"
+                          className="w-3.5 h-3.5 accent-primary cursor-pointer"
                         />
                       </td>
                       <td className="py-2.5 px-4 text-center">
@@ -1023,7 +1023,7 @@ export function EmitirPropostaForm({
                           name={`acc_${idx}`}
                           checked={acc.estado === 'exibir'}
                           onChange={() => updateAccEstado(idx, 'exibir')}
-                          className="w-3.5 h-3.5 accent-[#337ab7] cursor-pointer"
+                          className="w-3.5 h-3.5 accent-primary cursor-pointer"
                         />
                       </td>
                     </tr>
@@ -1187,7 +1187,7 @@ export function EmitirPropostaForm({
       </div>
 
       <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-100">
+        <DialogContent className="emitir-proposta-theme max-w-5xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-100">
           <DialogHeader className="p-4 pb-2 shrink-0 bg-white border-b border-slate-200 flex flex-row items-center justify-between">
             <DialogTitle className="text-lg font-normal text-primary">
               Pré-visualização do PDF
@@ -1294,7 +1294,7 @@ export function EmitirPropostaForm({
       </Dialog>
 
       <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="emitir-proposta-theme sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Cancelar Proposta</DialogTitle>
           </DialogHeader>
