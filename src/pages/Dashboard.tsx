@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { format } from 'date-fns'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import pb from '@/lib/pocketbase/client'
@@ -9,11 +11,12 @@ import {
   Trophy,
   FileText,
   PieChart as PieChartIcon,
-  CheckCircle,
   DollarSign,
   Percent,
   BarChart3,
   TrendingDown,
+  ArrowRight,
+  ExternalLink,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -26,6 +29,25 @@ import {
 } from '@/components/ui/table'
 import { CurrencyWidget } from '@/components/CurrencyWidget'
 import { ProjectsWidget } from '@/components/ProjectsWidget'
+import { AdvanceProposalDialog } from '@/components/AdvanceProposalDialog'
+import { ProposalHistory } from '@/components/ProposalHistory'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { useToast } from '@/components/ui/use-toast'
+import { updateProposta } from '@/services/propostas'
+import { getRepresentantes } from '@/services/cadastros'
 import {
   PieChart,
   Pie,
@@ -40,13 +62,6 @@ import {
   YAxis,
 } from 'recharts'
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 
 function StatusBadge({ status }: { status: string }) {
   let color = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
@@ -57,7 +72,6 @@ function StatusBadge({ status }: { status: string }) {
   if (status === 'Recusada') color = 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400'
   if (status === 'Excluída')
     color = 'bg-slate-200 text-slate-500 dark:bg-slate-800/80 dark:text-slate-400'
-
   return (
     <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap', color)}>
       {status}
@@ -69,12 +83,11 @@ function getDateRange(period: string) {
   const now = new Date()
   let start = new Date(now)
   let end = new Date(now)
-
   if (period === 'este_mes') {
     start = new Date(now.getFullYear(), now.getMonth(), 1)
   } else if (period === 'mes_passado') {
     start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59)
+    end = new Date(now.getFullYear(), now.getMonth(), 0)
   } else if (period === 'ultimos_3_meses') {
     start = new Date(now.getFullYear(), now.getMonth() - 3, 1)
   } else if (period === 'este_ano') {
@@ -82,7 +95,6 @@ function getDateRange(period: string) {
   } else if (period === 'todos') {
     start = new Date(2000, 0, 1)
   }
-
   return { start, end }
 }
 
@@ -96,11 +108,17 @@ const chartConfig = {
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const { toast } = useToast()
 
   const [notificacoes, setNotificacoes] = useState<any[]>([])
   const [eventos, setEventos] = useState<any[]>([])
   const [configs, setConfigs] = useState<Record<string, boolean>>({})
   const [period, setPeriod] = useState('este_mes')
+  const [representantes, setRepresentantes] = useState<any[]>([])
+  const [selectedRepresentante, setSelectedRepresentante] = useState<string>('todos')
+  const [selectedProposta, setSelectedProposta] = useState<any>(null)
+  const [avancarPropostaItem, setAvancarPropostaItem] = useState<any>(null)
+  const [novoStatus, setNovoStatus] = useState<string>('')
 
   const [metrics, setMetrics] = useState({
     representativesRanking: [] as {
@@ -119,28 +137,46 @@ export default function Dashboard() {
     totalFinal: 0,
   })
 
+  useEffect(() => {
+    const loadRepresentantes = async () => {
+      try {
+        const reps = await getRepresentantes()
+        setRepresentantes(reps.filter((r: any) => r.status === 'Ativo'))
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    loadRepresentantes()
+  }, [])
+
   const loadData = async () => {
     try {
       const todayStart = new Date()
       todayStart.setHours(0, 0, 0, 0)
-      const startTodayStr = todayStart.toISOString().replace('T', ' ')
+      const startTodayStr = format(todayStart, 'yyyy-MM-dd')
 
       let filterStr = ''
       if (period !== 'todos') {
         const { start, end } = getDateRange(period)
-        const startStr = start.toISOString().replace('T', ' ')
+        const startStr = format(start, 'yyyy-MM-dd')
         if (period === 'mes_passado') {
-          const endStr = end.toISOString().replace('T', ' ')
-          filterStr = `created >= "${startStr}" && created <= "${endStr}"`
+          const endStr = format(end, 'yyyy-MM-dd')
+          filterStr = `dt_cad >= "${startStr}" && dt_cad <= "${endStr}"`
         } else {
-          filterStr = `created >= "${startStr}"`
+          filterStr = `dt_cad >= "${startStr}"`
         }
+      }
+
+      if (selectedRepresentante !== 'todos') {
+        filterStr = filterStr
+          ? `${filterStr} && representante = "${selectedRepresentante}"`
+          : `representante = "${selectedRepresentante}"`
       }
 
       const todasPropostas = await pb.collection('propostas').getFullList({
         filter: filterStr,
-        expand: 'representante,cliente',
-        sort: '-created',
+        expand: 'representante,cliente,user,ultimo_usuario_status',
+        sort: '-dt_cad',
       })
 
       const repStats: Record<string, { name: string; totalSales: number; totalProposals: number }> =
@@ -152,14 +188,11 @@ export default function Dashboard() {
       todasPropostas.forEach((p) => {
         const repId = p.representante
         const repName = p.expand?.representante?.fantasia
-
         statusCount[p.status] = (statusCount[p.status] || 0) + 1
-
         if (p.status === 'Aprovada') {
           totalAprovada++
           valorAprovado += p.valor_final || 0
         }
-
         if (repId && repName) {
           if (!repStats[repId]) {
             repStats[repId] = { name: repName, totalSales: 0, totalProposals: 0 }
@@ -191,7 +224,8 @@ export default function Dashboard() {
 
       const monthlyMap: Record<string, { aprovada: number; outros: number }> = {}
       todasPropostas.forEach((p) => {
-        const date = new Date(p.created)
+        const rawDate = p.dt_cad || p.created
+        const date = new Date(rawDate)
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
         if (!monthlyMap[monthKey]) monthlyMap[monthKey] = { aprovada: 0, outros: 0 }
         if (p.status === 'Aprovada') {
@@ -228,7 +262,7 @@ export default function Dashboard() {
 
       setMetrics({
         representativesRanking: ranking,
-        latestProposals: todasPropostas.slice(0, 5),
+        latestProposals: todasPropostas.slice(0, 10),
         totalCriadas: todasPropostas.length,
         taxaAprovacao,
         valorAprovado,
@@ -268,7 +302,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData()
-  }, [user, period])
+  }, [user, period, selectedRepresentante])
 
   useRealtime('eventos', () => loadData())
   useRealtime('notificacoes', () => loadData())
@@ -276,6 +310,22 @@ export default function Dashboard() {
   useRealtime('propostas', () => loadData())
 
   const isVisible = (componente: string) => configs[componente] !== false
+
+  const handleAvancarProposta = async () => {
+    if (!avancarPropostaItem) return
+    try {
+      await updateProposta(avancarPropostaItem.id, {
+        status: novoStatus,
+        ultimo_usuario_status: user?.id,
+        data_alteracao_status: format(new Date(), 'yyyy-MM-dd'),
+      })
+      toast({ title: 'Status da proposta atualizado com sucesso' })
+      setAvancarPropostaItem(null)
+      loadData()
+    } catch (e) {
+      toast({ title: 'Erro ao atualizar status', variant: 'destructive' })
+    }
+  }
 
   return (
     <div className="space-y-8 animate-fade-in pb-8">
@@ -288,19 +338,42 @@ export default function Dashboard() {
             Aqui está o resumo de performance de vendas.
           </p>
         </div>
-        <div className="w-full sm:w-64">
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-full bg-white dark:bg-slate-900">
-              <SelectValue placeholder="Selecione o período" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="este_mes">Este Mês</SelectItem>
-              <SelectItem value="mes_passado">Mês Passado</SelectItem>
-              <SelectItem value="ultimos_3_meses">Últimos 3 Meses</SelectItem>
-              <SelectItem value="este_ano">Este Ano</SelectItem>
-              <SelectItem value="todos">Todo o Período</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="w-full sm:w-56">
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1 block">
+              Representante
+            </span>
+            <Select value={selectedRepresentante} onValueChange={setSelectedRepresentante}>
+              <SelectTrigger className="w-full bg-white dark:bg-slate-900">
+                <SelectValue placeholder="Selecione o representante" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                {representantes.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.fantasia || r.razao_social || 'Sem nome'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-full sm:w-48">
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1 block">
+              Período
+            </span>
+            <Select value={period} onValueChange={setPeriod}>
+              <SelectTrigger className="w-full bg-white dark:bg-slate-900">
+                <SelectValue placeholder="Selecione o período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="este_mes">Este Mês</SelectItem>
+                <SelectItem value="mes_passado">Mês Passado</SelectItem>
+                <SelectItem value="ultimos_3_meses">Últimos 3 Meses</SelectItem>
+                <SelectItem value="este_ano">Este Ano</SelectItem>
+                <SelectItem value="todos">Todo o Período</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -320,7 +393,6 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-
         <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800">
           <CardContent className="p-6 flex items-center gap-4">
             <div className="p-3 bg-brand-green/10 dark:bg-brand-green/20 rounded-full">
@@ -336,7 +408,6 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-
         <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800">
           <CardContent className="p-6 flex items-center gap-4">
             <div className="p-3 bg-brand-orange/10 dark:bg-brand-orange/20 rounded-full">
@@ -356,13 +427,8 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="mt-4">
-        <CurrencyWidget />
-      </div>
-
-      <div className="mt-4">
-        <ProjectsWidget />
-      </div>
+      <CurrencyWidget />
+      <ProjectsWidget />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="rounded-2xl shadow-sm border-slate-200 dark:border-slate-800 lg:col-span-1 flex flex-col">
@@ -413,7 +479,7 @@ export default function Dashboard() {
               Ranking de Representantes
             </CardTitle>
             <CardDescription>
-              Top 10 representantes com maior volume de vendas em propostas aprovadas no período
+              Top 10 representantes com maior volume de vendas aprovadas no período
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-2">
@@ -649,10 +715,9 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                  {new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  }).format(metrics.totalSemDesconto)}
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                    metrics.totalSemDesconto,
+                  )}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">Soma total dos valores originais</p>
               </div>
@@ -664,18 +729,16 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                  {new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  }).format(metrics.totalFinal)}
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                    metrics.totalFinal,
+                  )}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
                   Impacto total de desconto:{' '}
                   <span className="font-semibold text-brand-orange">
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    }).format(metrics.totalSemDesconto - metrics.totalFinal)}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                      metrics.totalSemDesconto - metrics.totalFinal,
+                    )}
                   </span>
                 </p>
               </div>
@@ -690,55 +753,109 @@ export default function Dashboard() {
             <FileText className="h-5 w-5 text-brand-blue" />
             Últimas Propostas
           </CardTitle>
-          <CardDescription>As 5 propostas mais recentes do período selecionado</CardDescription>
+          <CardDescription>
+            As 10 propostas mais recentes do período selecionado — clique para ver o histórico
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {metrics.latestProposals.length === 0 ? (
             <p className="text-sm text-slate-500">Nenhuma proposta recente.</p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
-              <Table>
-                <TableHeader className="bg-slate-50 dark:bg-slate-900/50">
-                  <TableRow>
-                    <TableHead>Número</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Representante</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {metrics.latestProposals.map((p) => (
-                    <TableRow
-                      key={p.id}
-                      className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
-                    >
-                      <TableCell className="font-medium text-brand-blue">
+            <div className="space-y-3">
+              {metrics.latestProposals.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex flex-col p-4 border border-slate-100 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+                  onClick={() => setSelectedProposta(p)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-semibold text-sm text-slate-800 dark:text-slate-200">
                         {p.numero_proposta}
-                      </TableCell>
-                      <TableCell className="text-slate-700 dark:text-slate-300">
-                        {p.expand?.cliente?.fantasia || 'N/A'}
-                      </TableCell>
-                      <TableCell className="text-slate-600 dark:text-slate-400">
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-0.5 truncate max-w-[200px]">
+                        {p.expand?.cliente?.fantasia || 'Cliente não informado'}
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
                         {p.expand?.representante?.fantasia || 'N/A'}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
+                      </div>
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1.5">
+                      <StatusBadge status={p.status || 'Em Análise'} />
+                      <div className="text-[10px] text-slate-400 font-medium">
                         {new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL',
-                        }).format(p.valor_final || 0)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <StatusBadge status={p.status} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        }).format(p.valor_final || p.valor_atual || 0)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-2.5 flex items-center gap-3">
+                    {p.status !== 'Excluída' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setAvancarPropostaItem(p)
+                          setNovoStatus(
+                            p.status === 'Em Análise' ? 'Aprovada' : p.status || 'Em Análise',
+                          )
+                        }}
+                        className="text-[11px] text-amber-500 font-medium flex items-center hover:text-amber-600 transition-colors"
+                      >
+                        <ArrowRight className="w-3 h-3 mr-1" /> Avançar Proposta
+                      </button>
+                    )}
+                    <Link
+                      to="/controle-propostas/propostas-criadas"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-[11px] text-brand-blue font-medium flex items-center hover:text-blue-700 transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" /> Ver / Editar
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <Sheet open={!!selectedProposta} onOpenChange={(o) => !o && setSelectedProposta(null)}>
+        <SheetContent className="sm:max-w-md w-[90vw] overflow-y-auto">
+          <SheetHeader className="pb-4 border-b dark:border-slate-800">
+            <SheetTitle>Proposta {selectedProposta?.numero_proposta}</SheetTitle>
+            <SheetDescription className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Cliente: {selectedProposta?.expand?.cliente?.fantasia || 'Não informado'}
+              <br />
+              Data:{' '}
+              {selectedProposta?.dt_cad
+                ? format(new Date(selectedProposta.dt_cad), 'dd/MM/yyyy')
+                : ''}
+              {selectedProposta?.expand?.ultimo_usuario_status?.name && (
+                <>
+                  <br />
+                  Última alteração por:{' '}
+                  <span className="font-medium text-slate-900 dark:text-slate-200">
+                    {selectedProposta.expand.ultimo_usuario_status.name}
+                  </span>
+                </>
+              )}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6">
+            <ProposalHistory proposalId={selectedProposta?.id} />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <AdvanceProposalDialog
+        open={!!avancarPropostaItem}
+        onOpenChange={(open) => !open && setAvancarPropostaItem(null)}
+        proposta={avancarPropostaItem}
+        novoStatus={novoStatus}
+        onStatusChange={setNovoStatus}
+        onConfirm={handleAvancarProposta}
+      />
     </div>
   )
 }

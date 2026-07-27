@@ -78,10 +78,9 @@ const menuItems: MenuItem[] = [
   },
   {
     title: 'Controle de Propostas',
-    url: '/controle-propostas/dashboard-geral',
+    url: '/controle-propostas/propostas-criadas',
     icon: FileText,
     sub: [
-      { title: 'Dashboard', url: '/controle-propostas/dashboard-geral', menuKey: 'propostas' },
       {
         title: 'Propostas Criadas',
         url: '/controle-propostas/propostas-criadas',
