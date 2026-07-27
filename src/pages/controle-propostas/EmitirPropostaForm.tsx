@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { format } from 'date-fns'
-import { List, Eye, FileText, PenTool, CheckCircle } from 'lucide-react'
+import { List, Eye, FileText, PenTool, CheckCircle, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
@@ -71,8 +71,12 @@ export function EmitirPropostaForm({
   useEffect(() => {
     let mounted = true
     fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
       .then((d) => {
+        if (!d?.USDBRL?.bid || !d?.EURBRL?.bid) throw new Error('Invalid response')
         if (mounted)
           setExchangeRates({
             USD: parseFloat(d.USDBRL.bid),
@@ -937,7 +941,10 @@ export function EmitirPropostaForm({
               <span>R$: 1,00</span>
             </>
           ) : (
-            <span className="text-rose-600">Cotações indisponíveis</span>
+            <span className="flex items-center gap-1.5 text-amber-600">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              Taxa de câmbio temporariamente indisponível
+            </span>
           )}
         </div>
 
