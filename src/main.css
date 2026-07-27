@@ -51,69 +51,6 @@
     --chart-4: 42 100% 50%;
     --chart-5: 33 100% 50%;
 
-    /* ============================================================
-       Brand Colors for Dashboard
-       ============================================================ */
-=======
-    --chart-4: 42 100% 50%;
-    --chart-5: 33 100% 50%;
-  }
-
-  /* ============================================================
-     Emitir Proposta — scoped teal theme
-     Overrides --primary to a vibrant teal (#0d9488 / teal-600)
-     only within elements that carry the .emitir-proposta-theme
-     class. Does NOT affect any other page in the application.
-     ============================================================ */
-  .emitir-proposta-theme {
-    --primary: 173 80% 30%;
-    --primary-foreground: 0 0% 100%;
-    --ring: 173 80% 30%;
-  }============================================================
-      */
-      .emitir-proposta-theme {
-      --primary: 173 80% 30%;
-      --primary-foreground: 0 0% 100%;
-      --ring: 173 80% 30%;
-    }
-
-    /* ============================================================
-       Brand Colors for Dashboard
-       ============================================================ */
-    --brand-green: 147 60% 15%;
-=======
-    --chart-4: 42 100% 50%;
-    --chart-5: 33 100% 50%;
-
-    /* ============================================================
-       Brand Colors for Dashboard
-       ============================================================ */
-    --brand-green: 147 60% 15%;
-=======
-    --chart-5: 33 100% 50%;
-  }
-
-  /* ============================================================
-     Emitir Proposta — scoped teal theme
-     Overrides --primary to a vibrant teal (#0d9488 / teal-600)
-     only within elements that carry the .emitir-proposta-theme
-     class. Does NOT affect any other page in the application.
-     ============================================================ */
-  .emitir-proposta-theme {
-    --primary: 173 80% 30%;
-    --primary-foreground: 0 0% 100%;
-    --ring: 173 80% 30%;
-  }============================================================
-      */
-      .emitir-proposta-theme {
-      --primary: 173 80% 30%;
-      --primary-foreground: 0 0% 100%;
-      --ring: 173 80% 30%;
-    }
-
-    /* ============================================================
-       Brand Colors for Dashboard
-       ============================================================ */
     --brand-green: 147 60% 15%;
     --brand-sidebar: 147 60% 15%;
     --brand-sidebar-header: 147 55% 10%;
@@ -325,8 +262,6 @@
 /* ============================================================
    EmitirProposta visual alignment with Cadastros module
    Remaps legacy #337ab7 blue to primary brand green
-   Placed outside @layer so these override Tailwind utilities
-   by source order (same specificity, later in cascade).
    ============================================================ */
 
 .bg-\[\#337ab7\] {
@@ -381,8 +316,7 @@
 /* ============================================================
    Legacy color unification — map all hardcoded hex colors to
    the centralized CSS variables so every screen shares the
-   same brand palette.  Follows the same pattern as the
-   #337ab7 overrides above.
+   same brand palette.
    ============================================================ */
 
 /* #3b82f6 → primary (Gerentes, Regiões) */
