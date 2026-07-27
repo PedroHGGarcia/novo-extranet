@@ -83,37 +83,42 @@ export async function createProjetoWithPropostas(
   data: Partial<Projeto>,
   propostaIds: string[],
 ): Promise<{ projeto: Projeto; linkedCount: number }> {
-  const projeto = await createProjeto(data)
-  if (propostaIds.length === 0) return { projeto, linkedCount: 0 }
-
-  const linkedIds: string[] = []
   try {
-    for (const id of propostaIds) {
-      await pb.collection('propostas').update(id, { projeto: projeto.id })
-      linkedIds.push(id)
-    }
+    const res = await pb.send('/backend/v1/projetos/create-with-propostas', {
+      method: 'POST',
+      body: JSON.stringify({
+        nome: data.nome,
+        descricao: data.descricao || '',
+        cliente: data.cliente,
+        status: data.status || 'Em Andamento',
+        propostas: propostaIds || [],
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    return { projeto: res.projeto, linkedCount: res.linkedCount || 0 }
   } catch (err: any) {
-    let rollbackFailed = false
-    for (const id of linkedIds) {
+    if (err?.status === 404 || err?.status === 405) {
+      const projeto = await createProjeto(data)
+      if (!propostaIds || propostaIds.length === 0) return { projeto, linkedCount: 0 }
+
+      const linkedIds: string[] = []
       try {
-        await pb.collection('propostas').update(id, { projeto: null })
-      } catch {
-        rollbackFailed = true
+        for (const id of propostaIds) {
+          await pb.collection('propostas').update(id, { projeto: projeto.id })
+          linkedIds.push(id)
+        }
+      } catch (linkErr: any) {
+        try {
+          await pb.collection('projetos').delete(projeto.id)
+        } catch {
+          /* rollback failed */
+        }
+        throw new Error(
+          'Falha ao vincular propostas ao projeto. A criação do projeto foi cancelada.',
+        )
       }
-    }
-    try {
-      await pb.collection('projetos').delete(projeto.id)
-    } catch {
-      rollbackFailed = true
-    }
-    if (!err.isLinkError) {
-      err.isLinkError = true
-    }
-    if (rollbackFailed) {
-      err.rollbackFailed = true
-      err.projetoId = projeto.id
+      return { projeto, linkedCount: linkedIds.length }
     }
     throw err
   }
-  return { projeto, linkedCount: linkedIds.length }
 }
