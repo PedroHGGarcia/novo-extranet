@@ -49,6 +49,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { DialogFooter } from '@/components/ui/dialog'
 import { SignaturePad } from '@/components/SignaturePad'
 import { SearchableCombobox } from '@/components/SearchableCombobox'
+import { VersionSelector } from '@/components/VersionSelector'
 import { getErrorMessage } from '@/lib/pocketbase/errors'
 import { getProjetosByCliente } from '@/services/projetos'
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
@@ -1764,18 +1765,12 @@ export default function EmitirProposta() {
               </div>
               <div className="flex flex-col w-full">
                 <label className={labelClass}>Versão</label>
-                <select
-                  className={cn(inputClass, !formData.versao && 'border-amber-300 bg-amber-50/30')}
+                <VersionSelector
+                  versions={versoes}
                   value={formData.versao || ''}
-                  onChange={(e) => handleVersaoChange(e.target.value)}
-                >
-                  <option value=""></option>
-                  {versoes.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.nome}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(id) => handleVersaoChange(id)}
+                  className={cn(!formData.versao && 'border-amber-300 bg-amber-50/30')}
+                />
                 {!formData.versao && (
                   <span className="text-[10px] text-amber-600 mt-0.5">Versão é obrigatória</span>
                 )}
