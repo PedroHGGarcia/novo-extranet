@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getProjeto, type Projeto } from '@/services/projetos'
 import { getPropostasPaginated, createPropostaRevision, type Proposta } from '@/services/propostas'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -60,6 +61,7 @@ export function ProjectDetail({
   const [propostas, setPropostas] = useState<Proposta[]>([])
   const [loading, setLoading] = useState(true)
   const [cloningId, setCloningId] = useState<string | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const loadData = async () => {
     try {
@@ -78,8 +80,19 @@ export function ProjectDetail({
     loadData()
   }, [projeto.id])
 
-  useRealtime('propostas', loadData)
-  useRealtime('projetos', loadData)
+  const debouncedReload = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => loadData(), 300)
+  }
+
+  useRealtime('propostas', debouncedReload)
+  useRealtime('projetos', debouncedReload)
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
 
   const totalProjeto = propostas
     .filter((p) => p.status !== 'Excluída')
@@ -173,18 +186,26 @@ export function ProjectDetail({
         </CardHeader>
         <CardContent className="pt-4">
           {loading ? (
-            <p className="text-center text-muted-foreground py-8">Carregando...</p>
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
           ) : propostas.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Nenhuma proposta vinculada.</p>
+            <p className="text-center text-muted-foreground py-8">
+              Nenhuma proposta vinculada a este projeto.
+            </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Número</TableHead>
+                  <TableHead>Cliente</TableHead>
                   <TableHead>Revisão</TableHead>
                   <TableHead>Versão</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor Final</TableHead>
+                  <TableHead>Data de Criação</TableHead>
                   <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -210,6 +231,9 @@ export function ProjectDetail({
                       </div>
                     </TableCell>
                     <TableCell>
+                      {p.expand?.cliente?.fantasia || p.cliente_original || '-'}
+                    </TableCell>
+                    <TableCell>
                       <Badge variant="outline" className="text-xs">
                         {p.revisao || 'A'}
                       </Badge>
@@ -229,6 +253,9 @@ export function ProjectDetail({
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(p.valor_final)}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(p.created).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center gap-1">

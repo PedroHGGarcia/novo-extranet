@@ -79,6 +79,36 @@ export async function getProposalCountsForProjects(
   return result
 }
 
+export async function updateProjetoWithPropostas(
+  projetoId: string,
+  data: Partial<Projeto>,
+  propostaIds: string[],
+  currentPropostaIds: string[],
+): Promise<{ linkedCount: number; unlinkedCount: number }> {
+  await updateProjeto(projetoId, data)
+
+  const toLink = propostaIds.filter((id) => !currentPropostaIds.includes(id))
+  const toUnlink = currentPropostaIds.filter((id) => !propostaIds.includes(id))
+
+  for (const id of toLink) {
+    try {
+      await pb.collection('propostas').update(id, { projeto: projetoId })
+    } catch {
+      /* continue linking others */
+    }
+  }
+
+  for (const id of toUnlink) {
+    try {
+      await pb.collection('propostas').update(id, { projeto: null })
+    } catch {
+      /* continue unlinking others */
+    }
+  }
+
+  return { linkedCount: toLink.length, unlinkedCount: toUnlink.length }
+}
+
 export async function createProjetoWithPropostas(
   data: Partial<Projeto>,
   propostaIds: string[],

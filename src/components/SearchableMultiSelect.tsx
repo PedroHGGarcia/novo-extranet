@@ -22,6 +22,7 @@ interface SearchableMultiSelectProps {
   onPaginatedSearch: (query: string, page: number) => Promise<PaginatedSearchResult>
   refreshSignal?: number
   dependentValue?: string
+  initialItems?: any[]
 }
 
 export function SearchableMultiSelect({
@@ -35,6 +36,7 @@ export function SearchableMultiSelect({
   onPaginatedSearch,
   refreshSignal = 0,
   dependentValue,
+  initialItems,
 }: SearchableMultiSelectProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -45,6 +47,18 @@ export function SearchableMultiSelect({
   const [hasMore, setHasMore] = useState(false)
   const [itemCache, setItemCache] = useState<Record<string, any>>({})
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  useEffect(() => {
+    if (initialItems && initialItems.length > 0) {
+      setItemCache((prev) => {
+        const next = { ...prev }
+        for (const item of initialItems) {
+          if (item && item.id) next[item.id] = item
+        }
+        return next
+      })
+    }
+  }, [initialItems])
 
   const doSearch = useCallback(
     async (q: string, p: number, append: boolean) => {

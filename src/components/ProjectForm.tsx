@@ -1,7 +1,13 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useAuth } from '@/hooks/use-auth'
-import { updateProjeto, createProjetoWithPropostas, type Projeto } from '@/services/projetos'
-import { extractFieldErrors, getErrorMessage, type FieldErrors } from '@/lib/pocketbase/errors'
+import {
+  updateProjeto,
+  updateProjetoWithPropostas,
+  createProjetoWithPropostas,
+  type Projeto,
+} from '@/services/projetos'
+import { getUnlinkedPropostasPaginated, getPropostasByProjeto } from '@/services/propostas'
+import { extractFieldErrors, type FieldErrors } from '@/lib/pocketbase/errors'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,9 +25,11 @@ import { useToast } from '@/hooks/use-toast'
 import { SearchableCombobox } from '@/components/SearchableCombobox'
 import { SearchableMultiSelect } from '@/components/SearchableMultiSelect'
 import { searchClientesPaginated } from '@/services/cadastros'
-import { getUnlinkedPropostasPaginated } from '@/services/propostas'
 import { useRealtime } from '@/hooks/use-realtime'
 import pb from '@/lib/pocketbase/client'
+
+const formatCurrency = (v?: number) =>
+  v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v) : '-'
 
 export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBack: () => void }) {
   const { user } = useAuth()
@@ -37,6 +45,7 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
     status: 'Em Andamento',
   })
   const [selectedPropostas, setSelectedPropostas] = useState<string[]>([])
+  const [initialPropostas, setInitialPropostas] = useState<any[]>([])
   const [propostasRefreshSignal, setPropostasRefreshSignal] = useState(0)
 
   useRealtime('propostas', () => {
@@ -44,13 +53,31 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
   })
 
   useEffect(() => {
+    if (!projeto?.id) {
+      setInitialPropostas([])
+      setSelectedPropostas([])
+      return
+    }
+    getPropostasByProjeto(projeto.id)
+      .then((props) => {
+        setInitialPropostas(props)
+        setSelectedPropostas(props.map((p) => p.id))
+      })
+      .catch(() => {})
+  }, [projeto?.id])
+
+  useEffect(() => {
+    if (projeto) return
     setSelectedPropostas([])
-  }, [formData.cliente])
+  }, [formData.cliente, projeto])
 
   const handlePropostaSearch = useCallback(
-    (query: string, page: number) => getUnlinkedPropostasPaginated(query, page, formData.cliente),
-    [formData.cliente],
+    (query: string, page: number) =>
+      getUnlinkedPropostasPaginated(query, page, formData.cliente, projeto?.id),
+    [formData.cliente, projeto?.id],
   )
+
+  const initialPropostaIds = useMemo(() => initialPropostas.map((p) => p.id), [initialPropostas])
 
   const isDirty = useMemo(() => {
     if (!projeto) return true
@@ -64,13 +91,17 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
     const initCliente = projeto.cliente || ''
     const initStatus = projeto.status || 'Em Andamento'
 
-    return (
+    const fieldChanged =
       normNome !== initNome ||
       normDesc !== initDesc ||
       normCliente !== initCliente ||
       normStatus !== initStatus
-    )
-  }, [formData, projeto])
+
+    const currentSorted = [...selectedPropostas].sort().join(',')
+    const initialSorted = [...initialPropostaIds].sort().join(',')
+
+    return fieldChanged || currentSorted !== initialSorted
+  }, [formData, projeto, selectedPropostas, initialPropostaIds])
 
   useEffect(() => {
     if (projeto) {
@@ -139,9 +170,18 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
 
     try {
       if (projeto) {
-        await updateProjeto(projeto.id, payload)
+        const { linkedCount, unlinkedCount } = await updateProjetoWithPropostas(
+          projeto.id,
+          payload,
+          selectedPropostas,
+          initialPropostaIds,
+        )
         toast({
           title: 'Projeto salvo com sucesso!',
+          description:
+            linkedCount > 0 || unlinkedCount > 0
+              ? `${linkedCount} proposta(s) vinculada(s), ${unlinkedCount} desvinculada(s).`
+              : undefined,
           className: 'bg-emerald-600 text-white border-emerald-700',
         })
       } else {
@@ -274,33 +314,34 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
             </Select>
             {fieldErrors.status && <p className="text-xs text-destructive">{fieldErrors.status}</p>}
           </div>
-          {!projeto && (
-            <div className="space-y-2 md:col-span-2">
-              <Label>Vincular Propostas</Label>
-              <SearchableMultiSelect
-                value={selectedPropostas}
-                onChange={setSelectedPropostas}
-                getLabel={(p: any) => p.numero_proposta || 'Sem número'}
-                getSubLabel={(p: any) => p.expand?.cliente?.fantasia || 'Sem cliente'}
-                placeholder={
-                  formData.cliente
-                    ? 'Selecionar propostas para vincular...'
-                    : 'Selecione um cliente primeiro'
-                }
-                emptyMessage={
-                  formData.cliente
-                    ? 'Nenhuma proposta disponível para este cliente.'
-                    : 'Selecione um cliente para ver propostas.'
-                }
-                onPaginatedSearch={handlePropostaSearch}
-                refreshSignal={propostasRefreshSignal}
-                dependentValue={formData.cliente}
-              />
-              <p className="text-xs text-muted-foreground">
-                Apenas propostas sem projeto vinculado são exibidas.
-              </p>
-            </div>
-          )}
+          <div className="space-y-2 md:col-span-2">
+            <Label>Vincular Propostas</Label>
+            <SearchableMultiSelect
+              value={selectedPropostas}
+              onChange={setSelectedPropostas}
+              getLabel={(p: any) => p.numero_proposta || 'Sem número'}
+              getSubLabel={(p: any) =>
+                `${p.expand?.cliente?.fantasia || 'Sem cliente'} • ${formatCurrency(p.valor_final)}`
+              }
+              placeholder={
+                formData.cliente
+                  ? 'Selecionar propostas para vincular...'
+                  : 'Selecione um cliente primeiro'
+              }
+              emptyMessage={
+                formData.cliente
+                  ? 'Nenhuma proposta disponível para este cliente.'
+                  : 'Selecione um cliente para ver propostas.'
+              }
+              onPaginatedSearch={handlePropostaSearch}
+              refreshSignal={propostasRefreshSignal}
+              dependentValue={formData.cliente}
+              initialItems={initialPropostas}
+            />
+            <p className="text-xs text-muted-foreground">
+              Apenas propostas sem projeto vinculado (ou já vinculadas a este projeto) são exibidas.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
