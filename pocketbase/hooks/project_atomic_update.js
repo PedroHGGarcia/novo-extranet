@@ -36,6 +36,8 @@ routerAdd(
     var unlinkedCount = 0
 
     // Step 1: Save the project record directly — not inside a transaction.
+    // This ensures created/updated autodate fields are properly populated,
+    // consistent with the creation hook's persistence pattern.
     try {
       if (nome) projetoRecord.set('nome', nome)
       projetoRecord.set('descricao', descricao)

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import {
   updateProjeto,
@@ -33,6 +34,7 @@ const formatCurrency = (v?: number) =>
 
 export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBack: () => void }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const isSubmittingRef = useRef(false)
@@ -192,6 +194,7 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
           className: 'bg-emerald-600 text-white border-emerald-700',
         })
         setSelectedPropostas([])
+        navigate('/projetos')
       }
       onBack()
     } catch (e: any) {

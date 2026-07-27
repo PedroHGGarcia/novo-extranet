@@ -31,8 +31,10 @@ routerAdd(
     var linkedCount = 0
 
     // Step 1: Save the project record directly — not inside a transaction.
+    // This ensures created/updated autodate fields are properly populated.
     // In the current JSVM environment, $app.runInTransaction does not
     // reliably commit to disk, so we persist the project first.
+    // The transaction is only used for optional proposal linking below.
     try {
       var record = new Record(projetosCol)
       record.set('nome', nome)
