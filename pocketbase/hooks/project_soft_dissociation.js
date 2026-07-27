@@ -1,18 +1,25 @@
-onRecordAfterDeleteSuccess((e) => {
+onRecordDelete((e) => {
   try {
-    var proposals = $app.findRecordsByFilter(
-      'propostas',
-      'projeto = "' + e.record.id + '"',
-      '',
-      1000,
-      0,
-    )
-    for (var i = 0; i < proposals.length; i++) {
-      proposals[i].set('projeto', null)
-      $app.saveNoValidate(proposals[i])
+    if (!e || !e.record) return
+    var projectId = e.record.id
+    if (projectId) {
+      var propostas = $app.findRecordsByFilter(
+        'propostas',
+        'projeto = {:pid}',
+        '-created',
+        500,
+        0,
+        { pid: projectId },
+      )
+      if (propostas && propostas.length > 0) {
+        for (var i = 0; i < propostas.length; i++) {
+          var p = propostas[i]
+          if (p) {
+            p.set('projeto', null)
+            $app.save(p)
+          }
+        }
+      }
     }
-  } catch (err) {
-    console.log('Erro ao dissociar propostas do projeto: ' + err.message)
-  }
-  return e.next()
+  } catch (_) {}
 }, 'projetos')

@@ -2,12 +2,12 @@ routerAdd(
   'POST',
   '/backend/v1/projetos/create-with-propostas',
   (e) => {
-    let body = e.requestInfo().body || {}
-    let nome = (body.nome || '').trim()
-    let cliente = body.cliente || ''
-    let descricao = body.descricao || ''
-    let status = body.status || 'Em Andamento'
-    let propostas = Array.isArray(body.propostas) ? body.propostas : []
+    var body = e.requestInfo().body || {}
+    var nome = (body.nome || '').trim()
+    var cliente = body.cliente || ''
+    var descricao = body.descricao || ''
+    var status = body.status || 'Em Andamento'
+    var propostas = Array.isArray(body.propostas) ? body.propostas : []
 
     if (!nome) {
       return e.badRequestError('Nome do projeto é obrigatório.')
@@ -16,20 +16,22 @@ routerAdd(
       return e.badRequestError('Cliente é obrigatório.')
     }
 
-    let userId = e.auth?.id
+    var userId = e.auth?.id
     if (!userId) {
       return e.unauthorizedError('Usuário não autenticado.')
     }
 
-    let projetosCol = $app.findCollectionByNameOrId('projetos')
-    let propostasCol = $app.findCollectionByNameOrId('propostas')
-    let auditoriaCol = $app.findCollectionByNameOrId('auditoria')
+    var projetosCol = $app.findCollectionByNameOrId('projetos')
+    var auditoriaCol = null
+    try {
+      auditoriaCol = $app.findCollectionByNameOrId('auditoria')
+    } catch (_) {}
 
-    let createdProject = null
+    var createdProject = null
 
     try {
       $app.runInTransaction((txApp) => {
-        let record = new Record(projetosCol)
+        var record = new Record(projetosCol)
         record.set('nome', nome)
         record.set('descricao', descricao)
         record.set('cliente', cliente)
@@ -39,55 +41,60 @@ routerAdd(
         txApp.save(record)
         createdProject = record
 
-        try {
-          let auditRec = new Record(auditoriaCol)
-          auditRec.set('user', userId)
-          auditRec.set('acao', 'Criação de Projeto')
-          auditRec.set('tabela', 'projetos')
-          auditRec.set('registro_id', record.id)
-          auditRec.set('dados', {
-            nome: nome,
-            cliente: cliente,
-            status: status,
-            total_propostas_vinculadas: propostas.length,
-          })
-          txApp.save(auditRec)
-        } catch (auditErr) {
-          // Silent catch for optional audit logging
+        if (auditoriaCol) {
+          try {
+            var auditRec = new Record(auditoriaCol)
+            auditRec.set('user', userId)
+            auditRec.set('acao', 'Criação de Projeto')
+            auditRec.set('tabela', 'projetos')
+            auditRec.set('registro_id', record.id)
+            auditRec.set('dados', {
+              nome: nome,
+              cliente: cliente,
+              status: status,
+              total_propostas_vinculadas: propostas.length,
+            })
+            txApp.save(auditRec)
+          } catch (_) {}
         }
 
         if (propostas.length > 0) {
-          for (let i = 0; i < propostas.length; i++) {
-            let propId = propostas[i]
-            let propRecord = txApp.findRecordById('propostas', propId)
-            propRecord.set('projeto', record.id)
-            txApp.save(propRecord)
-
+          for (var i = 0; i < propostas.length; i++) {
+            var propId = propostas[i]
+            var propRecord = null
             try {
-              let auditProp = new Record(auditoriaCol)
-              auditProp.set('user', userId)
-              auditProp.set('acao', 'Vínculo de Projeto em Proposta')
-              auditProp.set('tabela', 'propostas')
-              auditProp.set('registro_id', propId)
-              auditProp.set('dados', { projeto_id: record.id, projeto_nome: nome })
-              txApp.save(auditProp)
-            } catch (auditPropErr) {
-              // Silent catch for optional audit logging
+              propRecord = txApp.findRecordById('propostas', propId)
+            } catch (_) {}
+
+            if (propRecord) {
+              propRecord.set('projeto', record.id)
+              txApp.save(propRecord)
+
+              if (auditoriaCol) {
+                try {
+                  var auditProp = new Record(auditoriaCol)
+                  auditProp.set('user', userId)
+                  auditProp.set('acao', 'Vínculo de Projeto em Proposta')
+                  auditProp.set('tabela', 'propostas')
+                  auditProp.set('registro_id', propId)
+                  auditProp.set('dados', { projeto_id: record.id, projeto_nome: nome })
+                  txApp.save(auditProp)
+                } catch (_) {}
+              }
             }
           }
         }
       })
     } catch (txErr) {
-      return e.badRequestError(
-        'Erro ao salvar projeto: ' + (txErr.message || 'Falha ao processar a criação.'),
-      )
+      var msg = txErr.message || 'Falha ao processar a criação do projeto.'
+      return e.badRequestError('Erro ao salvar projeto: ' + msg)
     }
 
     try {
-      $app.expandRecord(createdProject, ['cliente', 'user'])
-    } catch (expErr) {
-      // Ignore expand exception
-    }
+      if (createdProject) {
+        $app.expandRecord(createdProject, ['cliente', 'user'])
+      }
+    } catch (_) {}
 
     return e.json(200, {
       success: true,

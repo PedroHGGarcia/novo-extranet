@@ -161,12 +161,12 @@ export const getUnlinkedPropostasPaginated = async (
   if (!clienteId) {
     return { items: [] as Proposta[], hasMore: false }
   }
-  const baseFilter = `(projeto = "" || projeto = null) && cliente = "${clienteId}"`
+  const baseFilter = `(projeto = "" || projeto = null) && cliente = "${clienteId}" && status != 'Excluída'`
   const escapedQuery = query.replace(/"/g, '\\"')
   const filter = query.trim()
     ? `${baseFilter} && (numero_proposta ~ "${escapedQuery}" || cliente.fantasia ~ "${escapedQuery}")`
     : baseFilter
-  const res = await pb.collection('propostas').getList(page, perPage, {
+  const res = await pb.collection('propostas').getList<Proposta>(page, perPage, {
     filter,
     expand: 'cliente',
     sort: '-created',

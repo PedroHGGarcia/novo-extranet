@@ -1,62 +1,93 @@
 onRecordAfterCreateSuccess((e) => {
-  const adminOrUser = e.auth?.id || null
-  if (e.collection.name === 'auditoria') return e.next()
-
   try {
-    const auditoria = new Record($app.findCollectionByNameOrId('auditoria'))
-    if (adminOrUser) {
-      auditoria.set('user', adminOrUser)
+    if (!e || !e.record) return
+    var rec = e.record
+    var colName = rec.collectionName || ''
+    if (colName === 'auditoria') return
+
+    var userId = ''
+    try {
+      if (e.auth && e.auth.id) {
+        userId = e.auth.id
+      } else if (rec.get && rec.get('user')) {
+        userId = rec.get('user')
+      } else if (rec.get && rec.get('atualizado_por')) {
+        userId = rec.get('atualizado_por')
+      }
+    } catch (_) {}
+
+    if (!userId) return
+
+    var userName = ''
+    try {
+      var uRec = $app.findRecordById('users', userId)
+      if (uRec) {
+        userName = uRec.getString('name') || uRec.get('name') || uRec.getString('email') || ''
+      }
+    } catch (_) {}
+
+    var auditoriaCol = $app.findCollectionByNameOrId('auditoria')
+    if (auditoriaCol) {
+      var auditRec = new Record(auditoriaCol)
+      auditRec.set('user', userId)
+      auditRec.set('acao', 'Criação: ' + colName)
+      auditRec.set('tabela', colName)
+      auditRec.set('registro_id', rec.id)
+      auditRec.set('dados', {
+        id: rec.id,
+        user_name: userName,
+        created_at: new Date().toISOString(),
+      })
+      $app.save(auditRec)
     }
-    auditoria.set('acao', 'create')
-    auditoria.set('tabela', e.collection.name)
-    auditoria.set('registro_id', e.record.id)
-    auditoria.set('dados', e.record.publicExport())
-    $app.saveNoValidate(auditoria)
   } catch (err) {
-    console.log('Erro ao salvar auditoria', err.message)
+    // Prevent audit failures from breaking record creation
   }
-  return e.next()
 })
 
 onRecordAfterUpdateSuccess((e) => {
-  const adminOrUser = e.auth?.id || null
-  if (e.collection.name === 'auditoria') return e.next()
-
   try {
-    const auditoria = new Record($app.findCollectionByNameOrId('auditoria'))
-    if (adminOrUser) {
-      auditoria.set('user', adminOrUser)
-    }
-    auditoria.set('acao', 'update')
-    auditoria.set('tabela', e.collection.name)
-    auditoria.set('registro_id', e.record.id)
-    auditoria.set('dados', {
-      old: e.record.original().publicExport(),
-      new: e.record.publicExport(),
-    })
-    $app.saveNoValidate(auditoria)
-  } catch (err) {
-    console.log('Erro ao salvar auditoria', err.message)
-  }
-  return e.next()
-})
+    if (!e || !e.record) return
+    var rec = e.record
+    var colName = rec.collectionName || ''
+    if (colName === 'auditoria') return
 
-onRecordAfterDeleteSuccess((e) => {
-  const adminOrUser = e.auth?.id || null
-  if (e.collection.name === 'auditoria') return e.next()
+    var userId = ''
+    try {
+      if (e.auth && e.auth.id) {
+        userId = e.auth.id
+      } else if (rec.get && rec.get('user')) {
+        userId = rec.get('user')
+      } else if (rec.get && rec.get('atualizado_por')) {
+        userId = rec.get('atualizado_por')
+      }
+    } catch (_) {}
 
-  try {
-    const auditoria = new Record($app.findCollectionByNameOrId('auditoria'))
-    if (adminOrUser) {
-      auditoria.set('user', adminOrUser)
+    if (!userId) return
+
+    var userName = ''
+    try {
+      var uRec = $app.findRecordById('users', userId)
+      if (uRec) {
+        userName = uRec.getString('name') || uRec.get('name') || uRec.getString('email') || ''
+      }
+    } catch (_) {}
+
+    var auditoriaCol = $app.findCollectionByNameOrId('auditoria')
+    if (auditoriaCol) {
+      var auditRec = new Record(auditoriaCol)
+      auditRec.set('user', userId)
+      auditRec.set('acao', 'Atualização: ' + colName)
+      auditRec.set('tabela', colName)
+      auditRec.set('registro_id', rec.id)
+      auditRec.set('dados', {
+        id: rec.id,
+        user_name: userName,
+        updated_at: new Date().toISOString(),
+      })
+      $app.save(auditRec)
     }
-    auditoria.set('acao', 'delete')
-    auditoria.set('tabela', e.collection.name)
-    auditoria.set('registro_id', e.record.id)
-    auditoria.set('dados', e.record.publicExport())
-    $app.saveNoValidate(auditoria)
   } catch (err) {
-    console.log('Erro ao salvar auditoria', err.message)
+    // Prevent audit failures from breaking record updates
   }
-  return e.next()
 })

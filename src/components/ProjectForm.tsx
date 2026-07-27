@@ -141,22 +141,16 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
       if (projeto) {
         await updateProjeto(projeto.id, payload)
         toast({
-          title: 'Projeto salvo com sucesso',
+          title: 'Projeto salvo com sucesso!',
           className: 'bg-emerald-600 text-white border-emerald-700',
         })
       } else {
         const { linkedCount } = await createProjetoWithPropostas(payload, selectedPropostas)
-        if (linkedCount > 0) {
-          toast({
-            title: `Projeto criado com sucesso, e ${linkedCount} proposta(s) vinculada(s).`,
-            className: 'bg-emerald-600 text-white border-emerald-700',
-          })
-        } else {
-          toast({
-            title: 'Projeto criado com sucesso',
-            className: 'bg-emerald-600 text-white border-emerald-700',
-          })
-        }
+        toast({
+          title: 'Projeto criado com sucesso!',
+          description: linkedCount > 0 ? `${linkedCount} proposta(s) vinculada(s).` : undefined,
+          className: 'bg-emerald-600 text-white border-emerald-700',
+        })
         setSelectedPropostas([])
       }
       onBack()
@@ -173,8 +167,8 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
           onBack()
         } else {
           toast({
-            title: 'Erro ao vincular propostas',
-            description: 'A criação do projeto foi cancelada.',
+            title: 'Erro ao salvar projeto',
+            description: e.message || 'A criação do projeto foi cancelada.',
             variant: 'destructive',
             className: 'bg-red-600 text-white border-red-700',
           })
@@ -191,7 +185,7 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
               .join(', ')
         }
         toast({
-          title: 'Erro ao salvar',
+          title: 'Erro ao salvar projeto',
           description: errorMsg,
           variant: 'destructive',
           className: 'bg-red-600 text-white border-red-700',
