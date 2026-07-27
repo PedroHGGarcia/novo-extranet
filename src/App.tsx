@@ -50,7 +50,7 @@ const NotFound = lazy(() => import('@/pages/NotFound'))
 const Representantes = lazy(() => import('@/pages/Representantes'))
 const RepresentanteEdit = lazy(() => import('@/pages/RepresentanteEdit'))
 const Projetos = lazy(() => import('@/pages/Projetos'))
-const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage'))
+const ProjetosForm = lazy(() => import('@/pages/ProjetosForm'))
 const Login = lazy(() => import('@/pages/Login'))
 const Signup = lazy(() => import('@/pages/Signup'))
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'))
@@ -189,10 +189,19 @@ const router = createBrowserRouter(
             errorElement={<RouteError />}
           />
           <Route
+            path="/projetos/novo"
+            element={
+              <LazyRoute>
+                <ProjetosForm />
+              </LazyRoute>
+            }
+            errorElement={<RouteError />}
+          />
+          <Route
             path="/projetos/:id"
             element={
               <LazyRoute>
-                <ProjectDetailPage />
+                <ProjetosForm />
               </LazyRoute>
             }
             errorElement={<RouteError />}

@@ -7,7 +7,6 @@ vi.mock('@/lib/pocketbase/client', () => {
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
-    getFullList: vi.fn(),
   }
   return { default: { collection: vi.fn(() => mockCollection) } }
 })
