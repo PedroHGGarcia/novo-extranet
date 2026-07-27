@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-27T19:56:07.695Z",
+  "generatedAt": "2026-07-27T20:01:27.876Z",
   "collections": [
     {
       "name": "users",
@@ -2212,9 +2212,9 @@
         }
       ],
       "indexes": [
-        "CREATE INDEX idx_projetos_cliente ON projetos (cliente)",
-        "CREATE INDEX idx_projetos_status ON projetos (status)",
-        "CREATE INDEX idx_projetos_nome ON projetos (nome)",
+        "CREATE INDEX `idx_projetos_cliente` ON `projetos` (cliente)",
+        "CREATE INDEX `idx_projetos_status` ON `projetos` (status)",
+        "CREATE INDEX `idx_projetos_nome` ON `projetos` (nome)",
         "CREATE INDEX `idx_projetos_cliente_status` ON `projetos` (cliente, status)"
       ]
     },
