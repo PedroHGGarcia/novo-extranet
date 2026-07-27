@@ -35,7 +35,6 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
     descricao: '',
     cliente: '',
     status: 'Em Andamento',
-    user: user?.id || '',
   })
   const [selectedPropostas, setSelectedPropostas] = useState<string[]>([])
   const [propostasRefreshSignal, setPropostasRefreshSignal] = useState(0)
@@ -71,7 +70,7 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
       normCliente !== initCliente ||
       normStatus !== initStatus
     )
-  }, [formData, projeto, user])
+  }, [formData, projeto])
 
   useEffect(() => {
     if (projeto) {
@@ -80,7 +79,6 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
         descricao: projeto.descricao || '',
         cliente: projeto.cliente,
         status: projeto.status || 'Em Andamento',
-        user: projeto.user || '',
       })
       if (projeto.cliente) {
         pb.collection('clientes')
@@ -137,7 +135,6 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
       descricao: formData.descricao,
       cliente: formData.cliente,
       status: formData.status,
-      user: user.id,
     }
 
     try {
@@ -164,35 +161,35 @@ export function ProjectForm({ projeto, onBack }: { projeto: Projeto | null; onBa
       }
       onBack()
     } catch (e: any) {
-      const extractedErrors = extractFieldErrors(e)
-      setFieldErrors(extractedErrors)
-      let errorMsg = e.message || 'Erro inesperado'
-      if (Object.keys(extractedErrors).length > 0) {
-        errorMsg +=
-          ' - ' +
-          Object.entries(extractedErrors)
-            .map(([k, v]) => `${k}: ${v}`)
-            .join(', ')
-      }
-
       if (!projeto && e.isLinkError) {
         if (e.rollbackFailed) {
           toast({
-            title: 'Erro parcial ao vincular',
-            description: `O projeto foi criado, mas falhou ao vincular as propostas. Detalhes: ${errorMsg}`,
-            variant: 'destructive',
-            className: 'bg-red-600 text-white border-red-700',
+            title: 'Projeto criado, mas houve erro ao vincular propostas',
+            description:
+              'O projeto foi criado, mas algumas propostas não puderam ser vinculadas. Tente vincular manualmente na página do projeto.',
+            variant: 'default',
+            className: 'bg-amber-600 text-white border-amber-700',
           })
           onBack()
         } else {
           toast({
             title: 'Erro ao vincular propostas',
-            description: `A criação do projeto foi revertida. Detalhes: ${errorMsg}`,
+            description: 'A criação do projeto foi cancelada.',
             variant: 'destructive',
             className: 'bg-red-600 text-white border-red-700',
           })
         }
       } else {
+        const extractedErrors = extractFieldErrors(e)
+        setFieldErrors(extractedErrors)
+        let errorMsg = e.message || 'Erro inesperado'
+        if (Object.keys(extractedErrors).length > 0) {
+          errorMsg +=
+            ' - ' +
+            Object.entries(extractedErrors)
+              .map(([k, v]) => `${k}: ${v}`)
+              .join(', ')
+        }
         toast({
           title: 'Erro ao salvar',
           description: errorMsg,

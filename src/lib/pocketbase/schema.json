@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-27T13:02:01.579Z",
+  "generatedAt": "2026-07-27T13:16:58.789Z",
   "collections": [
     {
       "name": "users",
@@ -2147,7 +2147,7 @@
         "view": "@request.auth.id != ''",
         "create": "@request.auth.id != ''",
         "update": "@request.auth.id != ''",
-        "delete": "@request.auth.role = 'admin'"
+        "delete": "@request.auth.role = 'admin' || user = @request.auth.id"
       },
       "fields": [
         {
