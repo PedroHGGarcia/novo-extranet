@@ -965,14 +965,14 @@ export function EmitirPropostaForm({
             <List className="w-5 h-5 text-primary" /> Acessórios
           </h3>
         </div>
-        <div className="w-full mb-8 border border-border rounded-lg overflow-x-auto">
+        <div className="w-full mb-8 border border-input rounded-lg overflow-x-auto">
           {!formData.versao ? (
             <div className="py-6 text-center text-slate-500 text-sm">
               Selecione uma versão para visualizar os acessórios disponíveis.
             </div>
           ) : (
             <table className="w-full text-left text-[11px] bg-white border-collapse">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-slate-50 border-b border-input">
                 <tr>
                   <th className="py-2.5 px-4 font-normal text-slate-600">Acessório</th>
                   <th className="py-2.5 px-4 font-normal text-slate-600">Tipo</th>
@@ -1005,7 +1005,7 @@ export function EmitirPropostaForm({
                           name={`acc_${idx}`}
                           checked={acc.estado === 'incluir'}
                           onChange={() => updateAccEstado(idx, 'incluir')}
-                          className="w-3.5 h-3.5 accent-primary cursor-pointer"
+                          className="w-4 h-4 accent-primary cursor-pointer border border-input bg-background text-slate-700 transition-colors focus:border-primary focus:ring-1 focus:ring-ring"
                         />
                       </td>
                       <td className="py-2.5 px-4 text-center">
@@ -1014,7 +1014,7 @@ export function EmitirPropostaForm({
                           name={`acc_${idx}`}
                           checked={acc.estado === 'nao_exibir'}
                           onChange={() => updateAccEstado(idx, 'nao_exibir')}
-                          className="w-3.5 h-3.5 accent-primary cursor-pointer"
+                          className="w-4 h-4 accent-primary cursor-pointer border border-input bg-background text-slate-700 transition-colors focus:border-primary focus:ring-1 focus:ring-ring"
                         />
                       </td>
                       <td className="py-2.5 px-4 text-center">
@@ -1023,7 +1023,7 @@ export function EmitirPropostaForm({
                           name={`acc_${idx}`}
                           checked={acc.estado === 'exibir'}
                           onChange={() => updateAccEstado(idx, 'exibir')}
-                          className="w-3.5 h-3.5 accent-primary cursor-pointer"
+                          className="w-4 h-4 accent-primary cursor-pointer border border-input bg-background text-slate-700 transition-colors focus:border-primary focus:ring-1 focus:ring-ring"
                         />
                       </td>
                     </tr>
@@ -1088,14 +1088,14 @@ export function EmitirPropostaForm({
               </h3>
             </div>
             {selectedProposta?.assinatura_representante ? (
-              <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
+              <div className="flex items-center gap-4 p-4 border border-input rounded-sm bg-slate-50/50">
                 <img
                   src={pb.files.getURL(
                     selectedProposta as any,
                     selectedProposta.assinatura_representante as string,
                   )}
                   alt="Assinatura"
-                  className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
+                  className="max-h-20 max-w-[200px] object-contain bg-white p-2 border border-input rounded"
                 />
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-emerald-600" />
@@ -1104,11 +1104,11 @@ export function EmitirPropostaForm({
               </div>
             ) : !selectedProposta ? (
               signatureConfirmed && propostaSignatureBlob ? (
-                <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
+                <div className="flex items-center gap-4 p-4 border border-input rounded-sm bg-slate-50/50">
                   <img
                     src={URL.createObjectURL(propostaSignatureBlob)}
                     alt="Assinatura confirmada"
-                    className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
+                    className="max-h-20 max-w-[200px] object-contain bg-white p-2 border border-input rounded"
                   />
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-emerald-600" />
@@ -1127,11 +1127,11 @@ export function EmitirPropostaForm({
                   </Button>
                 </div>
               ) : useProfileSignature && user?.assinatura ? (
-                <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
+                <div className="flex items-center gap-4 p-4 border border-input rounded-sm bg-slate-50/50">
                   <img
                     src={pb.files.getURL(user as any, user.assinatura as string)}
                     alt="Assinatura do perfil"
-                    className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
+                    className="max-h-20 max-w-[200px] object-contain bg-white p-2 border border-input rounded"
                   />
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-emerald-600" />
@@ -1147,7 +1147,7 @@ export function EmitirPropostaForm({
                   </Button>
                 </div>
               ) : (
-                <div className="p-4 border-2 border-dashed border-amber-300 rounded-sm">
+                <div className="p-4 border-2 border-dashed border-input rounded-sm">
                   <p className="text-xs text-amber-600 text-center mb-3">
                     A assinatura do representante é obrigatória.
                   </p>
@@ -1160,11 +1160,11 @@ export function EmitirPropostaForm({
                 </div>
               )
             ) : user.assinatura ? (
-              <div className="flex items-center gap-4 p-4 border border-slate-200 rounded-sm bg-slate-50/50">
+              <div className="flex items-center gap-4 p-4 border border-input rounded-sm bg-slate-50/50">
                 <img
                   src={pb.files.getURL(user as any, user.assinatura as string)}
                   alt="Assinatura"
-                  className="max-h-20 max-w-[200px] object-contain bg-white p-2 border rounded"
+                  className="max-h-20 max-w-[200px] object-contain bg-white p-2 border border-input rounded"
                 />
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-emerald-600" />
@@ -1174,7 +1174,7 @@ export function EmitirPropostaForm({
                 </div>
               </div>
             ) : (
-              <div className="p-4 border-2 border-dashed border-slate-300 rounded-sm">
+              <div className="p-4 border-2 border-dashed border-input rounded-sm">
                 <p className="text-xs text-slate-500 text-center">
                   Esta proposta não possui assinatura registrada.
                 </p>
