@@ -70,27 +70,27 @@ export function EmitirPropostaForm({
 
   useEffect(() => {
     let mounted = true
-    fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL')
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`)
-        return r.json()
-      })
-      .then((d) => {
-        if (!d?.USDBRL?.bid || !d?.EURBRL?.bid) throw new Error('Invalid response')
-        if (mounted)
+    const fetchExchangeRates = async () => {
+      try {
+        const res = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL')
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const d = await res.json()
+        if (!d?.USDBRL?.bid || !d?.EURBRL?.bid) throw new Error('Invalid response format')
+        if (mounted) {
           setExchangeRates({
             USD: parseFloat(d.USDBRL.bid),
             usdPct: parseFloat(d.USDBRL.pctChange),
             EUR: parseFloat(d.EURBRL.bid),
             eurPct: parseFloat(d.EURBRL.pctChange),
           })
-      })
-      .catch(() => {
+        }
+      } catch {
         if (mounted) setExchangeRates(null)
-      })
-      .finally(() => {
+      } finally {
         if (mounted) setExchangeRatesLoading(false)
-      })
+      }
+    }
+    fetchExchangeRates()
     pb.collection('representantes')
       .getFullList({ sort: 'fantasia' })
       .then((r) => {
@@ -906,16 +906,34 @@ export function EmitirPropostaForm({
                 Aprox. {formatCurrency(formData.valor_final * exchangeRates.USD, 'BRL')}
               </div>
             )}
+            {formData.valor_final &&
+              !exchangeRates &&
+              !exchangeRatesLoading &&
+              mapCurrencyCode(formData.moeda) === 'USD' && (
+                <div className="text-[10px] text-slate-400 mt-1">Aprox. Indisponível</div>
+              )}
             {formData.valor_final && exchangeRates && mapCurrencyCode(formData.moeda) === 'EUR' && (
               <div className="text-[10px] text-slate-500 mt-1">
                 Aprox. {formatCurrency(formData.valor_final * exchangeRates.EUR, 'BRL')}
               </div>
             )}
+            {formData.valor_final &&
+              !exchangeRates &&
+              !exchangeRatesLoading &&
+              mapCurrencyCode(formData.moeda) === 'EUR' && (
+                <div className="text-[10px] text-slate-400 mt-1">Aprox. Indisponível</div>
+              )}
             {formData.valor_final && exchangeRates && mapCurrencyCode(formData.moeda) === 'BRL' && (
               <div className="text-[10px] text-slate-500 mt-1">
                 Aprox. {formatCurrency(formData.valor_final / exchangeRates.USD, 'USD')}
               </div>
             )}
+            {formData.valor_final &&
+              !exchangeRates &&
+              !exchangeRatesLoading &&
+              mapCurrencyCode(formData.moeda) === 'BRL' && (
+                <div className="text-[10px] text-slate-400 mt-1">Aprox. Indisponível</div>
+              )}
           </div>
         </div>
 
