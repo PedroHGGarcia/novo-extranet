@@ -72,7 +72,7 @@ export function EmitirPropostaForm({
     let mounted = true
     const fetchExchangeRates = async () => {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000)
+      const timeoutId = setTimeout(() => controller.abort(), 8000)
       try {
         const res = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL', {
           signal: controller.signal,
