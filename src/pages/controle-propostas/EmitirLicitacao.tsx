@@ -21,7 +21,6 @@ import { MemoriaCalculo } from '@/components/MemoriaCalculo'
 import { CurrencyWidget } from '@/components/CurrencyWidget'
 import { useLicitacao } from '@/hooks/use-licitacao'
 import { searchClientesPaginated } from '@/services/cadastros'
-import { getProjetosByCliente } from '@/services/projetos'
 import { cn } from '@/lib/utils'
 import { FolderKanban } from 'lucide-react'
 
@@ -56,7 +55,7 @@ const TEXT_FIELDS: Array<{ key: string; label: string }> = [
 ]
 
 const inputClass =
-  'w-full bg-white border border-slate-300 rounded-sm px-2 py-1.5 outline-none text-slate-700 text-xs focus:border-[#337ab7] min-h-[30px]'
+  'w-full bg-white border border-slate-300 rounded-sm px-2 py-1.5 outline-none text-slate-700 text-xs focus:border-slate-400 min-h-[30px]'
 const labelClass = 'text-[11px] font-bold text-slate-700 mb-1'
 
 export default function EmitirLicitacao() {
@@ -80,7 +79,7 @@ export default function EmitirLicitacao() {
   if (lic.loading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#337ab7]" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
       </div>
     )
   }
@@ -121,7 +120,7 @@ export default function EmitirLicitacao() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Button className="bg-[#337ab7] hover:bg-[#286090] gap-2">
+            <Button className="bg-slate-700 hover:bg-slate-800 gap-2">
               <Printer className="h-4 w-4" /> Visualizar / Imprimir PDF
             </Button>
           </a>
@@ -141,7 +140,7 @@ export default function EmitirLicitacao() {
   return (
     <div className="flex flex-col flex-1 bg-white rounded-md shadow-sm border border-slate-200 overflow-hidden">
       <div className="flex items-center gap-2 border-b border-slate-200 px-6 py-3 shrink-0">
-        <h1 className="text-base font-normal text-[#337ab7] flex items-center gap-2">
+        <h1 className="text-base font-normal text-slate-700 flex items-center gap-2">
           <FileText className="h-5 w-5" /> Emitir Proposta de Licitação
         </h1>
       </div>
@@ -152,120 +151,128 @@ export default function EmitirLicitacao() {
             <h2 className="text-sm font-bold text-slate-700 mb-4 border-b border-slate-200 pb-2">
               Dados Gerais
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className={labelClass}>Cliente *</label>
-                <SearchableCombobox
-                  items={lic.clientes}
-                  value={f.cliente || ''}
-                  onChange={lic.handleClienteChange}
-                  getLabel={(c) => c.fantasia || c.razao_social}
-                  getSearchText={(c) => `${c.fantasia || ''} ${c.razao_social || ''}`}
-                  placeholder="Buscar cliente..."
-                  emptyMessage="Nenhum cliente encontrado."
-                  className={cn(inputClass, err.cliente && 'border-rose-400 bg-rose-50/30')}
-                  onPaginatedSearch={searchClientesPaginated}
-                />
-                {err.cliente && (
-                  <span className="text-[10px] text-rose-600 mt-0.5">{err.cliente}</span>
-                )}
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className={labelClass}>Cliente *</label>
+                  <SearchableCombobox
+                    items={lic.clientes}
+                    value={f.cliente || ''}
+                    onChange={lic.handleClienteChange}
+                    getLabel={(c) => c.fantasia || c.razao_social}
+                    getSearchText={(c) => `${c.fantasia || ''} ${c.razao_social || ''}`}
+                    placeholder="Buscar cliente..."
+                    emptyMessage="Nenhum cliente encontrado."
+                    className={cn(inputClass, err.cliente && 'border-rose-400 bg-rose-50/30')}
+                    onPaginatedSearch={searchClientesPaginated}
+                  />
+                  {err.cliente && (
+                    <span className="text-[10px] text-rose-600 mt-0.5">{err.cliente}</span>
+                  )}
+                </div>
               </div>
-              <div>
-                <label className={labelClass}>Representante *</label>
-                <SearchableCombobox
-                  items={lic.representantes}
-                  value={f.representante || ''}
-                  onChange={(id) => setFormData({ ...f, representante: id })}
-                  getLabel={(r) => r.fantasia}
-                  getSearchText={(r) => `${r.fantasia || ''} ${r.sigla || ''}`}
-                  placeholder="Buscar representante..."
-                  emptyMessage="Nenhum representante encontrado."
-                  className={cn(inputClass, err.representante && 'border-rose-400 bg-rose-50/30')}
-                  onSearch={lic.searchRepresentantes}
-                />
-                {err.representante && (
-                  <span className="text-[10px] text-rose-600 mt-0.5">{err.representante}</span>
-                )}
-              </div>
-              <div>
-                <label className={labelClass}>Versão *</label>
-                <select
-                  className={cn(inputClass, err.versao && 'border-rose-400 bg-rose-50/30')}
-                  value={f.versao || ''}
-                  onChange={(e) => lic.handleVersaoChange(e.target.value)}
-                >
-                  <option value="">-- Selecione --</option>
-                  {lic.versoes.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.nome}
-                    </option>
-                  ))}
-                </select>
-                {err.versao && (
-                  <span className="text-[10px] text-rose-600 mt-0.5">{err.versao}</span>
-                )}
-              </div>
-              <div>
-                <label className={labelClass}>Gerente</label>
-                <select
-                  className={inputClass}
-                  value={f.gerente || ''}
-                  onChange={(e) => setFormData({ ...f, gerente: e.target.value })}
-                >
-                  <option value=""></option>
-                  {lic.gerentes.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.nome}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Data de Emissão</label>
-                <input
-                  type="date"
-                  className={inputClass}
-                  value={f.dt_cad ? f.dt_cad.substring(0, 10) : ''}
-                  onChange={(e) => setFormData({ ...f, dt_cad: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className={cn(labelClass, 'flex items-center gap-1')}>
-                  <FolderKanban className="h-3 w-3 text-slate-400" /> Vincular ao Projeto
-                </label>
-                <select
-                  className={cn(inputClass, lic.projetoError && 'border-rose-400 bg-rose-50/30')}
-                  value={f.projeto || ''}
-                  onChange={(e) => lic.handleProjetoChange(e.target.value)}
-                >
-                  <option value="">-- Sem projeto --</option>
-                  {lic.projetos.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nome}
-                    </option>
-                  ))}
-                </select>
-                {!f.cliente && (
-                  <span className="text-[10px] text-slate-400 mt-0.5">
-                    Selecione um cliente primeiro
-                  </span>
-                )}
-                {f.cliente && lic.projetos.length === 0 && (
-                  <span className="text-[10px] text-slate-400 mt-0.5">
-                    Nenhum projeto em andamento para este cliente.
-                  </span>
-                )}
-                {lic.projetoError && (
-                  <span className="text-[10px] text-rose-600 mt-0.5">{lic.projetoError}</span>
-                )}
-                {f.projeto && (
-                  <a
-                    href={`/projetos`}
-                    className="text-[10px] text-[#337ab7] hover:underline mt-0.5 inline-block"
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className={labelClass}>Representante *</label>
+                  <SearchableCombobox
+                    items={lic.representantes}
+                    value={f.representante || ''}
+                    onChange={(id) => setFormData({ ...f, representante: id })}
+                    getLabel={(r) => r.fantasia}
+                    getSearchText={(r) => `${r.fantasia || ''} ${r.sigla || ''}`}
+                    placeholder="Buscar representante..."
+                    emptyMessage="Nenhum representante encontrado."
+                    className={cn(inputClass, err.representante && 'border-rose-400 bg-rose-50/30')}
+                    onSearch={lic.searchRepresentantes}
+                  />
+                  {err.representante && (
+                    <span className="text-[10px] text-rose-600 mt-0.5">{err.representante}</span>
+                  )}
+                </div>
+                <div>
+                  <label className={labelClass}>Versão *</label>
+                  <select
+                    className={cn(inputClass, err.versao && 'border-rose-400 bg-rose-50/30')}
+                    value={f.versao || ''}
+                    onChange={(e) => lic.handleVersaoChange(e.target.value)}
                   >
-                    Ver projeto →
-                  </a>
-                )}
+                    <option value="">-- Selecione --</option>
+                    {lic.versoes.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.nome}
+                      </option>
+                    ))}
+                  </select>
+                  {err.versao && (
+                    <span className="text-[10px] text-rose-600 mt-0.5">{err.versao}</span>
+                  )}
+                </div>
+                <div>
+                  <label className={labelClass}>Gerente</label>
+                  <select
+                    className={inputClass}
+                    value={f.gerente || ''}
+                    onChange={(e) => setFormData({ ...f, gerente: e.target.value })}
+                  >
+                    <option value=""></option>
+                    {lic.gerentes.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Data de Emissão</label>
+                  <input
+                    type="date"
+                    className={inputClass}
+                    value={f.dt_cad ? f.dt_cad.substring(0, 10) : ''}
+                    onChange={(e) => setFormData({ ...f, dt_cad: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className={cn(labelClass, 'flex items-center gap-1')}>
+                    <FolderKanban className="h-3 w-3 text-slate-400" /> Vincular ao Projeto
+                  </label>
+                  <select
+                    className={cn(inputClass, lic.projetoError && 'border-rose-400 bg-rose-50/30')}
+                    value={f.projeto || ''}
+                    onChange={(e) => lic.handleProjetoChange(e.target.value)}
+                  >
+                    <option value="">-- Sem projeto --</option>
+                    {lic.projetos.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nome}
+                      </option>
+                    ))}
+                  </select>
+                  {!f.cliente && (
+                    <span className="text-[10px] text-slate-400 mt-0.5">
+                      Selecione um cliente primeiro
+                    </span>
+                  )}
+                  {f.cliente && lic.projetos.length === 0 && (
+                    <span className="text-[10px] text-slate-400 mt-0.5">
+                      Nenhum projeto em andamento para este cliente.
+                    </span>
+                  )}
+                  {lic.projetoError && (
+                    <span className="text-[10px] text-rose-600 mt-0.5">{lic.projetoError}</span>
+                  )}
+                  {f.projeto && (
+                    <Link
+                      to="/projetos"
+                      className="text-[10px] text-slate-500 hover:text-slate-700 hover:underline mt-0.5 inline-block"
+                    >
+                      Ver projeto →
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
           </section>
@@ -274,51 +281,54 @@ export default function EmitirLicitacao() {
             <h2 className="text-sm font-bold text-slate-700 mb-4 border-b border-slate-200 pb-2">
               Valores
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div>
-                <label className={labelClass}>Moeda</label>
-                <select
-                  className={inputClass}
-                  value={f.moeda || 'USD'}
-                  onChange={(e) => setFormData({ ...f, moeda: e.target.value })}
-                >
-                  <option value="BRL">BRL</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Valor sem Desconto</label>
-                <input
-                  className={cn(inputClass, 'bg-slate-50 cursor-not-allowed')}
-                  value={formatCurrency(f.valor_sem_desconto, f.moeda)}
-                  readOnly
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Desconto (%)</label>
-                <input
-                  type="number"
-                  className={cn(
-                    inputClass,
-                    (f.percentual_desconto || 0) > 28 && 'border-rose-500 text-rose-600 bg-rose-50',
-                  )}
-                  value={f.percentual_desconto ?? ''}
-                  step="0.01"
-                  min="0"
-                  onChange={(e) => {
-                    const v = e.target.value === '' ? 0 : parseFloat(e.target.value)
-                    if (!isNaN(v)) lic.handleDiscountChange(v)
-                  }}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Valor Final</label>
-                <input
-                  className={cn(inputClass, 'bg-slate-50 cursor-not-allowed')}
-                  value={formatCurrency(f.valor_final, f.moeda)}
-                  readOnly
-                />
+            <div className="border border-slate-200 rounded-md p-4 bg-slate-50/50">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className={labelClass}>Moeda</label>
+                  <select
+                    className={inputClass}
+                    value={f.moeda || 'USD'}
+                    onChange={(e) => setFormData({ ...f, moeda: e.target.value })}
+                  >
+                    <option value="BRL">BRL</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Valor sem Desconto</label>
+                  <input
+                    className={cn(inputClass, 'bg-slate-100 cursor-not-allowed')}
+                    value={formatCurrency(f.valor_sem_desconto, f.moeda)}
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Desconto (%)</label>
+                  <input
+                    type="number"
+                    className={cn(
+                      inputClass,
+                      (f.percentual_desconto || 0) > 28 &&
+                        'border-rose-500 text-rose-600 bg-rose-50',
+                    )}
+                    value={f.percentual_desconto ?? ''}
+                    step="0.01"
+                    min="0"
+                    onChange={(e) => {
+                      const v = e.target.value === '' ? 0 : parseFloat(e.target.value)
+                      if (!isNaN(v)) lic.handleDiscountChange(v)
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Valor Final</label>
+                  <input
+                    className={cn(inputClass, 'bg-slate-100 cursor-not-allowed')}
+                    value={formatCurrency(f.valor_final, f.moeda)}
+                    readOnly
+                  />
+                </div>
               </div>
             </div>
           </section>
@@ -350,7 +360,7 @@ export default function EmitirLicitacao() {
             <h2 className="text-sm font-bold text-slate-700 mb-4 border-b border-slate-200 pb-2">
               Prazo e Condições
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Prazo de Entrega</label>
                 <input
@@ -374,7 +384,7 @@ export default function EmitirLicitacao() {
             <h2 className="text-sm font-bold text-slate-700 mb-4 border-b border-slate-200 pb-2">
               Detalhes da Licitação
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {TEXT_FIELDS.map(({ key, label }) => (
                 <div key={key}>
                   <label className={labelClass}>{label}</label>
@@ -454,7 +464,7 @@ export default function EmitirLicitacao() {
                         </button>
                       </div>
                     ) : (
-                      <label className="flex flex-col items-center justify-center gap-1 border-2 border-dashed border-slate-300 rounded-sm py-4 cursor-pointer hover:border-[#337ab7] hover:bg-slate-50/50 transition-colors">
+                      <label className="flex flex-col items-center justify-center gap-1 border-2 border-dashed border-slate-300 rounded-sm py-4 cursor-pointer hover:border-slate-400 hover:bg-slate-50/50 transition-colors">
                         <ImagePlus className="h-5 w-5 text-slate-400" />
                         <span className="text-[10px] text-slate-500">Adicionar Foto</span>
                         <input
@@ -476,7 +486,7 @@ export default function EmitirLicitacao() {
                 variant="outline"
                 size="sm"
                 onClick={addCustomSection}
-                className="gap-2 w-fit text-[#337ab7] border-[#337ab7] hover:bg-[#337ab7] hover:text-white"
+                className="gap-2 w-fit text-slate-600 border-slate-300 hover:bg-slate-100"
               >
                 <Plus className="h-4 w-4" /> Adicionar Campo Personalizado
               </Button>
@@ -531,7 +541,7 @@ export default function EmitirLicitacao() {
             <Button
               onClick={lic.handleSubmit}
               disabled={lic.submitting}
-              className="text-white rounded-sm px-4 py-2 h-auto text-xs shadow-none uppercase font-normal bg-[#337ab7] hover:bg-[#286090] disabled:opacity-50 whitespace-normal leading-tight text-center max-w-[220px] sm:max-w-none"
+              className="text-white rounded-sm px-4 py-2 h-auto text-xs shadow-none uppercase font-normal bg-slate-700 hover:bg-slate-800 disabled:opacity-50 whitespace-normal leading-tight text-center max-w-[220px] sm:max-w-none"
             >
               {lic.submitting ? (
                 <>
