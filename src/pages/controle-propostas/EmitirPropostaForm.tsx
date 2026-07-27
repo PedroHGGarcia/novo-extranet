@@ -527,8 +527,8 @@ export function EmitirPropostaForm({
   }
 
   const inputClass =
-    'w-full bg-background border border-input rounded-md px-3 py-2 outline-none text-foreground text-sm focus:border-primary focus:ring-1 focus:ring-ring min-h-[38px] transition-colors'
-  const labelClass = 'text-sm font-medium text-foreground mb-2'
+    'w-full bg-background border border-input rounded-md px-3 py-2 outline-none text-slate-700 text-sm focus:border-primary focus:ring-1 focus:ring-ring min-h-[38px] transition-colors'
+  const labelClass = 'text-sm font-medium text-slate-700 mb-2'
   const isOverDiscount = (formData.percentual_desconto || 0) > 28
   const isOwner = !selectedProposta || user?.id === selectedProposta.user
   const canSave = !isOverDiscount && isOwner && requiredFieldsValid
