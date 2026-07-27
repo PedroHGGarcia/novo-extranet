@@ -170,7 +170,7 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
   const renderSortableHead = (label: string, field: string) => {
     const isActive = sortField === field
     return (
-      <TableHead className="text-[#337ab7] font-normal text-[11px] whitespace-nowrap bg-white border-b-2 border-slate-200 py-3 px-3 h-auto">
+      <TableHead className="text-primary font-normal text-[11px] whitespace-nowrap bg-white border-b-2 border-slate-200 py-3 px-3 h-auto">
         <div
           className="flex items-center gap-1 cursor-pointer hover:underline"
           onClick={() => handleSort(field)}
@@ -251,7 +251,7 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
     const start = totalItems === 0 ? 0 : (page - 1) * perPage + 1
     const end = Math.min(page * perPage, totalItems)
     return (
-      <div className="flex items-center text-[11px] text-[#337ab7] gap-4">
+      <div className="flex items-center text-[11px] text-primary gap-4">
         <div className="flex items-center space-x-1">
           {pages.map((p) => (
             <button
@@ -259,7 +259,7 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
               onClick={() => setPage(p)}
               className={cn(
                 'px-2 py-1 min-w-[24px] text-center rounded-sm transition-colors',
-                p === page ? 'bg-[#337ab7] text-white' : 'hover:bg-slate-100',
+                p === page ? 'bg-primary text-primary-foreground' : 'hover:bg-slate-100',
               )}
             >
               {p}
@@ -351,7 +351,7 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
             <TableRow className="border-b-2 border-slate-200 hover:bg-transparent">
               <TableHead className="w-[40px] px-3 py-3 bg-white h-auto border-b-2 border-slate-200">
                 <Checkbox
-                  className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
+                  className="border-slate-300 rounded-[2px] data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   checked={data.length > 0 && selectedIds.size === data.length}
                   onCheckedChange={(checked) => toggleSelectAll(!!checked)}
                 />
@@ -366,7 +366,7 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
               {renderSortableHead('Valor', 'valor_final')}
               {renderSortableHead('Dt. Cad', 'dt_cad')}
               {renderSortableHead('Responsável', 'created')}
-              <TableHead className="text-[#337ab7] font-normal text-[11px] whitespace-nowrap bg-white border-b-2 border-slate-200 py-3 px-3 h-auto">
+              <TableHead className="text-primary font-normal text-[11px] whitespace-nowrap bg-white border-b-2 border-slate-200 py-3 px-3 h-auto">
                 Setor
               </TableHead>
             </TableRow>
@@ -392,7 +392,7 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
                 >
                   <TableCell className="align-top py-2.5 px-3">
                     <Checkbox
-                      className="border-slate-300 rounded-[2px] data-[state=checked]:bg-[#337ab7] data-[state=checked]:border-[#337ab7]"
+                      className="border-slate-300 rounded-[2px] data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                       checked={selectedIds.has(item.id)}
                       onCheckedChange={(checked) => toggleSelect(item.id, !!checked)}
                     />
@@ -412,19 +412,19 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
                     <div className="flex flex-col gap-1 mt-1">
                       <button
                         onClick={() => onEdit(item)}
-                        className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit"
+                        className="flex items-center text-primary hover:underline text-[11px] w-fit"
                       >
                         <Pencil className="h-3 w-3 mr-1" fill="currentColor" /> Editar
                       </button>
                       <button
                         onClick={() => handleView(item)}
-                        className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit"
+                        className="flex items-center text-primary hover:underline text-[11px] w-fit"
                       >
                         <Eye className="h-3 w-3 mr-1" /> Visualizar
                       </button>
                       <button
                         onClick={() => handleHistory(item)}
-                        className="flex items-center text-[#337ab7] hover:underline text-[11px] w-fit"
+                        className="flex items-center text-primary hover:underline text-[11px] w-fit"
                       >
                         <History className="h-3 w-3 mr-1" /> Histórico
                       </button>
@@ -599,7 +599,7 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
                     </span>
                     <Link
                       to={`/projetos/${viewProposta.expand.projeto.id}`}
-                      className="font-medium text-[#337ab7] hover:underline"
+                      className="font-medium text-primary hover:underline"
                     >
                       {viewProposta.expand.projeto.nome}
                     </Link>

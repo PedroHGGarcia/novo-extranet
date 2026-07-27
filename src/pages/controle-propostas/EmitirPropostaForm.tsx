@@ -1187,7 +1187,7 @@ export function EmitirPropostaForm({
       </div>
 
       <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
-        <DialogContent className="emitir-proposta-theme max-w-5xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-100">
+        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-slate-100">
           <DialogHeader className="p-4 pb-2 shrink-0 bg-white border-b border-slate-200 flex flex-row items-center justify-between">
             <DialogTitle className="text-lg font-normal text-primary">
               Pré-visualização do PDF
@@ -1294,7 +1294,7 @@ export function EmitirPropostaForm({
       </Dialog>
 
       <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
-        <DialogContent className="emitir-proposta-theme sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Cancelar Proposta</DialogTitle>
           </DialogHeader>
