@@ -26,7 +26,6 @@ const Regioes = lazy(() => import('@/pages/Regioes'))
 const Gerentes = lazy(() => import('@/pages/Gerentes'))
 const Clientes = lazy(() => import('@/pages/ClientesWrapper'))
 const Eventos = lazy(() => import('@/pages/Eventos'))
-const EmitirProposta = lazy(() => import('@/pages/controle-propostas/EmitirProposta'))
 const ControlePropostas = lazy(() => import('@/pages/controle-propostas/ControlePropostas'))
 const PropostasAvancadas = lazy(() => import('@/pages/controle-propostas/PropostasAvancadas'))
 const TiposPropostas = lazy(() => import('@/pages/controle-propostas/TiposPropostas'))
@@ -229,11 +228,7 @@ const router = createBrowserRouter(
                   <ControlePropostas />
                 </LazyRoute>
               }
-            >
-              <Route index element={<Navigate to="/controle-propostas/emitir" replace />} />
-              <Route path="emitir" />
-              <Route path="dashboard" />
-            </Route>
+            />
           </Route>
           <Route
             path="/controle-propostas/dashboard-geral"
@@ -245,19 +240,15 @@ const router = createBrowserRouter(
           />
           <Route
             path="/controle-propostas/emitir-licitacao"
-            element={<Navigate to="/controle-propostas/emitir" replace />}
+            element={<Navigate to="/controle-propostas?tab=emitir-proposta" replace />}
           />
           <Route
             path="/controle-propostas/dashboard-licitacoes"
-            element={<Navigate to="/controle-propostas/dashboard" replace />}
+            element={<Navigate to="/controle-propostas?tab=propostas-criadas" replace />}
           />
           <Route
             path="/controle-propostas/emitir-proposta"
-            element={
-              <LazyRoute>
-                <EmitirProposta />
-              </LazyRoute>
-            }
+            element={<Navigate to="/controle-propostas?tab=emitir-proposta" replace />}
           />
           <Route
             path="/controle-propostas/propostas-avancadas"
