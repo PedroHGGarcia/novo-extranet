@@ -27,6 +27,8 @@ const Gerentes = lazy(() => import('@/pages/Gerentes'))
 const Clientes = lazy(() => import('@/pages/ClientesWrapper'))
 const Eventos = lazy(() => import('@/pages/Eventos'))
 const ControlePropostas = lazy(() => import('@/pages/controle-propostas/ControlePropostas'))
+const PropostasCriadasPage = lazy(() => import('@/pages/controle-propostas/PropostasCriadasPage'))
+const EmitirPropostaPage = lazy(() => import('@/pages/controle-propostas/EmitirPropostaPage'))
 const PropostasAvancadas = lazy(() => import('@/pages/controle-propostas/PropostasAvancadas'))
 const TiposPropostas = lazy(() => import('@/pages/controle-propostas/TiposPropostas'))
 const PropostaPDF = lazy(() => import('@/pages/controle-propostas/PropostaPDF'))
@@ -223,9 +225,21 @@ const router = createBrowserRouter(
           <Route element={<BiddingPermissionRoute />}>
             <Route
               path="/controle-propostas"
+              element={<Navigate to="/controle-propostas/propostas-criadas" replace />}
+            />
+            <Route
+              path="/controle-propostas/propostas-criadas"
               element={
                 <LazyRoute>
-                  <ControlePropostas />
+                  <PropostasCriadasPage />
+                </LazyRoute>
+              }
+            />
+            <Route
+              path="/controle-propostas/emitir-proposta"
+              element={
+                <LazyRoute>
+                  <EmitirPropostaPage />
                 </LazyRoute>
               }
             />
@@ -240,15 +254,11 @@ const router = createBrowserRouter(
           />
           <Route
             path="/controle-propostas/emitir-licitacao"
-            element={<Navigate to="/controle-propostas?tab=emitir-proposta" replace />}
+            element={<Navigate to="/controle-propostas/emitir-proposta" replace />}
           />
           <Route
             path="/controle-propostas/dashboard-licitacoes"
-            element={<Navigate to="/controle-propostas?tab=propostas-criadas" replace />}
-          />
-          <Route
-            path="/controle-propostas/emitir-proposta"
-            element={<Navigate to="/controle-propostas?tab=emitir-proposta" replace />}
+            element={<Navigate to="/controle-propostas/propostas-criadas" replace />}
           />
           <Route
             path="/controle-propostas/propostas-avancadas"

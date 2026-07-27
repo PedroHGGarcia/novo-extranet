@@ -83,6 +83,11 @@ const menuItems: MenuItem[] = [
     sub: [
       { title: 'Dashboard', url: '/controle-propostas/dashboard-geral', menuKey: 'propostas' },
       {
+        title: 'Propostas Criadas',
+        url: '/controle-propostas/propostas-criadas',
+        menuKey: 'propostas_criadas',
+      },
+      {
         title: 'Emitir Proposta',
         url: '/controle-propostas/emitir-proposta',
         menuKey: 'emitir_proposta',

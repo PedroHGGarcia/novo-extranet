@@ -327,12 +327,10 @@ export function EmitirPropostaForm({
   }
 
   const searchRepresentantes = useCallback(async (query: string) => {
-    const res = await pb
-      .collection('representantes')
-      .getList(1, 20, {
-        filter: `documento ~ "${query}" || fantasia ~ "${query}"`,
-        sort: 'fantasia',
-      })
+    const res = await pb.collection('representantes').getList(1, 20, {
+      filter: `documento ~ "${query}" || fantasia ~ "${query}"`,
+      sort: 'fantasia',
+    })
     return res.items
   }, [])
 
@@ -448,6 +446,8 @@ export function EmitirPropostaForm({
         setInitialFormData({ ...formData })
         setInitialAcessorios(acessoriosProposta.map((a) => ({ ...a })))
         setFormTouched(false)
+        onSaved()
+        return
       } else {
         const fd = new FormData()
         for (const [key, value] of Object.entries(sanitized)) {

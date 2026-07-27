@@ -13,6 +13,7 @@ export const MENU_ACCESS_KEYS = [
   'acessorios',
   'alterar_precos',
   'propostas',
+  'propostas_criadas',
   'emitir_proposta',
   'emitir_licitacao',
   'propostas_avancadas',
@@ -46,6 +47,7 @@ export const DEFAULT_USER_ACCESS: MenuAccess = {
   acessorios: false,
   alterar_precos: false,
   propostas: true,
+  propostas_criadas: true,
   emitir_proposta: true,
   emitir_licitacao: false,
   propostas_avancadas: false,
@@ -62,6 +64,7 @@ const PATH_TO_MENU_KEY: Record<string, string> = {
   '/cadastros/regioes': 'regioes',
   '/cadastros/gerentes': 'gerentes',
   '/eventos': 'eventos',
+  '/controle-propostas/propostas-criadas': 'propostas_criadas',
   '/controle-propostas/emitir-proposta': 'emitir_proposta',
   '/controle-propostas/emitir': 'emitir_licitacao',
   '/controle-propostas/propostas-avancadas': 'propostas_avancadas',
@@ -69,7 +72,7 @@ const PATH_TO_MENU_KEY: Record<string, string> = {
   '/controle-propostas/proposta-pdf': 'propostas',
   '/controle-propostas/dashboard-geral': 'propostas',
   '/controle-propostas/dashboard': 'dashboard_licitacoes',
-  '/controle-propostas': 'dashboard_licitacoes',
+  '/controle-propostas': 'propostas_criadas',
   '/produtos/categorias': 'categorias',
   '/produtos/marcas': 'marcas',
   '/produtos/modelos': 'modelos',
@@ -98,7 +101,11 @@ export function hasMenuAccess(user: any, menuKey: string): boolean {
   if (user.role === 'admin') return true
   const access = user.menu_access
   if (!access || typeof access !== 'object') return false
-  return access[menuKey] === true
+  if (access[menuKey] !== undefined) return access[menuKey] === true
+  if (menuKey === 'propostas_criadas' || menuKey === 'emitir_proposta') {
+    return access['propostas'] === true
+  }
+  return false
 }
 
 export const MENU_ACCESS_GROUPS: Array<{ title: string; keys: string[] }> = [
@@ -119,6 +126,7 @@ export const MENU_ACCESS_GROUPS: Array<{ title: string; keys: string[] }> = [
     title: 'Propostas',
     keys: [
       'propostas',
+      'propostas_criadas',
       'emitir_proposta',
       'emitir_licitacao',
       'propostas_avancadas',
@@ -144,6 +152,7 @@ export const MENU_KEY_LABELS: Record<string, string> = {
   acessorios: 'Acessórios',
   alterar_precos: 'Alterar Preços',
   propostas: 'Propostas (Dashboard)',
+  propostas_criadas: 'Propostas Criadas',
   emitir_proposta: 'Emitir Proposta',
   emitir_licitacao: 'Emitir Licitação',
   propostas_avancadas: 'Propostas Avançadas',
@@ -178,6 +187,7 @@ export const PERMISSION_TEMPLATES: Array<{
       acessorios: false,
       alterar_precos: false,
       propostas: true,
+      propostas_criadas: true,
       emitir_proposta: true,
       emitir_licitacao: false,
       propostas_avancadas: false,

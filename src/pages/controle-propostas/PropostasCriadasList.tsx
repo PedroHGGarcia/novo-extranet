@@ -57,6 +57,7 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [sectorFilter, setSectorFilter] = useState<string>('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [setores, setSetores] = useState<string[]>([])
   const [debouncedSearch, setDebouncedSearch] = useState<string>('')
@@ -89,9 +90,17 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
     try {
       setIsLoading(true)
       const sortParam = sortDirection === 'desc' ? `-${sortField}` : sortField
-      const filters: string[] = [
-        "(status = 'Em Análise' || status = '' || status = 'Aprovada' || status = 'Recusada')",
-      ]
+      const filters: string[] = []
+
+      if (statusFilter && statusFilter !== 'all') {
+        if (statusFilter === 'Em Análise') {
+          filters.push("(status = 'Em Análise' || status = '')")
+        } else {
+          filters.push(`status = "${statusFilter}"`)
+        }
+      } else {
+        filters.push("status != 'Excluída'")
+      }
 
       if (sectorFilter) {
         const sectorUsers = await pb
@@ -106,18 +115,29 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
       }
 
       if (debouncedSearch.trim()) {
+        const term = debouncedSearch.trim()
         const matchingUsers = await pb.collection('users').getList(1, 50, {
-          filter: `name ~ "${debouncedSearch.trim()}"`,
+          filter: `name ~ "${term}"`,
         })
+        const matchingClientes = await pb.collection('clientes').getList(1, 50, {
+          filter: `fantasia ~ "${term}" || razao_social ~ "${term}"`,
+        })
+
+        const searchOrs: string[] = [`numero_proposta ~ "${term}"`, `cliente_original ~ "${term}"`]
         if (matchingUsers.items.length > 0) {
-          const userFilter = matchingUsers.items.map((u: any) => `user = "${u.id}"`).join(' || ')
-          filters.push(`(${userFilter})`)
-        } else {
-          filters.push('id = "nonexistent"')
+          const uFilter = matchingUsers.items.map((u: any) => `user = "${u.id}"`).join(' || ')
+          searchOrs.push(`(${uFilter})`)
         }
+        if (matchingClientes.items.length > 0) {
+          const cFilter = matchingClientes.items.map((c: any) => `cliente = "${c.id}"`).join(' || ')
+          searchOrs.push(`(${cFilter})`)
+        }
+
+        filters.push(`(${searchOrs.join(' || ')})`)
       }
 
-      const res = await getPropostasPaginated(page, perPage, sortParam, filters.join(' && '))
+      const filterString = filters.join(' && ')
+      const res = await getPropostasPaginated(page, perPage, sortParam, filterString)
       setData(res.items)
       setTotalItems(res.totalItems)
     } catch (error) {
@@ -129,7 +149,7 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
 
   useEffect(() => {
     loadData()
-  }, [page, perPage, sortField, sortDirection, sectorFilter, debouncedSearch])
+  }, [page, perPage, sortField, sortDirection, sectorFilter, statusFilter, debouncedSearch])
   useRealtime('propostas', () => {
     loadData()
   })
@@ -277,21 +297,35 @@ export function PropostasCriadasList({ onEdit }: PropostasCriadasListProps) {
 
   return (
     <div className="flex flex-col h-full bg-white text-slate-700 font-sans overflow-hidden">
-      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2 shrink-0">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
             <input
               type="text"
-              placeholder="Buscar por responsável..."
+              placeholder="Buscar por nº, cliente ou responsável..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value)
                 setPage(1)
               }}
-              className="pl-7 pr-2 py-2 text-sm border border-input rounded-md bg-background outline-none focus:border-primary focus:ring-1 focus:ring-ring min-w-[200px] transition-colors"
+              className="pl-8 pr-3 py-2 text-sm border border-input rounded-md bg-background outline-none focus:border-primary focus:ring-1 focus:ring-ring min-w-[240px] transition-colors"
             />
           </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value)
+              setPage(1)
+            }}
+            className="text-sm border border-input rounded-md bg-background px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-ring cursor-pointer transition-colors"
+          >
+            <option value="all">Todos os Status</option>
+            <option value="Em Análise">Em Análise</option>
+            <option value="Aprovada">Aprovada</option>
+            <option value="Recusada">Recusada</option>
+            <option value="Excluída">Excluídas (Lixeira)</option>
+          </select>
           <select
             value={sectorFilter}
             onChange={(e) => {
