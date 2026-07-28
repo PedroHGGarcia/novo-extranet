@@ -1,0 +1,220 @@
+/* ===== Screen Styles ===== */
+.print-page {
+  max-width: 210mm;
+  margin: 0 auto;
+  background: white;
+  min-height: 100vh;
+}
+
+.print-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* ===== Loading / Error States ===== */
+.print-loading,
+.print-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 16px;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #555;
+}
+
+.print-loading .spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #337ab7;
+  border-radius: 50%;
+  animation: print-spin 0.8s linear infinite;
+}
+
+@keyframes print-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== Document Container ===== */
+.proposta-document {
+  width: 100%;
+}
+
+/* ===== Header Table ===== */
+.print-header-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.print-header-table td:first-child {
+  width: 200px;
+}
+
+.print-header-table td:last-child {
+  text-align: right;
+  font-size: 11pt;
+}
+
+/* ===== Destinatário ===== */
+.print-destinatario {
+  margin-bottom: 25px;
+  line-height: 1.6;
+}
+
+/* ===== Corpo ===== */
+.print-corpo {
+  margin-bottom: 25px;
+  line-height: 1.6;
+}
+
+/* ===== Itens Table ===== */
+.print-itens-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.print-itens-table th {
+  background: #f0f0f0;
+  border: 1px solid #999;
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.print-itens-table td {
+  border: 1px solid #999;
+  padding: 4px 8px;
+}
+
+.print-itens-table td.item-col {
+  text-align: center;
+  width: 40px;
+}
+
+.print-itens-table td.qtd-col {
+  text-align: center;
+  width: 50px;
+}
+
+.print-itens-table td.preco-col {
+  text-align: right;
+  width: 100px;
+}
+
+/* ===== Condições / Observações ===== */
+.print-condicoes,
+.print-observacoes {
+  margin-bottom: 25px;
+}
+
+.print-condicoes h2,
+.print-observacoes h2 {
+  border-bottom: 1px solid #999;
+  padding-bottom: 5px;
+}
+
+/* ===== Assinaturas ===== */
+.print-assinaturas {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 60px;
+}
+
+.print-assinaturas .assinatura-box {
+  width: 45%;
+  text-align: center;
+}
+
+/* ===== Print Styles ===== */
+@media print {
+  @page {
+    margin: 20mm 15mm;
+    size: A4;
+  }
+
+  @page {
+    @bottom-center {
+      content: 'Página ' counter(page) ' / ' counter(pages);
+      font-size: 9pt;
+      color: #666;
+    }
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    font-size: 12pt !important;
+    color: black !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+  }
+
+  .print-page {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .proposta-document {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .page-break {
+    page-break-after: always;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  img,
+  table,
+  tr,
+  td,
+  th {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .rich-text-content {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  .rich-text-content * {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}

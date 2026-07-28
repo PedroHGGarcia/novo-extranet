@@ -34,6 +34,7 @@ const EmitirPropostaPage = lazy(() => import('@/pages/controle-propostas/EmitirP
 const PropostasAvancadas = lazy(() => import('@/pages/controle-propostas/PropostasAvancadas'))
 const TiposPropostas = lazy(() => import('@/pages/controle-propostas/TiposPropostas'))
 const PropostaPDF = lazy(() => import('@/pages/controle-propostas/PropostaPDF'))
+const PrintProposta = lazy(() => import('@/pages/PrintProposta'))
 
 const Produtos = lazy(() => import('@/pages/Produtos'))
 const Categorias = lazy(() => import('@/pages/produtos/Categorias'))
@@ -105,6 +106,14 @@ const router = createBrowserRouter(
         element={
           <LazyRoute>
             <ValidarProposta />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path="/proposta/:id/imprimir"
+        element={
+          <LazyRoute>
+            <PrintProposta />
           </LazyRoute>
         }
       />
