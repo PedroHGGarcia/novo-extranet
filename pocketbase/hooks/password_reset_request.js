@@ -106,39 +106,125 @@ routerAdd('POST', '/backend/v1/request-password-reset', (e) => {
     currentSendCount = 1
   }
 
-  let pbUrl = $secrets.get('PB_INSTANCE_URL') || ''
-  var urlsToTry = []
-  if (pbUrl) {
-    if (pbUrl.endsWith('/')) pbUrl = pbUrl.slice(0, -1)
-    urlsToTry.push(pbUrl)
-  }
-  if (e.request && e.request.host) {
-    urlsToTry.push('https://' + e.request.host)
-  }
-  urlsToTry.push('http://127.0.0.1:8080')
-  urlsToTry.push('http://127.0.0.1:8090')
+  // Generate reset token and send custom email directly
+  var emailSent = false
 
-  var sentSuccess = false
-  for (var i = 0; i < urlsToTry.length; i++) {
+  var userRecord = null
+  try {
+    userRecord = $app.findAuthRecordByEmail('users', email)
+  } catch (_) {}
+
+  if (userRecord) {
     try {
-      var res = $http.send({
-        url: urlsToTry[i] + '/api/collections/users/request-password-reset',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email }),
-        timeout: 10,
-      })
-      if (res.statusCode >= 200 && res.statusCode < 300) {
-        sentSuccess = true
-        break
+      // Generate password reset token
+      var resetToken = userRecord.newPasswordResetToken()
+      $app.save(userRecord)
+
+      // Build reset URL
+      var baseUrl = ''
+      try {
+        var settings = $app.settings()
+        if (settings && settings.meta && settings.meta.appUrl) {
+          baseUrl = settings.meta.appUrl
+        }
+      } catch (_) {}
+
+      if (!baseUrl) {
+        baseUrl = $secrets.get('SITE_URL') || ''
       }
-    } catch (_) {}
+      if (!baseUrl) {
+        var pbUrl = $secrets.get('PB_INSTANCE_URL') || ''
+        if (pbUrl) {
+          if (pbUrl.endsWith('/')) pbUrl = pbUrl.slice(0, -1)
+          baseUrl = pbUrl
+        }
+      }
+      if (!baseUrl && e.request && e.request.host) {
+        baseUrl = 'https://' + e.request.host
+      }
+      if (!baseUrl) {
+        baseUrl = 'http://127.0.0.1:8090'
+      }
+      if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1)
+
+      var resetUrl = baseUrl + '/_/collections/users/confirm-password-reset/' + resetToken
+
+      // Build email content — exact format specified by user story
+      var subject = 'Redefinição de senha - Extranet Gourmet'
+      var textContent =
+        'Olá,\n\n' +
+        'Resete sua senha no link abaixo:\n\n\n' +
+        resetUrl +
+        '\n\n\n' +
+        'Obrigado.\n' +
+        'Extranet Gourmet'
+      var htmlContent = '<pre>' + textContent + '</pre>'
+
+      // Get sender info from settings (fallback to defaults)
+      var fromName = 'Extranet Gourmet'
+      var fromAddress = 'noreply@extranetgourmet.goskip.app'
+      try {
+        var s = $app.settings()
+        if (s && s.meta) {
+          if (s.meta.senderName) fromName = s.meta.senderName
+          if (s.meta.senderAddress) fromAddress = s.meta.senderAddress
+        }
+      } catch (_) {}
+
+      // Send custom email directly via mailer
+      var message = new MailerMessage({
+        from: { name: fromName, address: fromAddress },
+        to: [{ address: email }],
+        subject: subject,
+        text: textContent,
+        html: htmlContent,
+      })
+      $app.newMailClient().send(message)
+      emailSent = true
+    } catch (err) {
+      $app
+        .logger()
+        .error(
+          'password_reset: direct token generation or email send failed',
+          'error',
+          err.message || String(err),
+        )
+    }
   }
 
-  if (!sentSuccess) {
-    $app
-      .logger()
-      .error('password_reset: failed to trigger reset email on all candidate internal URLs')
+  // Fallback: call PocketBase built-in endpoint if direct approach failed
+  if (!emailSent) {
+    var fallbackPbUrl = $secrets.get('PB_INSTANCE_URL') || ''
+    var urlsToTry = []
+    if (fallbackPbUrl) {
+      if (fallbackPbUrl.endsWith('/')) fallbackPbUrl = fallbackPbUrl.slice(0, -1)
+      urlsToTry.push(fallbackPbUrl)
+    }
+    if (e.request && e.request.host) {
+      urlsToTry.push('https://' + e.request.host)
+    }
+    urlsToTry.push('http://127.0.0.1:8080')
+    urlsToTry.push('http://127.0.0.1:8090')
+
+    for (var i = 0; i < urlsToTry.length; i++) {
+      try {
+        var res = $http.send({
+          url: urlsToTry[i] + '/api/collections/users/request-password-reset',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email }),
+          timeout: 10,
+        })
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          emailSent = true
+          break
+        }
+      } catch (_) {}
+    }
+
+    if (!emailSent) {
+      $app.logger().error('password_reset: failed to send reset email on all candidate URLs')
+    }
   }
 
   return e.json(200, {
