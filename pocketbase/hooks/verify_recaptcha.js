@@ -10,7 +10,7 @@ routerAdd('POST', '/backend/v1/verify-recaptcha', (e) => {
   }
 
   const secretKey =
-    $secrets.get('RECAPTCHA_SECRET_KEY') || '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+    $secrets.get('RECAPTCHA_SECRET_KEY') || '6Lesv2ktAAAAAN2R-a6WJBOycsEZnBVroLL7kPU'
 
   try {
     const res = $http.send({
@@ -51,3 +51,53 @@ routerAdd('POST', '/backend/v1/verify-recaptcha', (e) => {
     })
   }
 })
+
+onRecordCreateRequest((e) => {
+  if (e.hasSuperuserAuth()) {
+    return e.next()
+  }
+
+  const body = e.requestInfo().body || {}
+  const token =
+    body.recaptcha_token ||
+    body.recaptchaToken ||
+    body.token ||
+    (e.request ? e.request.header.get('X-Recaptcha-Token') : '')
+
+  if (!token || typeof token !== 'string') {
+    throw e.badRequestError('Falha na verificação do reCAPTCHA. Por favor, tente novamente.')
+  }
+
+  const secretKey =
+    $secrets.get('RECAPTCHA_SECRET_KEY') || '6Lesv2ktAAAAAN2R-a6WJBOycsEZnBVroLL7kPU'
+
+  try {
+    const res = $http.send({
+      url: 'https://www.google.com/recaptcha/api/siteverify',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'secret=' + encodeURIComponent(secretKey) + '&response=' + encodeURIComponent(token),
+      timeout: 10,
+    })
+
+    if (res.statusCode === 200) {
+      const data = res.json
+      if (data.success !== true) {
+        throw e.badRequestError('Falha na verificação do reCAPTCHA. Por favor, tente novamente.')
+      }
+    }
+  } catch (err) {
+    if (err && err.status === 400) {
+      throw err
+    }
+    $app
+      .logger()
+      .error(
+        'reCAPTCHA hook verification failed for propostas',
+        'error',
+        err.message || String(err),
+      )
+  }
+
+  return e.next()
+}, 'propostas')
