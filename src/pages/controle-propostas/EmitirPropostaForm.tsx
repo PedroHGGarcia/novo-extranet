@@ -337,6 +337,61 @@ export function EmitirPropostaForm({
     }
   }
 
+  const handleTipoPropostaChange = (tipoId: string) => {
+    const tipo = tiposProposta.find((t) => t.id === tipoId)
+    let updatedAcc = acessoriosProposta
+    let valueChange = 0
+    if (tipo?.acessorios_default?.length > 0 && acessoriosProposta.length > 0) {
+      const defaults = tipo.acessorios_default
+      updatedAcc = acessoriosProposta.map((acc) => {
+        const def = defaults.find((d) => d.acessorio_id === acc.id)
+        return def ? { ...acc, estado: def.estado } : acc
+      })
+      const propMoeda = formData.moeda || 'USD'
+      updatedAcc.forEach((acc, idx) => {
+        const oldInc = acessoriosProposta[idx].estado === 'incluir'
+        const newInc = acc.estado === 'incluir'
+        if (newInc && !oldInc)
+          valueChange += convertCurrency(acc.valor || 0, acc.moeda || 'BRL', propMoeda)
+        else if (!newInc && oldInc)
+          valueChange -= convertCurrency(acc.valor || 0, acc.moeda || 'BRL', propMoeda)
+      })
+      setAcessoriosProposta(updatedAcc)
+    }
+    const newBase =
+      valueChange !== 0
+        ? Math.round(((formData.valor_sem_desconto || 0) + valueChange) * 100) / 100
+        : formData.valor_sem_desconto
+    const desc = formData.percentual_desconto || 0
+    const newFinal =
+      valueChange !== 0 ? Math.round(newBase * (1 - desc / 100) * 100) / 100 : formData.valor_final
+    setFormData({
+      ...formData,
+      tipo_proposta: tipoId,
+      ...(tipo
+        ? {
+            prazo_entrega: tipo.prazo_entrega || formData.prazo_entrega,
+            condicoes_pagamento: tipo.condicoes_pagamento || formData.condicoes_pagamento,
+            validade_oferta: tipo.validade_oferta || formData.validade_oferta,
+          }
+        : {}),
+      ...(valueChange !== 0
+        ? { valor_sem_desconto: newBase, valor_final: newFinal, valor_atual: newFinal }
+        : {}),
+    })
+  }
+
+  const filteredTiposProposta = useMemo(() => {
+    const versao = versoes.find((v) => v.id === formData.versao)
+    const validIds = versao?.tipos_proposta || []
+    const filtered = tiposProposta.filter((t) => validIds.includes(t.id) && t.status === 'Ativo')
+    if (formData.tipo_proposta && !filtered.some((t) => t.id === formData.tipo_proposta)) {
+      const extra = tiposProposta.find((t) => t.id === formData.tipo_proposta)
+      if (extra) filtered.push(extra)
+    }
+    return filtered
+  }, [versoes, formData.versao, formData.tipo_proposta, tiposProposta])
+
   const searchRepresentantes = useCallback(async (query: string) => {
     const res = await pb.collection('representantes').getList(1, 20, {
       filter: `documento ~ "${query}" || fantasia ~ "${query}"`,
@@ -673,18 +728,17 @@ export function EmitirPropostaForm({
           </div>
           <div className="flex flex-col w-full">
             <label className={labelClass}>Gerente</label>
-            <select
-              className={inputClass}
+            <SearchableCombobox
+              items={gerentes}
               value={formData.gerente || ''}
-              onChange={(e) => setFormData({ ...formData, gerente: e.target.value })}
-            >
-              <option value=""></option>
-              {gerentes.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.nome}
-                </option>
-              ))}
-            </select>
+              onChange={(id) => setFormData({ ...formData, gerente: id })}
+              getLabel={(g) => g.nome}
+              getSearchText={(g) => `${g.nome || ''} ${g.documento || ''} ${g.email || ''}`}
+              placeholder="Buscar gerente..."
+              emptyMessage="Nenhum gerente encontrado."
+              className={inputClass}
+              entityType="gerente"
+            />
           </div>
         </div>
 
@@ -712,82 +766,22 @@ export function EmitirPropostaForm({
           </div>
           <div className="flex flex-col w-full">
             <label className={labelClass}>Tipo de Proposta *</label>
-            <select
+            <SearchableCombobox
+              items={filteredTiposProposta}
+              value={formData.tipo_proposta || ''}
+              onChange={(id) => handleTipoPropostaChange(id)}
+              getLabel={(t) => t.nome}
+              getSearchText={(t) => t.nome || ''}
+              placeholder={
+                formData.versao ? 'Buscar tipo de proposta...' : 'Selecione uma versão primeiro'
+              }
+              emptyMessage="Nenhum tipo encontrado."
               className={cn(
                 inputClass,
                 !formData.tipo_proposta && 'border-amber-300 bg-amber-50/30',
               )}
-              value={formData.tipo_proposta || ''}
-              onChange={(e) => {
-                const tipoId = e.target.value
-                const tipo = tiposProposta.find((t) => t.id === tipoId)
-                let updatedAcc = acessoriosProposta
-                let valueChange = 0
-                if (tipo?.acessorios_default?.length > 0 && acessoriosProposta.length > 0) {
-                  const defaults = tipo.acessorios_default
-                  updatedAcc = acessoriosProposta.map((acc) => {
-                    const def = defaults.find((d) => d.acessorio_id === acc.id)
-                    return def ? { ...acc, estado: def.estado } : acc
-                  })
-                  const propMoeda = formData.moeda || 'USD'
-                  updatedAcc.forEach((acc, idx) => {
-                    const oldInc = acessoriosProposta[idx].estado === 'incluir'
-                    const newInc = acc.estado === 'incluir'
-                    if (newInc && !oldInc)
-                      valueChange += convertCurrency(acc.valor || 0, acc.moeda || 'BRL', propMoeda)
-                    else if (!newInc && oldInc)
-                      valueChange -= convertCurrency(acc.valor || 0, acc.moeda || 'BRL', propMoeda)
-                  })
-                  setAcessoriosProposta(updatedAcc)
-                }
-                const newBase =
-                  valueChange !== 0
-                    ? Math.round(((formData.valor_sem_desconto || 0) + valueChange) * 100) / 100
-                    : formData.valor_sem_desconto
-                const desc = formData.percentual_desconto || 0
-                const newFinal =
-                  valueChange !== 0
-                    ? Math.round(newBase * (1 - desc / 100) * 100) / 100
-                    : formData.valor_final
-                setFormData({
-                  ...formData,
-                  tipo_proposta: tipoId,
-                  ...(tipo
-                    ? {
-                        prazo_entrega: tipo.prazo_entrega || formData.prazo_entrega,
-                        condicoes_pagamento:
-                          tipo.condicoes_pagamento || formData.condicoes_pagamento,
-                        validade_oferta: tipo.validade_oferta || formData.validade_oferta,
-                      }
-                    : {}),
-                  ...(valueChange !== 0
-                    ? { valor_sem_desconto: newBase, valor_final: newFinal, valor_atual: newFinal }
-                    : {}),
-                })
-              }}
               disabled={!formData.versao}
-            >
-              <option value="">-- Selecione --</option>
-              {(() => {
-                const versao = versoes.find((v) => v.id === formData.versao)
-                const validIds = versao?.tipos_proposta || []
-                const filtered = tiposProposta.filter(
-                  (t) => validIds.includes(t.id) && t.status === 'Ativo',
-                )
-                if (
-                  formData.tipo_proposta &&
-                  !filtered.some((t) => t.id === formData.tipo_proposta)
-                ) {
-                  const extra = tiposProposta.find((t) => t.id === formData.tipo_proposta)
-                  if (extra) filtered.push(extra)
-                }
-                return filtered.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nome}
-                  </option>
-                ))
-              })()}
-            </select>
+            />
             {!formData.tipo_proposta && (
               <span className="text-[10px] text-amber-600 mt-0.5">
                 Tipo de Proposta é obrigatório

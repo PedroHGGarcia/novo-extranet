@@ -35,6 +35,7 @@ interface SearchableComboboxProps {
   onSearch?: (query: string) => Promise<any[]>
   onPaginatedSearch?: (query: string, page: number) => Promise<PaginatedSearchResult>
   entityType?: 'representante' | 'cliente' | 'gerente'
+  disabled?: boolean
 }
 
 export function SearchableCombobox({
@@ -49,6 +50,7 @@ export function SearchableCombobox({
   onSearch,
   onPaginatedSearch,
   entityType: entityTypeProp,
+  disabled,
 }: SearchableComboboxProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -163,14 +165,16 @@ export function SearchableCombobox({
     useAsync && !usePaginated && query.trim().length < 3 && displayItems.length === 0
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(v) => !disabled && setOpen(v)}>
       <PopoverTrigger asChild>
         <button
           type="button"
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           className={cn(
             'w-full bg-background border border-input rounded-md px-3 py-2 outline-none text-foreground text-sm focus:border-primary focus:ring-1 focus:ring-ring min-h-[38px] flex items-center justify-between transition-colors',
+            disabled && 'opacity-50 cursor-not-allowed',
             className,
           )}
         >
