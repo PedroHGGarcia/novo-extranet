@@ -584,12 +584,35 @@ export function EmitirPropostaForm({
     }
   }
 
-  const printProposal = () => {
-    if (!selectedProposta?.id) {
-      toast({ title: 'Salve antes de gerar o PDF', variant: 'default' })
+  const printProposal = async () => {
+    if (selectedProposta?.id) {
+      window.open(`/controle-propostas/proposta-pdf/${selectedProposta.id}`, '_blank')
       return
     }
-    window.open(`/controle-propostas/proposta-pdf/${selectedProposta.id}`, '_blank')
+    const cliente = clientes.find((c) => c.id === formData.cliente)
+    const representante = representantes.find((r) => r.id === formData.representante)
+    const versao = versoes.find((v) => v.id === formData.versao)
+    const gerente = gerentes.find((g) => g.id === formData.gerente)
+    const tipoProp = tiposProposta.find((t) => t.id === formData.tipo_proposta)
+    const draftData = {
+      ...formData,
+      id: 'draft',
+      expand: { cliente, representante, versao, gerente, tipo_proposta: tipoProp, user },
+      acessorios_proposta: acessoriosProposta,
+    }
+    let sigUrl: string | null = null
+    if (propostaSignatureBlob) {
+      sigUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.readAsDataURL(propostaSignatureBlob)
+      })
+    } else if (useProfileSignature && user?.assinatura) {
+      sigUrl = pb.files.getURL(user as any, user.assinatura as string)
+    }
+    sessionStorage.setItem('proposta-draft-data', JSON.stringify(draftData))
+    if (sigUrl) sessionStorage.setItem('proposta-draft-signature', sigUrl)
+    window.open('/controle-propostas/proposta-pdf/draft', '_blank')
   }
 
   const inputClass =
@@ -623,7 +646,7 @@ export function EmitirPropostaForm({
         </Button>
         <Button
           onClick={printProposal}
-          disabled={!selectedProposta || isOverDiscount}
+          disabled={isOverDiscount || !formData.cliente}
           className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-4 py-2 h-auto text-sm shadow-none font-medium disabled:opacity-50"
         >
           GERAR PDF
