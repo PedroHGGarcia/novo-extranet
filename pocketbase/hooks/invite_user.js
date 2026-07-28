@@ -73,6 +73,9 @@ routerAdd(
     user.setEmail(body.email)
     user.setPassword($security.randomString(12))
     user.set('role', body.role)
+    if (body.name) {
+      user.set('name', body.name)
+    }
     user.setVerified(false)
     user.set('menu_access', body.role === 'admin' ? adminAccess : defaultUserAccess)
 

@@ -114,7 +114,7 @@ export default function Usuarios() {
           className="bg-brand-success hover:bg-brand-success/90"
         >
           <Plus className="mr-2 h-4 w-4" />
-          Novo Usuário
+          Convidar Usuário
         </Button>
       </div>
 

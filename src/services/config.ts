@@ -39,9 +39,9 @@ export const getConfigDashboard = () =>
 export const updateConfigDashboard = (id: string, visivel: boolean) =>
   pb.collection('configuracoes_dashboard').update<ConfigDashboard>(id, { visivel })
 
-export const inviteUser = (email: string, role: string) =>
+export const inviteUser = (email: string, role: string, name?: string) =>
   pb.send('/backend/v1/invite', {
     method: 'POST',
-    body: JSON.stringify({ email, role }),
+    body: JSON.stringify({ email, role, name }),
     headers: { 'Content-Type': 'application/json' },
   })
