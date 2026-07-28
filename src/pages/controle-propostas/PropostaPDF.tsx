@@ -88,6 +88,63 @@ export default function PropostaPDF() {
     return null
   }
 
+  const handlePrint = () => {
+    const content = document.getElementById('proposta-print-content')
+    if (!content) {
+      window.print()
+      return
+    }
+
+    const printWindow = window.open('', '_blank', 'width=900,height=700')
+    if (!printWindow) {
+      window.print()
+      return
+    }
+
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map((el) => el.outerHTML)
+      .join('\n')
+
+    printWindow.document.open()
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposta ${data.numero_proposta || ''}</title>
+  <base href="${window.location.origin}">
+  ${styles}
+  <style>
+    @page { margin: 20mm 15mm; size: A4; }
+    @page { @bottom-center { content: "Página " counter(page) "/" counter(pages); font-size: 9pt; color: #666; } }
+    body { font-family: Arial, Helvetica, sans-serif; padding: 0; margin: 0; background: white; color: black; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    html, body { width: 100%; }
+    .page-break { page-break-after: always; }
+    table { border-collapse: collapse; width: 100%; }
+    h1, h2, h3, h4, h5, h6 { page-break-after: avoid; break-after: avoid; }
+    img { max-width: 100%; page-break-inside: avoid; break-inside: avoid; }
+    table, tr, td, th { page-break-inside: avoid; break-inside: avoid; }
+    thead { display: table-header-group; }
+    .doc-header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: white; }
+    .doc-footer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: white; }
+    .doc-footer .page-num::after { content: "Página " counter(page) "/" counter(pages); font-weight: bold; }
+    .rich-text-content { overflow: visible !important; max-height: none !important; }
+    .rich-text-content * { max-height: none !important; overflow: visible !important; }
+    .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+  ${content.innerHTML}
+</body>
+</html>`)
+    printWindow.document.close()
+
+    setTimeout(() => {
+      printWindow.focus()
+      printWindow.print()
+    }, 500)
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center py-8">
       <div className="w-full max-w-5xl flex justify-between items-center mb-6 px-4 print:hidden">
@@ -99,13 +156,16 @@ export default function PropostaPDF() {
           <ArrowLeft className="w-4 h-4" /> Voltar para a Lista de Propostas
         </Button>
         <Button
-          onClick={() => window.print()}
+          onClick={handlePrint}
           className="bg-[#337ab7] hover:bg-[#286090] text-white gap-2 shadow-sm"
         >
           <Printer className="w-4 h-4" /> Imprimir Proposta
         </Button>
       </div>
-      <div className="bg-white shadow-xl overflow-hidden w-fit print:shadow-none print:w-full">
+      <div
+        id="proposta-print-content"
+        className="proposta-print-area bg-white shadow-xl overflow-hidden w-fit print:shadow-none print:w-full"
+      >
         <PropostaCleanDocument
           proposta={data}
           tipoProposta={tipoProposta}

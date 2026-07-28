@@ -207,16 +207,16 @@ export function PropostaCleanDocument({
       <style>{`
         @media screen { .doc-footer { display: none; } }
         @media print {
-          @page { size: A4; margin: 32mm 15mm 30mm 15mm; }
+          @page { size: A4; margin: 20mm 15mm; }
           body { background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .doc-header {
-            position: fixed; top: 5mm; left: 15mm; right: 15mm;
+            position: fixed; top: 0; left: 0; right: 0;
             border-bottom: 1px solid #000; padding-bottom: 3mm;
             background: white; z-index: 100;
           }
           .doc-footer {
             display: block !important;
-            position: fixed; bottom: 5mm; left: 15mm; right: 15mm;
+            position: fixed; bottom: 0; left: 0; right: 0;
             border-top: 1px solid #000; padding-top: 3mm;
             background: white; z-index: 100;
           }

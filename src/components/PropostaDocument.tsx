@@ -600,7 +600,7 @@ export function PropostaDocument({
       <style>{`
         .print-only-footer { display: none; }
         @media print {
-          @page { size: A4; margin: 12mm 15mm 28mm 15mm; }
+          @page { size: A4; margin: 20mm 15mm; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
           .print-break-inside-avoid { break-inside: avoid; }
           .print-break-before { page-break-before: always; }

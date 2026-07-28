@@ -1,40 +1,61 @@
-@media print {
-  body {
-    margin: 0 !important;
-    padding: 0 !important;
-    background: white !important;
-  }
+@page {
+  margin: 20mm 15mm;
+  size: A4;
+}
 
+@page {
+  @bottom-center {
+    content: 'Página ' counter(page) ' / ' counter(pages);
+    font-size: 9pt;
+    color: #666;
+  }
+}
+
+@media print {
+  nav,
+  aside,
   .AppSidebar,
   .app-sidebar,
-  aside,
-  nav,
+  .sidebar,
   header,
   .AppHeader,
   .app-header,
-  .theme-toggle,
-  .CommandPalette,
-  .HeaderSearch,
-  .BenerLogo,
   footer,
+  .theme-toggle,
   button,
   .btn,
   [role='button'],
+  a[href],
   .PaginationBar,
   .pagination-bar,
+  .CommandPalette,
+  .HeaderSearch,
+  .BenerLogo,
+  .PageLayout > *:not(.proposta-content):not(main),
+  [class*='breadcrumb'],
+  [class*='navigation'],
+  [class*='nav-'],
+  a[href^='/'],
   [data-sidebar],
   .sidebar-trigger {
     display: none !important;
   }
 
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    font-size: 12pt !important;
+    color: black !important;
+  }
+
   main,
   .main-content,
-  [class*='SidebarInset']
-    > *:not(.AppSidebar):not(.app-sidebar):not(header):not(footer):not(nav):not(button) {
+  .proposta-print-area {
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 20px !important;
+    padding: 0 !important;
     position: relative !important;
     left: 0 !important;
     top: 0 !important;
@@ -49,34 +70,17 @@
     display: block !important;
   }
 
-  * {
-    background: transparent !important;
-    color: black !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid;
+    break-after: avoid;
   }
 
-  .page-break {
-    page-break-after: always;
-  }
-
-  a[href]::after {
-    content: ' (' attr(href) ')';
-    font-size: 0.8em;
-    color: #555;
-  }
-
-  a[href^='#']::after,
-  a[href^='javascript:']::after {
-    content: '';
-  }
-
-  img {
-    max-width: 100% !important;
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
+  img,
   table,
   tr,
   td,
@@ -89,13 +93,53 @@
     display: table-header-group;
   }
 
-  .doc-header,
-  .doc-footer {
-    position: fixed !important;
+  .page-break {
+    page-break-after: always;
   }
 
-  @page {
-    size: A4;
-    margin: 32mm 15mm 30mm 15mm;
+  .print-only {
+    display: block !important;
+  }
+
+  .no-print,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .doc-header {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+
+  .doc-footer {
+    position: fixed !important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+
+  .doc-footer .page-num::after {
+    content: 'Página ' counter(page) ' / ' counter(pages);
+    font-weight: bold;
+  }
+
+  .rich-text-content {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  .rich-text-content * {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
