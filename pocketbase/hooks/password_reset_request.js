@@ -203,7 +203,31 @@ routerAdd('POST', '/backend/v1/request-password-reset', (e) => {
           'Caso não tenha solicitado esta alteração, favor desconsiderar este e-mail. Sua senha permanecerá inalterada.\n\n' +
           'Atenciosamente,\n' +
           'Extranet Gourmet — Portal de Vendas & Gestão'
-        var htmlContent = '<pre>' + textContent + '</pre>'
+
+        var siteUrl = $secrets.get('SITE_URL') || 'https://extranetgourmet.goskip.app'
+        var bannerImgUrl = (baseUrl || siteUrl) + '/src/assets/editedimage1784831163387-1-0c382.png'
+
+        var htmlContent =
+          '<div style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.6; color: #222222; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">' +
+          '<p style="margin: 0 0 16px 0; font-size: 15px; letter-spacing: normal;">Prezado(a) usuário(a),</p>' +
+          '<p style="margin: 0 0 16px 0; font-size: 15px; letter-spacing: normal;">Informamos que foi solicitada a redefinição de sua senha de acesso à Extranet Gourmet.</p>' +
+          '<p style="margin: 0 0 12px 0; font-size: 15px; letter-spacing: normal;">Para prosseguir, acesse o link a seguir:</p>' +
+          '<p style="margin: 0 0 20px 0; word-break: break-all; font-size: 15px; letter-spacing: normal;">' +
+          '<a href="' +
+          resetUrl +
+          '" style="color: #2563eb; text-decoration: underline; font-weight: 500;">' +
+          resetUrl +
+          '</a>' +
+          '</p>' +
+          '<p style="margin: 0 0 20px 0; font-size: 15px; letter-spacing: normal;">Caso não tenha solicitado esta alteração, favor desconsiderar este e-mail. Sua senha permanecerá inalterada.</p>' +
+          '<p style="margin: 0 0 4px 0; font-size: 15px; letter-spacing: normal;">Atenciosamente,</p>' +
+          '<p style="margin: 0 0 24px 0; font-size: 15px; font-weight: 600; color: #1e293b; letter-spacing: normal;">Extranet Gourmet — Portal de Vendas & Gestão</p>' +
+          '<div style="margin-top: 24px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 20px;">' +
+          '<img src="' +
+          bannerImgUrl +
+          '" alt="Bener Máquinas Banner" style="max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0 auto;" />' +
+          '</div>' +
+          '</div>'
 
         var message = new MailerMessage({
           from: { name: fromName, address: fromAddress },
