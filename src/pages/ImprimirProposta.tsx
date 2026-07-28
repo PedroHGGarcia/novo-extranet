@@ -262,10 +262,8 @@ export default function ImprimirProposta() {
           <ul className="lista-opcionais">
             {optional.map((a: any, i: number) => (
               <li key={i}>
-                {a.id && <span className="item-codigo">{a.id}</span>}
-                {a.id ? ' - ' : ''}
-                <span className="item-nome">{a.nome}</span> -{' '}
-                <span className="item-valor">{formatCurrency(a.valor, a.moeda)}</span> -{' '}
+                <span className="item-nome">{a.nome}</span> —{' '}
+                <span className="item-valor">{formatCurrency(a.valor, a.moeda)}</span> —{' '}
                 <span className="item-status">NÃO INCLUSO</span>
               </li>
             ))}

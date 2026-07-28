@@ -103,6 +103,60 @@
   color: #444;
 }
 
+.proposta-document .lista-opcionais {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.proposta-document .lista-opcionais li {
+  font-size: 14pt;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  padding: 0;
+  border: none;
+}
+
+.proposta-document .lista-opcionais .item-codigo {
+  display: none;
+}
+
+.proposta-document .lista-opcionais .item-nome {
+  font-weight: bold;
+}
+
+.proposta-document .lista-opcionais .item-status {
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.proposta-document .lista-opcionais .item-valor {
+  font-weight: normal;
+}
+
+@media print {
+  .proposta-document .lista-opcionais li {
+    font-size: 14pt !important;
+    line-height: 1.3 !important;
+    border: none !important;
+    padding: 0 !important;
+    margin-bottom: 4px !important;
+  }
+
+  .proposta-document .lista-opcionais .item-codigo {
+    display: none !important;
+  }
+
+  .proposta-document .lista-opcionais .item-nome {
+    font-weight: bold !important;
+  }
+
+  .proposta-document .lista-opcionais .item-status {
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+  }
+}
+
 .proposta-document .clean-doc-rep-info {
   font-size: 12pt;
 }

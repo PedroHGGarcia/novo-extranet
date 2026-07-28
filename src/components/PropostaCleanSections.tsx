@@ -140,13 +140,13 @@ export function PropostaCleanSections({
           <h2 className="font-bold text-[14pt] uppercase mb-1">
             6. ACESSÓRIOS OPCIONAIS NÃO INCLUSOS NO PREÇO ACIMA
           </h2>
-          <ul className="list-none pl-4 space-y-1 text-[14pt]">
+          <ul className="list-none pl-0 space-y-1 text-[14pt] leading-tight">
             {optionalAcc.map((acc, i) => (
               <li key={i} className="leading-tight">
-                {acc.id && <span className="font-bold">{acc.id}</span>}
-                {acc.id ? ' - ' : ''}
-                <span className="font-bold">{acc.nome}</span> -{' '}
-                <span>{formatCurrency(acc.valor, acc.moeda)}</span> -{' '}
+                <span className="font-bold">{acc.nome}</span>
+                {' — '}
+                <span>{formatCurrency(acc.valor, acc.moeda)}</span>
+                {' — '}
                 <span className="font-bold uppercase text-slate-700">Não Incluso</span>
               </li>
             ))}
