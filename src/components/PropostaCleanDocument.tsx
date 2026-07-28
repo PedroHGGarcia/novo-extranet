@@ -201,7 +201,6 @@ export function PropostaCleanDocument({
         <p>Rua Iracema Lucas, 450 (Antiga Rua Parsch) – Distrito Industrial</p>
         <p>Vinhedo - SP - Brasil - CEP: 13280-172 - Fone / Fax: (0**19) 3826-7373</p>
         <p>E-mail: vendas@bener.com.br - Site: www.bener.com.br</p>
-        <p className="page-num font-bold mt-1"></p>
       </div>
 
       <style>{`
@@ -219,9 +218,6 @@ export function PropostaCleanDocument({
             position: fixed; bottom: 0; left: 0; right: 0;
             border-top: 1px solid #000; padding-top: 3mm;
             background: white; z-index: 100;
-          }
-          .doc-footer .page-num::after {
-            content: "Página " counter(page) "/" counter(pages);
           }
           .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
           .rich-text-content { overflow: visible !important; max-height: none !important; }

@@ -673,21 +673,12 @@ export function PropostaDocument({
             text-align: center;
             z-index: 100;
           }
-          .print-only-footer .page-num::after {
-            content: "Página " counter(page) "/" counter(pages);
-          }
-          .print-only-footer .page-num {
-            text-align: right;
-            font-weight: bold;
-            margin-top: 2px;
-          }
         }
       `}</style>
       <div className="print-only-footer">
         <p>Rua Iracema Lucas, 450 (Antiga Rua Parsch) – Distrito Industrial</p>
         <p>Vinhedo - SP - Brasil - CEP: 13280-172 - Fone: (19) 3826-7373</p>
         <p>E-mail: vendas@bener.com.br - Site: www.bener.com.br</p>
-        <p className="page-num"></p>
       </div>
     </div>
   )
