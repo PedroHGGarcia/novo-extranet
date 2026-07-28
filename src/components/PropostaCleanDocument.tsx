@@ -173,9 +173,9 @@ export function PropostaCleanDocument({
         <p>Atenciosamente,</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-12 mb-4 font-mono text-[14pt] break-inside-avoid">
+      <div className="grid grid-cols-2 gap-12 mb-4 font-mono text-[14pt] break-inside-avoid items-stretch">
         <div className="flex flex-col items-center text-center">
-          <div className="h-20 flex items-end justify-center mb-1">
+          <div className="flex-1 flex items-end justify-center mb-1 min-h-[80px]">
             {assinaturaRepresentanteUrl && (
               <img
                 src={assinaturaRepresentanteUrl}
@@ -190,7 +190,7 @@ export function PropostaCleanDocument({
           </div>
         </div>
         <div className="flex flex-col items-center text-center">
-          <div className="h-20 flex items-end justify-center mb-1">
+          <div className="flex-1 flex items-end justify-center mb-1 min-h-[80px]">
             {gerenteAssinaturaUrl && (
               <img
                 src={gerenteAssinaturaUrl}

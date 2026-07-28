@@ -102,11 +102,24 @@ export function PropostaCleanSections({
           <h2 className="font-bold text-[14pt] uppercase mb-1">
             4. ACESSÓRIOS OPCIONAIS INCLUSOS NO PREÇO
           </h2>
-          <ul className="list-disc pl-5 text-[14pt] space-y-0.5">
-            {includedAcc.map((acc, i) => (
-              <li key={i}>{acc.nome}</li>
-            ))}
-          </ul>
+          <table className="w-full text-[14pt] border-collapse">
+            <thead>
+              <tr className="bg-slate-100">
+                <th className={th}>Item</th>
+                <th className={th + ' text-center'}>Situação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {includedAcc.map((acc, i) => (
+                <tr key={i}>
+                  <td className={td}>
+                    <span className="font-bold">{acc.nome}</span>
+                  </td>
+                  <td className={td + ' text-center font-bold'}>Incluso</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       )}
 
@@ -130,17 +143,25 @@ export function PropostaCleanSections({
           <table className="w-full text-[14pt] border-collapse">
             <thead>
               <tr className="bg-slate-100">
-                <th className={th}>Código</th>
-                <th className={th}>Descrição</th>
-                <th className={th + ' text-right'}>Valor</th>
+                <th className={th + ' w-[15%]'}>Código</th>
+                <th className={th + ' w-[50%]'}>Descrição</th>
+                <th className={th + ' w-[20%] text-right'}>Valor</th>
+                <th className={th + ' w-[15%] text-center'}>Situação</th>
               </tr>
             </thead>
             <tbody>
               {optionalAcc.map((acc, i) => (
                 <tr key={i}>
-                  <td className={td}>{acc.id || '-'}</td>
-                  <td className={td}>{acc.nome}</td>
-                  <td className={td + ' text-right'}>{formatCurrency(acc.valor, acc.moeda)}</td>
+                  <td className={td + ' font-bold'}>{acc.id || '-'}</td>
+                  <td className={td}>
+                    <span className="font-bold">{acc.nome}</span>
+                  </td>
+                  <td className={td + ' text-right font-bold'}>
+                    {formatCurrency(acc.valor, acc.moeda)}
+                  </td>
+                  <td className={td + ' text-center'}>
+                    <span className="font-bold uppercase text-slate-600">Não Incluso</span>
+                  </td>
                 </tr>
               ))}
             </tbody>

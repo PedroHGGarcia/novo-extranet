@@ -107,6 +107,25 @@
   font-size: 12pt;
 }
 
+.proposta-document .clean-doc-assinaturas .assinatura-nome {
+  font-size: 14pt;
+  font-weight: bold;
+}
+
+.proposta-document .clean-doc-assinaturas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+}
+
+.proposta-document .clean-doc-assinaturas .assinatura-area {
+  flex: 1;
+  min-height: 80px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
 @media print {
   .proposta-document {
     font-size: 14pt !important;
