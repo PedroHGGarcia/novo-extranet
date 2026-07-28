@@ -64,10 +64,10 @@ onMailerBeforeSend((e) => {
     customHtml +=
       '<p style="margin:0 0 16px;color:#1a1a2e;font-size:16px;font-weight:600;">Olá,</p>'
     customHtml +=
-      '<p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">Clique no botão abaixo para redefinir sua senha.</p>'
+      '<p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">Resete sua senha no link abaixo:</p>'
 
     customHtml += '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">'
-    customHtml += '<tr><td align="center" style="padding:12px 0 28px 0;">'
+    customHtml += '<tr><td align="center" style="padding:8px 0 8px 0;">'
     customHtml +=
       '<a href="' +
       resetUrl +
@@ -76,10 +76,12 @@ onMailerBeforeSend((e) => {
     customHtml += '</table>'
 
     customHtml +=
-      '<p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.6;">Se você não solicitou esta alteração, ignore este e-mail.</p>'
+      '<p style="margin:0 0 48px;color:#4a4a68;font-size:15px;line-height:1.6;">&nbsp;</p>'
+    customHtml +=
+      '<p style="margin:0 0 48px;color:#4a4a68;font-size:15px;line-height:1.6;">&nbsp;</p>'
 
     customHtml +=
-      '<p style="margin:0;color:#1a1a2e;font-size:15px;line-height:1.6;">Atenciosamente,<br>Equipe Extranet Gourmet.</p>'
+      '<p style="margin:0 0 8px;color:#1a1a2e;font-size:15px;line-height:1.6;">Obrigado.<br>Extranet Gourmet</p>'
 
     customHtml += '</td>'
     customHtml += '</tr>'
@@ -108,11 +110,11 @@ onMailerBeforeSend((e) => {
 
     message.text =
       'Olá,\n\n' +
-      'Clique no botão abaixo para redefinir sua senha:\n' +
+      'Resete sua senha no link abaixo:\n\n\n\n' +
       resetUrl +
-      '\n\n' +
-      'Se você não solicitou esta alteração, ignore este e-mail.\n\n' +
-      'Atenciosamente,\nEquipe Extranet Gourmet.'
+      '\n\n\n' +
+      'Obrigado.\n' +
+      'Extranet Gourmet'
 
     return e.next()
   } catch (err) {
