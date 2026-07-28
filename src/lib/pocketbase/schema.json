@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-28T15:02:12.793Z",
+  "generatedAt": "2026-07-28T15:11:20.326Z",
   "collections": [
     {
       "name": "users",
@@ -2305,6 +2305,60 @@
         "CREATE INDEX idx_historico_importacoes_usuario ON historico_importacoes (usuario)",
         "CREATE INDEX idx_historico_importacoes_tipo_status ON historico_importacoes (tipo, status)",
         "CREATE INDEX idx_historico_importacoes_created ON historico_importacoes (created DESC)"
+      ]
+    },
+    {
+      "name": "password_reset_tracking",
+      "type": "base",
+      "apiRules": {
+        "list": null,
+        "view": null,
+        "create": null,
+        "update": null,
+        "delete": null
+      },
+      "fields": [
+        {
+          "name": "email",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "send_count",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "window_start",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "last_send",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX idx_password_reset_tracking_email ON password_reset_tracking (email)"
       ]
     }
   ]
