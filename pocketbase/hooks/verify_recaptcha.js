@@ -5,7 +5,7 @@ routerAdd('POST', '/backend/v1/verify-recaptcha', (e) => {
   if (!token || typeof token !== 'string') {
     return e.json(400, {
       success: false,
-      error: 'Falha na verificação do reCAPTCHA. Por favor, tente novamente.',
+      error: 'Por favor, complete o desafio do reCAPTCHA para continuar.',
     })
   }
 
@@ -37,7 +37,7 @@ routerAdd('POST', '/backend/v1/verify-recaptcha', (e) => {
 
     return e.json(400, {
       success: false,
-      error: 'Falha na verificação do reCAPTCHA. Por favor, tente novamente.',
+      error: 'Por favor, complete o desafio do reCAPTCHA para continuar.',
       codes: (data && data['error-codes']) || [],
     })
   } catch (err) {
@@ -65,7 +65,7 @@ onRecordCreateRequest((e) => {
     (e.request ? e.request.header.get('X-Recaptcha-Token') : '')
 
   if (!token || typeof token !== 'string') {
-    throw e.badRequestError('Falha na verificação do reCAPTCHA. Por favor, tente novamente.')
+    throw e.badRequestError('Por favor, complete o desafio do reCAPTCHA para continuar.')
   }
 
   const secretKey =
@@ -83,7 +83,7 @@ onRecordCreateRequest((e) => {
     if (res.statusCode === 200) {
       const data = res.json
       if (data.success !== true) {
-        throw e.badRequestError('Falha na verificação do reCAPTCHA. Por favor, tente novamente.')
+        throw e.badRequestError('Por favor, complete o desafio do reCAPTCHA para continuar.')
       }
     }
   } catch (err) {

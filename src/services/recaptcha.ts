@@ -7,6 +7,13 @@ export interface ReCaptchaVerificationResult {
 }
 
 export async function verifyReCaptchaToken(token: string): Promise<ReCaptchaVerificationResult> {
+  if (!token) {
+    return {
+      success: false,
+      error: 'Por favor, complete o desafio do reCAPTCHA para continuar.',
+    }
+  }
+
   try {
     const res = await pb.send('/backend/v1/verify-recaptcha', {
       method: 'POST',
@@ -15,7 +22,9 @@ export async function verifyReCaptchaToken(token: string): Promise<ReCaptchaVeri
     })
     return {
       success: res.success === true,
-      error: res.error,
+      error:
+        res.error ||
+        (res.success ? undefined : 'Por favor, complete o desafio do reCAPTCHA para continuar.'),
       fallback: res.fallback,
     }
   } catch (err: unknown) {
@@ -25,7 +34,7 @@ export async function verifyReCaptchaToken(token: string): Promise<ReCaptchaVeri
       'response' in err &&
       (err as { response?: { data?: { error?: string } } }).response?.data?.error
         ? (err as { response: { data: { error: string } } }).response.data.error
-        : 'Falha na verificação do reCAPTCHA. Por favor, tente novamente.'
+        : 'Por favor, complete o desafio do reCAPTCHA para continuar.'
     return { success: false, error: message }
   }
 }
