@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast'
 import pb from '@/lib/pocketbase/client'
 import { getErrorMessage } from '@/lib/pocketbase/errors'
 import { UserSignatureSection } from '@/components/UserSignatureSection'
+import { ChangePasswordSection } from '@/components/ChangePasswordSection'
 
 export default function Perfil() {
   const { user, refreshUser } = useAuth()
@@ -84,6 +85,8 @@ export default function Perfil() {
       </Card>
 
       <UserSignatureSection />
+
+      <ChangePasswordSection />
     </div>
   )
 }
