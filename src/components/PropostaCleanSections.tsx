@@ -35,42 +35,42 @@ export function PropostaCleanSections({
   const transporte = proposta.transporte_seguro || tipoProposta?.transporte_seguro || ''
   const validade = proposta.validade_oferta || tipoProposta?.validade_oferta || ''
 
-  const th = 'border border-slate-400 px-2 py-1 text-left font-bold'
-  const td = 'border border-slate-400 px-2 py-1'
+  const th = 'border border-slate-400 px-2 py-0.5 text-left font-bold'
+  const td = 'border border-slate-400 px-2 py-0.5'
 
   return (
     <>
       {acessoriosStandards?.trim() && (
-        <section className="mb-6 break-inside-avoid">
-          <h2 className="font-bold text-[11pt] uppercase mb-2">
+        <section className="mb-3 break-inside-avoid">
+          <h2 className="font-bold text-[14pt] uppercase mb-1">
             1. EQUIPADA COM SEUS ACESSÓRIOS STANDARD ABAIXO DESCRITOS
           </h2>
           <div
-            className="text-[10pt] pl-4 rich-text-content"
+            className="text-[14pt] pl-4 leading-tight rich-text-content"
             dangerouslySetInnerHTML={{ __html: acessoriosStandards }}
           />
         </section>
       )}
 
       {caracteristicasConstrutivas?.trim() && (
-        <section className="mb-6 break-inside-avoid">
-          <h2 className="font-bold text-[11pt] uppercase mb-2">
+        <section className="mb-3 break-inside-avoid">
+          <h2 className="font-bold text-[14pt] uppercase mb-1">
             2. CARACTERÍSTICAS CONSTRUTIVAS PRINCIPAIS
           </h2>
           <div
-            className="text-[10pt] text-justify rich-text-content"
+            className="text-[14pt] text-justify leading-tight rich-text-content"
             dangerouslySetInnerHTML={{ __html: caracteristicasConstrutivas }}
           />
         </section>
       )}
 
       {(hasSpecsJson || especificacoesTecnicas?.trim()) && (
-        <section className="mb-6 break-inside-avoid">
-          <h2 className="font-bold text-[11pt] uppercase mb-2">
+        <section className="mb-3 break-inside-avoid">
+          <h2 className="font-bold text-[14pt] uppercase mb-1">
             3. ESPECIFICAÇÕES TÉCNICAS PRINCIPAIS
           </h2>
           {hasSpecsJson ? (
-            <table className="w-full text-[10pt] border-collapse">
+            <table className="w-full text-[14pt] border-collapse">
               <thead>
                 <tr className="bg-slate-100">
                   <th className={th}>PARÂMETRO</th>
@@ -90,7 +90,7 @@ export function PropostaCleanSections({
             </table>
           ) : (
             <div
-              className="text-[10pt] text-justify rich-text-content"
+              className="text-[14pt] text-justify leading-tight rich-text-content"
               dangerouslySetInnerHTML={{ __html: especificacoesTecnicas || '' }}
             />
           )}
@@ -98,11 +98,11 @@ export function PropostaCleanSections({
       )}
 
       {includedAcc.length > 0 && (
-        <section className="mb-6 break-inside-avoid">
-          <h2 className="font-bold text-[11pt] uppercase mb-2">
+        <section className="mb-3 break-inside-avoid">
+          <h2 className="font-bold text-[14pt] uppercase mb-1">
             4. ACESSÓRIOS OPCIONAIS INCLUSOS NO PREÇO
           </h2>
-          <ul className="list-disc pl-5 text-[10pt] space-y-1">
+          <ul className="list-disc pl-5 text-[14pt] space-y-0.5">
             {includedAcc.map((acc, i) => (
               <li key={i}>{acc.nome}</li>
             ))}
@@ -110,24 +110,24 @@ export function PropostaCleanSections({
         </section>
       )}
 
-      <section className="mb-6 break-inside-avoid">
-        <h2 className="font-bold text-[11pt] uppercase mb-2">5. PREÇOS</h2>
-        <p className="text-[10pt] mb-1">
+      <section className="mb-3 break-inside-avoid">
+        <h2 className="font-bold text-[14pt] uppercase mb-1">5. PREÇOS</h2>
+        <p className="text-[14pt] mb-0.5 leading-tight">
           {frasePreco ||
             `Ex Works Vinhedo / Importação direta pelo cliente — ${formatCurrency(valorFinal, moeda)}`}
         </p>
-        <p className="text-[10pt]">
+        <p className="text-[14pt] leading-tight">
           <span className="font-bold">Pagamento Brasil:</span> Serviços e Comissão Bener —{' '}
           {formatCurrency(valorFinal, moeda)}
         </p>
       </section>
 
       {optionalAcc.length > 0 && (
-        <section className="mb-6 break-inside-avoid">
-          <h2 className="font-bold text-[11pt] uppercase mb-2">
+        <section className="mb-3 break-inside-avoid">
+          <h2 className="font-bold text-[14pt] uppercase mb-1">
             6. ACESSÓRIOS OPCIONAIS NÃO INCLUSOS NO PREÇO ACIMA
           </h2>
-          <table className="w-full text-[10pt] border-collapse">
+          <table className="w-full text-[14pt] border-collapse">
             <thead>
               <tr className="bg-slate-100">
                 <th className={th}>Código</th>
@@ -148,51 +148,51 @@ export function PropostaCleanSections({
         </section>
       )}
 
-      <section className="mb-6 break-inside-avoid">
-        <h2 className="font-bold text-[11pt] uppercase mb-3">
+      <section className="mb-3 break-inside-avoid">
+        <h2 className="font-bold text-[14pt] uppercase mb-1">
           7. CONDIÇÕES GERAIS DE FORNECIMENTO
         </h2>
-        <div className="text-[10pt] space-y-2">
+        <div className="text-[14pt] space-y-1">
           <div>
             <p className="font-bold">7.1 Prazo de Entrega</p>
-            <p className="whitespace-pre-wrap">
+            <p className="whitespace-pre-wrap leading-tight">
               {proposta.prazo_entrega || tipoProposta?.prazo_entrega || '-'}
             </p>
           </div>
           <div>
             <p className="font-bold">7.2 Condições de Pagamento</p>
-            <p className="whitespace-pre-wrap">
+            <p className="whitespace-pre-wrap leading-tight">
               {proposta.condicoes_pagamento || tipoProposta?.condicoes_pagamento || '-'}
             </p>
           </div>
           {garantia && (
             <div className="break-inside-avoid">
               <p className="font-bold">7.3 Garantia</p>
-              <p className="whitespace-pre-wrap">{garantia}</p>
+              <p className="whitespace-pre-wrap leading-tight">{garantia}</p>
             </div>
           )}
           {assist && (
             <div className="break-inside-avoid">
               <p className="font-bold">7.4 Assistência Técnica</p>
-              <p className="whitespace-pre-wrap">{assist}</p>
+              <p className="whitespace-pre-wrap leading-tight">{assist}</p>
             </div>
           )}
           {treinamento && (
             <div className="break-inside-avoid">
               <p className="font-bold">7.5 Treinamento Técnico</p>
-              <p className="whitespace-pre-wrap">{treinamento}</p>
+              <p className="whitespace-pre-wrap leading-tight">{treinamento}</p>
             </div>
           )}
           {transporte && (
             <div className="break-inside-avoid">
               <p className="font-bold">7.6 Transporte / Seguro</p>
-              <p className="whitespace-pre-wrap">{transporte}</p>
+              <p className="whitespace-pre-wrap leading-tight">{transporte}</p>
             </div>
           )}
           {validade && (
             <div className="break-inside-avoid">
               <p className="font-bold">7.7 Validade desta Oferta</p>
-              <p className="whitespace-pre-wrap">{validade}</p>
+              <p className="whitespace-pre-wrap leading-tight">{validade}</p>
             </div>
           )}
         </div>

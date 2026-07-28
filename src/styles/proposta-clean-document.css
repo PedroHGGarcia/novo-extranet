@@ -18,8 +18,8 @@
 }
 
 .proposta-document .clean-doc-destinatario {
-  font-size: 12pt;
-  line-height: 1.6;
+  font-size: 14pt;
+  line-height: 1.3;
 }
 
 .proposta-document .clean-doc-destinatario .dest-nome {
@@ -28,8 +28,8 @@
 }
 
 .proposta-document .clean-doc-saudacao {
-  font-size: 12pt;
-  line-height: 1.6;
+  font-size: 14pt;
+  line-height: 1.3;
 }
 
 .proposta-document .clean-doc-equipamento-titulo {
@@ -52,49 +52,49 @@
 }
 
 .proposta-document .clean-doc-secao h3 {
-  font-size: 13pt;
+  font-size: 14pt;
   font-weight: bold;
   text-transform: uppercase;
 }
 
 .proposta-document .clean-doc-secao h4 {
-  font-size: 12pt;
+  font-size: 14pt;
   font-weight: bold;
 }
 
 .proposta-document .clean-doc-secao p {
-  font-size: 12pt;
-  line-height: 1.6;
+  font-size: 14pt;
+  line-height: 1.3;
 }
 
 .proposta-document .clean-doc-secao .rich-text-content {
-  font-size: 12pt;
-  line-height: 1.6;
+  font-size: 14pt;
+  line-height: 1.3;
 }
 
 .proposta-document .clean-doc-secao .lista-bullets li {
-  font-size: 12pt;
+  font-size: 14pt;
 }
 
 .proposta-document .clean-doc-secao table {
-  font-size: 12pt;
+  font-size: 14pt;
 }
 
 .proposta-document .clean-doc-condicoes {
-  font-size: 12pt;
+  font-size: 14pt;
 }
 
 .proposta-document .clean-doc-assinaturas {
-  font-size: 12pt;
+  font-size: 14pt;
 }
 
 .proposta-document .clean-doc-assinaturas .assinatura-nome {
-  font-size: 12pt;
+  font-size: 14pt;
   font-weight: bold;
 }
 
 .proposta-document .clean-doc-assinaturas .assinatura-cargo {
-  font-size: 11pt;
+  font-size: 12pt;
   color: #555;
 }
 
@@ -104,12 +104,12 @@
 }
 
 .proposta-document .clean-doc-rep-info {
-  font-size: 11pt;
+  font-size: 12pt;
 }
 
 @media print {
   .proposta-document {
-    font-size: 13pt !important;
+    font-size: 14pt !important;
   }
 
   .proposta-document .clean-doc-header,
@@ -127,7 +127,8 @@
   .proposta-document .clean-doc-secao table,
   .proposta-document .clean-doc-condicoes,
   .proposta-document .clean-doc-assinaturas {
-    font-size: 12pt !important;
+    font-size: 14pt !important;
+    line-height: 1.3 !important;
   }
 
   .proposta-document .clean-doc-destinatario .dest-nome,
@@ -136,17 +137,17 @@
   }
 
   .proposta-document .clean-doc-secao h3 {
-    font-size: 13pt !important;
+    font-size: 14pt !important;
   }
 
   .proposta-document .clean-doc-secao h4,
   .proposta-document .clean-doc-assinaturas .assinatura-nome {
-    font-size: 12pt !important;
+    font-size: 14pt !important;
   }
 
   .proposta-document .clean-doc-assinaturas .assinatura-cargo,
   .proposta-document .clean-doc-rep-info {
-    font-size: 11pt !important;
+    font-size: 12pt !important;
   }
 
   .proposta-document .clean-doc-footer {
@@ -176,5 +177,6 @@
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     page-break-before: auto;
+    margin-bottom: 3mm !important;
   }
 }

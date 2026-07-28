@@ -79,12 +79,12 @@ export function PropostaCleanDocument({
 
   return (
     <div className="clean-doc-root bg-white text-black w-[210mm] max-w-full min-h-[297mm] p-12 mx-auto font-sans print:p-0">
-      <div className="doc-header flex justify-between items-start mb-8 pb-3 border-b border-black">
+      <div className="doc-header flex justify-between items-start mb-4 pb-3 border-b border-black">
         <img src={benerLogoUrl} alt="Bener" className="h-16 object-contain" />
-        <div className="text-right text-[9pt] font-mono">
+        <div className="text-right text-[12pt] font-mono">
           <p className="font-bold">Bener Comercial Importadora Exportadora Ltda.</p>
           <p>Vinhedo, {dataFormatada}</p>
-          <table className="ml-auto mt-2 border-collapse text-[9pt]">
+          <table className="ml-auto mt-2 border-collapse text-[12pt]">
             <tbody>
               <tr>
                 <td className="border border-black px-2 py-1">
@@ -105,7 +105,7 @@ export function PropostaCleanDocument({
         </div>
       </div>
 
-      <div className="text-[10pt] font-mono leading-snug mb-6 break-inside-avoid">
+      <div className="text-[14pt] font-mono leading-tight mb-3 break-inside-avoid">
         <p>À</p>
         <p className="font-bold uppercase">{clienteNome}</p>
         <p>{clienteEndereco || '-'}</p>
@@ -125,26 +125,26 @@ export function PropostaCleanDocument({
         <br />
         <p>Prezados Senhores,</p>
         <br />
-        <p className="text-justify">
+        <p className="text-justify leading-tight">
           Atendendo a sua prezada consulta, temos o prazer de submeter a vossa devida apreciação
           nossa proposta acima citada, para o fornecimento de:
         </p>
       </div>
 
-      <div className="text-center mb-4 break-inside-avoid">
-        <h2 className="text-[12pt] font-bold uppercase font-mono">
+      <div className="text-center mb-3 break-inside-avoid">
+        <h2 className="text-[14pt] font-bold uppercase font-mono">
           {categoriaNome} MARCA {marcaNome} - {versaoNome}
         </h2>
       </div>
 
       {versaoImagemUrl && (
-        <div className="flex flex-col items-center mb-6 break-inside-avoid">
+        <div className="flex flex-col items-center mb-3 break-inside-avoid">
           <img
             src={versaoImagemUrl}
             alt={versaoNome}
             className="max-w-full max-h-[220px] object-contain"
           />
-          <p className="text-[9pt] text-slate-500 mt-2 font-mono italic">
+          <p className="text-[12pt] text-slate-500 mt-1 font-mono italic">
             Imagem meramente ilustrativa
           </p>
         </div>
@@ -163,7 +163,7 @@ export function PropostaCleanDocument({
         proposta={proposta}
       />
 
-      <div className="text-[10pt] font-mono text-justify leading-relaxed mb-8 mt-6 break-inside-avoid">
+      <div className="text-[14pt] font-mono text-justify leading-tight mb-4 mt-3 break-inside-avoid">
         <p>
           Antecipadamente agradecemos vossa honrosa preferência, permanecendo ao vosso inteiro
           dispor, para dirimir e atender quaisquer eventuais esclarecimentos adicionais que se
@@ -173,7 +173,7 @@ export function PropostaCleanDocument({
         <p>Atenciosamente,</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-12 mb-8 font-mono text-[10pt] break-inside-avoid">
+      <div className="grid grid-cols-2 gap-12 mb-4 font-mono text-[14pt] break-inside-avoid">
         <div className="flex flex-col items-center text-center">
           <div className="h-20 flex items-end justify-center mb-1">
             {assinaturaRepresentanteUrl && (
@@ -186,7 +186,7 @@ export function PropostaCleanDocument({
           </div>
           <div className="w-full border-t border-black pt-1">
             <p className="font-bold">{issuerName || representanteNome || '-'}</p>
-            <p className="text-[9pt] text-slate-600">{issuerSectorLabel || 'Comercial'}</p>
+            <p className="text-[12pt] text-slate-600">{issuerSectorLabel || 'Comercial'}</p>
           </div>
         </div>
         <div className="flex flex-col items-center text-center">
@@ -201,17 +201,17 @@ export function PropostaCleanDocument({
           </div>
           <div className="w-full border-t border-black pt-1">
             <p className="font-bold">{gerenteNome || '-'}</p>
-            <p className="text-[9pt] text-slate-600">Gerente</p>
+            <p className="text-[12pt] text-slate-600">Gerente</p>
           </div>
         </div>
       </div>
 
-      <div className="text-[9pt] font-mono mb-6 break-inside-avoid">
+      <div className="text-[12pt] font-mono mb-3 break-inside-avoid">
         <p className="underline">{representanteNome}</p>
         <p>{representanteTelefone || '-'}</p>
       </div>
 
-      <div className="doc-footer text-center text-[8pt] font-mono text-slate-700">
+      <div className="doc-footer text-center text-[10pt] font-mono text-slate-700">
         <p>Rua Iracema Lucas, 450 (Antiga Rua Parsch) – Distrito Industrial</p>
         <p>Vinhedo - SP - Brasil - CEP: 13280-172 - Fone / Fax: (0**19) 3826-7373</p>
         <p>E-mail: vendas@bener.com.br - Site: www.bener.com.br</p>
