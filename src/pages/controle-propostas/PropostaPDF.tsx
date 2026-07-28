@@ -102,7 +102,7 @@ export default function PropostaPDF() {
           onClick={() => window.print()}
           className="bg-[#337ab7] hover:bg-[#286090] text-white gap-2 shadow-sm"
         >
-          <Printer className="w-4 h-4" /> Imprimir / Salvar PDF
+          <Printer className="w-4 h-4" /> Imprimir Proposta
         </Button>
       </div>
       <div className="bg-white shadow-xl overflow-hidden w-fit print:shadow-none print:w-full">

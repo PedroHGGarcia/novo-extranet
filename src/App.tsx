@@ -18,6 +18,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ThemeProvider } from '@/components/theme-provider'
 import { RouteError } from '@/components/RouteError'
 import './styles/editor.css'
+import './styles/print.css'
 
 const Layout = lazy(() => import('@/components/Layout').then((m) => ({ default: m.default })))
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
