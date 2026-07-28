@@ -45,6 +45,42 @@
 /* ===== Document Container ===== */
 .proposta-document {
   width: 100%;
+  font-size: 13pt;
+  line-height: 1.5;
+}
+
+/* Ensure all text within the clean document uses the increased base font */
+.proposta-document p,
+.proposta-document li,
+.proposta-document td,
+.proposta-document th,
+.proposta-document span,
+.proposta-document div {
+  font-size: inherit;
+}
+
+.proposta-document h1,
+.proposta-document h2,
+.proposta-document h3,
+.proposta-document h4 {
+  page-break-after: avoid;
+  break-after: avoid;
+}
+
+/* Center any equipment/product images within the document */
+.proposta-document img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+}
+
+.proposta-document img[src*='assinatura'],
+.proposta-document img[src*='signature'] {
+  max-height: 20mm;
+  max-width: 200px;
 }
 
 /* ===== Header Table ===== */
@@ -59,25 +95,28 @@
 
 .print-header-table td:last-child {
   text-align: right;
-  font-size: 11pt;
+  font-size: 12pt;
 }
 
 /* ===== Destinatário ===== */
 .print-destinatario {
   margin-bottom: 25px;
   line-height: 1.6;
+  font-size: 12pt;
 }
 
 /* ===== Corpo ===== */
 .print-corpo {
   margin-bottom: 25px;
   line-height: 1.6;
+  font-size: 12pt;
 }
 
 /* ===== Itens Table ===== */
 .print-itens-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 12pt;
 }
 
 .print-itens-table th {
@@ -111,6 +150,7 @@
 .print-condicoes,
 .print-observacoes {
   margin-bottom: 25px;
+  font-size: 12pt;
 }
 
 .print-condicoes h2,
@@ -141,7 +181,7 @@
   @page {
     @bottom-center {
       content: 'Página ' counter(page) ' / ' counter(pages);
-      font-size: 9pt;
+      font-size: 10pt;
       color: #666;
     }
   }
@@ -154,7 +194,7 @@
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
-    font-size: 12pt !important;
+    font-size: 13pt !important;
     color: black !important;
     font-family: Arial, Helvetica, sans-serif !important;
   }
@@ -168,6 +208,7 @@
   .proposta-document {
     width: 100% !important;
     max-width: 100% !important;
+    font-size: 13pt !important;
   }
 
   .page-break {

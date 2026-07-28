@@ -7,6 +7,7 @@ import { getProposta } from '@/services/propostas'
 import { getTiposProposta } from '@/services/tipos-propostas'
 import pb from '@/lib/pocketbase/client'
 import './PrintProposta.css'
+import '@/styles/proposta-clean-document.css'
 
 export default function PrintProposta() {
   const { id } = useParams()
