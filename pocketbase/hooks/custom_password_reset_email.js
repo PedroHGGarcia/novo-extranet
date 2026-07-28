@@ -76,10 +76,10 @@ onMailerBeforeSend((e) => {
     customHtml += '</table>'
 
     customHtml +=
-      '<p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.6;">Se você não solicitou a redefinição de sua senha, ignore este e-mail.</p>'
+      '<p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.6;">Se você não solicitou esta alteração, ignore este e-mail.</p>'
 
     customHtml +=
-      '<p style="margin:0;color:#1a1a2e;font-size:15px;line-height:1.6;">Obrigado,<br>Equipe Extranet Gourmet.</p>'
+      '<p style="margin:0;color:#1a1a2e;font-size:15px;line-height:1.6;">Atenciosamente,<br>Equipe Extranet Gourmet.</p>'
 
     customHtml += '</td>'
     customHtml += '</tr>'
@@ -111,8 +111,8 @@ onMailerBeforeSend((e) => {
       'Clique no botão abaixo para redefinir sua senha:\n' +
       resetUrl +
       '\n\n' +
-      'Se você não solicitou a redefinição de sua senha, ignore este e-mail.\n\n' +
-      'Obrigado,\nEquipe Extranet Gourmet.'
+      'Se você não solicitou esta alteração, ignore este e-mail.\n\n' +
+      'Atenciosamente,\nEquipe Extranet Gourmet.'
 
     return e.next()
   } catch (err) {

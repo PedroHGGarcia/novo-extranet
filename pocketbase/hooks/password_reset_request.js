@@ -107,23 +107,38 @@ routerAdd('POST', '/backend/v1/request-password-reset', (e) => {
   }
 
   let pbUrl = $secrets.get('PB_INSTANCE_URL') || ''
-  if (!pbUrl) {
-    pbUrl = 'https://' + e.request.host
+  var urlsToTry = []
+  if (pbUrl) {
+    if (pbUrl.endsWith('/')) pbUrl = pbUrl.slice(0, -1)
+    urlsToTry.push(pbUrl)
   }
-  if (pbUrl.endsWith('/')) pbUrl = pbUrl.slice(0, -1)
+  if (e.request && e.request.host) {
+    urlsToTry.push('https://' + e.request.host)
+  }
+  urlsToTry.push('http://127.0.0.1:8080')
+  urlsToTry.push('http://127.0.0.1:8090')
 
-  try {
-    $http.send({
-      url: pbUrl + '/api/collections/users/request-password-reset',
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email }),
-      timeout: 15,
-    })
-  } catch (err) {
+  var sentSuccess = false
+  for (var i = 0; i < urlsToTry.length; i++) {
+    try {
+      var res = $http.send({
+        url: urlsToTry[i] + '/api/collections/users/request-password-reset',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email }),
+        timeout: 10,
+      })
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        sentSuccess = true
+        break
+      }
+    } catch (_) {}
+  }
+
+  if (!sentSuccess) {
     $app
       .logger()
-      .error('password_reset: failed to send reset email', 'error', err.message || String(err))
+      .error('password_reset: failed to trigger reset email on all candidate internal URLs')
   }
 
   return e.json(200, {

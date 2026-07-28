@@ -139,25 +139,34 @@ export default function ForgotPassword() {
                 </div>
               )}
 
-              {resendState !== 'countdown_long' && (
-                <div className="flex justify-center py-2 min-h-[78px]">
-                  <ReCaptcha
-                    key={captchaKey}
-                    siteKey={SITE_KEY}
-                    onVerify={(token) => setResendToken(token)}
-                    onExpire={() => setResendToken(null)}
-                    onError={() => setResendToken(null)}
-                  />
+              {resendState === 'countdown_long' && (
+                <div className="bg-amber-50 text-amber-800 p-3.5 rounded-2xl text-xs font-medium border border-amber-200 text-center animate-fade-in">
+                  Limite de reenvios atingido. Por favor, aguarde{' '}
+                  <span className="font-bold">{formatMMSS(countdown)}</span> para tentar novamente.
                 </div>
               )}
 
-              <Button
-                onClick={handleResend}
-                className="w-full bg-brand-green hover:bg-brand-green/90 text-white uppercase text-sm h-12 rounded-full font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={resendDisabled}
-              >
-                {resendLabel}
-              </Button>
+              {resendState !== 'countdown_long' && (
+                <>
+                  <div className="flex justify-center py-2 min-h-[78px]">
+                    <ReCaptcha
+                      key={captchaKey}
+                      siteKey={SITE_KEY}
+                      onVerify={(token) => setResendToken(token)}
+                      onExpire={() => setResendToken(null)}
+                      onError={() => setResendToken(null)}
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleResend}
+                    className="w-full bg-brand-green hover:bg-brand-green/90 text-white uppercase text-sm h-12 rounded-full font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={resendDisabled}
+                  >
+                    {resendLabel}
+                  </Button>
+                </>
+              )}
 
               <div className="text-center text-sm pt-1">
                 <Link to="/login" className="text-brand-green hover:underline font-semibold">
