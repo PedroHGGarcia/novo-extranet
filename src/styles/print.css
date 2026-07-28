@@ -2,3 +2,21 @@
   margin: 20mm 15mm;
   size: A4;
 }
+
+@media print {
+  b,
+  strong,
+  th,
+  .font-bold {
+    font-weight: bold !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: bold !important;
+  }
+}

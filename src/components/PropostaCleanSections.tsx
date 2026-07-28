@@ -117,7 +117,8 @@ export function PropostaCleanSections({
             `Ex Works Vinhedo / Importação direta pelo cliente — ${formatCurrency(valorFinal, moeda)}`}
         </p>
         <p className="text-[10pt]">
-          Pagamento Brasil: Serviços e Comissão Bener — {formatCurrency(valorFinal, moeda)}
+          <span className="font-bold">Pagamento Brasil:</span> Serviços e Comissão Bener —{' '}
+          {formatCurrency(valorFinal, moeda)}
         </p>
       </section>
 

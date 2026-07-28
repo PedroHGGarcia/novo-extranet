@@ -157,6 +157,7 @@
 .print-observacoes h2 {
   border-bottom: 1px solid #999;
   padding-bottom: 5px;
+  font-weight: bold;
 }
 
 /* ===== Assinaturas ===== */
@@ -249,5 +250,26 @@
   .rich-text-content * {
     max-height: none !important;
     overflow: visible !important;
+  }
+
+  .font-bold {
+    font-weight: bold !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: bold !important;
+  }
+
+  th {
+    font-weight: bold !important;
+  }
+
+  .print-itens-table th {
+    font-weight: bold !important;
   }
 }

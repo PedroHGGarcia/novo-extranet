@@ -273,6 +273,10 @@ body {
   font-size: 11pt;
 }
 
+.condicoes .cond-label {
+  font-weight: bold;
+}
+
 .condicao-item {
   margin-bottom: 3mm;
   page-break-inside: avoid;
@@ -281,6 +285,10 @@ body {
 
 .condicao-item p {
   white-space: pre-wrap;
+}
+
+.condicao-item .cond-label {
+  font-weight: bold;
 }
 
 /* ===== Signatures ===== */
@@ -410,6 +418,21 @@ body {
   .rich-text-content * {
     max-height: none !important;
     overflow: visible !important;
+  }
+
+  .secao h3,
+  .secao h4,
+  .destinatario .dest-nome,
+  .tabela-especificacoes th,
+  .tabela-opcionais th,
+  .header-table tr:first-child td,
+  .condicoes .cond-label,
+  .condicao-item .cond-label {
+    font-weight: bold !important;
+  }
+
+  .font-bold {
+    font-weight: bold !important;
   }
 
   * {

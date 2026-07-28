@@ -143,9 +143,17 @@ export function PropostaDocument({
         <p>À</p>
         <p className="font-bold uppercase">{clienteNome}</p>
         <p>{clienteEndereco || '-'}</p>
-        {clienteCnpj && <p>CNPJ: {clienteCnpj}</p>}
-        <p>Telefone: {proposta.telefone || '-'}</p>
-        <p>E-mail: {clienteEmail || '-'}</p>
+        {clienteCnpj && (
+          <p>
+            <span className="font-bold">CNPJ:</span> {clienteCnpj}
+          </p>
+        )}
+        <p>
+          <span className="font-bold">Telefone:</span> {proposta.telefone || '-'}
+        </p>
+        <p>
+          <span className="font-bold">E-mail:</span> {clienteEmail || '-'}
+        </p>
         <br />
         <p className="font-bold uppercase">A/C. SR. {proposta.contato || '-'}</p>
       </div>
@@ -673,6 +681,9 @@ export function PropostaDocument({
             text-align: center;
             z-index: 100;
           }
+          .font-bold { font-weight: bold !important; }
+          h2, h3, h4 { font-weight: bold !important; }
+          th { font-weight: bold !important; }
         }
       `}</style>
       <div className="print-only-footer">

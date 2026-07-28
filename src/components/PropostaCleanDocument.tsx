@@ -88,11 +88,17 @@ export function PropostaCleanDocument({
             <tbody>
               <tr>
                 <td className="border border-black px-2 py-1">
-                  Sigla: {representanteSigla || '-'}
+                  <span className="font-bold">Sigla:</span> {representanteSigla || '-'}
                 </td>
-                <td className="border border-black px-2 py-1">Nº Oferta: {numRevisao || '-'}</td>
-                <td className="border border-black px-2 py-1">Mês: {mesOferta}</td>
-                <td className="border border-black px-2 py-1">Ano: {anoOferta}</td>
+                <td className="border border-black px-2 py-1">
+                  <span className="font-bold">Nº Oferta:</span> {numRevisao || '-'}
+                </td>
+                <td className="border border-black px-2 py-1">
+                  <span className="font-bold">Mês:</span> {mesOferta}
+                </td>
+                <td className="border border-black px-2 py-1">
+                  <span className="font-bold">Ano:</span> {anoOferta}
+                </td>{' '}
               </tr>
             </tbody>
           </table>
@@ -103,9 +109,17 @@ export function PropostaCleanDocument({
         <p>À</p>
         <p className="font-bold uppercase">{clienteNome}</p>
         <p>{clienteEndereco || '-'}</p>
-        {clienteCnpj && <p>CNPJ: {clienteCnpj}</p>}
-        <p>Telefone: {clienteTelefone || proposta.telefone || '-'}</p>
-        <p>E-mail: {clienteEmail || '-'}</p>
+        {clienteCnpj && (
+          <p>
+            <span className="font-bold">CNPJ:</span> {clienteCnpj}
+          </p>
+        )}
+        <p>
+          <span className="font-bold">Telefone:</span> {clienteTelefone || proposta.telefone || '-'}
+        </p>
+        <p>
+          <span className="font-bold">E-mail:</span> {clienteEmail || '-'}
+        </p>
         <br />
         <p className="font-bold uppercase">A/C. Sr. {clienteContato || '-'}</p>
         <br />
@@ -222,6 +236,9 @@ export function PropostaCleanDocument({
           .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
           .rich-text-content { overflow: visible !important; max-height: none !important; }
           .rich-text-content * { max-height: none !important; overflow: visible !important; }
+          .font-bold { font-weight: bold !important; }
+          h2, h3, h4 { font-weight: bold !important; }
+          th { font-weight: bold !important; }
         }
       `}</style>
     </div>

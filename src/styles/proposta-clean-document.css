@@ -152,4 +152,21 @@
   .proposta-document .clean-doc-footer {
     font-size: 10pt !important;
   }
+
+  .proposta-document .clean-doc-secao h3,
+  .proposta-document .clean-doc-secao h4,
+  .proposta-document .clean-doc-destinatario .dest-nome,
+  .proposta-document .clean-doc-equipamento-titulo,
+  .proposta-document .clean-doc-assinaturas .assinatura-nome,
+  .proposta-document .clean-doc-header .header-company {
+    font-weight: bold !important;
+  }
+
+  .proposta-document .font-bold {
+    font-weight: bold !important;
+  }
+
+  .proposta-document th {
+    font-weight: bold !important;
+  }
 }
