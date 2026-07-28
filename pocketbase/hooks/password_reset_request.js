@@ -106,7 +106,41 @@ routerAdd('POST', '/backend/v1/request-password-reset', (e) => {
     currentSendCount = 1
   }
 
-  // Generate reset token and send custom email directly
+  // Ensure PocketBase app settings have "Extranet Gourmet" as sender display name and app name
+  try {
+    var settings = $app.settings()
+    if (settings) {
+      var needsSave = false
+      if (!settings.meta) {
+        settings.meta = {}
+      }
+      if (settings.meta.senderName !== 'Extranet Gourmet') {
+        settings.meta.senderName = 'Extranet Gourmet'
+        needsSave = true
+      }
+      if (settings.meta.appName !== 'Extranet Gourmet') {
+        settings.meta.appName = 'Extranet Gourmet'
+        needsSave = true
+      }
+      if (!settings.meta.senderAddress) {
+        settings.meta.senderAddress = 'noreply@mail.goskip.dev'
+        needsSave = true
+      }
+      if (needsSave) {
+        $app.save(settings)
+      }
+    }
+  } catch (settingsErr) {
+    $app
+      .logger()
+      .error(
+        'password_reset: failed to update settings',
+        'error',
+        settingsErr.message || String(settingsErr),
+      )
+  }
+
+  // Generate reset token and send custom email directly if possible
   var emailSent = false
 
   var userRecord = null
@@ -116,16 +150,12 @@ routerAdd('POST', '/backend/v1/request-password-reset', (e) => {
 
   if (userRecord) {
     try {
-      // Generate password reset token
-      var resetToken = userRecord.newPasswordResetToken()
-      $app.save(userRecord)
-
       // Build reset URL
       var baseUrl = ''
       try {
-        var settings = $app.settings()
-        if (settings && settings.meta && settings.meta.appUrl) {
-          baseUrl = settings.meta.appUrl
+        var sObj = $app.settings()
+        if (sObj && sObj.meta && sObj.meta.appUrl) {
+          baseUrl = sObj.meta.appUrl
         }
       } catch (_) {}
 
@@ -147,24 +177,9 @@ routerAdd('POST', '/backend/v1/request-password-reset', (e) => {
       }
       if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1)
 
-      var resetUrl = baseUrl + '/_/collections/users/confirm-password-reset/' + resetToken
-
-      // Build email content — Opção 3 (formal version)
-      var subject = 'Solicitação de redefinição de senha'
-      var textContent =
-        'Prezado(a) usuário(a),\n\n' +
-        'Informamos que foi solicitada a redefinição de sua senha de acesso à Extranet Gourmet.\n\n' +
-        'Para prosseguir, acesse o link a seguir:\n\n' +
-        resetUrl +
-        '\n\n' +
-        'Caso não tenha solicitado esta alteração, favor desconsiderar este e-mail. Sua senha permanecerá inalterada.\n\n' +
-        'Atenciosamente,\n' +
-        'Extranet Gourmet — Portal de Vendas & Gestão'
-      var htmlContent = '<pre>' + textContent + '</pre>'
-
-      // Get sender info from settings (fallback to defaults)
+      // Get sender info from settings (default to Extranet Gourmet and platform no-reply address)
       var fromName = 'Extranet Gourmet'
-      var fromAddress = 'noreply@extranetgourmet.goskip.app'
+      var fromAddress = 'noreply@mail.goskip.dev'
       try {
         var s = $app.settings()
         if (s && s.meta) {
@@ -173,16 +188,33 @@ routerAdd('POST', '/backend/v1/request-password-reset', (e) => {
         }
       } catch (_) {}
 
-      // Send custom email directly via mailer
-      var message = new MailerMessage({
-        from: { name: fromName, address: fromAddress },
-        to: [{ address: email }],
-        subject: subject,
-        text: textContent,
-        html: htmlContent,
-      })
-      $app.newMailClient().send(message)
-      emailSent = true
+      if (typeof MailerMessage !== 'undefined') {
+        var resetToken = userRecord.newPasswordResetToken()
+        $app.save(userRecord)
+        var resetUrl = baseUrl + '/_/collections/users/confirm-password-reset/' + resetToken
+
+        var subject = 'Solicitação de redefinição de senha'
+        var textContent =
+          'Prezado(a) usuário(a),\n\n' +
+          'Informamos que foi solicitada a redefinição de sua senha de acesso à Extranet Gourmet.\n\n' +
+          'Para prosseguir, acesse o link a seguir:\n\n' +
+          resetUrl +
+          '\n\n' +
+          'Caso não tenha solicitado esta alteração, favor desconsiderar este e-mail. Sua senha permanecerá inalterada.\n\n' +
+          'Atenciosamente,\n' +
+          'Extranet Gourmet — Portal de Vendas & Gestão'
+        var htmlContent = '<pre>' + textContent + '</pre>'
+
+        var message = new MailerMessage({
+          from: { name: fromName, address: fromAddress },
+          to: [{ address: email }],
+          subject: subject,
+          text: textContent,
+          html: htmlContent,
+        })
+        $app.newMailClient().send(message)
+        emailSent = true
+      }
     } catch (err) {
       $app
         .logger()
