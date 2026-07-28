@@ -19,4 +19,12 @@
   h6 {
     font-weight: bold !important;
   }
+
+  section,
+  .secao,
+  .break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    page-break-before: auto;
+  }
 }

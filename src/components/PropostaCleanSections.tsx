@@ -65,7 +65,7 @@ export function PropostaCleanSections({
       )}
 
       {(hasSpecsJson || especificacoesTecnicas?.trim()) && (
-        <section className="mb-6">
+        <section className="mb-6 break-inside-avoid">
           <h2 className="font-bold text-[11pt] uppercase mb-2">
             3. ESPECIFICAÇÕES TÉCNICAS PRINCIPAIS
           </h2>
@@ -148,11 +148,11 @@ export function PropostaCleanSections({
         </section>
       )}
 
-      <section className="mb-6">
+      <section className="mb-6 break-inside-avoid">
         <h2 className="font-bold text-[11pt] uppercase mb-3">
           7. CONDIÇÕES GERAIS DE FORNECIMENTO
         </h2>
-        <div className="text-[10pt] space-y-3">
+        <div className="text-[10pt] space-y-2">
           <div>
             <p className="font-bold">7.1 Prazo de Entrega</p>
             <p className="whitespace-pre-wrap">

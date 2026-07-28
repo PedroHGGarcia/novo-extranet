@@ -395,9 +395,17 @@ body {
   img,
   .secao,
   .condicao-item,
-  .assinaturas-grid {
+  .assinaturas-grid,
+  .destinatario,
+  .saudacao,
+  .equipamento-titulo,
+  .equipamento-imagem,
+  .secao-assinaturas,
+  .proposta-header,
+  .proposta-footer {
     page-break-inside: avoid;
     break-inside: avoid;
+    page-break-before: auto;
   }
 
   h3,

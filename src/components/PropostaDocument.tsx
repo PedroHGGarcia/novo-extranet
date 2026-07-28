@@ -110,7 +110,7 @@ export function PropostaDocument({
   return (
     <div className="bg-white text-black w-[210mm] max-w-full min-h-[297mm] p-12 shadow-lg print:shadow-none print:w-full print:m-0 print:pb-16 relative mx-auto box-border">
       {/* Header */}
-      <div className="flex justify-between items-start mb-12">
+      <div className="flex justify-between items-start mb-12 break-inside-avoid">
         <img src={benerLogoUrl} alt="Bener" className="h-20 object-contain" />
 
         <div className="flex flex-col items-end font-mono">
@@ -139,7 +139,7 @@ export function PropostaDocument({
       </div>
 
       {/* Client Info */}
-      <div className="text-[14px] font-mono leading-snug mb-10 tracking-tight">
+      <div className="text-[14px] font-mono leading-snug mb-10 tracking-tight break-inside-avoid">
         <p>À</p>
         <p className="font-bold uppercase">{clienteNome}</p>
         <p>{clienteEndereco || '-'}</p>
@@ -159,7 +159,7 @@ export function PropostaDocument({
       </div>
 
       {/* Salutation */}
-      <div className="text-[14px] font-mono leading-relaxed mb-8">
+      <div className="text-[14px] font-mono leading-relaxed mb-8 break-inside-avoid">
         <p>Prezados Senhores,</p>
         <br />
         <p>
@@ -169,7 +169,7 @@ export function PropostaDocument({
       </div>
 
       {/* Product Title */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 break-inside-avoid">
         <h2 className="text-[16px] font-bold uppercase font-mono tracking-wide">
           {categoriaNome} MARCA {marcaNome} - {versaoNome}
         </h2>
@@ -203,7 +203,7 @@ export function PropostaDocument({
 
       {/* Acessorios (Included & Optional) */}
       {acessorios.length > 0 && (
-        <div className="mb-10 print-detail-block px-8">
+        <div className="mb-10 print-detail-block px-8 break-inside-avoid">
           <h3 className="font-bold font-mono text-[14px] uppercase mb-3 border-b border-black pb-1">
             Itens Adicionais e Opcionais
           </h3>
@@ -403,7 +403,7 @@ export function PropostaDocument({
         <h2 className="font-bold font-mono text-[15px] uppercase tracking-wide border-b-2 border-black pb-2 mb-6">
           Preço e Condições
         </h2>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-6 font-mono text-[13px]">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-6 font-mono text-[13px] break-inside-avoid">
           <div className="col-span-2 flex items-center justify-between border-b border-slate-300 pb-4 mb-2">
             <span className="font-bold text-[15px] uppercase">Valor Final do Equipamento:</span>
             <span className="text-[18px] font-bold">
@@ -522,7 +522,7 @@ export function PropostaDocument({
       </div>
 
       {/* Footer info & Assinaturas */}
-      <div className="mt-12 font-mono print-break-inside-avoid pt-12">
+      <div className="mt-12 font-mono print-break-inside-avoid break-inside-avoid pt-12">
         <div className="grid grid-cols-2 gap-12 mb-12">
           <div className="flex flex-col items-center text-center">
             <div className="h-24 flex items-end justify-center w-full mb-1">
@@ -610,7 +610,9 @@ export function PropostaDocument({
         @media print {
           @page { size: A4; margin: 20mm 15mm; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
-          .print-break-inside-avoid { break-inside: avoid; }
+          .print-break-inside-avoid,
+          .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
+          .print-detail-block { break-inside: avoid; page-break-inside: avoid; }
           .print-break-before { page-break-before: always; }
           .no-print { display: none !important; }
           .print-details-section {

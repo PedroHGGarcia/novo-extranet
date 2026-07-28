@@ -78,7 +78,7 @@ export function PropostaCleanDocument({
     : proposta.numero_proposta
 
   return (
-    <div className="bg-white text-black w-[210mm] max-w-full min-h-[297mm] p-12 mx-auto font-sans print:p-0">
+    <div className="clean-doc-root bg-white text-black w-[210mm] max-w-full min-h-[297mm] p-12 mx-auto font-sans print:p-0">
       <div className="doc-header flex justify-between items-start mb-8 pb-3 border-b border-black">
         <img src={benerLogoUrl} alt="Bener" className="h-16 object-contain" />
         <div className="text-right text-[9pt] font-mono">
@@ -105,7 +105,7 @@ export function PropostaCleanDocument({
         </div>
       </div>
 
-      <div className="text-[10pt] font-mono leading-snug mb-6">
+      <div className="text-[10pt] font-mono leading-snug mb-6 break-inside-avoid">
         <p>À</p>
         <p className="font-bold uppercase">{clienteNome}</p>
         <p>{clienteEndereco || '-'}</p>
@@ -131,7 +131,7 @@ export function PropostaCleanDocument({
         </p>
       </div>
 
-      <div className="text-center mb-4">
+      <div className="text-center mb-4 break-inside-avoid">
         <h2 className="text-[12pt] font-bold uppercase font-mono">
           {categoriaNome} MARCA {marcaNome} - {versaoNome}
         </h2>
@@ -163,7 +163,7 @@ export function PropostaCleanDocument({
         proposta={proposta}
       />
 
-      <div className="text-[10pt] font-mono text-justify leading-relaxed mb-8 mt-6">
+      <div className="text-[10pt] font-mono text-justify leading-relaxed mb-8 mt-6 break-inside-avoid">
         <p>
           Antecipadamente agradecemos vossa honrosa preferência, permanecendo ao vosso inteiro
           dispor, para dirimir e atender quaisquer eventuais esclarecimentos adicionais que se
@@ -206,7 +206,7 @@ export function PropostaCleanDocument({
         </div>
       </div>
 
-      <div className="text-[9pt] font-mono mb-6">
+      <div className="text-[9pt] font-mono mb-6 break-inside-avoid">
         <p className="underline">{representanteNome}</p>
         <p>{representanteTelefone || '-'}</p>
       </div>
@@ -234,6 +234,12 @@ export function PropostaCleanDocument({
             background: white; z-index: 100;
           }
           .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
+          .clean-doc-root > div,
+          .clean-doc-root > section {
+            break-inside: avoid;
+            page-break-inside: avoid;
+            page-break-before: auto;
+          }
           .rich-text-content { overflow: visible !important; max-height: none !important; }
           .rich-text-content * { max-height: none !important; overflow: visible !important; }
           .font-bold { font-weight: bold !important; }

@@ -169,4 +169,12 @@
   .proposta-document th {
     font-weight: bold !important;
   }
+
+  .clean-doc-root > div,
+  .clean-doc-root > section,
+  .proposta-document section {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    page-break-before: auto;
+  }
 }
