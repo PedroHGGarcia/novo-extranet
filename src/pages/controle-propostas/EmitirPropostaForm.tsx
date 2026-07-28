@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { format } from 'date-fns'
-import { List, Eye, FileText, PenTool, CheckCircle, AlertTriangle, ShieldCheck } from 'lucide-react'
+import { List, Eye, FileText, PenTool, CheckCircle, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
@@ -25,9 +25,7 @@ import { getProjetosByCliente } from '@/services/projetos'
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 import pb from '@/lib/pocketbase/client'
 import { formatCurrency, mapCurrencyCode, CurrencyInput } from './utils'
-import { ReCaptcha } from '@/components/ReCaptcha'
 import { EmailTagInput } from '@/components/EmailTagInput'
-import { verifyReCaptchaToken } from '@/services/recaptcha'
 
 interface EmitirPropostaFormProps {
   selectedProposta: Proposta | null
@@ -59,7 +57,6 @@ export function EmitirPropostaForm({
   const [signatureConfirmed, setSignatureConfirmed] = useState(false)
   const [useProfileSignature, setUseProfileSignature] = useState(false)
   const [formTouched, setFormTouched] = useState(false)
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null)
 
   const [exchangeRates, setExchangeRates] = useState<{
     USD: number
@@ -177,7 +174,6 @@ export function EmitirPropostaForm({
       setPropostaSignatureBlob(null)
       setSignatureConfirmed(false)
       setUseProfileSignature(!!user?.assinatura)
-      setRecaptchaToken(null)
     }
   }, [selectedProposta, user])
 
@@ -390,7 +386,6 @@ export function EmitirPropostaForm({
     if (!formData.representante) missing.push('Representante')
     if (!formData.tipo_proposta) missing.push('Tipo de Proposta')
     if (!selectedProposta && !signatureConfirmed && !useProfileSignature) missing.push('Assinatura')
-    if (!selectedProposta && !recaptchaToken) missing.push('reCAPTCHA')
     return missing
   }, [
     formData.cliente,
@@ -400,7 +395,6 @@ export function EmitirPropostaForm({
     selectedProposta,
     signatureConfirmed,
     useProfileSignature,
-    recaptchaToken,
   ])
 
   const requiredFieldsValid = missingFields.length === 0
@@ -439,30 +433,9 @@ export function EmitirPropostaForm({
       toast({ title: 'Assinatura do representante é obrigatória', variant: 'destructive' })
       return
     }
-    if (!selectedProposta && !recaptchaToken) {
-      toast({
-        title: 'Verificação de segurança obrigatória',
-        description: 'Por favor, complete a verificação reCAPTCHA para emitir a proposta.',
-        variant: 'destructive',
-      })
-      return
-    }
     if (selectedProposta && user?.id !== selectedProposta.user) {
       toast({ title: 'Sem permissão para modificar', variant: 'destructive' })
       return
-    }
-
-    if (!selectedProposta && recaptchaToken) {
-      const verification = await verifyReCaptchaToken(recaptchaToken)
-      if (!verification.success && !verification.fallback) {
-        toast({
-          title: 'Falha na verificação do reCAPTCHA',
-          description:
-            verification.error || 'Falha na verificação do reCAPTCHA. Por favor, tente novamente.',
-          variant: 'destructive',
-        })
-        return
-      }
     }
 
     const cleanData = stripSystemFields(formData)
@@ -495,9 +468,6 @@ export function EmitirPropostaForm({
         fd.append('user', user?.id || '')
         fd.append('numero_proposta', sanitized.numero_proposta || 'NOVA-0')
         fd.append('acessorios_proposta', JSON.stringify(acessoriosProposta))
-        if (recaptchaToken) {
-          fd.append('recaptcha_token', recaptchaToken)
-        }
         if (propostaSignatureBlob) {
           fd.append(
             'assinatura_representante',
@@ -1259,29 +1229,6 @@ export function EmitirPropostaForm({
                   Esta proposta não possui assinatura registrada.
                 </p>
               </div>
-            )}
-          </div>
-        )}
-
-        {!selectedProposta && (
-          <div className="w-full mt-6 mb-2 flex flex-col items-center justify-center p-4 border border-slate-200 rounded-lg bg-slate-50/50">
-            <label className="text-xs font-medium text-slate-700 mb-2 flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-primary" /> Verificação de Segurança (reCAPTCHA)
-              *
-            </label>
-            <ReCaptcha
-              siteKey={
-                import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
-                '6Lc-xGktAAAAABkxZBa7Sbd1-dU3QHRJbR6D6C21'
-              }
-              onVerify={(token) => setRecaptchaToken(token)}
-              onExpire={() => setRecaptchaToken(null)}
-              onError={() => setRecaptchaToken(null)}
-            />
-            {!recaptchaToken && (
-              <p className="text-[11px] text-amber-600 mt-2">
-                A verificação reCAPTCHA é obrigatória para emitir uma nova proposta.
-              </p>
             )}
           </div>
         )}
