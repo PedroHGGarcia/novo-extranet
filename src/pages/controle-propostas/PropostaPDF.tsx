@@ -99,7 +99,7 @@ export default function PropostaPDF() {
           <ArrowLeft className="w-4 h-4" /> Voltar para a Lista de Propostas
         </Button>
         <Button
-          onClick={() => window.open(`/proposta/${id}/imprimir`, '_blank')}
+          onClick={() => window.open(`/propostas/${id}/imprimir`, '_blank')}
           className="bg-[#337ab7] hover:bg-[#286090] text-white gap-2 shadow-sm"
         >
           <Printer className="w-4 h-4" /> Imprimir Proposta
