@@ -74,6 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!pb.authStore.record) return
     try {
       await pb.collection('users').authRefresh()
+      setUser(pb.authStore.record)
     } catch (err: any) {
       if (err?.status === 401) {
         pb.authStore.clear()

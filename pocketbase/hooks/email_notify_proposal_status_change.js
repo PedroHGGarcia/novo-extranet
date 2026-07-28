@@ -217,14 +217,30 @@ onRecordAfterUpdateSuccess((e) => {
   // Notification emails field
   var rawEmails = record.getString('emails_notificacao') || ''
   if (rawEmails) {
-    var notifList = rawEmails
-      .split(/[\n,;]+/)
-      .map(function (s) {
-        return s.trim()
-      })
-      .filter(function (s) {
-        return s.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
-      })
+    var notifList = []
+    try {
+      var parsedEmails = JSON.parse(rawEmails)
+      if (Array.isArray(parsedEmails)) {
+        notifList = parsedEmails
+          .map(function (s) {
+            return String(s).trim()
+          })
+          .filter(function (s) {
+            return s.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+          })
+      } else {
+        throw new Error('not array')
+      }
+    } catch (_) {
+      notifList = rawEmails
+        .split(/[\n,;]+/)
+        .map(function (s) {
+          return s.trim()
+        })
+        .filter(function (s) {
+          return s.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+        })
+    }
     for (var n = 0; n < notifList.length; n++) {
       if (recipientEmails.indexOf(notifList[n]) === -1) recipientEmails.push(notifList[n])
     }

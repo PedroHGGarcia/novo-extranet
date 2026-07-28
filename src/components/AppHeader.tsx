@@ -28,6 +28,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { BenerLogo } from '@/components/BenerLogo'
 import { CommandPalette } from '@/components/CommandPalette'
+import pb from '@/lib/pocketbase/client'
 
 export function AppHeader() {
   const { user, signOut } = useAuth()
@@ -173,9 +174,18 @@ export function AppHeader() {
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full text-white hover:bg-white/10 hover:text-white"
+              className="relative rounded-full text-white hover:bg-white/10 hover:text-white overflow-hidden"
             >
-              <User className="h-6 w-6 select-none" draggable={false} />
+              {user?.avatar ? (
+                <img
+                  src={pb.files.getURL(user as any, user.avatar as string)}
+                  alt="Avatar"
+                  className="h-8 w-8 rounded-full object-cover"
+                  draggable={false}
+                />
+              ) : (
+                <User className="h-6 w-6 select-none" draggable={false} />
+              )}
               <span className="sr-only">Perfil</span>
             </Button>
           </DropdownMenuTrigger>

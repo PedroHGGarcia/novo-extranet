@@ -26,6 +26,7 @@ import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 import pb from '@/lib/pocketbase/client'
 import { formatCurrency, mapCurrencyCode, CurrencyInput } from './utils'
 import { ReCaptcha } from '@/components/ReCaptcha'
+import { EmailTagInput } from '@/components/EmailTagInput'
 import { verifyReCaptchaToken } from '@/services/recaptcha'
 
 interface EmitirPropostaFormProps {
@@ -168,6 +169,7 @@ export function EmitirPropostaForm({
         dt_cad: format(new Date(), 'yyyy-MM-dd'),
         modelo_licitacao: false,
         projeto: '',
+        emails_notificacao: '[]',
       }
       setFormData(newFormData)
       setInitialFormData(newFormData)
@@ -1011,12 +1013,9 @@ export function EmitirPropostaForm({
         <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="flex flex-col w-full">
             <label className={labelClass}>E-mails para notificação</label>
-            <textarea
-              className={cn(inputClass, 'min-h-[60px] resize-y')}
-              placeholder="Digite os e-mails separados por vírgula ou quebra de linha..."
+            <EmailTagInput
               value={formData.emails_notificacao || ''}
-              onChange={(e) => setFormData({ ...formData, emails_notificacao: e.target.value })}
-              rows={2}
+              onChange={(val) => setFormData({ ...formData, emails_notificacao: val })}
             />
             <span className="text-[10px] text-slate-400 mt-0.5">
               Estes e-mails receberão uma notificação quando a proposta for criada e quando o status

@@ -11,17 +11,22 @@ import pb from '@/lib/pocketbase/client'
 import { getErrorMessage } from '@/lib/pocketbase/errors'
 import { UserSignatureSection } from '@/components/UserSignatureSection'
 import { ChangePasswordSection } from '@/components/ChangePasswordSection'
+import { UserAvatarSection } from '@/components/UserAvatarSection'
 
 export default function Perfil() {
   const { user, refreshUser } = useAuth()
   const { toast } = useToast()
 
   const [nome, setNome] = useState(user?.name || '')
+  const [setor, setSetor] = useState(user?.setor || '')
   const [isUpdating, setIsUpdating] = useState(false)
 
   useEffect(() => {
     if (user?.name) {
       setNome(user.name)
+    }
+    if (user?.setor !== undefined) {
+      setSetor(user.setor)
     }
   }, [user])
 
@@ -29,7 +34,7 @@ export default function Perfil() {
     if (!user) return
     setIsUpdating(true)
     try {
-      await pb.collection('users').update(user.id, { name: nome })
+      await pb.collection('users').update(user.id, { name: nome, setor })
       toast({ title: 'Usuário atualizado com sucesso' })
       await refreshUser()
     } catch (e) {
@@ -72,6 +77,15 @@ export default function Perfil() {
               className="bg-gray-50"
             />
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="setor">Setor</Label>
+            <Input
+              id="setor"
+              value={setor}
+              onChange={(e) => setSetor(e.target.value)}
+              placeholder="Digite o setor..."
+            />
+          </div>
         </CardContent>
         <CardFooter className="justify-end border-t pt-4">
           <Button
@@ -85,6 +99,8 @@ export default function Perfil() {
       </Card>
 
       <UserSignatureSection />
+
+      <UserAvatarSection />
 
       <ChangePasswordSection />
     </div>
