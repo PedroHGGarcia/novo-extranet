@@ -1258,7 +1258,8 @@ export function EmitirPropostaForm({
             </label>
             <ReCaptcha
               siteKey={
-                import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6Lesv2ktAAAAABPaB6AooD1iPf09yZv90uaMbCz'
+                import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
+                '6Lc-xGktAAAAABkxZBa7Sbd1-dU3QHRJbR6D6C21'
               }
               onVerify={(token) => setRecaptchaToken(token)}
               onExpire={() => setRecaptchaToken(null)}
