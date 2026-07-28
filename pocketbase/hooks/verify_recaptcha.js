@@ -10,7 +10,7 @@ routerAdd('POST', '/backend/v1/verify-recaptcha', (e) => {
   }
 
   const secretKey =
-    $secrets.get('RECAPTCHA_SECRET_KEY') || '6Lesv2ktAAAAAN2R-a6WJBOycsEZnBVroLL7kPU'
+    $secrets.get('RECAPTCHA_SECRET_KEY') || '6Lc-xGktAAAAAD-Crz9hpn2MIBsEN6vo0H7cMf_N'
 
   try {
     const res = $http.send({
@@ -69,7 +69,7 @@ onRecordCreateRequest((e) => {
   }
 
   const secretKey =
-    $secrets.get('RECAPTCHA_SECRET_KEY') || '6Lesv2ktAAAAAN2R-a6WJBOycsEZnBVroLL7kPU'
+    $secrets.get('RECAPTCHA_SECRET_KEY') || '6Lc-xGktAAAAAD-Crz9hpn2MIBsEN6vo0H7cMf_N'
 
   try {
     const res = $http.send({
