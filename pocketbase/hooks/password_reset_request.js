@@ -149,15 +149,17 @@ routerAdd('POST', '/backend/v1/request-password-reset', (e) => {
 
       var resetUrl = baseUrl + '/_/collections/users/confirm-password-reset/' + resetToken
 
-      // Build email content — exact format specified by user story
-      var subject = 'Redefinição de senha - Extranet Gourmet'
+      // Build email content — Opção 3 (formal version)
+      var subject = 'Solicitação de redefinição de senha'
       var textContent =
-        'Olá,\n\n' +
-        'Resete sua senha no link abaixo:\n\n\n' +
+        'Prezado(a) usuário(a),\n\n' +
+        'Informamos que foi solicitada a redefinição de sua senha de acesso à Extranet Gourmet.\n\n' +
+        'Para prosseguir, acesse o link a seguir:\n\n' +
         resetUrl +
-        '\n\n\n' +
-        'Obrigado.\n' +
-        'Extranet Gourmet'
+        '\n\n' +
+        'Caso não tenha solicitado esta alteração, favor desconsiderar este e-mail. Sua senha permanecerá inalterada.\n\n' +
+        'Atenciosamente,\n' +
+        'Extranet Gourmet — Portal de Vendas & Gestão'
       var htmlContent = '<pre>' + textContent + '</pre>'
 
       // Get sender info from settings (fallback to defaults)
