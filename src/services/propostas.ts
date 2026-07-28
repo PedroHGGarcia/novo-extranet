@@ -49,6 +49,7 @@ export interface Proposta {
   ultimo_usuario_status?: string
   assinatura_cliente?: string
   assinatura_representante?: string
+  emails_notificacao?: string
   expand?: {
     cliente?: { fantasia: string; razao_social?: string }
     versao?: {

@@ -1010,6 +1010,20 @@ export function EmitirPropostaForm({
 
         <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="flex flex-col w-full">
+            <label className={labelClass}>E-mails para notificação</label>
+            <textarea
+              className={cn(inputClass, 'min-h-[60px] resize-y')}
+              placeholder="Digite os e-mails separados por vírgula ou quebra de linha..."
+              value={formData.emails_notificacao || ''}
+              onChange={(e) => setFormData({ ...formData, emails_notificacao: e.target.value })}
+              rows={2}
+            />
+            <span className="text-[10px] text-slate-400 mt-0.5">
+              Estes e-mails receberão uma notificação quando a proposta for criada e quando o status
+              mudar.
+            </span>
+          </div>
+          <div className="flex flex-col w-full">
             <label className={labelClass}>Prazo de Entrega</label>
             <input
               className={inputClass}

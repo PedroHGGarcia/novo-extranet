@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-28T17:51:24.133Z",
+  "generatedAt": "2026-07-28T17:58:24.761Z",
   "collections": [
     {
       "name": "users",
@@ -1852,6 +1852,12 @@
           "required": false,
           "system": false,
           "collectionRef": "projetos"
+        },
+        {
+          "name": "emails_notificacao",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
