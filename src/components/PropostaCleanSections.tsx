@@ -140,32 +140,17 @@ export function PropostaCleanSections({
           <h2 className="font-bold text-[14pt] uppercase mb-1">
             6. ACESSÓRIOS OPCIONAIS NÃO INCLUSOS NO PREÇO ACIMA
           </h2>
-          <table className="w-full text-[14pt] border-collapse">
-            <thead>
-              <tr className="bg-slate-100">
-                <th className={th + ' w-[15%]'}>Código</th>
-                <th className={th + ' w-[50%]'}>Descrição</th>
-                <th className={th + ' w-[20%] text-right'}>Valor</th>
-                <th className={th + ' w-[15%] text-center'}>Situação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {optionalAcc.map((acc, i) => (
-                <tr key={i}>
-                  <td className={td + ' font-bold'}>{acc.id || '-'}</td>
-                  <td className={td}>
-                    <span className="font-bold">{acc.nome}</span>
-                  </td>
-                  <td className={td + ' text-right font-bold'}>
-                    {formatCurrency(acc.valor, acc.moeda)}
-                  </td>
-                  <td className={td + ' text-center'}>
-                    <span className="font-bold uppercase text-slate-600">Não Incluso</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ul className="list-none pl-4 space-y-1 text-[14pt]">
+            {optionalAcc.map((acc, i) => (
+              <li key={i} className="leading-tight">
+                {acc.id && <span className="font-bold">{acc.id}</span>}
+                {acc.id ? ' - ' : ''}
+                <span className="font-bold">{acc.nome}</span> -{' '}
+                <span>{formatCurrency(acc.valor, acc.moeda)}</span> -{' '}
+                <span className="font-bold uppercase text-slate-700">Não Incluso</span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

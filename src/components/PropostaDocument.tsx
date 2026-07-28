@@ -530,63 +530,65 @@ export function PropostaDocument({
       </div>
 
       {/* Footer info & Assinaturas */}
-      <div className="mt-6 font-mono print-break-inside-avoid break-inside-avoid pt-6">
-        <div className="grid grid-cols-2 gap-12 mb-6">
+      <div className="mt-4 font-mono print-break-inside-avoid break-inside-avoid pt-4">
+        <div
+          className={`grid ${assinaturaClienteUrl ? 'grid-cols-3' : 'grid-cols-2'} gap-8 mb-6 items-stretch`}
+        >
           <div className="flex flex-col items-center text-center">
-            <div className="h-24 flex items-end justify-center w-full mb-1">
+            <div className="h-20 flex items-end justify-center w-full mb-1">
               {assinaturaRepresentanteUrl ? (
                 <img
                   src={assinaturaRepresentanteUrl}
                   alt="Assinatura do Representante"
-                  className="max-h-24 max-w-[200px] object-contain"
+                  className="max-h-20 max-w-[200px] object-contain"
                 />
               ) : representanteAssinaturaUrl ? (
                 <img
                   src={representanteAssinaturaUrl}
                   alt="Assinatura do Representante"
-                  className="max-h-24 max-w-[200px] object-contain"
+                  className="max-h-20 max-w-[200px] object-contain"
                 />
               ) : null}
             </div>
-            <p className="font-bold text-[14pt] uppercase mb-1 h-4">
+            <p className="font-bold text-[14pt] uppercase mb-1">
               {issuerName || proposta.expand?.user?.name || representanteNome || '-'}
             </p>
-            <div className="w-[250px] border-t-2 border-black mb-2"></div>
+            <div className="w-full max-w-[250px] border-t-2 border-black mb-1"></div>
             <p className="text-[12pt] font-bold text-slate-600">
               {issuerSectorLabel || 'Assinatura do Representante'}
             </p>
           </div>
 
           <div className="flex flex-col items-center text-center">
-            <div className="h-24 flex items-end justify-center w-full mb-1">
+            <div className="h-20 flex items-end justify-center w-full mb-1">
               {gerenteAssinaturaUrl ? (
                 <img
                   src={gerenteAssinaturaUrl}
                   alt="Assinatura do Gerente"
-                  className="max-h-24 max-w-[200px] object-contain"
+                  className="max-h-20 max-w-[200px] object-contain"
                 />
               ) : null}
             </div>
-            <p className="font-bold text-[14pt] uppercase mb-1 h-4">{gerenteNome || '-'}</p>
-            <div className="w-[250px] border-t-2 border-black mb-2"></div>
+            <p className="font-bold text-[14pt] uppercase mb-1">{gerenteNome || '-'}</p>
+            <div className="w-full max-w-[250px] border-t-2 border-black mb-1"></div>
             <p className="text-[12pt] font-bold text-slate-600">Assinatura do Gerente</p>
           </div>
-        </div>
 
-        {assinaturaClienteUrl && (
-          <div className="flex flex-col items-center text-center mb-6">
-            <div className="h-24 flex items-end justify-center w-full mb-1">
-              <img
-                src={assinaturaClienteUrl}
-                alt="Assinatura do Cliente"
-                className="max-h-24 max-w-[200px] object-contain"
-              />
+          {assinaturaClienteUrl && (
+            <div className="flex flex-col items-center text-center">
+              <div className="h-20 flex items-end justify-center w-full mb-1">
+                <img
+                  src={assinaturaClienteUrl}
+                  alt="Assinatura do Cliente"
+                  className="max-h-20 max-w-[200px] object-contain"
+                />
+              </div>
+              <p className="font-bold text-[14pt] uppercase mb-1">{clienteNome || '-'}</p>
+              <div className="w-full max-w-[250px] border-t-2 border-black mb-1"></div>
+              <p className="text-[12pt] font-bold text-slate-600">Assinatura do Cliente</p>
             </div>
-            <p className="font-bold text-[14pt] uppercase mb-1 h-4">{clienteNome || '-'}</p>
-            <div className="w-[250px] border-t-2 border-black mb-2"></div>
-            <p className="text-[12pt] font-bold text-slate-600">Assinatura do Cliente</p>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="flex justify-between items-end text-[11pt] gap-4">
           <div className="max-w-sm">

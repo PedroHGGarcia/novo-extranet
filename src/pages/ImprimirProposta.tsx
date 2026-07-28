@@ -117,6 +117,9 @@ export default function ImprimirProposta() {
       : null
   const gUser = gerente?.expand?.usuario
   const sigGer = gUser?.assinatura ? pb.files.getURL(gUser, gUser.assinatura) : null
+  const sigCliente = proposta.assinatura_cliente
+    ? pb.files.getURL(proposta, proposta.assinatura_cliente)
+    : null
   const imgPreview = v?.imagem_preview ? pb.files.getURL(v, v.imagem_preview) : null
 
   return (
@@ -256,24 +259,17 @@ export default function ImprimirProposta() {
       {optional.length > 0 && (
         <section className="secao">
           <h3>6. ACESSÓRIOS OPCIONAIS NÃO INCLUSOS NO PREÇO ACIMA</h3>
-          <table className="tabela-opcionais">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Descrição</th>
-                <th>Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {optional.map((a: any, i: number) => (
-                <tr key={i}>
-                  <td>{a.id || '-'}</td>
-                  <td>{a.nome}</td>
-                  <td className="col-valor">{formatCurrency(a.valor, a.moeda)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ul className="lista-opcionais">
+            {optional.map((a: any, i: number) => (
+              <li key={i}>
+                {a.id && <span className="item-codigo">{a.id}</span>}
+                {a.id ? ' - ' : ''}
+                <span className="item-nome">{a.nome}</span> -{' '}
+                <span className="item-valor">{formatCurrency(a.valor, a.moeda)}</span> -{' '}
+                <span className="item-status">NÃO INCLUSO</span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
@@ -300,17 +296,37 @@ export default function ImprimirProposta() {
         <p>Atenciosamente,</p>
         <div className="assinaturas-grid">
           <div className="assinatura-block">
-            {sigRep && <img src={sigRep} alt="Assinatura" className="assinatura-img" />}
+            <div className="assinatura-img-wrapper">
+              {sigRep && <img src={sigRep} alt="Assinatura" className="assinatura-img" />}
+            </div>
             <div className="assinatura-linha" />
             <p className="assinatura-nome">{user?.name || rep?.fantasia || '-'}</p>
             <p className="assinatura-cargo">{user?.setor || 'Comercial'}</p>
           </div>
-          <div className="assinatura-block">
-            {sigGer && <img src={sigGer} alt="Assinatura" className="assinatura-img" />}
-            <div className="assinatura-linha" />
-            <p className="assinatura-nome">{gerente?.nome || proposta.gerente_original || '-'}</p>
-            <p className="assinatura-cargo">Gerente</p>
-          </div>
+          {(sigGer || gerente?.nome || proposta.gerente_original) && (
+            <div className="assinatura-block">
+              <div className="assinatura-img-wrapper">
+                {sigGer && <img src={sigGer} alt="Assinatura" className="assinatura-img" />}
+              </div>
+              <div className="assinatura-linha" />
+              <p className="assinatura-nome">{gerente?.nome || proposta.gerente_original || '-'}</p>
+              <p className="assinatura-cargo">Gerente</p>
+            </div>
+          )}
+          {(sigCliente || c?.fantasia || c?.razao_social || proposta.cliente_original) && (
+            <div className="assinatura-block">
+              <div className="assinatura-img-wrapper">
+                {sigCliente && (
+                  <img src={sigCliente} alt="Assinatura Cliente" className="assinatura-img" />
+                )}
+              </div>
+              <div className="assinatura-linha" />
+              <p className="assinatura-nome">
+                {c?.fantasia || c?.razao_social || proposta.cliente_original || '-'}
+              </p>
+              <p className="assinatura-cargo">Cliente</p>
+            </div>
+          )}
         </div>
         {rep && (
           <div className="rep-info">

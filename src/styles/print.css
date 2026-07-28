@@ -22,9 +22,22 @@
 
   section,
   .secao,
-  .break-inside-avoid {
-    break-inside: avoid;
-    page-break-inside: avoid;
+  .break-inside-avoid,
+  .print-break-inside-avoid,
+  .print-detail-block,
+  .condicao-item,
+  .assinaturas-grid,
+  .secao-assinaturas,
+  .destinatario,
+  .saudacao,
+  .equipamento-titulo,
+  .equipamento-imagem {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
     page-break-before: auto;
+  }
+
+  .no-print {
+    display: none !important;
   }
 }

@@ -196,6 +196,6 @@
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     page-break-before: auto;
-    margin-bottom: 3mm !important;
+    margin-bottom: 20px !important;
   }
 }

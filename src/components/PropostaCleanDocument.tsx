@@ -30,6 +30,7 @@ interface PropostaCleanDocumentProps {
   assinaturaRepresentanteUrl?: string | null
   representanteAssinaturaUrl?: string | null
   gerenteAssinaturaUrl?: string | null
+  assinaturaClienteUrl?: string | null
   issuerSectorLabel?: string
   issuerName?: string
 }
@@ -58,6 +59,7 @@ export function PropostaCleanDocument({
   especificacoesJson,
   assinaturaRepresentanteUrl,
   gerenteAssinaturaUrl,
+  assinaturaClienteUrl,
   issuerSectorLabel,
   issuerName,
 }: PropostaCleanDocumentProps) {
@@ -173,13 +175,15 @@ export function PropostaCleanDocument({
         <p>Atenciosamente,</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-12 mb-4 font-mono text-[14pt] break-inside-avoid items-stretch">
+      <div
+        className={`grid ${assinaturaClienteUrl ? 'grid-cols-3' : 'grid-cols-2'} gap-8 mb-4 font-mono text-[14pt] break-inside-avoid items-stretch`}
+      >
         <div className="flex flex-col items-center text-center">
-          <div className="flex-1 flex items-end justify-center mb-1 min-h-[80px]">
+          <div className="h-20 w-full flex items-end justify-center mb-1">
             {assinaturaRepresentanteUrl && (
               <img
                 src={assinaturaRepresentanteUrl}
-                alt="Assinatura"
+                alt="Assinatura Representante"
                 className="max-h-20 max-w-[200px] object-contain"
               />
             )}
@@ -190,11 +194,11 @@ export function PropostaCleanDocument({
           </div>
         </div>
         <div className="flex flex-col items-center text-center">
-          <div className="flex-1 flex items-end justify-center mb-1 min-h-[80px]">
+          <div className="h-20 w-full flex items-end justify-center mb-1">
             {gerenteAssinaturaUrl && (
               <img
                 src={gerenteAssinaturaUrl}
-                alt="Assinatura"
+                alt="Assinatura Gerente"
                 className="max-h-20 max-w-[200px] object-contain"
               />
             )}
@@ -204,6 +208,21 @@ export function PropostaCleanDocument({
             <p className="text-[12pt] text-slate-600">Gerente</p>
           </div>
         </div>
+        {assinaturaClienteUrl && (
+          <div className="flex flex-col items-center text-center">
+            <div className="h-20 w-full flex items-end justify-center mb-1">
+              <img
+                src={assinaturaClienteUrl}
+                alt="Assinatura Cliente"
+                className="max-h-20 max-w-[200px] object-contain"
+              />
+            </div>
+            <div className="w-full border-t border-black pt-1">
+              <p className="font-bold">{clienteNome || '-'}</p>
+              <p className="text-[12pt] text-slate-600">Cliente</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="text-[12pt] font-mono mb-3 break-inside-avoid">
