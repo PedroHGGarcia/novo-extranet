@@ -15,7 +15,7 @@ const loginSchema = z.object({
 })
 
 const RECAPTCHA_SITE_KEY =
-  import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
+  import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6Lc-xGktAAAAABkxZBa7Sbd1-dU3QHRJbR6D6C21'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -106,9 +106,9 @@ export default function Login() {
       setLoading(false)
       setCaptchaToken('')
       toast({
-        title: 'Falha na verificação do CAPTCHA',
+        title: 'Falha na verificação do reCAPTCHA',
         description:
-          captchaResult.error || 'Falha na verificação do CAPTCHA. Por favor, tente novamente.',
+          captchaResult.error || 'Falha na verificação do reCAPTCHA. Por favor, tente novamente.',
         variant: 'destructive',
       })
       return
@@ -226,8 +226,8 @@ export default function Login() {
 
           <Button
             type="submit"
-            disabled={loading}
-            className="w-full h-11 bg-brand-green hover:bg-brand-green/90 text-white font-medium rounded-md tracking-wide"
+            disabled={loading || !captchaToken}
+            className="w-full h-11 bg-brand-green hover:bg-brand-green/90 text-white font-medium rounded-md tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <Loader2 className="h-5 w-5 animate-spin select-none" draggable={false} />

@@ -5,7 +5,7 @@ routerAdd('POST', '/backend/v1/verify-recaptcha', (e) => {
   if (!token || typeof token !== 'string') {
     return e.json(400, {
       success: false,
-      error: 'Token reCAPTCHA não fornecido',
+      error: 'Falha na verificação do reCAPTCHA. Por favor, tente novamente.',
     })
   }
 
@@ -31,14 +31,14 @@ routerAdd('POST', '/backend/v1/verify-recaptcha', (e) => {
     }
 
     const data = res.json
-    if (data.success === true) {
+    if (data && data.success === true) {
       return e.json(200, { success: true })
     }
 
     return e.json(400, {
       success: false,
       error: 'Falha na verificação do reCAPTCHA. Por favor, tente novamente.',
-      codes: data['error-codes'] || [],
+      codes: (data && data['error-codes']) || [],
     })
   } catch (err) {
     $app

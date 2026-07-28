@@ -19,7 +19,13 @@ export async function verifyReCaptchaToken(token: string): Promise<ReCaptchaVeri
       fallback: res.fallback,
     }
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erro ao verificar reCAPTCHA'
+    const message =
+      err &&
+      typeof err === 'object' &&
+      'response' in err &&
+      (err as { response?: { data?: { error?: string } } }).response?.data?.error
+        ? (err as { response: { data: { error: string } } }).response.data.error
+        : 'Falha na verificação do reCAPTCHA. Por favor, tente novamente.'
     return { success: false, error: message }
   }
 }

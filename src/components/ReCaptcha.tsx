@@ -106,8 +106,8 @@ export function ReCaptcha({
 
   if (loadFailed) {
     return (
-      <div className="flex items-center justify-center min-h-[78px] text-xs text-gray-500 text-center px-4">
-        Não foi possível carregar a verificação de segurança (reCAPTCHA).
+      <div className="flex items-center justify-center min-h-[78px] text-xs text-red-500 text-center px-4">
+        Não foi possível carregar a verificação de segurança. Recarregue a página e tente novamente.
       </div>
     )
   }
