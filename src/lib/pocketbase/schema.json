@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T20:35:28.915Z",
+  "generatedAt": "2026-07-29T20:44:34.401Z",
   "collections": [
     {
       "name": "users",
@@ -1266,7 +1266,7 @@
           "type": "select",
           "required": false,
           "system": false,
-          "selectValues": ["Ativo", "Inativo", "Fora de Linha"]
+          "selectValues": ["Ativo", "Inativo", "Fora de Linha", "Em Revisão", "Aprovado"]
         },
         {
           "name": "alerta_estoque_minimo",

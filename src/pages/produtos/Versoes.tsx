@@ -40,6 +40,7 @@ import { RichTextEditor } from '@/components/RichTextEditor'
 import { cn } from '@/lib/utils'
 import { z } from 'zod'
 import pb from '@/lib/pocketbase/client'
+import { extractFieldErrors, getErrorMessage } from '@/lib/pocketbase/errors'
 import {
   getVersoes,
   createVersao,
@@ -108,10 +109,13 @@ export default function Versoes() {
 
   // Form States
   const [nome, setNome] = useState('')
-  const [status, setStatus] = useState<'Ativo' | 'Inativo' | 'Em Revisão' | 'Aprovado'>('Ativo')
+  const [status, setStatus] = useState<
+    'Ativo' | 'Inativo' | 'Fora de Linha' | 'Em Revisão' | 'Aprovado'
+  >('Ativo')
   const [nomeAbreviado, setNomeAbreviado] = useState('')
   const [modeloId, setModeloId] = useState('')
   const [codErp, setCodErp] = useState('')
+  const [fieldErrorsMap, setFieldErrorsMap] = useState<Record<string, string>>({})
 
   const [moeda, setMoeda] = useState('BRL')
   const [valor, setValor] = useState<number>(0)
@@ -286,7 +290,20 @@ export default function Versoes() {
 
   const specsSchema = z.string()
 
+  const FIELD_LABELS: Record<string, string> = {
+    nome: 'Nome',
+    status: 'Status',
+    modelo: 'Modelo',
+    cod_erp: 'Código E2Corp',
+    valor: 'Valor',
+    acessorios_standards: 'Acessórios Standards',
+    caracteristicas_construtivas: 'Características Construtivas',
+    especificacoes_tecnicas: 'Especificações Técnicas',
+    atualizado_por: 'Usuário',
+  }
+
   const handleSave = async () => {
+    setFieldErrorsMap({})
     setNomeError(!nome.trim())
     setModeloError(!modeloId)
 
@@ -313,18 +330,21 @@ export default function Versoes() {
       formData.append('modelo', modeloId)
       formData.append('cod_erp', codErp.trim())
       formData.append('moeda', moeda)
-      formData.append('valor', String(valor))
-      formData.append('tem_fator', String(temFator))
-      formData.append('fator_nac', String(fatorNac))
-      formData.append('tem_estoque', String(temEstoque))
-      formData.append('desconto_max_representante', String(descMaxRep))
-      formData.append('desconto_max_bener', String(descMaxBener))
+      formData.append('valor', String(isNaN(valor) ? 0 : valor))
+      formData.append('tem_fator', String(Boolean(temFator)))
+      formData.append('fator_nac', String(isNaN(fatorNac) ? 1 : fatorNac))
+      formData.append('tem_estoque', String(Boolean(temEstoque)))
+      formData.append('desconto_max_representante', String(isNaN(descMaxRep) ? 0 : descMaxRep))
+      formData.append('desconto_max_bener', String(isNaN(descMaxBener) ? 0 : descMaxBener))
 
-      formData.append('acessorios_standards', acessorios)
-      formData.append('caracteristicas_construtivas', caracteristicas)
-      formData.append('especificacoes_tecnicas', especificacoes)
-      formData.append('tipos_proposta', JSON.stringify(tiposProposta))
-      formData.append('atualizado_por', user?.id)
+      formData.append('acessorios_standards', acessorios || '')
+      formData.append('caracteristicas_construtivas', caracteristicas || '')
+      formData.append('especificacoes_tecnicas', especificacoes || '')
+      formData.append('tipos_proposta', JSON.stringify(tiposProposta || []))
+
+      if (user?.id) {
+        formData.append('atualizado_por', user.id)
+      }
 
       if (!editingItem) {
         formData.append('estoque_total', '0')
@@ -339,14 +359,38 @@ export default function Versoes() {
         formData.append('imagem_preview', newFoto)
       }
 
-      if (editingItem) await updateVersao(editingItem.id, formData)
-      else await createVersao(formData)
+      if (editingItem) {
+        await updateVersao(editingItem.id, formData)
+      } else {
+        await createVersao(formData)
+      }
+
+      await loadData()
 
       toast({ title: `Versão ${editingItem ? 'atualizada' : 'criada'} com sucesso` })
       resetForm()
       setActiveTab('registros')
     } catch (error: any) {
-      toast({ title: 'Erro ao salvar versão', description: error.message, variant: 'destructive' })
+      console.error('Error saving version:', error)
+      const fieldErrors = extractFieldErrors(error)
+      setFieldErrorsMap(fieldErrors)
+
+      const entries = Object.entries(fieldErrors)
+      if (entries.length > 0) {
+        const details = entries.map(([k, v]) => `${FIELD_LABELS[k] || k}: ${v}`).join('\n')
+        toast({
+          title: 'Erro de validação ao salvar versão',
+          description: details,
+          variant: 'destructive',
+        })
+      } else {
+        const msg = getErrorMessage(error)
+        toast({
+          title: 'Erro ao salvar versão',
+          description: msg || error.message || 'Falha ao atualizar o registro.',
+          variant: 'destructive',
+        })
+      }
     }
   }
 
@@ -376,6 +420,7 @@ export default function Versoes() {
     setDeleteFoto(false)
     setNomeError(false)
     setModeloError(false)
+    setFieldErrorsMap({})
     if (fotoInputRef.current) fotoInputRef.current.value = ''
   }
 
@@ -562,6 +607,14 @@ export default function Versoes() {
                             <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-700">
                               {item.status}
                             </span>
+                          ) : item.status === 'Aprovado' ? (
+                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700">
+                              {item.status}
+                            </span>
+                          ) : item.status === 'Em Revisão' ? (
+                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-700">
+                              {item.status}
+                            </span>
                           ) : (
                             <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700">
                               {item.status}
@@ -645,6 +698,7 @@ export default function Versoes() {
                       <SelectContent>
                         <SelectItem value="Ativo">Ativo</SelectItem>
                         <SelectItem value="Inativo">Inativo</SelectItem>
+                        <SelectItem value="Fora de Linha">Fora de Linha</SelectItem>
                         <SelectItem value="Em Revisão">Em Revisão</SelectItem>
                         {isAdmin && <SelectItem value="Aprovado">Aprovado</SelectItem>}
                       </SelectContent>
