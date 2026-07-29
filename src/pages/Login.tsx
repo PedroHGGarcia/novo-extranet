@@ -236,17 +236,6 @@ export default function Login() {
             )}
           </Button>
         </form>
-
-        <div className="mt-8 text-center text-sm text-gray-600">
-          Não tem uma conta?{' '}
-          <Link
-            to="/signup"
-            draggable={false}
-            className="font-medium text-brand-green hover:underline select-none"
-          >
-            Cadastre-se
-          </Link>
-        </div>
       </div>
       <footer className="mt-8 text-center text-xs text-gray-500 select-none">
         <p>

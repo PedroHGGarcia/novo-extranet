@@ -56,7 +56,7 @@ const RepresentanteEdit = lazy(() => import('@/pages/RepresentanteEdit'))
 const Projetos = lazy(() => import('@/pages/Projetos'))
 const ProjetosForm = lazy(() => import('@/pages/ProjetosForm'))
 const Login = lazy(() => import('@/pages/Login'))
-const Signup = lazy(() => import('@/pages/Signup'))
+
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'))
 const ValidarProposta = lazy(() => import('@/pages/ValidarProposta'))
 const Notificacoes = lazy(() => import('@/pages/Notificacoes'))
@@ -86,14 +86,7 @@ const router = createBrowserRouter(
           </LazyRoute>
         }
       />
-      <Route
-        path="/signup"
-        element={
-          <LazyRoute>
-            <Signup />
-          </LazyRoute>
-        }
-      />
+      <Route path="/signup" element={<Navigate to="/login" replace />} />
       <Route
         path="/forgot-password"
         element={
