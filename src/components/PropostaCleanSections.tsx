@@ -160,24 +160,14 @@ export function PropostaCleanSections({
       {includedAcc.length > 0 && (
         <section className="doc-section mb-3 break-inside-avoid">
           <h2 className={h2Class}>4. ACESSÓRIOS OPCIONAIS INCLUSOS NO PREÇO</h2>
-          <table className="doc-table w-full">
-            <thead>
-              <tr>
-                <th className={th}>Item</th>
-                <th className={th + ' ta-center'}>Situação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {includedAcc.map((acc, i) => (
-                <tr key={i}>
-                  <td className={td}>
-                    <span className="fw-bold">{acc.nome}</span>
-                  </td>
-                  <td className={td + ' ta-center fw-bold'}>Incluso</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ul className="doc-bullet-list space-y-1 pl-4 leading-tight">
+            {includedAcc.map((acc, i) => (
+              <li key={i} className={bodyClass + ' leading-tight flex items-start gap-1.5'}>
+                <span className="shrink-0 select-none">•</span>
+                <span>{acc.nome}</span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
       <section className="doc-section mb-3 break-inside-avoid">
@@ -196,14 +186,17 @@ export function PropostaCleanSections({
       {optionalAcc.length > 0 && (
         <section className="doc-section mb-3 break-inside-avoid">
           <h2 className={h2Class}>6. ACESSÓRIOS OPCIONAIS NÃO INCLUSOS NO PREÇO ACIMA</h2>
-          <ul className="doc-optional-list space-y-1 leading-tight">
+          <ul className="doc-optional-list space-y-1 pl-4 leading-tight">
             {optionalAcc.map((acc, i) => (
-              <li key={i} className="leading-tight">
-                <span className="fw-bold">{acc.nome}</span>
-                {' — '}
-                <span>{formatCurrency(acc.valor, acc.moeda)}</span>
-                {' — '}
-                <span className="fw-bold tt-upper fc-muted-dark">Não Incluso</span>
+              <li key={i} className={bodyClass + ' leading-tight flex items-start gap-1.5'}>
+                <span className="shrink-0 select-none">•</span>
+                <span>
+                  <span>{acc.nome}</span>
+                  {' — '}
+                  <span>{formatCurrency(acc.valor, acc.moeda)}</span>
+                  {' — '}
+                  <span className="fw-bold tt-upper fc-muted-dark">Não Incluso</span>
+                </span>
               </li>
             ))}
           </ul>
