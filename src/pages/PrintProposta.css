@@ -281,9 +281,17 @@ body {
     max-width: 100% !important;
     padding: 0 !important;
   }
+
+  /* Block-level elements must never split across pages */
   .doc-section,
   .doc-signatures,
-  .doc-equipamento-imagem {
+  .doc-equipamento-imagem,
+  .secao,
+  .condicao-item,
+  .print-destinatario,
+  .print-saudacao,
+  .secao-assinaturas,
+  .doc-conditions > div {
     break-inside: avoid;
     page-break-inside: avoid;
   }
@@ -291,6 +299,8 @@ body {
     page-break-after: avoid;
     break-after: avoid;
   }
+
+  /* Table rows must never be split across pages */
   table,
   tr,
   td,
@@ -302,6 +312,32 @@ body {
   thead {
     display: table-header-group;
   }
+  .doc-table tr,
+  .tabela-especificacoes tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* List items must never be split across pages */
+  li,
+  .doc-optional-list li,
+  .lista-opcionais li,
+  .secao ul li {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Paragraphs — prevent orphans and widows */
+  p,
+  .print-saudacao p,
+  .secao p,
+  .condicao-item p,
+  .rich-text-content p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Rich text content must expand fully in print */
   .rich-text-content {
     overflow: visible !important;
     max-height: none !important;
@@ -310,6 +346,8 @@ body {
     max-height: none !important;
     overflow: visible !important;
   }
+
+  /* Color and weight preservation */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -322,5 +360,17 @@ body {
     background: #003366 !important;
     color: #fff !important;
     font-weight: bold !important;
+  }
+
+  /* Headers and footers — must not be affected by pagination rules */
+  .doc-header,
+  .print-header,
+  .print-header-table {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .doc-footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
