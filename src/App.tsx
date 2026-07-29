@@ -18,7 +18,6 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ThemeProvider } from '@/components/theme-provider'
 import { RouteError } from '@/components/RouteError'
 import './styles/editor.css'
-import './styles/print.css'
 
 const Layout = lazy(() => import('@/components/Layout').then((m) => ({ default: m.default })))
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
@@ -35,7 +34,6 @@ const PropostasAvancadas = lazy(() => import('@/pages/controle-propostas/Propost
 const TiposPropostas = lazy(() => import('@/pages/controle-propostas/TiposPropostas'))
 const PropostaPDF = lazy(() => import('@/pages/controle-propostas/PropostaPDF'))
 const PrintProposta = lazy(() => import('@/pages/PrintProposta'))
-const ImprimirProposta = lazy(() => import('@/pages/ImprimirProposta'))
 
 const Produtos = lazy(() => import('@/pages/Produtos'))
 const Categorias = lazy(() => import('@/pages/produtos/Categorias'))
@@ -115,7 +113,7 @@ const router = createBrowserRouter(
         path="/propostas/:id/imprimir"
         element={
           <LazyRoute>
-            <ImprimirProposta />
+            <PrintProposta />
           </LazyRoute>
         }
       />

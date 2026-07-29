@@ -4,6 +4,7 @@ import benerLogoUrl from '@/assets/bener-thumb-c5c1b.png'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { PropostaCleanSections } from '@/components/PropostaCleanSections'
+import '@/pages/PrintProposta.css'
 
 interface VersaoComparacaoItem {
   nome: string
@@ -107,32 +108,26 @@ export function PropostaCleanDocument({
   ]
 
   return (
-    <div
-      className="clean-doc-root bg-white text-black w-[210mm] max-w-full min-h-[297mm] p-12 mx-auto font-sans print:p-0"
-      style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
-    >
-      <div className="doc-header flex justify-between items-start mb-4 pb-3 border-b border-black">
+    <div className="clean-doc-root w-[210mm] max-w-full min-h-[297mm] p-12 mx-auto print:p-0">
+      <div className="doc-header flex justify-between items-start mb-4 pb-3">
         <img src={benerLogoUrl} alt="Bener" className="h-16 object-contain" />
-        <div
-          className="text-right text-[10pt]"
-          style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
-        >
-          <p className="font-bold">Bener Comercial Importadora Exportadora Ltda.</p>
+        <div className="ta-right fs-10">
+          <p className="fw-bold">Bener Comercial Importadora Exportadora Ltda.</p>
           <p>Vinhedo, {dataFormatada}</p>
-          <table className="ml-auto mt-2 border-collapse text-[10pt]">
+          <table className="doc-header-table ml-auto mt-2">
             <tbody>
               <tr>
-                <td className="border border-black px-2 py-1">
-                  <span className="font-bold">Sigla:</span> {representanteSigla || '-'}
+                <td>
+                  <span className="fw-bold">Sigla:</span> {representanteSigla || '-'}
                 </td>
-                <td className="border border-black px-2 py-1">
-                  <span className="font-bold">Nº Oferta:</span> {numRevisao || '-'}
+                <td>
+                  <span className="fw-bold">Nº Oferta:</span> {numRevisao || '-'}
                 </td>
-                <td className="border border-black px-2 py-1">
-                  <span className="font-bold">Mês:</span> {mesOferta}
+                <td>
+                  <span className="fw-bold">Mês:</span> {mesOferta}
                 </td>
-                <td className="border border-black px-2 py-1">
-                  <span className="font-bold">Ano:</span> {anoOferta}
+                <td>
+                  <span className="fw-bold">Ano:</span> {anoOferta}
                 </td>
               </tr>
             </tbody>
@@ -140,52 +135,42 @@ export function PropostaCleanDocument({
         </div>
       </div>
 
-      <div
-        className="text-[10pt] leading-tight mb-3 break-inside-avoid"
-        style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
-      >
+      <div className="fs-10 leading-tight mb-3 break-inside-avoid">
         <p>À</p>
-        <p className="font-bold uppercase">{clienteNome}</p>
+        <p className="fw-bold tt-upper">{clienteNome}</p>
         <p>{clienteEndereco || '-'}</p>
         {clienteCnpj && (
           <p>
-            <span className="font-bold">CNPJ:</span> {clienteCnpj}
+            <span className="fw-bold">CNPJ:</span> {clienteCnpj}
           </p>
         )}
         <p>
-          <span className="font-bold">Telefone:</span> {clienteTelefone || proposta.telefone || '-'}
+          <span className="fw-bold">Telefone:</span> {clienteTelefone || proposta.telefone || '-'}
         </p>
         <p>
-          <span className="font-bold">E-mail:</span> {clienteEmail || '-'}
+          <span className="fw-bold">E-mail:</span> {clienteEmail || '-'}
         </p>
         <br />
-        <p className="font-bold uppercase">A/C. Sr. {clienteContato || '-'}</p>
+        <p className="fw-bold tt-upper">A/C. Sr. {clienteContato || '-'}</p>
         <br />
         <p>Prezados Senhores,</p>
         <br />
-        <p className="text-justify leading-tight">
+        <p className="ta-justify leading-tight">
           Atendendo a sua prezada consulta, temos o prazer de submeter a vossa devida apreciação
           nossa proposta acima citada, para o fornecimento de:
         </p>
       </div>
 
-      <div className="text-center mb-3 break-inside-avoid">
-        <h2
-          className="text-[12pt] font-bold uppercase"
-          style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
-        >
+      <div className="ta-center mb-3 break-inside-avoid">
+        <h2 className="fs-12 fw-bold tt-upper">
           {categoriaNome} MARCA {marcaNome} - {versaoNome}
         </h2>
       </div>
 
       {versaoImagemUrl && (
-        <div className="flex flex-col items-center mb-3 break-inside-avoid">
-          <img
-            src={versaoImagemUrl}
-            alt={versaoNome}
-            className="max-w-full max-h-[220px] object-contain"
-          />
-          <p className="text-[10pt] text-slate-500 mt-1 italic">Imagem meramente ilustrativa</p>
+        <div className="doc-equipamento-imagem flex flex-col items-center mb-3 break-inside-avoid">
+          <img src={versaoImagemUrl} alt={versaoNome} />
+          <p className="fs-10 fc-muted mt-1 fs-italic">Imagem meramente ilustrativa</p>
         </div>
       )}
 
@@ -205,10 +190,7 @@ export function PropostaCleanDocument({
         versoesComparacao={versoesComparacao}
       />
 
-      <div
-        className="text-[10pt] text-justify leading-tight mb-4 mt-3 break-inside-avoid"
-        style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
-      >
+      <div className="fs-10 ta-justify leading-tight mb-4 mt-3 break-inside-avoid">
         <p>
           Antecipadamente agradecemos vossa honrosa preferência, permanecendo ao vosso inteiro
           dispor, para dirimir e atender quaisquer eventuais esclarecimentos adicionais que se
@@ -218,64 +200,34 @@ export function PropostaCleanDocument({
         <p>Atenciosamente,</p>
       </div>
 
-      <div
-        className="grid grid-cols-3 gap-6 mb-4 break-inside-avoid items-stretch"
-        style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
-      >
+      <div className="doc-signatures grid grid-cols-2 gap-6 mb-4 break-inside-avoid items-stretch">
         {signatureBlocks.map((block, i) => (
-          <div key={i} className="flex flex-col items-center text-center">
-            <div className="h-16 w-full flex items-end justify-center mb-1">
+          <div key={i} className="doc-sig-block flex flex-col items-center">
+            <div className="doc-sig-img-wrapper h-16 w-full">
               {block.sigUrl ? (
-                <img
-                  src={block.sigUrl}
-                  alt={block.label}
-                  className="max-h-16 max-w-[180px] object-contain"
-                />
+                <img src={block.sigUrl} alt={block.label} className="doc-sig-img" />
               ) : (
-                <div className="w-full border-b-2 border-dotted border-slate-400 h-10" />
+                <div className="doc-sig-placeholder" />
               )}
             </div>
-            <div className="w-full border-t border-black pt-1">
-              <p className="font-bold text-[10pt]">{block.nome || '-'}</p>
-              <p className="text-[9pt] text-slate-600">{block.label}</p>
+            <div className="doc-sig-line w-full pt-1">
+              <p className="doc-sig-name fw-bold fs-10">{block.nome || '-'}</p>
+              <p className="doc-sig-label fs-9 fc-muted-dark">{block.label}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div
-        className="text-[10pt] mb-3 break-inside-avoid"
-        style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
-      >
-        <p className="underline">{representanteNome}</p>
+      <div className="doc-rep-info fs-10 mb-3 break-inside-avoid">
+        <p className="doc-underline">{representanteNome}</p>
         <p>{representanteTelefone || '-'}</p>
       </div>
 
-      <div
-        className="doc-footer text-center text-[9pt] text-slate-700"
-        style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
-      >
+      <div className="doc-footer ta-center fs-8 fc-body">
         <p>Rua Iracema Lucas, 450 (Antiga Rua Parsch) – Distrito Industrial</p>
         <p>Vinhedo - SP - Brasil - CEP: 13280-172 - Fone / Fax: (0**19) 3826-7373</p>
         <p>E-mail: vendas@bener.com.br - Site: www.bener.com.br</p>
       </div>
-
-      <style>{`
-        @media screen { .doc-footer { display: none; } }
-        @media print {
-          @page { size: A4; margin: 20mm 15mm; }
-          body { background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .doc-header { position: fixed; top: 0; left: 0; right: 0; border-bottom: 1px solid #000; padding-bottom: 3mm; background: white; z-index: 100; }
-          .doc-footer { display: block !important; position: fixed; bottom: 0; left: 0; right: 0; border-top: 1px solid #000; padding-top: 3mm; background: white; z-index: 100; }
-          .break-inside-avoid { break-inside: avoid; page-break-inside: avoid; }
-          .clean-doc-root > div, .clean-doc-root > section { break-inside: avoid; page-break-inside: avoid; page-break-before: auto; }
-          .rich-text-content { overflow: visible !important; max-height: none !important; }
-          .rich-text-content * { max-height: none !important; overflow: visible !important; }
-          .font-bold { font-weight: bold !important; }
-          h2, h3, h4 { font-weight: bold !important; }
-          th { font-weight: bold !important; }
-        }
-      `}</style>
     </div>
   )
 }
