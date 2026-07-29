@@ -1,12 +1,19 @@
 import { useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Eye, EyeOff, Lock, Mail, Loader2, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, Loader2, ShieldCheck, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ReCaptcha } from '@/components/ReCaptcha'
 import { verifyReCaptchaToken } from '@/services/recaptcha'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from '@/hooks/use-toast'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { z } from 'zod'
 
 const loginSchema = z.object({
@@ -25,6 +32,7 @@ export default function Login() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [captchaToken, setCaptchaToken] = useState('')
   const [captchaError, setCaptchaError] = useState(false)
+  const [registerDialogOpen, setRegisterDialogOpen] = useState(false)
   const captchaContainerRef = useRef<HTMLDivElement>(null)
   const { signIn } = useAuth()
   const navigate = useNavigate()
@@ -236,6 +244,17 @@ export default function Login() {
             )}
           </Button>
         </form>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={() => setRegisterDialogOpen(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-brand-green transition-colors select-none"
+          >
+            <UserPlus className="h-3.5 w-3.5" />
+            Cadastre-se
+          </button>
+        </div>
       </div>
       <footer className="mt-8 text-center text-xs text-gray-500 select-none">
         <p>
@@ -243,6 +262,30 @@ export default function Login() {
           <span className="text-brand-green font-medium">Pedro Garcia</span>
         </p>
       </footer>
+
+      <Dialog open={registerDialogOpen} onOpenChange={setRegisterDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-brand-green">
+              <UserPlus className="h-5 w-5" />
+              Criar conta
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-600 pt-2">
+              Entre em contato com o administrador ou seu gestor para criar uma conta.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setRegisterDialogOpen(false)}
+              className="text-sm"
+            >
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
