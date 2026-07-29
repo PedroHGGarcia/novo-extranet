@@ -108,7 +108,10 @@ export function PropostaDocument({
     : proposta.numero_proposta
 
   return (
-    <div className="bg-white text-black w-[210mm] max-w-full min-h-[297mm] p-12 shadow-lg print:shadow-none print:w-full print:m-0 print:pb-16 relative mx-auto box-border">
+    <div
+      className="proposta-doc-root bg-white text-black w-[210mm] max-w-full min-h-[297mm] p-12 shadow-lg print:shadow-none print:w-full print:m-0 print:pb-16 relative mx-auto box-border"
+      style={{ fontFamily: "'Courier New', Courier, monospace" }}
+    >
       {/* Header */}
       <div className="flex justify-between items-start mb-6 break-inside-avoid">
         <img src={benerLogoUrl} alt="Bener" className="h-20 object-contain" />
@@ -616,6 +619,9 @@ export function PropostaDocument({
       </div>
 
       <style>{`
+        .proposta-doc-root, .proposta-doc-root .font-mono, .proposta-doc-root * {
+          font-family: 'Courier New', Courier, monospace !important;
+        }
         .print-only-footer { display: none; }
         @media print {
           @page { size: A4; margin: 20mm 15mm; }

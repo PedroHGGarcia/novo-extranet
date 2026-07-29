@@ -35,6 +35,7 @@ import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 import pb from '@/lib/pocketbase/client'
 import { formatCurrency, mapCurrencyCode, CurrencyInput } from './utils'
 import { EmailTagInput } from '@/components/EmailTagInput'
+import { generateProposalPdf } from '@/lib/proposal-pdf'
 import {
   VersaoComparacaoSelector,
   type VersaoComparacaoItem,
@@ -444,6 +445,57 @@ export function EmitirPropostaForm({
     return res.items
   }, [])
 
+  const generateAndUploadPdf = useCallback(
+    async (proposalId: string, propostaNumero?: string) => {
+      try {
+        const cliente = clientes.find((c) => c.id === formData.cliente)
+        const representante = representantes.find((r) => r.id === formData.representante)
+        const versao = versoes.find((v) => v.id === formData.versao)
+        const gerente = gerentes.find((g) => g.id === formData.gerente)
+        const tipoProposta = tiposProposta.find((t) => t.id === formData.tipo_proposta)
+
+        const pdfBlob = generateProposalPdf({
+          proposta: {
+            ...formData,
+            id: proposalId,
+            numero_proposta: propostaNumero || formData.numero_proposta,
+          },
+          cliente,
+          representante,
+          versao,
+          gerente,
+          tipoProposta,
+          acessorios: acessoriosProposta,
+          user,
+        })
+
+        const pdfFd = new FormData()
+        const fileName = `proposta-${propostaNumero || formData.numero_proposta || proposalId}.pdf`
+        pdfFd.append('pdf_anexo', pdfBlob, fileName)
+        await pb.collection('propostas').update(proposalId, pdfFd)
+        toast({ title: 'PDF gerado e enviado por e-mail automaticamente' })
+      } catch {
+        toast({
+          title: 'Aviso: PDF não gerado automaticamente',
+          description:
+            'A proposta foi salva, mas o PDF não pôde ser gerado. Use "GERAR PDF" para criá-lo manualmente.',
+          variant: 'destructive',
+        })
+      }
+    },
+    [
+      formData,
+      clientes,
+      representantes,
+      versoes,
+      gerentes,
+      tiposProposta,
+      acessoriosProposta,
+      user,
+      toast,
+    ],
+  )
+
   const stripSystemFields = (data: Partial<Proposta>) => {
     const {
       id,
@@ -556,6 +608,7 @@ export function EmitirPropostaForm({
           nome_representante_comercial: nomeRepresentanteComercial,
         })
         toast({ title: 'Proposta atualizada com sucesso' })
+        await generateAndUploadPdf(selectedProposta.id)
         setInitialFormData({ ...formData })
         setInitialAcessorios(acessoriosProposta.map((a) => ({ ...a })))
         setFormTouched(false)
@@ -585,8 +638,9 @@ export function EmitirPropostaForm({
           const sigBlob = await sigRes.blob()
           fd.append('assinatura_representante', sigBlob, 'assinatura-representante.png')
         }
-        await pb.collection('propostas').create(fd)
+        const created = await pb.collection('propostas').create(fd)
         toast({ title: 'Proposta criada com sucesso!' })
+        await generateAndUploadPdf(created.id, created.numero_proposta)
         onSaved()
         return
       }
