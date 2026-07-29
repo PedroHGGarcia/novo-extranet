@@ -619,7 +619,21 @@ export function PropostaDocument({
       </div>
 
       <style>{`
-        .proposta-doc-root, .proposta-doc-root .font-mono, .proposta-doc-root * {
+        .proposta-doc-root {
+          font-family: 'Courier New', Courier, monospace !important;
+        }
+        .proposta-doc-root .font-mono {
+          font-family: 'Courier New', Courier, monospace !important;
+        }
+        .proposta-doc-root h2,
+        .proposta-doc-root h3,
+        .proposta-doc-root p,
+        .proposta-doc-root li,
+        .proposta-doc-root td,
+        .proposta-doc-root th,
+        .proposta-doc-root span,
+        .proposta-doc-root div,
+        .proposta-doc-root table {
           font-family: 'Courier New', Courier, monospace !important;
         }
         .print-only-footer { display: none; }

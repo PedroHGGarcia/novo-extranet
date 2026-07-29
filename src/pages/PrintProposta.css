@@ -7,7 +7,7 @@
   size: A4;
   margin: 20mm 15mm;
 }
-body {
+.print-page {
   font-family: 'Courier New', Courier, monospace;
   font-size: 10pt;
   color: #000;
@@ -273,8 +273,11 @@ body {
   }
   body {
     background: #fff !important;
-    font-size: 10pt !important;
     color: #000 !important;
+  }
+  .print-page {
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 10pt !important;
   }
   .print-page {
     max-width: 100% !important;
