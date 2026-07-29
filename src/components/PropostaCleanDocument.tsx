@@ -218,11 +218,6 @@ export function PropostaCleanDocument({
         ))}
       </div>
 
-      <div className="doc-rep-info fs-10 mb-3 break-inside-avoid">
-        <p className="doc-underline">{representanteNome}</p>
-        <p>{representanteTelefone || '-'}</p>
-      </div>
-
       <div className="doc-footer ta-center fs-8 fc-body">
         <p>Rua Iracema Lucas, 450 (Antiga Rua Parsch) – Distrito Industrial</p>
         <p>Vinhedo - SP - Brasil - CEP: 13280-172 - Fone / Fax: (0**19) 3826-7373</p>
