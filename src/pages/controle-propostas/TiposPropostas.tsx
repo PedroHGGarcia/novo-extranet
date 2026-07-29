@@ -146,6 +146,7 @@ export default function TiposPropostas() {
     status: 'Ativo',
     tem_fator: false,
     comissao: 0,
+    mostrar_pagamento_brasil: false,
     frase_preco: '',
     frase_comissao: '',
     prazo_entrega: '',
@@ -289,6 +290,7 @@ export default function TiposPropostas() {
       setFormData({
         status: 'Ativo',
         tem_fator: false,
+        mostrar_pagamento_brasil: false,
         formas_pagamento_selecionadas: [],
         acessorios_default: [],
       })
@@ -581,6 +583,30 @@ export default function TiposPropostas() {
                           isNumber={true}
                           placeholder="0,00%"
                         />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="flex flex-col justify-center">
+                        <label className={labelClass}>Mostrar "Pagamento Brasil"</label>
+                        <div className="mt-1 flex items-center space-x-2">
+                          <Switch
+                            checked={formData.mostrar_pagamento_brasil || false}
+                            onCheckedChange={(checked) =>
+                              setFormData({ ...formData, mostrar_pagamento_brasil: checked })
+                            }
+                            className="data-[state=checked]:bg-[#337ab7]"
+                          />
+                          <span className="text-xs text-slate-600">
+                            {formData.mostrar_pagamento_brasil ? 'Sim' : 'Não'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col justify-center">
+                        <p className="text-[10px] text-slate-400 leading-snug pt-4">
+                          Quando ativado, a linha "Pagamento Brasil" aparecerá na seção de preços da
+                          proposta.
+                        </p>
                       </div>
                     </div>
 

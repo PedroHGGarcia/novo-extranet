@@ -26,6 +26,10 @@ import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 import pb from '@/lib/pocketbase/client'
 import { formatCurrency, mapCurrencyCode, CurrencyInput } from './utils'
 import { EmailTagInput } from '@/components/EmailTagInput'
+import {
+  VersaoComparacaoSelector,
+  type VersaoComparacaoItem,
+} from '@/components/VersaoComparacaoSelector'
 
 interface EmitirPropostaFormProps {
   selectedProposta: Proposta | null
@@ -57,6 +61,10 @@ export function EmitirPropostaForm({
   const [signatureConfirmed, setSignatureConfirmed] = useState(false)
   const [useProfileSignature, setUseProfileSignature] = useState(false)
   const [formTouched, setFormTouched] = useState(false)
+  const [versoesComparacao, setVersoesComparacao] = useState<VersaoComparacaoItem[]>([])
+  const [nomeGerenteProduto, setNomeGerenteProduto] = useState('')
+  const [nomeAssessorTecnico, setNomeAssessorTecnico] = useState('')
+  const [nomeRepresentanteComercial, setNomeRepresentanteComercial] = useState('')
 
   const [exchangeRates, setExchangeRates] = useState<{
     USD: number
@@ -136,6 +144,15 @@ export function EmitirPropostaForm({
         percentual_desconto: selectedProposta.percentual_desconto || 0,
         nota_rep: selectedProposta.nota_rep || 1,
       }
+      try {
+        const vc = selectedProposta.versoes_comparacao
+        setVersoesComparacao(vc ? (typeof vc === 'string' ? JSON.parse(vc) : vc) : [])
+      } catch {
+        setVersoesComparacao([])
+      }
+      setNomeGerenteProduto(selectedProposta.nome_gerente_produto || '')
+      setNomeAssessorTecnico(selectedProposta.nome_assessor_tecnico || '')
+      setNomeRepresentanteComercial(selectedProposta.nome_representante_comercial || '')
       setFormData(mappedData)
       setInitialFormData(mappedData)
       if (selectedProposta.acessorios_proposta?.length > 0) {
@@ -174,6 +191,10 @@ export function EmitirPropostaForm({
       setPropostaSignatureBlob(null)
       setSignatureConfirmed(false)
       setUseProfileSignature(!!user?.assinatura)
+      setVersoesComparacao([])
+      setNomeGerenteProduto('')
+      setNomeAssessorTecnico('')
+      setNomeRepresentanteComercial('')
     }
   }, [selectedProposta, user])
 
@@ -507,6 +528,10 @@ export function EmitirPropostaForm({
         await updateProposta(selectedProposta.id, {
           ...sanitized,
           acessorios_proposta: acessoriosProposta,
+          versoes_comparacao: versoesComparacao,
+          nome_gerente_produto: nomeGerenteProduto,
+          nome_assessor_tecnico: nomeAssessorTecnico,
+          nome_representante_comercial: nomeRepresentanteComercial,
         })
         toast({ title: 'Proposta atualizada com sucesso' })
         setInitialFormData({ ...formData })
@@ -523,6 +548,10 @@ export function EmitirPropostaForm({
         fd.append('user', user?.id || '')
         fd.append('numero_proposta', sanitized.numero_proposta || 'NOVA-0')
         fd.append('acessorios_proposta', JSON.stringify(acessoriosProposta))
+        fd.append('versoes_comparacao', JSON.stringify(versoesComparacao))
+        fd.append('nome_gerente_produto', nomeGerenteProduto)
+        fd.append('nome_assessor_tecnico', nomeAssessorTecnico)
+        fd.append('nome_representante_comercial', nomeRepresentanteComercial)
         if (propostaSignatureBlob) {
           fd.append(
             'assinatura_representante',
@@ -599,6 +628,10 @@ export function EmitirPropostaForm({
       id: 'draft',
       expand: { cliente, representante, versao, gerente, tipo_proposta: tipoProp, user },
       acessorios_proposta: acessoriosProposta,
+      versoes_comparacao: versoesComparacao,
+      nome_gerente_produto: nomeGerenteProduto,
+      nome_assessor_tecnico: nomeAssessorTecnico,
+      nome_representante_comercial: nomeRepresentanteComercial,
     }
     let sigUrl: string | null = null
     if (propostaSignatureBlob) {
@@ -824,6 +857,20 @@ export function EmitirPropostaForm({
               className={inputClass}
             />
           </div>
+        </div>
+
+        <div className="w-full mb-6">
+          <label className={labelClass}>Versões para Comparação (Tabela Multi-coluna)</label>
+          <VersaoComparacaoSelector
+            versoes={versoes}
+            primaryVersaoId={formData.versao || ''}
+            value={versoesComparacao}
+            onChange={setVersoesComparacao}
+          />
+          <span className="text-[10px] text-slate-400 mt-0.5">
+            Adicione até 2 versões adicionais para exibir uma tabela de especificações comparativa
+            no PDF.
+          </span>
         </div>
 
         <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
@@ -1249,6 +1296,36 @@ export function EmitirPropostaForm({
             )}
           </div>
         )}
+
+        <div className="w-full mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex flex-col w-full">
+            <label className={labelClass}>Nome do Gerente de Produto</label>
+            <input
+              className={inputClass}
+              value={nomeGerenteProduto}
+              onChange={(e) => setNomeGerenteProduto(e.target.value)}
+              placeholder="Nome do assinante"
+            />
+          </div>
+          <div className="flex flex-col w-full">
+            <label className={labelClass}>Nome do Assessor Técnico</label>
+            <input
+              className={inputClass}
+              value={nomeAssessorTecnico}
+              onChange={(e) => setNomeAssessorTecnico(e.target.value)}
+              placeholder="Nome do assinante"
+            />
+          </div>
+          <div className="flex flex-col w-full">
+            <label className={labelClass}>Nome do Representante Comercial</label>
+            <input
+              className={inputClass}
+              value={nomeRepresentanteComercial}
+              onChange={(e) => setNomeRepresentanteComercial(e.target.value)}
+              placeholder="Nome do assinante"
+            />
+          </div>
+        </div>
 
         <div className="w-full mt-4 border-t border-slate-200 pt-6">{renderActionBar()}</div>
       </div>

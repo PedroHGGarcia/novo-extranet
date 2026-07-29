@@ -148,6 +148,28 @@ export default function PropostaPDF() {
           gerenteAssinaturaUrl={getGerenteAssinatura()}
           issuerName={user?.name}
           issuerSectorLabel={user?.setor || 'Comercial'}
+          assinaturaGerenteProdutoUrl={
+            data.assinatura_gerente_produto
+              ? pb.files.getURL(data, data.assinatura_gerente_produto)
+              : null
+          }
+          assinaturaAssessorTecnicoUrl={
+            data.assinatura_assessor_tecnico
+              ? pb.files.getURL(data, data.assinatura_assessor_tecnico)
+              : null
+          }
+          nomeGerenteProduto={data.nome_gerente_produto}
+          nomeAssessorTecnico={data.nome_assessor_tecnico}
+          nomeRepresentanteComercial={data.nome_representante_comercial}
+          versoesComparacao={(() => {
+            try {
+              return typeof data.versoes_comparacao === 'string'
+                ? JSON.parse(data.versoes_comparacao)
+                : data.versoes_comparacao
+            } catch {
+              return undefined
+            }
+          })()}
         />
       </div>
     </div>

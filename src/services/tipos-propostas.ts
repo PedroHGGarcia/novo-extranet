@@ -19,6 +19,7 @@ export interface TipoProposta {
   imposto_icms?: string
   formas_pagamento_selecionadas?: string[]
   acessorios_default?: Array<{ acessorio_id: string; nome: string; estado: string }>
+  mostrar_pagamento_brasil?: boolean
   created: string
   updated: string
 }

@@ -50,6 +50,12 @@ export interface Proposta {
   assinatura_cliente?: string
   assinatura_representante?: string
   emails_notificacao?: string
+  assinatura_gerente_produto?: string
+  assinatura_assessor_tecnico?: string
+  nome_gerente_produto?: string
+  nome_assessor_tecnico?: string
+  nome_representante_comercial?: string
+  versoes_comparacao?: any
   expand?: {
     cliente?: { fantasia: string; razao_social?: string }
     versao?: {
