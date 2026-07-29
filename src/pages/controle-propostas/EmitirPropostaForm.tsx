@@ -237,6 +237,18 @@ export function EmitirPropostaForm({
     }
   }, [selectedProposta])
 
+  useEffect(() => {
+    if (!formData.gerente) return
+    const g = gerentes.find((ger) => ger.id === formData.gerente)
+    if (g) setNomeGerenteProduto(g.nome)
+  }, [formData.gerente, gerentes])
+
+  useEffect(() => {
+    if (!formData.representante) return
+    const r = representantes.find((rep) => rep.id === formData.representante)
+    if (r) setNomeRepresentanteComercial(r.fantasia || r.razao_social || '')
+  }, [formData.representante, representantes])
+
   const loadAcessorios = async (versaoId?: string) => {
     if (!versaoId) {
       setAcessoriosProposta([])
@@ -807,7 +819,27 @@ export function EmitirPropostaForm({
             <SearchableCombobox
               items={representantes}
               value={formData.representante || ''}
-              onChange={(id) => setFormData({ ...formData, representante: id })}
+              onChange={(id) => {
+                setFormData({ ...formData, representante: id })
+                if (!id) {
+                  setNomeRepresentanteComercial('')
+                  return
+                }
+                const r = representantes.find((rep) => rep.id === id)
+                if (r) {
+                  setNomeRepresentanteComercial(r.fantasia || r.razao_social || '')
+                } else {
+                  pb.collection('representantes')
+                    .getOne(id)
+                    .then((rep) => {
+                      setRepresentantes((prev) =>
+                        prev.some((p) => p.id === rep.id) ? prev : [...prev, rep],
+                      )
+                      setNomeRepresentanteComercial(rep.fantasia || rep.razao_social || '')
+                    })
+                    .catch(() => {})
+                }
+              }}
               getLabel={(r) => r.fantasia}
               getSearchText={(r) => `${r.fantasia || ''} ${r.sigla || ''}`}
               placeholder="Buscar representante..."
@@ -844,7 +876,15 @@ export function EmitirPropostaForm({
             <SearchableCombobox
               items={gerentes}
               value={formData.gerente || ''}
-              onChange={(id) => setFormData({ ...formData, gerente: id })}
+              onChange={(id) => {
+                setFormData({ ...formData, gerente: id })
+                if (!id) {
+                  setNomeGerenteProduto('')
+                  return
+                }
+                const g = gerentes.find((ger) => ger.id === id)
+                if (g) setNomeGerenteProduto(g.nome)
+              }}
               getLabel={(g) => g.nome}
               getSearchText={(g) => `${g.nome || ''} ${g.documento || ''} ${g.email || ''}`}
               placeholder="Buscar gerente..."
@@ -1358,19 +1398,19 @@ export function EmitirPropostaForm({
           <div className="flex flex-col w-full">
             <label className={labelClass}>Nome do Gerente de Produto</label>
             <input
-              className={inputClass}
+              className={cn(inputClass, 'bg-muted cursor-not-allowed')}
               value={nomeGerenteProduto}
-              onChange={(e) => setNomeGerenteProduto(e.target.value)}
-              placeholder="Nome do assinante"
+              readOnly
+              placeholder="Preenchido automaticamente ao selecionar o gerente"
             />
           </div>
           <div className="flex flex-col w-full">
             <label className={labelClass}>Nome do Representante Comercial</label>
             <input
-              className={inputClass}
+              className={cn(inputClass, 'bg-muted cursor-not-allowed')}
               value={nomeRepresentanteComercial}
-              onChange={(e) => setNomeRepresentanteComercial(e.target.value)}
-              placeholder="Nome do assinante"
+              readOnly
+              placeholder="Preenchido automaticamente ao selecionar o representante"
             />
           </div>
         </div>
