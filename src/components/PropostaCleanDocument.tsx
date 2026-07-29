@@ -36,9 +36,7 @@ interface PropostaCleanDocumentProps {
   gerenteAssinaturaUrl?: string | null
   assinaturaClienteUrl?: string | null
   assinaturaGerenteProdutoUrl?: string | null
-  assinaturaAssessorTecnicoUrl?: string | null
   nomeGerenteProduto?: string
-  nomeAssessorTecnico?: string
   nomeRepresentanteComercial?: string
   issuerSectorLabel?: string
   issuerName?: string
@@ -72,9 +70,7 @@ export function PropostaCleanDocument({
   gerenteAssinaturaUrl,
   assinaturaClienteUrl,
   assinaturaGerenteProdutoUrl,
-  assinaturaAssessorTecnicoUrl,
   nomeGerenteProduto,
-  nomeAssessorTecnico,
   nomeRepresentanteComercial,
   issuerSectorLabel,
   issuerName,
@@ -102,11 +98,6 @@ export function PropostaCleanDocument({
       label: 'Gerente de Produto',
       sigUrl: assinaturaGerenteProdutoUrl ?? gerenteAssinaturaUrl,
       nome: nomeGerenteProduto ?? gerenteNome,
-    },
-    {
-      label: 'Assessor Técnico',
-      sigUrl: assinaturaAssessorTecnicoUrl,
-      nome: nomeAssessorTecnico,
     },
     {
       label: 'Representante Comercial',

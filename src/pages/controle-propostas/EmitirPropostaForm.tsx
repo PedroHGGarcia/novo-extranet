@@ -63,7 +63,6 @@ export function EmitirPropostaForm({
   const [formTouched, setFormTouched] = useState(false)
   const [versoesComparacao, setVersoesComparacao] = useState<VersaoComparacaoItem[]>([])
   const [nomeGerenteProduto, setNomeGerenteProduto] = useState('')
-  const [nomeAssessorTecnico, setNomeAssessorTecnico] = useState('')
   const [nomeRepresentanteComercial, setNomeRepresentanteComercial] = useState('')
 
   const [exchangeRates, setExchangeRates] = useState<{
@@ -151,7 +150,6 @@ export function EmitirPropostaForm({
         setVersoesComparacao([])
       }
       setNomeGerenteProduto(selectedProposta.nome_gerente_produto || '')
-      setNomeAssessorTecnico(selectedProposta.nome_assessor_tecnico || '')
       setNomeRepresentanteComercial(selectedProposta.nome_representante_comercial || '')
       setFormData(mappedData)
       setInitialFormData(mappedData)
@@ -193,7 +191,6 @@ export function EmitirPropostaForm({
       setUseProfileSignature(!!user?.assinatura)
       setVersoesComparacao([])
       setNomeGerenteProduto('')
-      setNomeAssessorTecnico('')
       setNomeRepresentanteComercial('')
     }
   }, [selectedProposta, user])
@@ -530,7 +527,6 @@ export function EmitirPropostaForm({
           acessorios_proposta: acessoriosProposta,
           versoes_comparacao: versoesComparacao,
           nome_gerente_produto: nomeGerenteProduto,
-          nome_assessor_tecnico: nomeAssessorTecnico,
           nome_representante_comercial: nomeRepresentanteComercial,
         })
         toast({ title: 'Proposta atualizada com sucesso' })
@@ -550,7 +546,6 @@ export function EmitirPropostaForm({
         fd.append('acessorios_proposta', JSON.stringify(acessoriosProposta))
         fd.append('versoes_comparacao', JSON.stringify(versoesComparacao))
         fd.append('nome_gerente_produto', nomeGerenteProduto)
-        fd.append('nome_assessor_tecnico', nomeAssessorTecnico)
         fd.append('nome_representante_comercial', nomeRepresentanteComercial)
         if (propostaSignatureBlob) {
           fd.append(
@@ -630,7 +625,6 @@ export function EmitirPropostaForm({
       acessorios_proposta: acessoriosProposta,
       versoes_comparacao: versoesComparacao,
       nome_gerente_produto: nomeGerenteProduto,
-      nome_assessor_tecnico: nomeAssessorTecnico,
       nome_representante_comercial: nomeRepresentanteComercial,
     }
     let sigUrl: string | null = null
@@ -1297,22 +1291,13 @@ export function EmitirPropostaForm({
           </div>
         )}
 
-        <div className="w-full mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="w-full mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col w-full">
             <label className={labelClass}>Nome do Gerente de Produto</label>
             <input
               className={inputClass}
               value={nomeGerenteProduto}
               onChange={(e) => setNomeGerenteProduto(e.target.value)}
-              placeholder="Nome do assinante"
-            />
-          </div>
-          <div className="flex flex-col w-full">
-            <label className={labelClass}>Nome do Assessor Técnico</label>
-            <input
-              className={inputClass}
-              value={nomeAssessorTecnico}
-              onChange={(e) => setNomeAssessorTecnico(e.target.value)}
               placeholder="Nome do assinante"
             />
           </div>

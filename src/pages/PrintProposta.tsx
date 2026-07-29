@@ -152,13 +152,7 @@ export default function PrintProposta() {
               ? pb.files.getURL(data, data.assinatura_gerente_produto)
               : null
           }
-          assinaturaAssessorTecnicoUrl={
-            data.assinatura_assessor_tecnico
-              ? pb.files.getURL(data, data.assinatura_assessor_tecnico)
-              : null
-          }
           nomeGerenteProduto={data.nome_gerente_produto}
-          nomeAssessorTecnico={data.nome_assessor_tecnico}
           nomeRepresentanteComercial={data.nome_representante_comercial}
           versoesComparacao={(() => {
             try {
