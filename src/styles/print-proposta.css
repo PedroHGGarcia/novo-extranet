@@ -58,8 +58,8 @@ body {
 }
 
 .header-logo {
-  max-width: 120px;
-  max-height: 60px;
+  max-width: 200px;
+  max-height: 90px;
   object-fit: contain;
 }
 
@@ -442,6 +442,13 @@ body {
   .rich-text-content {
     overflow: visible !important;
     max-height: none !important;
+  }
+
+  .header-logo {
+    max-width: 200px !important;
+    max-height: 90px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .rich-text-content * {

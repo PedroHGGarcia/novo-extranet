@@ -56,6 +56,7 @@ export interface Proposta {
   nome_assessor_tecnico?: string
   nome_representante_comercial?: string
   versoes_comparacao?: any
+  pdf_anexo?: string
   expand?: {
     cliente?: { fantasia: string; razao_social?: string }
     versao?: {

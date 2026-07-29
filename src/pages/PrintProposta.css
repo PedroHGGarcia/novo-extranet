@@ -147,6 +147,11 @@ body {
   text-align: center;
 }
 
+.doc-header img {
+  max-height: 80px;
+  object-fit: contain;
+}
+
 .doc-equipamento-imagem img {
   display: block;
   margin: 0 auto;

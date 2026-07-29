@@ -1,6 +1,15 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { format } from 'date-fns'
-import { List, Eye, FileText, PenTool, CheckCircle, AlertTriangle } from 'lucide-react'
+import {
+  List,
+  Eye,
+  FileText,
+  PenTool,
+  CheckCircle,
+  AlertTriangle,
+  Upload,
+  Trash2,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
@@ -64,6 +73,9 @@ export function EmitirPropostaForm({
   const [versoesComparacao, setVersoesComparacao] = useState<VersaoComparacaoItem[]>([])
   const [nomeGerenteProduto, setNomeGerenteProduto] = useState('')
   const [nomeRepresentanteComercial, setNomeRepresentanteComercial] = useState('')
+  const [pdfAnexoName, setPdfAnexoName] = useState<string | null>(null)
+  const [uploadingPdf, setUploadingPdf] = useState(false)
+  const pdfFileRef = useRef<HTMLInputElement>(null)
 
   const [exchangeRates, setExchangeRates] = useState<{
     USD: number
@@ -151,6 +163,7 @@ export function EmitirPropostaForm({
       }
       setNomeGerenteProduto(selectedProposta.nome_gerente_produto || '')
       setNomeRepresentanteComercial(selectedProposta.nome_representante_comercial || '')
+      setPdfAnexoName(selectedProposta.pdf_anexo || null)
       setFormData(mappedData)
       setInitialFormData(mappedData)
       if (selectedProposta.acessorios_proposta?.length > 0) {
@@ -192,6 +205,7 @@ export function EmitirPropostaForm({
       setVersoesComparacao([])
       setNomeGerenteProduto('')
       setNomeRepresentanteComercial('')
+      setPdfAnexoName(null)
     }
   }, [selectedProposta, user])
 
@@ -605,6 +619,55 @@ export function EmitirPropostaForm({
       onCancel()
     } catch (e) {
       toast({ title: 'Erro ao cancelar', description: getErrorMessage(e), variant: 'destructive' })
+    }
+  }
+
+  const handlePdfUpload = async (file: File) => {
+    if (!selectedProposta) {
+      toast({ title: 'Salve a proposta primeiro para anexar o PDF', variant: 'destructive' })
+      return
+    }
+    if (file.type !== 'application/pdf') {
+      toast({ title: 'Apenas arquivos PDF são aceitos', variant: 'destructive' })
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: 'O arquivo excede o limite de 10 MB', variant: 'destructive' })
+      return
+    }
+    setUploadingPdf(true)
+    try {
+      const fd = new FormData()
+      fd.append('pdf_anexo', file)
+      await pb.collection('propostas').update(selectedProposta.id, fd)
+      setPdfAnexoName(file.name)
+      toast({ title: 'PDF anexado com sucesso' })
+    } catch (e) {
+      toast({
+        title: 'Erro ao anexar PDF',
+        description: getErrorMessage(e),
+        variant: 'destructive',
+      })
+    } finally {
+      setUploadingPdf(false)
+    }
+  }
+
+  const handlePdfRemove = async () => {
+    if (!selectedProposta) return
+    setUploadingPdf(true)
+    try {
+      await pb.collection('propostas').update(selectedProposta.id, { pdf_anexo: null })
+      setPdfAnexoName(null)
+      toast({ title: 'PDF removido com sucesso' })
+    } catch (e) {
+      toast({
+        title: 'Erro ao remover PDF',
+        description: getErrorMessage(e),
+        variant: 'destructive',
+      })
+    } finally {
+      setUploadingPdf(false)
     }
   }
 
@@ -1310,6 +1373,77 @@ export function EmitirPropostaForm({
               placeholder="Nome do assinante"
             />
           </div>
+        </div>
+
+        <div className="w-full mt-6">
+          <div className="border-b border-border w-full mb-4 pb-2">
+            <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" /> Anexar PDF da Proposta
+            </h3>
+          </div>
+          <input
+            ref={pdfFileRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) handlePdfUpload(file)
+              e.target.value = ''
+            }}
+            disabled={uploadingPdf}
+          />
+          {selectedProposta ? (
+            pdfAnexoName ? (
+              <div className="flex items-center gap-3 p-4 border border-input rounded-sm bg-slate-50/50">
+                <FileText className="h-8 w-8 text-rose-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-700 truncate">{pdfAnexoName}</p>
+                  <p className="text-xs text-emerald-600">&#10003; PDF anexado</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => pdfFileRef.current?.click()}
+                  disabled={uploadingPdf}
+                  className="text-xs gap-1.5"
+                >
+                  <Upload className="h-3.5 w-3.5" /> Substituir
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePdfRemove}
+                  disabled={uploadingPdf}
+                  className="text-xs gap-1.5 text-rose-600 hover:text-rose-700"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Remover
+                </Button>
+              </div>
+            ) : (
+              <div
+                onClick={() => !uploadingPdf && pdfFileRef.current?.click()}
+                className={cn(
+                  'flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-input rounded-sm transition-colors',
+                  uploadingPdf ? 'cursor-wait opacity-60' : 'cursor-pointer hover:bg-slate-50',
+                )}
+              >
+                <Upload className="h-8 w-8 text-slate-400" />
+                <span className="text-sm text-slate-600">
+                  {uploadingPdf ? 'Enviando...' : 'Clique para selecionar um arquivo PDF'}
+                </span>
+              </div>
+            )
+          ) : (
+            <div className="p-4 border-2 border-dashed border-slate-200 rounded-sm bg-slate-50/30">
+              <p className="text-sm text-slate-500 text-center">
+                Salve a proposta primeiro para poder anexar o PDF.
+              </p>
+            </div>
+          )}
+          <p className="text-[10px] text-slate-400 mt-2">
+            Para gerar o PDF, clique em 'Imprimir Proposta', salve como PDF e faça o upload aqui.
+          </p>
         </div>
 
         <div className="w-full mt-4 border-t border-slate-200 pt-6">{renderActionBar()}</div>

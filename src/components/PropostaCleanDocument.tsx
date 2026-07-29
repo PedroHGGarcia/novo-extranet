@@ -1,6 +1,6 @@
 import { type Proposta } from '@/services/propostas'
 import { type TipoProposta } from '@/services/tipos-propostas'
-import benerLogoUrl from '@/assets/bener-thumb-c5c1b.png'
+import benerLogoUrl from '@/assets/logo-bener-4ae76.png'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { PropostaCleanSections } from '@/components/PropostaCleanSections'
@@ -110,7 +110,7 @@ export function PropostaCleanDocument({
   return (
     <div className="clean-doc-root w-[210mm] max-w-full min-h-[297mm] p-12 mx-auto print:p-0">
       <div className="doc-header flex justify-between items-start mb-4 pb-3">
-        <img src={benerLogoUrl} alt="Bener" className="h-16 object-contain" />
+        <img src={benerLogoUrl} alt="Bener" className="h-20 object-contain" />
         <div className="ta-right fs-10">
           <p className="fw-bold">Bener Comercial Importadora Exportadora Ltda.</p>
           <p>Vinhedo, {dataFormatada}</p>

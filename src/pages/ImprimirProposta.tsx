@@ -5,7 +5,7 @@ import { formatCurrency } from '@/pages/controle-propostas/utils'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import pb from '@/lib/pocketbase/client'
-import benerLogoUrl from '@/assets/bener-thumb-c5c1b.png'
+import benerLogoUrl from '@/assets/logo-bener-4ae76.png'
 import '@/styles/print-proposta.css'
 
 export default function ImprimirProposta() {
