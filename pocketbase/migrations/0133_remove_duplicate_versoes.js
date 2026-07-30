@@ -1,128 +1,104 @@
 migrate(
   (app) => {
-    app.runInTransaction((txApp) => {
-      var allVersoes = txApp.findRecordsByFilter('versoes', "id != ''", '-updated', 10000, 0)
-      if (allVersoes.length === 0) return
+    var allVersoes = app.findRecordsByFilter('versoes', "id != ''", '-updated', 500, 0)
+    if (allVersoes.length === 0) return
 
-      var adminUserId = ''
-      try {
-        var admins = txApp.findRecordsByFilter('users', "role = 'admin'", '-created', 1, 0)
-        if (admins.length > 0) adminUserId = admins[0].id
-      } catch (_) {}
-      if (!adminUserId) return
+    var adminUserId = ''
+    try {
+      var admins = app.findRecordsByFilter('users', "role = 'admin'", '-created', 1, 0)
+      if (admins.length > 0) adminUserId = admins[0].id
+    } catch (_) {}
+    if (!adminUserId) return
 
-      var auditoriaCol = txApp.findCollectionByNameOrId('auditoria')
+    var auditoriaCol = app.findCollectionByNameOrId('auditoria')
 
-      var checkFields = [
-        'nome',
-        'cod_erp',
-        'modelo',
-        'moeda',
-        'valor',
-        'tem_fator',
-        'fator_nac',
-        'nome_abreviado',
-        'tem_estoque',
-        'desconto_max_representante',
-        'desconto_max_bener',
-        'estoque_total',
-        'estoque_bloqueado',
-        'estoque_reservado',
-        'estoque_disponivel',
-        'acessorios_standards',
-        'caracteristicas_construtivas',
-        'especificacoes_tecnicas',
-        'tipos_proposta',
-        'status',
-        'imagem_preview',
-        'galeria',
-      ]
+    var groups = {}
+    for (var i = 0; i < allVersoes.length; i++) {
+      var v = allVersoes[i]
+      var codErp = (v.getString('cod_erp') || '').trim()
+      var nome = (v.getString('nome') || '').trim().toLowerCase()
+      var modelo = (v.getString('modelo') || '').trim()
 
-      var groups = {}
-      for (var i = 0; i < allVersoes.length; i++) {
-        var v = allVersoes[i]
-        var codErp = (v.getString('cod_erp') || '').trim()
-        var nome = (v.getString('nome') || '').trim().toLowerCase()
-        var modelo = (v.getString('modelo') || '').trim()
+      var key = ''
+      if (codErp !== '') {
+        key = 'c:' + codErp
+      } else if (nome !== '' && modelo !== '') {
+        key = 'n:' + nome + '|' + modelo
+      } else if (nome !== '') {
+        key = 'n:' + nome + '|'
+      } else {
+        continue
+      }
+      if (!groups[key]) groups[key] = []
+      groups[key].push(v)
+    }
 
-        var key = ''
-        if (codErp !== '') {
-          key = 'c:' + codErp
-        } else if (nome !== '' && modelo !== '') {
-          key = 'n:' + nome + '|' + modelo
-        } else if (nome !== '') {
-          key = 'n:' + nome + '|'
-        } else {
-          continue
+    var hasDuplicates = false
+    for (var hk in groups) {
+      if (Object.prototype.hasOwnProperty.call(groups, hk) && groups[hk].length > 1) {
+        hasDuplicates = true
+        break
+      }
+    }
+    if (!hasDuplicates) return
+
+    var checkFields = [
+      'nome',
+      'cod_erp',
+      'modelo',
+      'moeda',
+      'valor',
+      'tem_fator',
+      'fator_nac',
+      'nome_abreviado',
+      'tem_estoque',
+      'status',
+      'imagem_preview',
+    ]
+
+    var totalDeleted = 0
+    var totalRelinkedPropostas = 0
+    var totalRelinkedAcessorios = 0
+
+    for (var groupKey in groups) {
+      if (!Object.prototype.hasOwnProperty.call(groups, groupKey)) continue
+      var groupItems = groups[groupKey]
+      if (groupItems.length <= 1) continue
+
+      var scored = []
+      for (var j = 0; j < groupItems.length; j++) {
+        var item = groupItems[j]
+        var filledCount = 0
+        for (var fi = 0; fi < checkFields.length; fi++) {
+          var val = item.get(checkFields[fi])
+          if (val !== null && val !== undefined && val !== '') {
+            if (Array.isArray(val) && val.length === 0) continue
+            filledCount++
+          }
         }
-        if (!groups[key]) groups[key] = []
-        groups[key].push(v)
+        scored.push({ versao: item, filled: filledCount, updated: item.getString('updated') || '' })
       }
 
-      var hasDuplicates = false
-      for (var hk in groups) {
-        if (Object.prototype.hasOwnProperty.call(groups, hk) && groups[hk].length > 1) {
-          hasDuplicates = true
-          break
-        }
-      }
-      if (!hasDuplicates) return
+      scored.sort(function (a, b) {
+        if (b.filled !== a.filled) return b.filled - a.filled
+        return (b.updated || '').localeCompare(a.updated || '')
+      })
 
-      var allAcessorios = txApp.findRecordsByFilter('acessorios', "id != ''", '-created', 10000, 0)
+      var keptVersao = scored[0].versao
+      var keptId = keptVersao.id
+      var keptNome = (keptVersao.getString('nome') || '').trim()
 
-      var totalDeleted = 0
-      var totalRelinkedPropostas = 0
-      var totalRelinkedAcessorios = 0
+      for (var d = 1; d < scored.length; d++) {
+        var dupVersao = scored[d].versao
+        var dupId = dupVersao.id
+        var dupNome = (dupVersao.getString('nome') || '').trim()
 
-      for (var groupKey in groups) {
-        if (!Object.prototype.hasOwnProperty.call(groups, groupKey)) continue
-        var groupItems = groups[groupKey]
-        if (groupItems.length <= 1) continue
-
-        var scored = []
-        for (var j = 0; j < groupItems.length; j++) {
-          var item = groupItems[j]
-          var filledCount = 0
-          for (var fi = 0; fi < checkFields.length; fi++) {
-            var val = item.get(checkFields[fi])
-            if (val !== null && val !== undefined && val !== '') {
-              if (Array.isArray(val) && val.length === 0) continue
-              filledCount++
-            }
-          }
-          scored.push({
-            versao: item,
-            filled: filledCount,
-            updated: item.getString('updated') || '',
-          })
-        }
-
-        scored.sort(function (a, b) {
-          if (b.filled !== a.filled) return b.filled - a.filled
-          return (b.updated || '').localeCompare(a.updated || '')
-        })
-
-        var keptVersao = scored[0].versao
-        var keptId = keptVersao.id
-
-        for (var d = 1; d < scored.length; d++) {
-          var dupVersao = scored[d].versao
-          var dupId = dupVersao.id
-
-          var originalData = {}
-          for (var ofi = 0; ofi < checkFields.length; ofi++) {
-            var fieldName = checkFields[ofi]
-            originalData[fieldName] = dupVersao.get(fieldName)
-          }
-          originalData.id = dupId
-          originalData.created = dupVersao.getString('created') || ''
-          originalData.updated = dupVersao.getString('updated') || ''
-
-          var propostas = txApp.findRecordsByFilter(
+        try {
+          var propostas = app.findRecordsByFilter(
             'propostas',
             "versao = '" + dupId + "'",
             '-created',
-            10000,
+            500,
             0,
           )
           for (var p = 0; p < propostas.length; p++) {
@@ -130,88 +106,70 @@ migrate(
             proposta.set('versao', keptId)
 
             var versaoOriginal = (proposta.getString('versao_original') || '').trim()
-            if (versaoOriginal !== '') {
-              var dupNome = (dupVersao.getString('nome') || '').trim()
-              var keptNome = (keptVersao.getString('nome') || '').trim()
-              if (versaoOriginal.toLowerCase() === dupNome.toLowerCase()) {
-                proposta.set('versao_original', keptNome)
-              }
+            if (versaoOriginal !== '' && versaoOriginal.toLowerCase() === dupNome.toLowerCase()) {
+              proposta.set('versao_original', keptNome)
             }
 
-            var versoesComparacao = proposta.get('versoes_comparacao')
-            if (versoesComparacao && typeof versoesComparacao === 'object') {
-              var vcArray = Array.isArray(versoesComparacao) ? versoesComparacao : []
-              var modified = false
-              for (var vc = 0; vc < vcArray.length; vc++) {
-                if (vcArray[vc] === dupId) {
-                  vcArray[vc] = keptId
-                  modified = true
-                }
-              }
-              if (modified) {
-                proposta.set('versoes_comparacao', vcArray)
-              }
-            }
-
-            txApp.save(proposta)
+            app.save(proposta)
             totalRelinkedPropostas++
           }
+        } catch (_) {}
 
-          for (var ac = 0; ac < allAcessorios.length; ac++) {
-            var acessorio = allAcessorios[ac]
+        try {
+          var acessorios = app.findRecordsByFilter(
+            'acessorios',
+            "versoes = '" + dupId + "'",
+            '-created',
+            500,
+            0,
+          )
+          for (var ac = 0; ac < acessorios.length; ac++) {
+            var acessorio = acessorios[ac]
             var versoesRel = acessorio.get('versoes')
             if (versoesRel && Array.isArray(versoesRel)) {
-              var modifiedAc = false
               var newVersoes = []
               for (var ri = 0; ri < versoesRel.length; ri++) {
                 if (versoesRel[ri] === dupId) {
-                  if (newVersoes.indexOf(keptId) === -1) {
-                    newVersoes.push(keptId)
-                  }
-                  modifiedAc = true
+                  if (newVersoes.indexOf(keptId) === -1) newVersoes.push(keptId)
                 } else {
                   newVersoes.push(versoesRel[ri])
                 }
               }
-              if (modifiedAc) {
-                acessorio.set('versoes', newVersoes)
-                txApp.save(acessorio)
-                totalRelinkedAcessorios++
-              }
+              acessorio.set('versoes', newVersoes)
+              app.save(acessorio)
+              totalRelinkedAcessorios++
             }
           }
+        } catch (_) {}
 
+        try {
           var auditRec = new Record(auditoriaCol)
           auditRec.set('user', adminUserId)
-          auditRec.set('acao', 'Remover versão duplicada')
+          auditRec.set('acao', 'Remover versao duplicada')
           auditRec.set('tabela', 'versoes')
           auditRec.set('registro_id', dupId)
           auditRec.set('dados', {
-            registro_original: originalData,
             kept_record_id: keptId,
-            kept_record_nome: (keptVersao.getString('nome') || '').trim(),
-            relinked_propostas: propostas.length,
-            timestamp: new Date().toISOString(),
+            kept_record_nome: keptNome,
+            relinked_propostas: totalRelinkedPropostas,
           })
-          txApp.save(auditRec)
+          app.save(auditRec)
+        } catch (_) {}
 
-          txApp.delete(dupVersao)
-          totalDeleted++
-        }
+        app.delete(dupVersao)
+        totalDeleted++
       }
+    }
 
-      console.log(
-        'Deduplicação de versões concluída: ' +
-          totalDeleted +
-          ' duplicados removidos, ' +
-          totalRelinkedPropostas +
-          ' propostas re-vinculadas, ' +
-          totalRelinkedAcessorios +
-          ' acessórios re-vinculados.',
-      )
-    })
+    console.log(
+      'Deduplicacao concluida: ' +
+        totalDeleted +
+        ' removidos, ' +
+        totalRelinkedPropostas +
+        ' propostas, ' +
+        totalRelinkedAcessorios +
+        ' acessorios.',
+    )
   },
-  (app) => {
-    // Downgrade not possible — deletions are permanent
-  },
+  (app) => {},
 )
