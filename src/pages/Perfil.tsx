@@ -14,7 +14,7 @@ import { ChangePasswordSection } from '@/components/ChangePasswordSection'
 import { UserAvatarSection } from '@/components/UserAvatarSection'
 
 export default function Perfil() {
-  const { user, refreshUser } = useAuth()
+  const { user, updateUser } = useAuth()
   const { toast } = useToast()
 
   const [nome, setNome] = useState(user?.name || '')
@@ -34,9 +34,9 @@ export default function Perfil() {
     if (!user) return
     setIsUpdating(true)
     try {
-      await pb.collection('users').update(user.id, { name: nome, setor })
+      const updatedRecord = await pb.collection('users').update(user.id, { name: nome, setor })
+      updateUser(updatedRecord)
       toast({ title: 'Usuário atualizado com sucesso' })
-      await refreshUser()
     } catch (e) {
       toast({
         title: 'Erro ao atualizar perfil',
