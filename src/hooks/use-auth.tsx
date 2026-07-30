@@ -10,6 +10,7 @@ interface AuthContextType {
   signOut: () => void
   loading: boolean
   refreshUser: () => Promise<void>
+  updateUser: (record: any) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -91,7 +92,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {
     if (!pb.authStore.record) return
     try {
-      await pb.collection('users').authRefresh()
       const refreshedRecord = await pb.collection('users').getOne(pb.authStore.record.id)
       setUser(refreshedRecord)
     } catch (err: any) {
@@ -101,9 +101,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  const updateUser = (record: any) => {
+    setUser(record)
+  }
+
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, signUp, signIn, signOut, loading, refreshUser }}
+      value={{ user, isAuthenticated, signUp, signIn, signOut, loading, refreshUser, updateUser }}
     >
       {children}
     </AuthContext.Provider>

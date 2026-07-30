@@ -11,13 +11,15 @@ const MAX_FILE_SIZE = 2 * 1024 * 1024
 const ACCEPTED_FORMATS = ['image/png', 'image/jpeg', 'image/gif']
 
 export function UserAvatarSection() {
-  const { user, refreshUser } = useAuth()
+  const { user, updateUser } = useAuth()
   const { toast } = useToast()
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const avatarUrl = user?.avatar ? pb.files.getURL(user as any, user.avatar as string) : null
+  const avatarUrl = user?.avatar
+    ? `${pb.files.getURL(user as any, user.avatar as string)}?t=${user.updated || Date.now()}`
+    : null
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -45,8 +47,8 @@ export function UserAvatarSection() {
     try {
       const formData = new FormData()
       formData.append('avatar', file)
-      await pb.collection('users').update(user.id, formData)
-      await refreshUser()
+      const updatedRecord = await pb.collection('users').update(user.id, formData)
+      updateUser(updatedRecord)
       toast({ title: 'Avatar atualizado com sucesso!' })
     } catch (err) {
       const msg = getErrorMessage(err)
