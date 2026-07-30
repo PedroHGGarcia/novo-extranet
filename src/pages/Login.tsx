@@ -18,11 +18,14 @@ import { z } from 'zod'
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
-  password: z.string().min(8, 'A senha deve ter no mínimo 8 caracteres'),
+  password: z
+    .string()
+    .min(8, 'A senha deve ter no mínimo 8 caracteres')
+    .regex(/[0-9]/, 'A senha deve conter pelo menos um número')
+    .regex(/[^a-zA-Z0-9]/, 'A senha deve conter pelo menos um caractere especial'),
 })
 
-const RECAPTCHA_SITE_KEY =
-  import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6Lc-xGktAAAAABkxZBa7Sbd1-dU3QHRJbR6D6C21'
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || ''
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -98,6 +101,16 @@ export default function Login() {
       return
     }
 
+    if (!RECAPTCHA_SITE_KEY) {
+      toast({
+        title: 'Configuração de segurança ausente',
+        description:
+          'A chave do reCAPTCHA não está configurada. Contate o administrador do sistema.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     if (!captchaToken) {
       toast({
         title: 'Verificação de segurança obrigatória',
@@ -126,15 +139,9 @@ export default function Login() {
     setLoading(false)
 
     if (error) {
-      let desc = 'Credenciais inválidas'
-      if (error?.message) {
-        if (error.message.includes('password')) desc = 'Senha incorreta'
-        if (error.message.includes('user') || error.message.includes('record'))
-          desc = 'Usuário não encontrado'
-      }
       toast({
         title: 'Erro ao fazer login',
-        description: desc,
+        description: 'Credenciais inválidas. Verifique seu e-mail e senha.',
         variant: 'destructive',
       })
       setCaptchaToken('')
@@ -216,7 +223,20 @@ export default function Login() {
               ref={captchaContainerRef}
               className="rounded-lg border border-gray-200 bg-gray-50/50 p-3 overflow-hidden"
             >
-              <ReCaptcha
+              {!RECAPTCHA_SITE_KEY ? (
+                <p className="text-xs text-red-500 text-center py-4">
+                  Chave do reCAPTCHA não configurada. Contate o administrador.
+                </p>
+              ) : (
+                <ReCaptcha
+                  siteKey={RECAPTCHA_SITE_KEY}
+                  onVerify={handleCaptchaVerify}
+                  onExpire={handleCaptchaExpire}
+                  onError={handleCaptchaError}
+                  theme="light"
+                  className="flex justify-center max-w-full overflow-x-auto"
+                />
+              )}
                 siteKey={RECAPTCHA_SITE_KEY}
                 onVerify={handleCaptchaVerify}
                 onExpire={handleCaptchaExpire}
@@ -234,7 +254,7 @@ export default function Login() {
 
           <Button
             type="submit"
-            disabled={loading || !captchaToken}
+            disabled={loading || !captchaToken || !RECAPTCHA_SITE_KEY}
             className="w-full h-11 bg-brand-green hover:bg-brand-green/90 text-white font-medium rounded-md tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (

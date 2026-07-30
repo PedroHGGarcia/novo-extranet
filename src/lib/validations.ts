@@ -2,19 +2,30 @@ import { z } from 'zod'
 
 export const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
-  password: z.string().min(8, 'A senha deve ter no mínimo 8 caracteres'),
+  password: z
+    .string()
+    .min(8, 'A senha deve ter no mínimo 8 caracteres')
+    .regex(/[0-9]/, 'A senha deve conter pelo menos um número')
+    .regex(/[^a-zA-Z0-9]/, 'A senha deve conter pelo menos um caractere especial'),
 })
 
 export type LoginFormData = z.infer<typeof loginSchema>
 
 export const clienteSchema = z.object({
-  documento: z.string().min(1, 'CPF/CNPJ é obrigatório'),
-  fantasia: z.string().min(1, 'Nome Fantasia é obrigatório'),
-  razao_social: z.string().optional(),
+  documento: z
+    .string()
+    .min(11, 'CPF/CNPJ deve ter no mínimo 11 caracteres')
+    .max(18, 'CPF/CNPJ deve ter no máximo 18 caracteres'),
+  fantasia: z.string().min(2, 'Nome Fantasia deve ter no mínimo 2 caracteres'),
+  razao_social: z
+    .string()
+    .min(2, 'Razão Social deve ter no mínimo 2 caracteres')
+    .optional()
+    .or(z.literal('')),
   status: z.enum(['Ativo', 'Inativo']).default('Ativo'),
   email: z.string().email('E-mail inválido').optional().or(z.literal('')),
   email_fiscal: z.string().email('E-mail fiscal inválido').optional().or(z.literal('')),
-  telefone: z.string().optional(),
+  telefone: z.string().min(8, 'Telefone deve ter no mínimo 8 caracteres'),
   telefone_2: z.string().optional(),
   telefone_3: z.string().optional(),
   celular: z.string().optional(),

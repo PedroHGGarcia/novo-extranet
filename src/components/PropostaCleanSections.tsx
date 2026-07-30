@@ -1,5 +1,6 @@
 import { formatCurrency } from '@/pages/controle-propostas/utils'
 import type { TipoProposta } from '@/services/tipos-propostas'
+import { sanitizeHtml } from '@/lib/sanitize'
 
 interface VersaoComparacaoItem {
   nome: string
@@ -112,7 +113,7 @@ export function PropostaCleanSections({
           <h2 className={h2Class}>1. EQUIPADA COM SEUS ACESSÓRIOS STANDARD ABAIXO DESCRITOS</h2>
           <div
             className={bodyClass + ' pl-4 rich-text-content'}
-            dangerouslySetInnerHTML={{ __html: acessoriosStandards }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(acessoriosStandards || '') }}
           />
         </section>
       )}
@@ -121,7 +122,7 @@ export function PropostaCleanSections({
           <h2 className={h2Class}>2. CARACTERÍSTICAS CONSTRUTIVAS PRINCIPAIS</h2>
           <div
             className={bodyClass + ' ta-justify rich-text-content'}
-            dangerouslySetInnerHTML={{ __html: caracteristicasConstrutivas }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(caracteristicasConstrutivas || '') }}
           />
         </section>
       )}
@@ -152,7 +153,7 @@ export function PropostaCleanSections({
           ) : (
             <div
               className={bodyClass + ' ta-justify rich-text-content'}
-              dangerouslySetInnerHTML={{ __html: especificacoesTecnicas || '' }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(especificacoesTecnicas || '') }}
             />
           )}
         </section>

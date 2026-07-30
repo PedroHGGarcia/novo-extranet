@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import pb from '@/lib/pocketbase/client'
+import { logAudit } from '@/services/audit'
 
 interface AuthContextType {
   user: any
@@ -60,6 +61,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       await pb.collection('users').authWithPassword(email, password)
+      await logAudit({
+        userId: pb.authStore.record?.id || '',
+        action: 'login',
+        table: 'users',
+        recordId: pb.authStore.record?.id || '',
+        data: { email, timestamp: new Date().toISOString() },
+      })
       return { error: null }
     } catch (error) {
       return { error }
@@ -67,6 +75,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const signOut = () => {
+    const userId = pb.authStore.record?.id || ''
+    if (userId) {
+      logAudit({
+        userId,
+        action: 'logout',
+        table: 'users',
+        recordId: userId,
+        data: { timestamp: new Date().toISOString() },
+      }).catch(() => {})
+    }
     pb.authStore.clear()
   }
 

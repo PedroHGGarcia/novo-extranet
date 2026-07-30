@@ -1,4 +1,5 @@
 import pb from '@/lib/pocketbase/client'
+import { logAudit, getCurrentUserId } from '@/services/audit'
 
 // Documentos Clientes
 export const getDocumentosCliente = (clienteId: string) =>
@@ -36,10 +37,44 @@ const stripMasks = (data: any) => {
   return cleanData
 }
 
-export const createCliente = (data: any) => pb.collection('clientes').create(stripMasks(data))
-export const updateCliente = (id: string, data: any) =>
-  pb.collection('clientes').update(id, stripMasks(data))
-export const deleteCliente = (id: string) => pb.collection('clientes').delete(id)
+export const createCliente = async (data: any) => {
+  const cleaned = stripMasks(data)
+  const record = await pb.collection('clientes').create(cleaned)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'create',
+    table: 'clientes',
+    recordId: record.id,
+    data: { after: cleaned },
+  })
+  return record
+}
+
+export const updateCliente = async (id: string, data: any) => {
+  const cleaned = stripMasks(data)
+  const record = await pb.collection('clientes').update(id, cleaned)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'update',
+    table: 'clientes',
+    recordId: id,
+    data: { after: cleaned },
+  })
+  return record
+}
+
+export const deleteCliente = async (id: string) => {
+  const result = await pb.collection('clientes').delete(id)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'delete',
+    table: 'clientes',
+    recordId: id,
+    data: { deletedAt: new Date().toISOString() },
+  })
+  return result
+}
+
 export const clearAllClientes = () => pb.send('/backend/v1/clientes/clear', { method: 'DELETE' })
 
 export const getTotalClienteCount = async (): Promise<number> => {
@@ -88,10 +123,39 @@ export const getRepresentantes = () =>
   pb.collection('representantes').getFullList({ sort: '-created' })
 export const getRepresentante = (id: string) =>
   pb.collection('representantes').getOne(id, { expand: 'categorias_rel,regioes_rel' })
-export const createRepresentante = (data: any) => pb.collection('representantes').create(data)
-export const updateRepresentante = (id: string, data: any) =>
-  pb.collection('representantes').update(id, data)
-export const deleteRepresentante = (id: string) => pb.collection('representantes').delete(id)
+export const createRepresentante = async (data: any) => {
+  const record = await pb.collection('representantes').create(data)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'create',
+    table: 'representantes',
+    recordId: record.id,
+    data: { after: data },
+  })
+  return record
+}
+export const updateRepresentante = async (id: string, data: any) => {
+  const record = await pb.collection('representantes').update(id, data)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'update',
+    table: 'representantes',
+    recordId: id,
+    data: { after: data },
+  })
+  return record
+}
+export const deleteRepresentante = async (id: string) => {
+  const result = await pb.collection('representantes').delete(id)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'delete',
+    table: 'representantes',
+    recordId: id,
+    data: { deletedAt: new Date().toISOString() },
+  })
+  return result
+}
 
 // Prepostos
 export const getPrepostos = () => pb.collection('prepostos').getFullList({ sort: '-created' })
@@ -102,12 +166,72 @@ export const deletePreposto = (id: string) => pb.collection('prepostos').delete(
 // Regiões
 export const getRegioes = () =>
   pb.collection('regioes').getFullList({ sort: 'nome', expand: 'atualizado_por' })
-export const createRegiao = (data: any) => pb.collection('regioes').create(data)
-export const updateRegiao = (id: string, data: any) => pb.collection('regioes').update(id, data)
-export const deleteRegiao = (id: string) => pb.collection('regioes').delete(id)
+export const createRegiao = async (data: any) => {
+  const record = await pb.collection('regioes').create(data)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'create',
+    table: 'regioes',
+    recordId: record.id,
+    data: { after: data },
+  })
+  return record
+}
+export const updateRegiao = async (id: string, data: any) => {
+  const record = await pb.collection('regioes').update(id, data)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'update',
+    table: 'regioes',
+    recordId: id,
+    data: { after: data },
+  })
+  return record
+}
+export const deleteRegiao = async (id: string) => {
+  const result = await pb.collection('regioes').delete(id)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'delete',
+    table: 'regioes',
+    recordId: id,
+    data: { deletedAt: new Date().toISOString() },
+  })
+  return result
+}
 
 // Gerentes
 export const getGerentes = () => pb.collection('gerentes').getFullList({ sort: '-created' })
-export const createGerente = (data: any) => pb.collection('gerentes').create(data)
-export const updateGerente = (id: string, data: any) => pb.collection('gerentes').update(id, data)
-export const deleteGerente = (id: string) => pb.collection('gerentes').delete(id)
+export const createGerente = async (data: any) => {
+  const record = await pb.collection('gerentes').create(data)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'create',
+    table: 'gerentes',
+    recordId: record.id,
+    data: { after: data },
+  })
+  return record
+}
+export const updateGerente = async (id: string, data: any) => {
+  const record = await pb.collection('gerentes').update(id, data)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'update',
+    table: 'gerentes',
+    recordId: id,
+    data: { after: data },
+  })
+  return record
+}
+export const deleteGerente = async (id: string) => {
+  const result = await pb.collection('gerentes').delete(id)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'delete',
+    table: 'gerentes',
+    recordId: id,
+    data: { deletedAt: new Date().toISOString() },
+  })
+  return result
+}

@@ -68,6 +68,7 @@ export function EmitirPropostaForm({
   const [initialAcessorios, setInitialAcessorios] = useState<any[]>([])
   const [estoqueUI, setEstoqueUI] = useState('')
   const [propostaSignatureBlob, setPropostaSignatureBlob] = useState<Blob | null>(null)
+  const [propostaSignatureHash, setPropostaSignatureHash] = useState<string | null>(null)
   const [signatureConfirmed, setSignatureConfirmed] = useState(false)
   const [useProfileSignature, setUseProfileSignature] = useState(false)
   const [formTouched, setFormTouched] = useState(false)
@@ -632,6 +633,9 @@ export function EmitirPropostaForm({
             propostaSignatureBlob,
             'assinatura-representante.png',
           )
+          if (propostaSignatureHash) {
+            fd.append('assinatura_hash', propostaSignatureHash)
+          }
         } else if (useProfileSignature && user?.assinatura) {
           const sigUrl = pb.files.getURL(user as any, user.assinatura as string)
           const sigRes = await fetch(sigUrl)
@@ -1417,8 +1421,9 @@ export function EmitirPropostaForm({
                     A assinatura do representante é obrigatória.
                   </p>
                   <SignaturePad
-                    onConfirm={(blob) => {
+                    onConfirm={(blob, hash) => {
                       setPropostaSignatureBlob(blob)
+                      setPropostaSignatureHash(hash)
                       setSignatureConfirmed(true)
                     }}
                   />

@@ -1,4 +1,5 @@
 import pb from '@/lib/pocketbase/client'
+import { logAudit, getCurrentUserId } from '@/services/audit'
 import type { TipoProposta } from './tipos-propostas'
 
 export interface Proposta {
@@ -107,7 +108,15 @@ export const getProposta = async (id: string) => {
 }
 
 export const updateProposta = async (id: string, data: Partial<Proposta>) => {
-  return pb.collection('propostas').update<Proposta>(id, data)
+  const record = await pb.collection('propostas').update<Proposta>(id, data)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'update',
+    table: 'propostas',
+    recordId: id,
+    data: { after: data },
+  })
+  return record
 }
 
 export const uploadAssinaturaCliente = async (id: string, file: Blob) => {
@@ -157,7 +166,15 @@ export const createPropostaRevision = async (id: string): Promise<Proposta> => {
   cloneData.revisao = nextRev
   cloneData.status = 'Em Análise'
 
-  return pb.collection('propostas').create<Proposta>(cloneData)
+  const record = await pb.collection('propostas').create<Proposta>(cloneData)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'create_revision',
+    table: 'propostas',
+    recordId: record.id,
+    data: { originalId: id, revisao: nextRev },
+  })
+  return record
 }
 
 export const getUnlinkedPropostasPaginated = async (

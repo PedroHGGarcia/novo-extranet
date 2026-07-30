@@ -25,12 +25,13 @@ export function ClientSignatureSection({ proposta, onSigned }: ClientSignatureSe
     ? pb.files.getURL(proposta as any, proposta.assinatura_cliente as string)
     : null
 
-  const handleConfirm = async (blob: Blob) => {
+  const handleConfirm = async (blob: Blob, hash: string) => {
     setIsSaving(true)
     try {
       const formData = new FormData()
       formData.append('assinatura_cliente', blob, 'assinatura-cliente.png')
       formData.append('status', 'Aprovada')
+      if (hash) formData.append('assinatura_hash', hash)
       await pb.collection('propostas').update(proposta.id, formData)
       setSigned(true)
       toast({

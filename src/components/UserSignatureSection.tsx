@@ -19,11 +19,12 @@ export function UserSignatureSection() {
     ? pb.files.getURL(user as any, user.assinatura as string)
     : null
 
-  const handleSaveDrawn = async (blob: Blob) => {
+  const handleSaveDrawn = async (blob: Blob, hash: string) => {
     setIsSaving(true)
     try {
       const formData = new FormData()
       formData.append('assinatura', blob, 'assinatura.png')
+      if (hash) formData.append('assinatura_hash', hash)
       await pb.collection('users').update(user.id, formData)
       await refreshUser()
       toast({ title: 'Assinatura salva com sucesso!' })

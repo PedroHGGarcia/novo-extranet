@@ -4,7 +4,7 @@ import { Eraser, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SignaturePadProps {
-  onConfirm: (blob: Blob) => void
+  onConfirm: (blob: Blob, hash: string) => void
   disabled?: boolean
   className?: string
 }
@@ -73,11 +73,20 @@ export function SignaturePad({ onConfirm, disabled, className }: SignaturePadPro
     setHasSignature(false)
   }
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const canvas = canvasRef.current
     if (!canvas || !hasSignature) return
-    canvas.toBlob((blob) => {
-      if (blob) onConfirm(blob)
+    canvas.toBlob(async (blob) => {
+      if (!blob) return
+      try {
+        const arrayBuffer = await blob.arrayBuffer()
+        const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer)
+        const hashArray = Array.from(new Uint8Array(hashBuffer))
+        const hash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+        onConfirm(blob, hash)
+      } catch {
+        onConfirm(blob, '')
+      }
     }, 'image/png')
   }
 

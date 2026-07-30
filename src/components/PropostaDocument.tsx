@@ -3,6 +3,7 @@ import { type TipoProposta } from '@/services/tipos-propostas'
 import benerLogoUrl from '@/assets/bener-thumb-c5c1b.png'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { sanitizeHtml } from '@/lib/sanitize'
 
 export const formatCurrency = (value: number | undefined, currency: string = 'BRL') => {
   if (value === undefined) return '-'
@@ -246,7 +247,7 @@ export function PropostaDocument({
                 </p>
                 <div
                   className="font-mono text-[14pt] leading-tight text-justify rich-text-content"
-                  dangerouslySetInnerHTML={{ __html: acessoriosStandards }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(acessoriosStandards || '') }}
                 />
               </div>
             )}
@@ -257,7 +258,9 @@ export function PropostaDocument({
                 </p>
                 <div
                   className="font-mono text-[14pt] leading-tight text-justify rich-text-content"
-                  dangerouslySetInnerHTML={{ __html: caracteristicasConstrutivas }}
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeHtml(caracteristicasConstrutivas || ''),
+                  }}
                 />
               </div>
             )}
@@ -268,7 +271,7 @@ export function PropostaDocument({
                 </p>
                 <div
                   className="font-mono text-[14pt] leading-tight text-justify rich-text-content"
-                  dangerouslySetInnerHTML={{ __html: especificacoesTecnicas }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(especificacoesTecnicas || '') }}
                 />
               </div>
             )}

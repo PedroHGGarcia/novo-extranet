@@ -93,31 +93,31 @@ const router = createBrowserRouter(
           </LazyRoute>
         }
       />
-      <Route
-        path="/validar-proposta/:id"
-        element={
-          <LazyRoute>
-            <ValidarProposta />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="/proposta/:id/imprimir"
-        element={
-          <LazyRoute>
-            <PrintProposta />
-          </LazyRoute>
-        }
-      />
-      <Route
-        path="/propostas/:id/imprimir"
-        element={
-          <LazyRoute>
-            <PrintProposta />
-          </LazyRoute>
-        }
-      />
       <Route element={<ProtectedRoute />}>
+        <Route
+          path="/validar-proposta/:id"
+          element={
+            <LazyRoute>
+              <ValidarProposta />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/proposta/:id/imprimir"
+          element={
+            <LazyRoute>
+              <PrintProposta />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/propostas/:id/imprimir"
+          element={
+            <LazyRoute>
+              <PrintProposta />
+            </LazyRoute>
+          }
+        />
         <Route
           element={
             <LazyRoute>

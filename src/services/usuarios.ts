@@ -1,4 +1,5 @@
 import pb from '@/lib/pocketbase/client'
+import { logAudit, getCurrentUserId } from '@/services/audit'
 
 export interface Usuario {
   id: string
@@ -14,17 +15,25 @@ export interface Usuario {
 
 export const getUsuarios = () => pb.collection('users').getFullList<Usuario>({ sort: 'name' })
 
-export const createUsuario = (
+export const createUsuario = async (
   data: Partial<Usuario> & { password?: string; passwordConfirm?: string },
 ) => {
   const payload = { ...data }
   if (payload.password && !payload.passwordConfirm) {
     payload.passwordConfirm = payload.password
   }
-  return pb.collection('users').create<Usuario>(payload)
+  const record = await pb.collection('users').create<Usuario>(payload)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'create',
+    table: 'users',
+    recordId: record.id,
+    data: { after: { ...payload, password: undefined, passwordConfirm: undefined } },
+  })
+  return record
 }
 
-export const updateUsuario = (
+export const updateUsuario = async (
   id: string,
   data: Partial<Usuario> & { password?: string; passwordConfirm?: string },
 ) => {
@@ -32,7 +41,25 @@ export const updateUsuario = (
   if (payload.password && !payload.passwordConfirm) {
     payload.passwordConfirm = payload.password
   }
-  return pb.collection('users').update<Usuario>(id, payload)
+  const record = await pb.collection('users').update<Usuario>(id, payload)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'update',
+    table: 'users',
+    recordId: id,
+    data: { after: { ...payload, password: undefined, passwordConfirm: undefined } },
+  })
+  return record
 }
 
-export const deleteUsuario = (id: string) => pb.collection('users').delete(id)
+export const deleteUsuario = async (id: string) => {
+  const result = await pb.collection('users').delete(id)
+  await logAudit({
+    userId: getCurrentUserId(),
+    action: 'delete',
+    table: 'users',
+    recordId: id,
+    data: { deletedAt: new Date().toISOString() },
+  })
+  return result
+}

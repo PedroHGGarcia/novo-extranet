@@ -7,6 +7,7 @@ import { ptBR } from 'date-fns/locale'
 import pb from '@/lib/pocketbase/client'
 import benerLogoUrl from '@/assets/logo-bener-4ae76.png'
 import '@/styles/print-proposta.css'
+import { sanitizeHtml } from '@/lib/sanitize'
 
 export default function ImprimirProposta() {
   const { id } = useParams()
@@ -187,7 +188,7 @@ export default function ImprimirProposta() {
           <h3>1. EQUIPADA COM SEUS ACESSÓRIOS STANDARD ABAIXO DESCRITOS</h3>
           <div
             className="rich-text-content"
-            dangerouslySetInnerHTML={{ __html: v.acessorios_standards }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(v.acessorios_standards || '') }}
           />
         </section>
       )}
@@ -197,7 +198,7 @@ export default function ImprimirProposta() {
           <h3>2. CARACTERÍSTICAS CONSTRUTIVAS PRINCIPAIS</h3>
           <div
             className="rich-text-content"
-            dangerouslySetInnerHTML={{ __html: v.caracteristicas_construtivas }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(v.caracteristicas_construtivas || '') }}
           />
         </section>
       )}
@@ -227,7 +228,7 @@ export default function ImprimirProposta() {
           ) : (
             <div
               className="rich-text-content"
-              dangerouslySetInnerHTML={{ __html: v.especificacoes_tecnicas }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(v.especificacoes_tecnicas || '') }}
             />
           )}
         </section>
