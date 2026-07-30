@@ -63,7 +63,7 @@ describe('Login Component', () => {
     })
   })
 
-  it('should show validation error on short password', async () => {
+  it('should NOT show validation error on short password (login allows any non-empty password)', async () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
@@ -76,7 +76,24 @@ describe('Login Component', () => {
     await user.tab()
 
     await waitFor(() => {
-      expect(screen.getByText('A senha deve ter no mínimo 8 caracteres')).toBeInTheDocument()
+      expect(screen.queryByText('A senha deve ter no mínimo 8 caracteres')).not.toBeInTheDocument()
+    })
+  })
+
+  it('should show validation error on empty password', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>,
+    )
+
+    const passwordInput = screen.getByPlaceholderText('••••••••')
+    await user.click(passwordInput)
+    await user.tab()
+
+    await waitFor(() => {
+      expect(screen.getByText('A senha é obrigatória')).toBeInTheDocument()
     })
   })
 })

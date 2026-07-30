@@ -27,6 +27,10 @@ export function ChangePasswordSection() {
       errs.newPassword = 'Informe a nova senha.'
     } else if (newPassword.length < 8) {
       errs.newPassword = 'A senha deve ter no mínimo 8 caracteres.'
+    } else if (!/[0-9]/.test(newPassword)) {
+      errs.newPassword = 'A senha deve conter pelo menos um número.'
+    } else if (!/[^a-zA-Z0-9]/.test(newPassword)) {
+      errs.newPassword = 'A senha deve conter pelo menos um caractere especial.'
     }
     if (!confirmPassword) {
       errs.confirmPassword = 'Confirme a nova senha.'

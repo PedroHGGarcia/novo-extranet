@@ -18,11 +18,7 @@ import { z } from 'zod'
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
-  password: z
-    .string()
-    .min(8, 'A senha deve ter no mínimo 8 caracteres')
-    .regex(/[0-9]/, 'A senha deve conter pelo menos um número')
-    .regex(/[^a-zA-Z0-9]/, 'A senha deve conter pelo menos um caractere especial'),
+  password: z.string().min(1, 'A senha é obrigatória'),
 })
 
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || ''

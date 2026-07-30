@@ -69,6 +69,10 @@ export function UserEditSheet({ user, open, onOpenChange, onSaved }: UserEditShe
       }
       if (safePassword && safePassword.length < 8)
         newErrors.password = 'A senha deve ter no mínimo 8 caracteres'
+      else if (safePassword && !/[0-9]/.test(safePassword))
+        newErrors.password = 'A senha deve conter pelo menos um número'
+      else if (safePassword && !/[^a-zA-Z0-9]/.test(safePassword))
+        newErrors.password = 'A senha deve conter pelo menos um caractere especial'
     } else {
       if (!safeEmail) newErrors.email = 'E-mail é obrigatório'
       else if (!emailRegex.test(safeEmail)) newErrors.email = 'Formato de e-mail inválido'
