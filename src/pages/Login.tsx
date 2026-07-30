@@ -237,13 +237,6 @@ export default function Login() {
                   className="flex justify-center max-w-full overflow-x-auto"
                 />
               )}
-                siteKey={RECAPTCHA_SITE_KEY}
-                onVerify={handleCaptchaVerify}
-                onExpire={handleCaptchaExpire}
-                onError={handleCaptchaError}
-                theme="light"
-                className="flex justify-center max-w-full overflow-x-auto"
-              />
               {captchaError && (
                 <p className="text-xs text-red-500 mt-2 text-center">
                   Não foi possível carregar a verificação reCAPTCHA. Recarregue a página.
