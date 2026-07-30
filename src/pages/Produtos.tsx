@@ -218,10 +218,24 @@ export default function Produtos() {
       newFotos.forEach((f) => formData.append('fotos', f))
 
       if (editingItem) {
-        await updateProduto(editingItem.id, formData)
+        const updated = await updateProduto(editingItem.id, formData)
+        setItems((prev) =>
+          prev.map((item) =>
+            item.id === editingItem.id
+              ? ({ ...item, ...updated, expand: item.expand } as Produto)
+              : item,
+          ),
+        )
         toast({ title: 'Produto atualizado com sucesso' })
       } else {
-        await createProduto(formData)
+        const created = await createProduto(formData)
+        const createdProduto: Produto = {
+          ...created,
+          expand: {
+            categoria: categorias.find((c) => c.id === (created as any).categoria),
+          },
+        } as Produto
+        setItems((prev) => [createdProduto, ...prev])
         toast({ title: 'Produto criado com sucesso' })
       }
       resetForm()

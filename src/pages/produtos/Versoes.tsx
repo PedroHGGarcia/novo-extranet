@@ -365,27 +365,39 @@ export default function Versoes() {
     try {
       const payload = buildPayload()
 
+      let savedRecord: any
       if (newFoto) {
         const formData = payloadToFormData(payload)
         formData.append('imagem_preview', newFoto)
         if (editingItem) {
-          await updateVersao(editingItem.id, formData as any)
+          savedRecord = await updateVersao(editingItem.id, formData as any)
         } else {
-          await createVersao(formData as any)
+          savedRecord = await createVersao(formData as any)
         }
       } else if (deleteFoto && editingItem) {
         const formData = payloadToFormData(payload)
         formData.append('imagem_preview', '')
-        await updateVersao(editingItem.id, formData as any)
+        savedRecord = await updateVersao(editingItem.id, formData as any)
       } else {
         if (editingItem) {
-          await updateVersao(editingItem.id, payload as any)
+          savedRecord = await updateVersao(editingItem.id, payload as any)
         } else {
-          await createVersao(payload as any)
+          savedRecord = await createVersao(payload as any)
         }
       }
 
-      await loadData()
+      if (editingItem) {
+        setItems((prev) =>
+          prev.map((item) =>
+            item.id === editingItem.id
+              ? ({ ...item, ...savedRecord, expand: item.expand } as Versao)
+              : item,
+          ),
+        )
+      } else {
+        const modelo = modelos.find((m) => m.id === savedRecord?.modelo)
+        setItems((prev) => [{ ...savedRecord, expand: { modelo } } as Versao, ...prev])
+      }
 
       toast({ title: `Versão ${editingItem ? 'atualizada' : 'criada'} com sucesso` })
       resetForm()
