@@ -146,6 +146,7 @@ export interface Versao {
   estoque_bloqueado?: number
   estoque_reservado?: number
   estoque_disponivel?: number
+  alerta_estoque_minimo?: number
   acessorios_standards?: string
   caracteristicas_construtivas?: string
   especificacoes_tecnicas?: string

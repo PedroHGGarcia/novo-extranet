@@ -129,6 +129,7 @@ export default function Versoes() {
   const [estoqueBloqueado, setEstoqueBloqueado] = useState(0)
   const [estoqueReservado, setEstoqueReservado] = useState(0)
   const [estoqueDisponivel, setEstoqueDisponivel] = useState(0)
+  const [alertaEstoqueMinimo, setAlertaEstoqueMinimo] = useState(0)
 
   const [acessorios, setAcessorios] = useState('')
   const [caracteristicas, setCaracteristicas] = useState('')
@@ -233,6 +234,7 @@ export default function Versoes() {
     setEstoqueBloqueado(item.estoque_bloqueado || 0)
     setEstoqueReservado(item.estoque_reservado || 0)
     setEstoqueDisponivel(item.estoque_disponivel || 0)
+    setAlertaEstoqueMinimo(item.alerta_estoque_minimo || 0)
     setAcessorios(item.acessorios_standards || '')
     setCaracteristicas(item.caracteristicas_construtivas || '')
     setEspecificacoes(item.especificacoes_tecnicas || '')
@@ -272,11 +274,11 @@ export default function Versoes() {
     const modelo = modelos.find((m) => m.id === modeloId)
     try {
       setLoadingSpecs(true)
-      const res = await pb.send('/backend/v1/ai/suggest-specs', {
+      const res = await pb.send('/backend/v1/suggest-specs', {
         method: 'POST',
-        body: JSON.stringify({ modelo: modelo?.nome, produto: modelo?.expand?.produto?.nome }),
+        body: JSON.stringify({ type: 'modelo', nome: modelo?.nome }),
       })
-      setEspecificacoes((prev) => prev + (prev ? '<br/><br/>' : '') + res.text)
+      setEspecificacoes((prev) => prev + (prev ? '<br/><br/>' : '') + res.content)
       toast({ title: 'Especificações sugeridas com sucesso.' })
     } catch (err: any) {
       toast({ title: 'Erro ao gerar sugestão', description: err.message, variant: 'destructive' })
@@ -297,6 +299,57 @@ export default function Versoes() {
     caracteristicas_construtivas: 'Características Construtivas',
     especificacoes_tecnicas: 'Especificações Técnicas',
     atualizado_por: 'Usuário',
+    alerta_estoque_minimo: 'Alerta Estoque Mínimo',
+  }
+
+  const buildPayload = (): Record<string, any> => {
+    const payload: Record<string, any> = {
+      nome: nome.trim(),
+      status,
+      nome_abreviado: nomeAbreviado.trim(),
+      modelo: modeloId,
+      cod_erp: codErp.trim(),
+      moeda,
+      valor: isNaN(valor) ? 0 : valor,
+      tem_fator: Boolean(temFator),
+      fator_nac: isNaN(fatorNac) ? 1 : fatorNac,
+      tem_estoque: Boolean(temEstoque),
+      desconto_max_representante: isNaN(descMaxRep) ? 0 : descMaxRep,
+      desconto_max_bener: isNaN(descMaxBener) ? 0 : descMaxBener,
+      estoque_total: estoqueTotal,
+      estoque_bloqueado: estoqueBloqueado,
+      estoque_reservado: estoqueReservado,
+      estoque_disponivel: estoqueDisponivel,
+      acessorios_standards: acessorios || '',
+      caracteristicas_construtivas: caracteristicas || '',
+      especificacoes_tecnicas: especificacoes || '',
+      tipos_proposta: tiposProposta || [],
+      alerta_estoque_minimo: alertaEstoqueMinimo || 0,
+    }
+
+    if (user?.id) {
+      payload.atualizado_por = user.id
+    }
+
+    return payload
+  }
+
+  const payloadToFormData = (payload: Record<string, any>): FormData => {
+    const formData = new FormData()
+    for (const [key, value] of Object.entries(payload)) {
+      if (value === null || value === undefined) {
+        formData.append(key, '')
+      } else if (typeof value === 'boolean') {
+        formData.append(key, value ? 'true' : 'false')
+      } else if (typeof value === 'number') {
+        formData.append(key, String(value))
+      } else if (Array.isArray(value)) {
+        formData.append(key, JSON.stringify(value))
+      } else {
+        formData.append(key, String(value))
+      }
+    }
+    return formData
   }
 
   const handleSave = async () => {
@@ -310,46 +363,26 @@ export default function Versoes() {
     }
 
     try {
-      const formData = new FormData()
-      formData.append('nome', nome.trim())
-      formData.append('status', status)
-      formData.append('nome_abreviado', nomeAbreviado.trim())
-      formData.append('modelo', modeloId)
-      formData.append('cod_erp', codErp.trim())
-      formData.append('moeda', moeda)
-      formData.append('valor', String(isNaN(valor) ? 0 : valor))
-      formData.append('tem_fator', String(Boolean(temFator)))
-      formData.append('fator_nac', String(isNaN(fatorNac) ? 1 : fatorNac))
-      formData.append('tem_estoque', String(Boolean(temEstoque)))
-      formData.append('desconto_max_representante', String(isNaN(descMaxRep) ? 0 : descMaxRep))
-      formData.append('desconto_max_bener', String(isNaN(descMaxBener) ? 0 : descMaxBener))
+      const payload = buildPayload()
 
-      formData.append('acessorios_standards', acessorios || '')
-      formData.append('caracteristicas_construtivas', caracteristicas || '')
-      formData.append('especificacoes_tecnicas', especificacoes || '')
-      formData.append('tipos_proposta', JSON.stringify(tiposProposta || []))
-
-      if (user?.id) {
-        formData.append('atualizado_por', user.id)
-      }
-
-      if (!editingItem) {
-        formData.append('estoque_total', '0')
-        formData.append('estoque_bloqueado', '0')
-        formData.append('estoque_reservado', '0')
-        formData.append('estoque_disponivel', '0')
-      }
-
-      if (deleteFoto) {
-        formData.append('imagem_preview', '')
-      } else if (newFoto) {
+      if (newFoto) {
+        const formData = payloadToFormData(payload)
         formData.append('imagem_preview', newFoto)
-      }
-
-      if (editingItem) {
-        await updateVersao(editingItem.id, formData)
+        if (editingItem) {
+          await updateVersao(editingItem.id, formData as any)
+        } else {
+          await createVersao(formData as any)
+        }
+      } else if (deleteFoto && editingItem) {
+        const formData = payloadToFormData(payload)
+        formData.append('imagem_preview', '')
+        await updateVersao(editingItem.id, formData as any)
       } else {
-        await createVersao(formData)
+        if (editingItem) {
+          await updateVersao(editingItem.id, payload as any)
+        } else {
+          await createVersao(payload as any)
+        }
       }
 
       await loadData()
@@ -399,6 +432,7 @@ export default function Versoes() {
     setEstoqueBloqueado(0)
     setEstoqueReservado(0)
     setEstoqueDisponivel(0)
+    setAlertaEstoqueMinimo(0)
     setAcessorios('')
     setCaracteristicas('')
     setEspecificacoes('')
@@ -911,6 +945,20 @@ export default function Versoes() {
                       value={estoqueDisponivel}
                       disabled
                       className="h-7 text-xs bg-gray-200 border-none text-gray-600 rounded-sm px-2"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-12 gap-6 pt-2">
+                  <div className="col-span-3 flex flex-col">
+                    <label className="text-[11px] text-gray-500 mb-0.5">
+                      Alerta Estoque Mínimo
+                    </label>
+                    <Input
+                      type="number"
+                      value={alertaEstoqueMinimo}
+                      onChange={(e) => setAlertaEstoqueMinimo(parseFloat(e.target.value) || 0)}
+                      className="input-bener"
                     />
                   </div>
                 </div>
