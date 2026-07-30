@@ -152,7 +152,7 @@ export interface Versao {
   tipos_proposta?: string[]
 
   atualizado_por?: string
-  status: 'Ativo' | 'Inativo' | 'Em Revisão' | 'Aprovado'
+  status: 'Ativo' | 'Inativo' | 'Fora de Linha' | 'Em Revisão' | 'Aprovado'
   created: string
   updated: string
   expand?: {

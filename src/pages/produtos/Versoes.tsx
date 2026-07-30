@@ -38,7 +38,6 @@ import { useTablePreferences } from '@/hooks/use-table-preferences'
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown'
 import { RichTextEditor } from '@/components/RichTextEditor'
 import { cn } from '@/lib/utils'
-import { z } from 'zod'
 import pb from '@/lib/pocketbase/client'
 import { extractFieldErrors, getErrorMessage } from '@/lib/pocketbase/errors'
 import {
@@ -288,8 +287,6 @@ export default function Versoes() {
 
   const isFormValid = nome.trim() && modeloId
 
-  const specsSchema = z.string()
-
   const FIELD_LABELS: Record<string, string> = {
     nome: 'Nome',
     status: 'Status',
@@ -309,16 +306,6 @@ export default function Versoes() {
 
     if (!isFormValid) {
       toast({ title: 'Preencha os campos obrigatórios', variant: 'destructive' })
-      return
-    }
-
-    const specsValidation = specsSchema.safeParse(especificacoes)
-    if (!specsValidation.success) {
-      toast({
-        title: 'Erro na Especificação Técnica',
-        description: specsValidation.error.issues[0].message,
-        variant: 'destructive',
-      })
       return
     }
 
@@ -932,12 +919,12 @@ export default function Versoes() {
                   <RichTextEditor
                     label="Acessórios Standards"
                     value={acessorios}
-                    onChange={setAcessorios}
+                    onChange={(val: string) => setAcessorios(val ?? '')}
                   />
                   <RichTextEditor
                     label="Características Construtivas Principais"
                     value={caracteristicas}
-                    onChange={setCaracteristicas}
+                    onChange={(val: string) => setCaracteristicas(val ?? '')}
                   />
                   <div className="relative">
                     <div className="absolute -top-7 right-0 z-10 flex gap-2">
@@ -956,7 +943,7 @@ export default function Versoes() {
                     <RichTextEditor
                       label="Especificações Técnicas Principais"
                       value={especificacoes}
-                      onChange={setEspecificacoes}
+                      onChange={(val: string) => setEspecificacoes(val ?? '')}
                     />
                   </div>
                 </div>
